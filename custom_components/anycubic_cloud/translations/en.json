@@ -1,0 +1,112 @@
+{
+  "config": {
+    "abort": {
+      "already_configured": "Already configured.",
+      "reauth_successful": "Re-authentication successful."
+    },
+    "error": {
+      "invalid_auth": "Invalid authentication.",
+      "cannot_connect": "Cannot connect."
+    },
+    "step": {
+      "user": {
+        "data": {
+          "username": "Username",
+          "password": "Password",
+          "name": "Printer Name"
+        }
+      },
+      "reauth_confirm": {
+        "data": {
+          "username": "Username",
+          "password": "Password",
+          "name": "Printer Name"
+        }
+      },
+      "printer": {
+        "data": {
+          "printer_name": "Printer Name"
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {}
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "current_project_in_progress": {
+        "name": "Project In Progress"
+      },
+      "current_project_complete": {
+        "name": "Project Complete"
+      },
+      "current_project_failed": {
+        "name": "Project Failed"
+      },
+      "current_project_is_paused": {
+        "name": "Project Paused"
+      }
+    },
+    "button": {},
+    "sensor": {
+      "device_status": {
+        "name": "Device Status"
+      },
+      "is_printing": {
+        "name": "Is Printing"
+      },
+      "curr_nozzle_temp": {
+        "name": "Nozzle Temperature"
+      },
+      "curr_hotbed_temp": {
+        "name": "Hotbed Temperature"
+      },
+      "fw_version": {
+        "name": "FW Version"
+      },
+      "multi_color_box_fw_version": {
+        "name": "ACE FW Version"
+      },
+      "current_project_name": {
+        "name": "Project Name"
+      },
+      "current_project_progress": {
+        "name": "Project Progress %"
+      },
+      "current_project_created_timestamp": {
+        "name": "Project Created At"
+      },
+      "current_project_time_elapsed": {
+        "name": "Project Time Elapsed"
+      },
+      "current_project_time_remaining": {
+        "name": "Project Time Remaining"
+      },
+      "current_project_print_total_time": {
+        "name": "Project Total Time Taken"
+      },
+      "print_state": {
+        "name": "Print State"
+      },
+      "print_approximate_completion_time": {
+        "name": "Approximate Completion Time"
+      },
+      "print_current_layer": {
+        "name": "Current Layer"
+      },
+      "print_total_layers": {
+        "name": "Total Layers"
+      },
+      "target_nozzle_temp": {
+        "name": "Target Nozzle Temperature"
+      },
+      "target_hotbed_temp": {
+        "name": "Target Hotbed Temperature"
+      }
+    }
+  },
+  "exceptions": {}
+}

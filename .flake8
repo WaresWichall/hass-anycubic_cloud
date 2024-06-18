@@ -1,0 +1,8 @@
+[flake8]
+filename = *.py, *.pyx, *.pxd
+max-line-length = 135
+exclude = example/*
+in-place = true
+recursive = true
+aggressive = 3
+pep8-passes = 4

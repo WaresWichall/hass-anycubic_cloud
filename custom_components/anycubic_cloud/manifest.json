@@ -1,0 +1,15 @@
+{
+  "domain": "anycubic_cloud",
+  "name": "Anycubic Cloud",
+  "codeowners": [
+    "@WaresWichall"
+  ],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://www.home-assistant.io/integrations/anycubic_cloud",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/WaresWichall/anycubic_cloud/issues",
+  "loggers": [],
+  "requirements": [],
+  "version": "0.0.1"
+}
