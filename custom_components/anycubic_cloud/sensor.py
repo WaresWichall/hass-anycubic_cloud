@@ -1,5 +1,6 @@
 """Sensors for Anycubic Cloud Printers."""
 from __future__ import annotations
+from typing import Any
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -82,6 +83,10 @@ SENSOR_TYPES = (
         translation_key="print_state",
     ),
     SensorEntityDescription(
+        key="raw_print_status",
+        translation_key="raw_print_status",
+    ),
+    SensorEntityDescription(
         key="print_approximate_completion_time",
         translation_key="print_approximate_completion_time",
         device_class=SensorDeviceClass.TIMESTAMP,
@@ -105,6 +110,10 @@ SENSOR_TYPES = (
         key="target_hotbed_temp",
         translation_key="target_hotbed_temp",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+    ),
+    SensorEntityDescription(
+        key="multi_color_box_spools",
+        translation_key="multi_color_box_spools",
     ),
 )
 
@@ -163,4 +172,17 @@ class AnycubicSensor(AnycubicCloudEntity, SensorEntity):
         elif self.entity_description.device_class == SensorDeviceClass.TIMESTAMP:
             return dt_util.utc_from_timestamp(state)
 
+        elif self.entity_description.key == 'multi_color_box_spools':
+            return "active" if state is not None else "inactive"
+
         return str(state)
+
+    @property
+    def state_attributes(self) -> dict[str, Any] | None:
+        """Return state attributes."""
+        if self.entity_description.key == 'multi_color_box_spools':
+            return {
+                "spool_info": self.coordinator.data[self.entity_description.key]
+            }
+        else:
+            return super().state_attributes

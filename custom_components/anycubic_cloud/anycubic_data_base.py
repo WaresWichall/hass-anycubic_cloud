@@ -222,8 +222,12 @@ class AnycubicProject:
         return self._progress
 
     @property
+    def raw_print_status(self):
+        return self._print_status
+
+    @property
     def print_in_progress(self):
-        return self._print_status == 1
+        return self._print_status == 1 or self._print_status == 6
 
     @property
     def print_complete(self):
@@ -279,7 +283,7 @@ class AnycubicProject:
             f"print_time_remaining_minutes={self.print_time_remaining_minutes}, pause={self._pause}, progress={self._progress}, "
             f"create_time={self._create_time}, total_time={self._total_time},\n "
             f"print_in_progress={self.print_in_progress}, print_complete={self.print_complete}, print_failed={self.print_failed}, "
-            f"print_is_paused={self.print_is_paused},\n "
+            f"print_is_paused={self.print_is_paused}, raw_print_status={self.raw_print_status},\n "
             f"print_approximate_completion_time={self.print_approximate_completion_time}, "
             f"print_current_layer={self.print_current_layer}, print_total_layers={self.print_total_layers},\n "
             f"finished_timestamp={self.finished_timestamp}, target_nozzle_temp={self.target_nozzle_temp}, "
@@ -501,14 +505,14 @@ class AnycubicSpoolInfo:
         self,
         index,
         sku,
-        type,
+        material_type,
         color,
         edit_status,
         status,
     ):
         self._index = int(index)
         self._sku = str(sku)
-        self._type = str(type)
+        self._material_type = str(material_type)
         self._color = color
         self._edit_status = int(edit_status)
         self._status = int(status)
@@ -521,15 +525,31 @@ class AnycubicSpoolInfo:
         return cls(
             index=data['index'],
             sku=data['sku'],
-            type=data['type'],
+            material_type=data['type'],
             color=data['color'],
             edit_status=data['edit_status'],
             status=data['status'],
         )
 
+    @property
+    def material_type(self):
+        return self._material_type
+
+    @property
+    def color(self):
+        return self._color
+
+    @property
+    def status(self):
+        return self._status
+
+    @property
+    def spool_loaded(self):
+        return self._status == 5
+
     def __repr__(self):
         return (
-            f"AnycubicSpoolInfo(index={self._index}, sku={self._sku}, type={self._type}, color={self._color}, "
+            f"AnycubicSpoolInfo(index={self._index}, sku={self._sku}, material_type={self.material_type}, color={self._color}, "
             f"edit_status={self._edit_status}, status={self._status})"
         )
 
@@ -579,6 +599,25 @@ class AnycubicMultiColorBox:
             target_nozzle_temp=data['target_nozzle_temp'],
             slots=data['slots'],
         )
+
+    @property
+    def slots(self):
+        return self._slots
+
+    @property
+    def spool_info_object(self):
+        if not self._slots or len(self._slots) < 1:
+            return None
+
+        spool_list = list([
+            {
+                "material_type": slot.material_type,
+                "color": slot.color,
+                "status": slot.status,
+                "spool_loaded": slot.spool_loaded,
+            } for slot in self._slots
+        ])
+        return spool_list
 
     def __repr__(self):
         return (
@@ -1019,6 +1058,10 @@ class AnycubicPrinter:
         return self._device_status
 
     @property
+    def printer_online(self):
+        return self._device_status == 1
+
+    @property
     def ready_status(self):
         return self._ready_status
 
@@ -1133,8 +1176,8 @@ class AnycubicPrinter:
                 f"AnycubicPrinter(machine_type={self._machine_type}, machine_name={self._machine_name},\n "
                 f"id={self.id}, name={self.name}, key={self.key}, printer_type={self.printer_type}, status={self.status}, "
                 f"available={self.available},\n "
-                f"device_status={self.device_status}, ready_status={self.ready_status}, is_printing={self.is_printing}, "
-                f"reason={self.reason},\n "
+                f"device_status={self.device_status}, printer_online={self.printer_online}, ready_status={self.ready_status}, "
+                f"is_printing={self.is_printing}, reason={self.reason},\n "
                 f"machine_data=\n{self.machine_data},\n "
                 f"parameter=\n{self.parameter},\n "
                 f"fw_version=\n{self.fw_version},\n "

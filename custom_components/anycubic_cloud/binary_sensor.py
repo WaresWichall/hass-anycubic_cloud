@@ -2,12 +2,10 @@
 from __future__ import annotations
 
 from homeassistant.components.binary_sensor import (
-    BinarySensorDeviceClass,
     BinarySensorEntity,
     BinarySensorEntityDescription,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
@@ -31,6 +29,10 @@ SENSOR_TYPES = (
     BinarySensorEntityDescription(
         key="current_project_is_paused",
         translation_key="current_project_is_paused",
+    ),
+    BinarySensorEntityDescription(
+        key="printer_online",
+        translation_key="printer_online",
     ),
 )
 

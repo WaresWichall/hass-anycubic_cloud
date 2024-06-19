@@ -10,7 +10,7 @@ from homeassistant.core import HomeAssistant
 from .const import COORDINATOR, DOMAIN
 from .coordinator import AnycubicCloudDataUpdateCoordinator
 
-TO_REDACT = {
+USER_TO_REDACT = {
     "birthday",
     "user_email",
     "password",
@@ -18,6 +18,28 @@ TO_REDACT = {
     "last_login_ip",
     "casdoor_user_id",
     "casdoor_user",
+    "user_nickname",
+    "ip_country",
+    "ip_province",
+    "ip_city",
+    "create_time",
+    "create_day_time",
+    "id",
+    "last_login_time",
+}
+PRINTER_TO_REDACT = {
+    "id",
+    "user_id",
+    "key",
+    "machine_mac",
+}
+PROJECT_TO_REDACT = {
+    "id",
+    "taskid",
+    "user_id",
+    "printer_id",
+    "gcode_id",
+    "key",
 }
 
 
@@ -30,5 +52,17 @@ async def async_get_config_entry_diagnostics(
     ]
 
     assert coordinator.anycubic_api
-    user_info = await coordinator.anycubic_api.get_user_info()
-    return async_redact_data(user_info, TO_REDACT)
+    user_info = await coordinator.anycubic_api.get_user_info(raw_data=True)
+    printer_info = await coordinator.anycubic_api.list_my_printers(raw_data=True)
+    projects_info = await coordinator.anycubic_api.list_all_projects(raw_data=True)
+    return {
+        "user_info": async_redact_data(user_info, USER_TO_REDACT),
+        "printer_info": {
+            **printer_info,
+            'data': async_redact_data(printer_info['data'], PRINTER_TO_REDACT),
+        },
+        "projects_info": {
+            **projects_info,
+            'data': [async_redact_data(x, PROJECT_TO_REDACT) for x in projects_info['data']],
+        },
+    }

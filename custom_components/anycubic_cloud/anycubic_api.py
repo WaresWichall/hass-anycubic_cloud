@@ -267,8 +267,14 @@ class AnycubicAPI:
         resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.user_store)
         self._debug_log(f"user_store output:\n{json.dumps(resp)}")
 
-    async def get_user_info(self):
+    async def get_user_info(
+        self,
+        raw_data=False
+    ):
         resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.user_info)
+        if raw_data:
+            return resp
+
         data = resp['data']
         if data is None:
             raise APIAuthTokensExpired('Invalid credentials.')
@@ -359,8 +365,14 @@ class AnycubicAPI:
         data = list([AnycubicPrinter.from_status_json(self, x) for x in resp['data']])
         return data
 
-    async def list_my_printers(self):
+    async def list_my_printers(
+        self,
+        raw_data=False
+    ):
         resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.printer_get_printers)
+        if raw_data:
+            return resp
+
         data = list([AnycubicPrinter.from_status_json(self, x) for x in resp['data']])
         return data
 
@@ -385,8 +397,14 @@ class AnycubicAPI:
         data = AnycubicPrinter.from_info_json(self, resp['data'])
         return data
 
-    async def list_all_projects(self):
+    async def list_all_projects(
+        self,
+        raw_data=False
+    ):
         resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.project_get_projects)
+        if raw_data:
+            return resp
+
         data = list([AnycubicProject.from_basic_json(self, x) for x in resp['data']])
         return data
 

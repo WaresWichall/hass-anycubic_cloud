@@ -48,6 +48,9 @@
       },
       "current_project_is_paused": {
         "name": "Project Paused"
+      },
+      "printer_online": {
+        "name": "Printer Online"
       }
     },
     "button": {},
@@ -91,6 +94,9 @@
       "print_state": {
         "name": "Print State"
       },
+      "raw_print_status": {
+        "name": "Print Status Code"
+      },
       "print_approximate_completion_time": {
         "name": "Approximate Completion Time"
       },
@@ -105,6 +111,9 @@
       },
       "target_hotbed_temp": {
         "name": "Target Hotbed Temperature"
+      },
+      "multi_color_box_spools": {
+        "name": "Multi-Color Box Spools"
       }
     }
   },

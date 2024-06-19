@@ -52,6 +52,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "id": self.anycubic_printer.id,
             "name": self.anycubic_printer.name,
             "device_status": self.anycubic_printer.device_status,
+            "printer_online": self.anycubic_printer.printer_online,
             "is_printing": self.anycubic_printer.is_printing,
             "curr_nozzle_temp": self.anycubic_printer.parameter.curr_nozzle_temp,
             "curr_hotbed_temp": self.anycubic_printer.parameter.curr_hotbed_temp,
@@ -60,7 +61,14 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "fw_version": self.anycubic_printer.fw_version.firmware_version,
             "multi_color_box_fw_version": (
                 self.anycubic_printer.multi_color_box_fw_version[0].firmware_version
-                if self.anycubic_printer.multi_color_box_fw_version and len(self.anycubic_printer.multi_color_box_fw_version) > 0
+                if self.anycubic_printer.multi_color_box_fw_version and len(
+                    self.anycubic_printer.multi_color_box_fw_version
+                ) > 0
+                else None
+            ),
+            "multi_color_box_spools": (
+                self.anycubic_printer.multi_color_box.spool_info_object
+                if self.anycubic_printer.multi_color_box
                 else None
             ),
             "current_project_name": self.latest_project.name if self.latest_project else None,
@@ -75,12 +83,12 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "current_project_is_paused": self.latest_project.print_is_paused if self.latest_project else None,
             "print_state": self.latest_project.print_status if self.latest_project else None,
             "print_approximate_completion_time": (
-                self.latest_project.print_approximate_completion_time if self.latest_project else None
-            ),
+                self.latest_project.print_approximate_completion_time if self.latest_project else None),
             "print_current_layer": self.latest_project.print_current_layer if self.latest_project else None,
             "print_total_layers": self.latest_project.print_total_layers if self.latest_project else None,
             "target_nozzle_temp": self.latest_project.target_nozzle_temp if self.latest_project else None,
             "target_hotbed_temp": self.latest_project.target_hotbed_temp if self.latest_project else None,
+            "raw_print_status": self.latest_project.raw_print_status if self.latest_project else None,
         }
 
     async def get_anycubic_updates(self, fresh_install: bool = False) -> dict[str, Any]:
