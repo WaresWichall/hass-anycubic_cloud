@@ -26,6 +26,10 @@ from .anycubic_const import (
     REX_APP_VERSION,
     REX_APP_SECRET,
     DEFAULT_USER_AGENT,
+    AC_KNOWN_CID,
+    AC_KNOWN_AID,
+    AC_KNOWN_VID,
+    AC_KNOWN_SEC,
 )
 
 
@@ -46,6 +50,7 @@ class AnycubicAPI:
         # Internal
         self._api_username = api_username
         self._api_password = api_password
+        self._api_user_id = None
         self._session: aiohttp.ClientSession = session
         self._sessionjar = cookie_jar
         self._cookie_state = str(uuid.uuid4())[-11:]
@@ -137,33 +142,44 @@ class AnycubicAPI:
             with_origin=with_origin,
         )
 
-    async def _extract_current_app_vars(self):
+    async def _fetch_js_body(self):
         body = await self._fetch_pub_get_resp("ai", is_json=False)
         js_files = REX_JS_FILE.search(body)
         if js_files is None:
             raise Exception("Could not find js file in source.")
         js_file = js_files.group(1)
-        js_body = await self._fetch_pub_get_resp(js_file[1:], is_json=False)
+        return await self._fetch_pub_get_resp(js_file[1:], is_json=False)
 
-        client_match = REX_CLIENT_ID.search(js_body)
-        if client_match is None:
-            raise Exception("Could not find client id in js source.")
-        self._client_id = client_match.group(1)
+    async def _extract_current_app_vars(self):
+        js_body = await self._fetch_js_body()
 
-        app_id_match = REX_APP_ID.search(js_body)
-        if app_id_match is None:
-            raise Exception("Could not find app id in js source.")
-        self._app_id = app_id_match.group(1)
+        client_matches = REX_CLIENT_ID.findall(js_body)
+        if len(client_matches) == 1:
+            self._client_id = client_matches[0]
+        else:
+            self._debug_log("Falling back to known Client ID.")
+            self._client_id = AC_KNOWN_CID
 
-        app_version_match = REX_APP_VERSION.search(js_body)
-        if app_version_match is None:
-            raise Exception("Could not find app version in js source.")
-        self._app_version = app_version_match.group(1)
+        app_id_matches = REX_APP_ID.findall(js_body)
+        if len(app_id_matches) == 1:
+            self._app_id = app_id_matches[0]
+        else:
+            self._debug_log("Falling back to known App ID.")
+            self._app_id = AC_KNOWN_AID
 
-        app_secret_match = REX_APP_SECRET.search(js_body)
-        if app_secret_match is None:
-            raise Exception("Could not find app secret in js source.")
-        self._app_secret = app_secret_match.group(1)
+        app_version_matches = REX_APP_VERSION.findall(js_body)
+        if len(app_version_matches) == 1:
+            self._app_version = app_version_matches[0]
+        else:
+            self._debug_log("Falling back to known Version.")
+            self._app_version = AC_KNOWN_VID
+
+        app_secret_matches = REX_APP_SECRET.findall(js_body)
+        if len(app_secret_matches) == 1:
+            self._app_secret = app_secret_matches[0]
+        else:
+            self._debug_log("Falling back to known Secret.")
+            self._app_secret = AC_KNOWN_SEC
 
         return self._client_id
 
@@ -278,6 +294,9 @@ class AnycubicAPI:
         data = resp['data']
         if data is None:
             raise APIAuthTokensExpired('Invalid credentials.')
+
+        self._api_user_id = data['id']
+
         return data
 
     async def _get_user_files(self):
@@ -444,8 +463,11 @@ class AnycubicAPI:
                 cached_tokens = None
                 self._debug_log("Tokens expired.")
         if not cached_tokens:
-            await self._login_retrieve_tokens()
-            await self._save_main_tokens()
+            try:
+                await self._login_retrieve_tokens()
+                await self._save_main_tokens()
+            except Exception:
+                return False
         try:
             await self.get_user_info()
         except Exception:
