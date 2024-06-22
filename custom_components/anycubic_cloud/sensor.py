@@ -65,6 +65,11 @@ SENSOR_TYPES = (
         device_class=SensorDeviceClass.TIMESTAMP,
     ),
     SensorEntityDescription(
+        key="current_project_finished_timestamp",
+        translation_key="current_project_finished_timestamp",
+        device_class=SensorDeviceClass.TIMESTAMP,
+    ),
+    SensorEntityDescription(
         key="current_project_time_elapsed",
         translation_key="current_project_time_elapsed",
         native_unit_of_measurement=UnitOfTime.MINUTES,

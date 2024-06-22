@@ -17,9 +17,12 @@ import homeassistant.helpers.config_validation as cv
 from .anycubic_api import AnycubicAPI
 
 from .const import (
+    CONF_DRYING_PRESET_DURATION_1,
+    CONF_DRYING_PRESET_TEMPERATURE_1,
+    CONF_DRYING_PRESET_DURATION_2,
+    CONF_DRYING_PRESET_TEMPERATURE_2,
     CONF_PRINTER_ID,
     CONF_PRINTER_NAME,
-    DEFAULT_NAME,
     DOMAIN,
     LOGGER,
 )
@@ -35,6 +38,15 @@ DATA_SCHEMA_AUTH = vol.Schema(
     {
         vol.Required(CONF_USERNAME): cv.string,
         vol.Required(CONF_PASSWORD): cv.string,
+    }
+)
+
+DATA_SCHEMA_OPTIONS = vol.Schema(
+    {
+        vol.Optional(CONF_DRYING_PRESET_DURATION_1): cv.positive_int,
+        vol.Optional(CONF_DRYING_PRESET_TEMPERATURE_1): cv.positive_int,
+        vol.Optional(CONF_DRYING_PRESET_DURATION_2): cv.positive_int,
+        vol.Optional(CONF_DRYING_PRESET_TEMPERATURE_2): cv.positive_int,
     }
 )
 
@@ -128,7 +140,6 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
 
             self._username = user_input[CONF_USERNAME]
             self._password = user_input[CONF_PASSWORD]
-            name = DEFAULT_NAME
 
             try:
                 ac = AnycubicAPI(
@@ -193,7 +204,7 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
                 errors = {"base": "invalid_printer"}
 
             printer_name_list = list([x.name for x in printer_list])
-            printer_name_map = { x.name: x.id for x in printer_list}
+            printer_name_map = {x.name: x.id for x in printer_list}
 
         except Exception as error:
             LOGGER.error("Authentication failed with unknown Error. Check credentials %s", error)
@@ -268,4 +279,8 @@ class AnycubicCloudOptionsFlowHandler(OptionsFlow):
         if user_input:
             return self.async_create_entry(data=user_input)
 
-        return await self.async_step_printer()
+        return self.async_show_form(
+            step_id="init",
+            data_schema=DATA_SCHEMA_OPTIONS,
+            errors=errors,
+        )

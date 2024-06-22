@@ -6,6 +6,7 @@ import uuid
 from os import path
 
 from .anycubic_data_base import (
+    AnycubicCameraToken,
     AnycubicPrinter,
     AnycubicProject,
 )
@@ -30,6 +31,7 @@ from .anycubic_const import (
     AC_KNOWN_AID,
     AC_KNOWN_VID,
     AC_KNOWN_SEC,
+    COMMAND_ID_CAMERA_OPEN,
     COMMAND_ID_MULTI_COLOR_BOX_DRY,
 )
 
@@ -103,7 +105,12 @@ class AnycubicAPI:
         url = base_url
         headers = {**self._web_headers(with_origin=with_origin), **extra_headers}
         if method == HTTP_METHODS.POST:
-            data = json.dumps(params) if params is not None else None
+            if params is not None and (isinstance(params, dict) or isinstance(params, list)):
+                data = json.dumps(params)
+            elif params is not None:
+                data = str(params)
+            else:
+                data = None
             h_coro = self._session.post(url, params=query, data=data, headers=headers)
         else:
             h_coro = self._session.get(url, params=query, headers=headers)
@@ -395,6 +402,33 @@ class AnycubicAPI:
 
         data = resp['data']['msgid']
         return data
+
+    async def _send_anycubic_camera_open_order(
+        self,
+        printer,
+        raw_data=False,
+    ):
+        if not printer:
+            return
+
+        params = {
+            'order_id': COMMAND_ID_CAMERA_OPEN,
+            'printer_id': printer.id,
+        }
+        resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.send_order, params=params)
+        if raw_data:
+            return resp
+
+        data = resp['data']
+
+        token = AnycubicCameraToken(
+            secret_id=data['token']['tmpSecretId'],
+            secret_key=data['token']['tmpSecretKey'],
+            session_token=data['token']['sessionToken'],
+            region=data['token']['region'],
+            msg_id=data['msgid'],
+        )
+        return token
 
     async def _send_order_multi_color_box_dry(self, printer, order_params):
         if not printer:

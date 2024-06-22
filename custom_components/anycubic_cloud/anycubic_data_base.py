@@ -2,6 +2,52 @@ import json
 import time
 
 
+class AnycubicCameraToken:
+    def __init__(
+        self,
+        secret_id,
+        secret_key,
+        session_token,
+        region,
+        msg_id,
+    ):
+        self._secret_id = secret_id
+        self._secret_key = secret_key
+        self._session_token = session_token
+        self._region = region
+        self._msg_id = msg_id
+
+    @property
+    def secret_id(self):
+        return self._secret_id
+
+    @property
+    def secret_key(self):
+        return self._secret_key
+
+    @property
+    def session_token(self):
+        return self._session_token
+
+    @property
+    def region(self):
+        return self._region
+
+    @property
+    def msg_id(self):
+        return self._msg_id
+
+    def __repr__(self):
+        return (
+            f"AnycubicCameraToken("
+            f"secret_id={self.secret_id}, "
+            f"secret_key={self.secret_key}, "
+            f"session_token={self.session_token}, "
+            f"region={self.region}, "
+            f"msg_id={self.msg_id})"
+        )
+
+
 class AnycubicProject:
     def __init__(
         self,
@@ -1202,6 +1248,34 @@ class AnycubicPrinter:
 
     async def update_info_from_api(self):
         await self._api_parent.printer_info_for_id(self._id, self)
+
+    async def multi_color_box_drying_start(
+        self,
+        duration,
+        target_temp,
+        box_id=0,
+    ):
+        if self._multi_color_box is None:
+            return None
+
+        return await self._api_parent.multi_color_box_drying_start(
+            self,
+            duration=duration,
+            target_temp=target_temp,
+            box_id=box_id,
+        )
+
+    async def multi_color_box_drying_stop(
+        self,
+        box_id=-1,
+    ):
+        if self._multi_color_box is None:
+            return None
+
+        return await self._api_parent.multi_color_box_drying_stop(
+            self,
+            box_id=box_id,
+        )
 
     def __repr__(self):
         if self._id is None:

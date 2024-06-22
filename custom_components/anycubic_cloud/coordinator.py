@@ -17,6 +17,8 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 from .anycubic_api import AnycubicAPI
 
 from .const import (
+    CONF_DRYING_PRESET_DURATION_,
+    CONF_DRYING_PRESET_TEMPERATURE_,
     CONF_PRINTER_ID,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
@@ -99,6 +101,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "current_project_name": self.latest_project.name if self.latest_project else None,
             "current_project_progress": self.latest_project.progress_percentage if self.latest_project else None,
             "current_project_created_timestamp": self.latest_project.created_timestamp if self.latest_project else None,
+            "current_project_finished_timestamp": self.latest_project.finished_timestamp if self.latest_project else None,
             "current_project_time_elapsed": self.latest_project.print_time_elapsed_minutes if self.latest_project else None,
             "current_project_time_remaining": self.latest_project.print_time_remaining_minutes if self.latest_project else None,
             "current_project_print_total_time": self.latest_project.print_total_time if self.latest_project else None,
@@ -179,3 +182,22 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             raise UpdateFailed from error
 
         return True
+
+    async def button_press_event(self, event_key):
+        if self.anycubic_printer is None:
+            return
+
+        if event_key.startswith('drying_start_preset_'):
+            num = event_key[-1]
+            preset_duration = self.entry.options.get(f"{CONF_DRYING_PRESET_DURATION_}{num}")
+            preset_temperature = self.entry.options.get(f"{CONF_DRYING_PRESET_TEMPERATURE_}{num}")
+            if preset_duration is None or preset_temperature is None:
+                return
+
+            await self.anycubic_printer.multi_color_box_drying_start(
+                duration=preset_duration,
+                target_temp=preset_temperature,
+            )
+
+        elif event_key == 'drying_stop':
+            await self.anycubic_printer.multi_color_box_drying_stop()
