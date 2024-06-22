@@ -51,6 +51,9 @@
       },
       "printer_online": {
         "name": "Printer Online"
+      },
+      "dry_status_is_drying": {
+        "name": "Drying Active"
       }
     },
     "button": {},
@@ -114,6 +117,18 @@
       },
       "multi_color_box_spools": {
         "name": "Multi-Color Box Spools"
+      },
+      "dry_status_raw_status_code": {
+        "name": "Drying Status Code"
+      },
+      "dry_status_target_temperature": {
+        "name": "Drying Target Temperature"
+      },
+      "dry_status_total_duration": {
+        "name": "Drying Total Duration"
+      },
+      "dry_status_remaining_time": {
+        "name": "Drying Remaining Time"
       }
     }
   },

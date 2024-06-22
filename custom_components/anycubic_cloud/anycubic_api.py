@@ -30,6 +30,7 @@ from .anycubic_const import (
     AC_KNOWN_AID,
     AC_KNOWN_VID,
     AC_KNOWN_SEC,
+    COMMAND_ID_MULTI_COLOR_BOX_DRY,
 )
 
 
@@ -373,6 +374,114 @@ class AnycubicAPI:
             return False
 
     # Confirmed API Calls
+
+    async def _send_anycubic_order(
+        self,
+        order_id,
+        printer_id,
+        project_id=0,
+        order_data={},
+        raw_data=False,
+    ):
+        params = {
+            'order_id': order_id,
+            'printer_id': printer_id,
+            'project_id': project_id,
+            'data': order_data,
+        }
+        resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.send_order, params=params)
+        if raw_data:
+            return resp
+
+        data = resp['data']['msgid']
+        return data
+
+    async def _send_order_multi_color_box_dry(self, printer, order_params):
+        if not printer:
+            return
+
+        if not isinstance(order_params, list):
+            order_params = [order_params]
+
+        box_list = list()
+
+        for box_id, order in enumerate(order_params):
+            box_list.append({
+                'drying_status': {
+                    'duration': int(order.get('duration', 0)),
+                    'remain_time': None,
+                    'status': int(order.get('status', 0)),
+                    'target_temp': int(order.get('target_temp', 40)),
+                },
+                'id': int(order.get('box_id', box_id)),
+            })
+
+        order_data = {
+            'multi_color_box': box_list
+        }
+
+        return await self._send_anycubic_order(
+            order_id=COMMAND_ID_MULTI_COLOR_BOX_DRY,
+            printer_id=printer.id,
+            order_data=order_data,
+        )
+
+    async def multi_color_box_drying_start(
+        self,
+        printer,
+        duration,
+        target_temp,
+        box_id=0,
+    ):
+        if not printer:
+            return
+
+        if not printer.multi_color_box:
+            return
+
+        order_params = {
+            'duration': duration,
+            'target_temp': target_temp,
+            'status': 1,
+        }
+        if box_id > 0:
+            order_params['box_id'] = box_id
+
+        resp = await self._send_order_multi_color_box_dry(
+            printer,
+            order_params,
+        )
+
+        return resp
+
+    async def multi_color_box_drying_stop(
+        self,
+        printer,
+        box_id=-1,
+    ):
+        if not printer:
+            return
+
+        if not printer.multi_color_box:
+            return
+
+        if box_id >= 0:
+            order_params = {
+                'status': 0,
+            }
+        else:
+            order_params = [
+                {
+                    'status': 0
+                } for x in range(int(printer.multi_color_box.total_slots / 4))
+            ]
+
+        resp = await self._send_order_multi_color_box_dry(
+            printer,
+            order_params,
+        )
+
+        return resp
 
     async def anycubic_full_available_printer_list(self):
         resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.printer_all)

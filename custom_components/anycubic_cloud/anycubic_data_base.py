@@ -493,10 +493,30 @@ class AnycubicDryingStatus:
             remain_time=data['remain_time'],
         )
 
+    @property
+    def is_drying(self):
+        return self._status == 1
+
+    @property
+    def raw_status_code(self):
+        return self._status
+
+    @property
+    def target_temperature(self):
+        return self._target_temp
+
+    @property
+    def total_duration(self):
+        return self._duration
+
+    @property
+    def remaining_time(self):
+        return self._remain_time
+
     def __repr__(self):
         return (
-            f"AnycubicDryingStatus(status={self._status}, target_temp={self._target_temp}, duration={self._duration}, "
-            f"remain_time={self._remain_time})"
+            f"AnycubicDryingStatus(is_drying={self.is_drying}, status={self._status}, target_temp={self._target_temp}, "
+            f"duration={self._duration}, remain_time={self._remain_time})"
         )
 
 
@@ -603,6 +623,14 @@ class AnycubicMultiColorBox:
     @property
     def slots(self):
         return self._slots
+
+    @property
+    def total_slots(self):
+        return len(self._slots)
+
+    @property
+    def drying_status(self):
+        return self._drying_status
 
     @property
     def spool_info_object(self):
@@ -1165,6 +1193,13 @@ class AnycubicPrinter:
     def multi_color_box(self):
         return self._multi_color_box
 
+    @property
+    def drying_status(self):
+        if self._multi_color_box is None:
+            return None
+
+        return self._multi_color_box.drying_status
+
     async def update_info_from_api(self):
         await self._api_parent.printer_info_for_id(self._id, self)
 
@@ -1186,4 +1221,5 @@ class AnycubicPrinter:
                 f"multi_color_box_fw_version=\n{self.multi_color_box_fw_version},\n "
                 f"external_shelves=\n{self.external_shelves},\n "
                 f"multi_color_box=\n{self.multi_color_box},\n "
+                f"drying_status=\n{self.drying_status},\n "
                 f")")

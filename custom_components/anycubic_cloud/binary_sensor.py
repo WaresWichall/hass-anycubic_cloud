@@ -34,6 +34,10 @@ SENSOR_TYPES = (
         key="printer_online",
         translation_key="printer_online",
     ),
+    BinarySensorEntityDescription(
+        key="dry_status_is_drying",
+        translation_key="dry_status_is_drying",
+    ),
 )
 
 

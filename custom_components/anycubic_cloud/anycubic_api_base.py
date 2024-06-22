@@ -41,3 +41,4 @@ class API_ENDPOINT:
     project_info = ac_api_endpoint(HTTP_METHODS.GET, '/v2/project/info')
     project_monitor = ac_api_endpoint(HTTP_METHODS.GET, '/v2/project/monitor')
     project_get_projects = ac_api_endpoint(HTTP_METHODS.GET, '/work/project/getProjects')
+    send_order = ac_api_endpoint(HTTP_METHODS.POST, '/work/operation/sendOrder')

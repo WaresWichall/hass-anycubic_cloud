@@ -71,6 +71,31 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 if self.anycubic_printer.multi_color_box
                 else None
             ),
+            "dry_status_is_drying": (
+                self.anycubic_printer.drying_status.is_drying
+                if self.anycubic_printer.drying_status
+                else None
+            ),
+            "dry_status_raw_status_code": (
+                self.anycubic_printer.drying_status.raw_status_code
+                if self.anycubic_printer.drying_status
+                else None
+            ),
+            "dry_status_target_temperature": (
+                self.anycubic_printer.drying_status.target_temperature
+                if self.anycubic_printer.drying_status
+                else None
+            ),
+            "dry_status_total_duration": (
+                self.anycubic_printer.drying_status.total_duration
+                if self.anycubic_printer.drying_status
+                else None
+            ),
+            "dry_status_remaining_time": (
+                self.anycubic_printer.drying_status.remaining_time
+                if self.anycubic_printer.drying_status
+                else None
+            ),
             "current_project_name": self.latest_project.name if self.latest_project else None,
             "current_project_progress": self.latest_project.progress_percentage if self.latest_project else None,
             "current_project_created_timestamp": self.latest_project.created_timestamp if self.latest_project else None,

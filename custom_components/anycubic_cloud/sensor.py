@@ -115,6 +115,22 @@ SENSOR_TYPES = (
         key="multi_color_box_spools",
         translation_key="multi_color_box_spools",
     ),
+    SensorEntityDescription(
+        key="dry_status_raw_status_code",
+        translation_key="dry_status_raw_status_code",
+    ),
+    SensorEntityDescription(
+        key="dry_status_target_temperature",
+        translation_key="dry_status_target_temperature",
+    ),
+    SensorEntityDescription(
+        key="dry_status_total_duration",
+        translation_key="dry_status_total_duration",
+    ),
+    SensorEntityDescription(
+        key="dry_status_remaining_time",
+        translation_key="dry_status_remaining_time",
+    ),
 )
 
 
