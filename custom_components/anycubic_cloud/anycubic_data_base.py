@@ -1148,6 +1148,15 @@ class AnycubicPrinter:
         return self._reason
 
     @property
+    def current_status(self):
+        if self._is_printing == 2:
+            return "busy"
+        elif self._is_printing == 1:
+            return "available"
+        else:
+            return "unknown"
+
+    @property
     def video_taskid(self):
         return self._video_taskid
 

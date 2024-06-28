@@ -33,6 +33,10 @@ SENSOR_TYPES = (
         translation_key="is_printing",
     ),
     SensorEntityDescription(
+        key="current_status",
+        translation_key="current_status",
+    ),
+    SensorEntityDescription(
         key="curr_nozzle_temp",
         translation_key="curr_nozzle_temp",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,

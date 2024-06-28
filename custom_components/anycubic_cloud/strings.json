@@ -81,6 +81,9 @@
       "is_printing": {
         "name": "Is Printing"
       },
+      "current_status": {
+        "name": "Current Status"
+      },
       "curr_nozzle_temp": {
         "name": "Nozzle Temperature"
       },

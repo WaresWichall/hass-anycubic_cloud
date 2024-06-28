@@ -56,6 +56,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "device_status": self.anycubic_printer.device_status,
             "printer_online": self.anycubic_printer.printer_online,
             "is_printing": self.anycubic_printer.is_printing,
+            "current_status": self.anycubic_printer.current_status,
             "curr_nozzle_temp": self.anycubic_printer.parameter.curr_nozzle_temp,
             "curr_hotbed_temp": self.anycubic_printer.parameter.curr_hotbed_temp,
             "machine_mac": self.anycubic_printer.machine_mac,
