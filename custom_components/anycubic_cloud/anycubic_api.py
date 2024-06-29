@@ -7,6 +7,7 @@ from os import path
 
 from .anycubic_data_base import (
     AnycubicCameraToken,
+    AnycubicMaterialColor,
     AnycubicPrinter,
     AnycubicProject,
 )
@@ -33,6 +34,7 @@ from .anycubic_const import (
     AC_KNOWN_SEC,
     COMMAND_ID_CAMERA_OPEN,
     COMMAND_ID_MULTI_COLOR_BOX_DRY,
+    COMMAND_ID_MULTI_COLOR_BOX_SET_SLOT,
 )
 
 
@@ -386,16 +388,18 @@ class AnycubicAPI:
         self,
         order_id,
         printer_id,
-        project_id=0,
+        project_id=None,
         order_data={},
         raw_data=False,
     ):
         params = {
             'order_id': order_id,
             'printer_id': printer_id,
-            'project_id': project_id,
             'data': order_data,
         }
+        if project_id is not None:
+            params['project_id'] = project_id
+
         resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.send_order, params=params)
         if raw_data:
             return resp
@@ -430,7 +434,48 @@ class AnycubicAPI:
         )
         return token
 
-    async def _send_order_multi_color_box_dry(self, printer, order_params):
+    async def _send_order_multi_color_box_set_slot(
+        self,
+        printer: AnycubicPrinter,
+        slot_index: int,
+        slot_color: AnycubicMaterialColor,
+        slot_material_type: str,
+        box_id=0,
+    ):
+        if not printer:
+            return
+
+        slot_params = {
+            'color': slot_color.data,
+            'index': slot_index,
+            'type': slot_material_type,
+        }
+
+        order_params = {
+            'id': box_id,
+            'slots': [
+                slot_params,
+            ]
+        }
+
+        order_data = {
+            'multi_color_box': [
+                order_params,
+            ]
+        }
+
+        return await self._send_anycubic_order(
+            order_id=COMMAND_ID_MULTI_COLOR_BOX_SET_SLOT,
+            printer_id=printer.id,
+            project_id=0,
+            order_data=order_data,
+        )
+
+    async def _send_order_multi_color_box_dry(
+        self,
+        printer,
+        order_params,
+    ):
         if not printer:
             return
 
@@ -457,7 +502,191 @@ class AnycubicAPI:
         return await self._send_anycubic_order(
             order_id=COMMAND_ID_MULTI_COLOR_BOX_DRY,
             printer_id=printer.id,
+            project_id=0,
             order_data=order_data,
+        )
+
+    async def multi_color_box_set_slot(
+        self,
+        printer: AnycubicPrinter,
+        slot_index: int,
+        slot_color: AnycubicMaterialColor | None = None,
+        slot_material_type: str = "PLA",
+        slot_color_red: int | None = None,
+        slot_color_green: int | None = None,
+        slot_color_blue: int | None = None,
+        box_id=0,
+    ):
+        if (
+            slot_color is None and
+            any([x is None for x in [
+                slot_color_red,
+                slot_color_green,
+                slot_color_blue
+            ]])
+        ):
+            raise TypeError(
+                "Must use either `slot_color` or "
+                "`slot_color_red`, `slot_color_green`, `slot_color_blue`"
+            )
+
+        if slot_color is None:
+            slot_color = AnycubicMaterialColor(
+                slot_color_red,
+                slot_color_green,
+                slot_color_blue,
+            )
+
+        return await self._send_order_multi_color_box_set_slot(
+            printer=printer,
+            slot_index=slot_index,
+            slot_color=slot_color,
+            slot_material_type=slot_material_type,
+            box_id=box_id,
+        )
+
+    async def multi_color_box_set_pla_slot(
+        self,
+        printer: AnycubicPrinter,
+        slot_index: int,
+        slot_color: AnycubicMaterialColor,
+        box_id=0,
+    ):
+
+        return await self._send_order_multi_color_box_set_slot(
+            printer=printer,
+            slot_index=slot_index,
+            slot_color=slot_color,
+            slot_material_type="PLA",
+            box_id=box_id,
+        )
+
+    async def multi_color_box_set_petg_slot(
+        self,
+        printer: AnycubicPrinter,
+        slot_index: int,
+        slot_color: AnycubicMaterialColor,
+        box_id=0,
+    ):
+
+        return await self._send_order_multi_color_box_set_slot(
+            printer=printer,
+            slot_index=slot_index,
+            slot_color=slot_color,
+            slot_material_type="PETG",
+            box_id=box_id,
+        )
+
+    async def multi_color_box_set_abs_slot(
+        self,
+        printer: AnycubicPrinter,
+        slot_index: int,
+        slot_color: AnycubicMaterialColor,
+        box_id=0,
+    ):
+
+        return await self._send_order_multi_color_box_set_slot(
+            printer=printer,
+            slot_index=slot_index,
+            slot_color=slot_color,
+            slot_material_type="ABS",
+            box_id=box_id,
+        )
+
+    async def multi_color_box_set_pacf_slot(
+        self,
+        printer: AnycubicPrinter,
+        slot_index: int,
+        slot_color: AnycubicMaterialColor,
+        box_id=0,
+    ):
+
+        return await self._send_order_multi_color_box_set_slot(
+            printer=printer,
+            slot_index=slot_index,
+            slot_color=slot_color,
+            slot_material_type="PACF",
+            box_id=box_id,
+        )
+
+    async def multi_color_box_set_pc_slot(
+        self,
+        printer: AnycubicPrinter,
+        slot_index: int,
+        slot_color: AnycubicMaterialColor,
+        box_id=0,
+    ):
+
+        return await self._send_order_multi_color_box_set_slot(
+            printer=printer,
+            slot_index=slot_index,
+            slot_color=slot_color,
+            slot_material_type="PC",
+            box_id=box_id,
+        )
+
+    async def multi_color_box_set_asa_slot(
+        self,
+        printer: AnycubicPrinter,
+        slot_index: int,
+        slot_color: AnycubicMaterialColor,
+        box_id=0,
+    ):
+
+        return await self._send_order_multi_color_box_set_slot(
+            printer=printer,
+            slot_index=slot_index,
+            slot_color=slot_color,
+            slot_material_type="ASA",
+            box_id=box_id,
+        )
+
+    async def multi_color_box_set_hips_slot(
+        self,
+        printer: AnycubicPrinter,
+        slot_index: int,
+        slot_color: AnycubicMaterialColor,
+        box_id=0,
+    ):
+
+        return await self._send_order_multi_color_box_set_slot(
+            printer=printer,
+            slot_index=slot_index,
+            slot_color=slot_color,
+            slot_material_type="HIPS",
+            box_id=box_id,
+        )
+
+    async def multi_color_box_set_pa_slot(
+        self,
+        printer: AnycubicPrinter,
+        slot_index: int,
+        slot_color: AnycubicMaterialColor,
+        box_id=0,
+    ):
+
+        return await self._send_order_multi_color_box_set_slot(
+            printer=printer,
+            slot_index=slot_index,
+            slot_color=slot_color,
+            slot_material_type="PA",
+            box_id=box_id,
+        )
+
+    async def multi_color_box_set_pla_se_slot(
+        self,
+        printer: AnycubicPrinter,
+        slot_index: int,
+        slot_color: AnycubicMaterialColor,
+        box_id=0,
+    ):
+
+        return await self._send_order_multi_color_box_set_slot(
+            printer=printer,
+            slot_index=slot_index,
+            slot_color=slot_color,
+            slot_material_type="PLA SE",
+            box_id=box_id,
         )
 
     async def multi_color_box_drying_start(
@@ -465,7 +694,7 @@ class AnycubicAPI:
         printer,
         duration,
         target_temp,
-        box_id=0,
+        box_id=-1,
     ):
         if not printer:
             return

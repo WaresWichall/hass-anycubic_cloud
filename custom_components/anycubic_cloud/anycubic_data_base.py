@@ -2,6 +2,46 @@ import json
 import time
 
 
+class AnycubicMaterialColor:
+    def __init__(
+        self,
+        red,
+        green,
+        blue,
+    ):
+        self._red = red
+        self._green = green
+        self._blue = blue
+
+    @property
+    def red(self):
+        return self._red
+
+    @property
+    def green(self):
+        return self._green
+
+    @property
+    def blue(self):
+        return self._blue
+
+    @property
+    def data(self):
+        return list([
+            self._red,
+            self._green,
+            self._blue,
+        ])
+
+    def __repr__(self):
+        return (
+            f"AnycubicMaterialColor("
+            f"red={self._red}, "
+            f"green={self._green}, "
+            f"blue={self._blue})"
+        )
+
+
 class AnycubicCameraToken:
     def __init__(
         self,
