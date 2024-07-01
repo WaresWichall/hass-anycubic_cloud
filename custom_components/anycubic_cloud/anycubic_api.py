@@ -699,7 +699,7 @@ class AnycubicAPI:
         if not printer:
             return
 
-        if not printer.multi_color_box:
+        if not printer.primary_multi_color_box:
             return
 
         order_params = {
@@ -725,7 +725,7 @@ class AnycubicAPI:
         if not printer:
             return
 
-        if not printer.multi_color_box:
+        if not printer.primary_multi_color_box:
             return
 
         if box_id >= 0:
@@ -736,7 +736,7 @@ class AnycubicAPI:
             order_params = [
                 {
                     'status': 0
-                } for x in range(int(printer.multi_color_box.total_slots / 4))
+                } for x in range(int(printer.primary_multi_color_box.total_slots / 4))
             ]
 
         resp = await self._send_order_multi_color_box_dry(

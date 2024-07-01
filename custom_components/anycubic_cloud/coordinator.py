@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from datetime import timedelta
 from typing import Any
+import time
 
 from aiohttp import CookieJar
 
@@ -14,13 +15,14 @@ from homeassistant.helpers.aiohttp_client import async_create_clientsession
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .anycubic_api import AnycubicAPI
+from .anycubic_api_mqtt import AnycubicMQTTAPI as AnycubicAPI
 
 from .const import (
     CONF_DRYING_PRESET_DURATION_,
     CONF_DRYING_PRESET_TEMPERATURE_,
     CONF_PRINTER_ID,
     DEFAULT_SCAN_INTERVAL,
+    MQTT_SCAN_INTERVAL,
     DOMAIN,
     LOGGER,
     STORAGE_KEY,
@@ -36,19 +38,22 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self.entry = entry
         self.anycubic_api: AnycubicAPI | None = None
         self.anycubic_printer = None
-        self.latest_project = None
+        self._last_state_update = None
         super().__init__(
             hass,
             LOGGER,
             name=DOMAIN,
-            update_interval=timedelta(seconds=DEFAULT_SCAN_INTERVAL),
+            update_interval=timedelta(seconds=MQTT_SCAN_INTERVAL),
             always_update=False,
         )
 
     async def _async_update_data(self) -> dict[str, Any]:
         """Fetch data from AnycubicCloud."""
 
-        await self.get_anycubic_updates()
+        if not self._last_state_update or int(time.time()) > self._last_state_update + DEFAULT_SCAN_INTERVAL:
+            await self.get_anycubic_updates()
+
+        latest_project = self.anycubic_printer.latest_project
 
         return {
             "id": self.anycubic_printer.id,
@@ -70,8 +75,8 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 else None
             ),
             "multi_color_box_spools": (
-                self.anycubic_printer.multi_color_box.spool_info_object
-                if self.anycubic_printer.multi_color_box
+                self.anycubic_printer.primary_multi_color_box.spool_info_object
+                if self.anycubic_printer.primary_multi_color_box
                 else None
             ),
             "dry_status_is_drying": (
@@ -99,29 +104,31 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 if self.anycubic_printer.drying_status
                 else None
             ),
-            "current_project_name": self.latest_project.name if self.latest_project else None,
-            "current_project_progress": self.latest_project.progress_percentage if self.latest_project else None,
-            "current_project_created_timestamp": self.latest_project.created_timestamp if self.latest_project else None,
-            "current_project_finished_timestamp": self.latest_project.finished_timestamp if self.latest_project else None,
-            "current_project_time_elapsed": self.latest_project.print_time_elapsed_minutes if self.latest_project else None,
-            "current_project_time_remaining": self.latest_project.print_time_remaining_minutes if self.latest_project else None,
-            "current_project_print_total_time": self.latest_project.print_total_time if self.latest_project else None,
-            "current_project_in_progress": self.latest_project.print_in_progress if self.latest_project else None,
-            "current_project_complete": self.latest_project.print_complete if self.latest_project else None,
-            "current_project_failed": self.latest_project.print_failed if self.latest_project else None,
-            "current_project_is_paused": self.latest_project.print_is_paused if self.latest_project else None,
-            "print_state": self.latest_project.print_status if self.latest_project else None,
+            "current_project_name": latest_project.name if latest_project else None,
+            "current_project_progress": latest_project.progress_percentage if latest_project else None,
+            "current_project_created_timestamp": latest_project.created_timestamp if latest_project else None,
+            "current_project_finished_timestamp": latest_project.finished_timestamp if latest_project else None,
+            "current_project_time_elapsed": latest_project.print_time_elapsed_minutes if latest_project else None,
+            "current_project_time_remaining": latest_project.print_time_remaining_minutes if latest_project else None,
+            "current_project_print_total_time": latest_project.print_total_time if latest_project else None,
+            "current_project_in_progress": latest_project.print_in_progress if latest_project else None,
+            "current_project_complete": latest_project.print_complete if latest_project else None,
+            "current_project_failed": latest_project.print_failed if latest_project else None,
+            "current_project_is_paused": latest_project.print_is_paused if latest_project else None,
+            "print_state": latest_project.print_status if latest_project else None,
             "print_approximate_completion_time": (
-                self.latest_project.print_approximate_completion_time if self.latest_project else None),
-            "print_current_layer": self.latest_project.print_current_layer if self.latest_project else None,
-            "print_total_layers": self.latest_project.print_total_layers if self.latest_project else None,
-            "target_nozzle_temp": self.latest_project.target_nozzle_temp if self.latest_project else None,
-            "target_hotbed_temp": self.latest_project.target_hotbed_temp if self.latest_project else None,
-            "raw_print_status": self.latest_project.raw_print_status if self.latest_project else None,
+                latest_project.print_approximate_completion_time if latest_project else None),
+            "print_current_layer": latest_project.print_current_layer if latest_project else None,
+            "print_total_layers": latest_project.print_total_layers if latest_project else None,
+            "target_nozzle_temp": latest_project.target_nozzle_temp if latest_project else None,
+            "target_hotbed_temp": latest_project.target_hotbed_temp if latest_project else None,
+            "raw_print_status": latest_project.raw_print_status if latest_project else None,
         }
 
-    async def get_anycubic_updates(self, fresh_install: bool = False) -> dict[str, Any]:
+    async def get_anycubic_updates(self, start_up: bool = False) -> dict[str, Any]:
         """Fetch data from AnycubicCloud."""
+
+        self._last_state_update = int(time.time())
 
         if self.anycubic_api is None:
             store = Store[dict[str, Any]](self.hass, STORAGE_VERSION, STORAGE_KEY)
@@ -141,17 +148,18 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     debug_logger=LOGGER.debug,
                 )
 
-                if not fresh_install and config:
+                if start_up and config is not None:
+                    LOGGER.debug("Loading tokens from store.")
                     try:
                         self.anycubic_api.load_tokens_from_dict(config)
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        LOGGER.debug(f"Error loading tokens from store: {e}")
 
                 success = await self.anycubic_api.check_api_tokens()
                 if not success:
                     raise ConfigEntryAuthFailed("Authentication failed. Check credentials.")
 
-                if fresh_install or not config:
+                if start_up:
                     # Create config
                     await store.async_save(self.anycubic_api.build_token_dict())
 
@@ -176,8 +184,24 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 store = Store[dict[str, Any]](self.hass, STORAGE_VERSION, STORAGE_KEY)
                 await store.async_save(self.anycubic_api.build_token_dict())
 
-            await self.anycubic_printer.update_info_from_api()
-            self.latest_project = await self.anycubic_api.get_latest_project()
+            await self.anycubic_printer.update_info_from_api(True)
+            if (
+                not self.anycubic_api.mqtt_is_connected and
+                self.anycubic_printer.is_printing == 2 and
+                not self.hass.is_stopping
+            ):
+                self.entry.async_create_background_task(
+                    self.hass,
+                    self.anycubic_api.async_connect_mqtt(),
+                    "anycubic_cloud.mqtt_connection",
+                )
+                await self.anycubic_api.mqtt_subscribe_printer_status(self.anycubic_printer)
+            elif (
+                self.anycubic_api.mqtt_is_connected and
+                (self.anycubic_printer.is_printing != 2 or self.hass.is_stopping)
+            ):
+                await self.anycubic_api.mqtt_unsubscribe_printer_status(self.anycubic_printer)
+                await self.anycubic_api.async_disconnect_mqtt()
 
         except Exception as error:
             raise UpdateFailed from error
