@@ -827,6 +827,10 @@ class AnycubicMultiColorBox:
         )
 
     @property
+    def auto_feed(self):
+        return self._auto_feed
+
+    @property
     def slots(self):
         return self._slots
 
@@ -1690,6 +1694,32 @@ class AnycubicPrinter:
             return None
 
         return await self._api_parent.multi_color_box_drying_stop(
+            self,
+            box_id=box_id,
+        )
+
+    async def multi_color_box_set_auto_feed(
+        self,
+        enabled: bool,
+        box_id=-1,
+    ):
+        if self.primary_multi_color_box is None:
+            return None
+
+        return await self._api_parent.multi_color_box_set_auto_feed(
+            self,
+            enabled=enabled,
+            box_id=box_id,
+        )
+
+    async def multi_color_box_toggle_auto_feed(
+        self,
+        box_id=-1,
+    ):
+        if self.primary_multi_color_box is None:
+            return None
+
+        return await self._api_parent.multi_color_box_toggle_auto_feed(
             self,
             box_id=box_id,
         )

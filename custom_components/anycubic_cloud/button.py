@@ -40,6 +40,10 @@ BUTTON_TYPES = (
         key="cancel_print",
         translation_key="cancel_print",
     ),
+    ButtonEntityDescription(
+        key="toggle_auto_feed",
+        translation_key="toggle_auto_feed",
+    ),
 )
 
 

@@ -647,6 +647,30 @@ class AnycubicAPI:
 
         return resp
 
+    async def multi_color_box_toggle_auto_feed(
+        self,
+        printer,
+        box_id=-1,
+    ):
+        if not printer:
+            return
+
+        if not printer.primary_multi_color_box:
+            return
+
+        if box_id < 0:
+            box_id = 0
+
+        current_auto_feed = bool(printer.multi_color_box[box_id].auto_feed)
+
+        resp = await self._send_order_multi_color_auto_feed(
+            printer,
+            (not current_auto_feed),
+            box_id,
+        )
+
+        return resp
+
     async def multi_color_box_set_slot(
         self,
         printer: AnycubicPrinter,

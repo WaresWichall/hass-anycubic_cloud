@@ -61,6 +61,9 @@
       },
       "dry_status_is_drying": {
         "name": "Drying Active"
+      },
+      "multi_color_box_auto_feed": {
+        "name": "Auto Switch Filament"
       }
     },
     "button": {
@@ -75,6 +78,9 @@
       },
       "cancel_print": {
         "name": "Cancel Print"
+      },
+      "toggle_auto_feed": {
+        "name": "Toggle Auto Feed"
       }
     },
     "sensor": {

@@ -79,6 +79,11 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 if self.anycubic_printer.primary_multi_color_box
                 else None
             ),
+            "multi_color_box_auto_feed": (
+                self.anycubic_printer.primary_multi_color_box.auto_feed
+                if self.anycubic_printer.primary_multi_color_box
+                else None
+            ),
             "dry_status_is_drying": (
                 self.anycubic_printer.drying_status.is_drying
                 if self.anycubic_printer.drying_status
@@ -229,3 +234,12 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         elif event_key == 'cancel_print':
             await self.anycubic_printer.cancel_print()
+
+        elif event_key == 'toggle_auto_feed':
+            await self.anycubic_printer.multi_color_box_toggle_auto_feed()
+
+        else:
+            return
+
+        self._last_state_update = None
+        await self.async_refresh()

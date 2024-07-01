@@ -38,6 +38,10 @@ SENSOR_TYPES = (
         key="dry_status_is_drying",
         translation_key="dry_status_is_drying",
     ),
+    BinarySensorEntityDescription(
+        key="multi_color_box_auto_feed",
+        translation_key="multi_color_box_auto_feed",
+    ),
 )
 
 
