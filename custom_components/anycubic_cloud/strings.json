@@ -72,6 +72,9 @@
       },
       "drying_stop": {
         "name": "Drying Stop"
+      },
+      "cancel_print": {
+        "name": "Cancel Print"
       }
     },
     "sensor": {

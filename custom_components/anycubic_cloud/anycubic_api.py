@@ -33,8 +33,12 @@ from .anycubic_const import (
     AC_KNOWN_VID,
     AC_KNOWN_SEC,
     COMMAND_ID_CAMERA_OPEN,
+    COMMAND_ID_LIST_LOCAL_FILES,
+    COMMAND_ID_MULTI_COLOR_BOX_AUTO_FEED,
     COMMAND_ID_MULTI_COLOR_BOX_DRY,
     COMMAND_ID_MULTI_COLOR_BOX_SET_SLOT,
+    COMMAND_ID_START_PRINT,
+    COMMAND_ID_STOP_PRINT,
 )
 
 
@@ -391,12 +395,18 @@ class AnycubicAPI:
         project_id=None,
         order_data={},
         raw_data=False,
+        extra_params=None,
     ):
         params = {
             'order_id': order_id,
             'printer_id': printer_id,
             'data': order_data,
         }
+        if extra_params is not None:
+            params = {
+                **params,
+                **extra_params,
+            }
         if project_id is not None:
             params['project_id'] = project_id
 
@@ -505,6 +515,137 @@ class AnycubicAPI:
             project_id=0,
             order_data=order_data,
         )
+
+    async def _send_order_multi_color_auto_feed(
+        self,
+        printer,
+        enabled: bool,
+        box_id=0,
+    ):
+        if not printer:
+            return
+
+        box_list = list([
+            {
+                'id': box_id,
+                'auto_feed': int(enabled),
+            }
+        ])
+
+        order_data = {
+            'multi_color_box': box_list
+        }
+
+        return await self._send_anycubic_order(
+            order_id=COMMAND_ID_MULTI_COLOR_BOX_AUTO_FEED,
+            printer_id=printer.id,
+            project_id=0,
+            order_data=order_data,
+        )
+
+    async def _send_order_stop_print(
+        self,
+        printer,
+        project,
+    ):
+        if not printer:
+            return
+
+        if not project:
+            return
+
+        return await self._send_anycubic_order(
+            order_id=COMMAND_ID_STOP_PRINT,
+            printer_id=printer.id,
+            project_id=project.id,
+            order_data=None,
+            extra_params={
+                'ams_info': None,
+                'settings': None,
+            },
+        )
+
+    async def _send_order_list_local_files(
+        self,
+        printer,
+    ):
+        """ Response sent via MQTT """
+        if not printer:
+            return
+
+        return await self._send_anycubic_order(
+            order_id=COMMAND_ID_LIST_LOCAL_FILES,
+            printer_id=printer.id,
+            project_id=0,
+        )
+
+    async def _send_order_print_local_file(
+        self,
+        printer,
+        file_name: str,
+    ):
+        if not printer:
+            return
+
+        order_data = {
+            'file_key': '',
+            'file_name': '',
+            'filename': file_name,
+            'filepath': '\\/',
+            'filetype': 1,
+            'task_settings': {},
+        }
+
+        return await self._send_anycubic_order(
+            order_id=COMMAND_ID_START_PRINT,
+            printer_id=printer.id,
+            project_id=0,
+            order_data=order_data,
+        )
+
+    async def cancel_print(
+        self,
+        printer,
+        project=None,
+    ):
+        if not printer:
+            return
+
+        if not project and not printer.latest_project:
+            return
+
+        if not project:
+            project = printer.latest_project
+
+        resp = await self._send_order_stop_print(
+            printer,
+            project,
+        )
+
+        return resp
+
+    async def multi_color_box_set_auto_feed(
+        self,
+        printer,
+        enabled: bool,
+        box_id=-1,
+    ):
+        if not printer:
+            return
+
+        if not printer.primary_multi_color_box:
+            return
+
+        if box_id < 0:
+            box_id = 0
+
+        resp = await self._send_order_multi_color_auto_feed(
+            printer,
+            enabled,
+            box_id,
+        )
+
+        return resp
 
     async def multi_color_box_set_slot(
         self,

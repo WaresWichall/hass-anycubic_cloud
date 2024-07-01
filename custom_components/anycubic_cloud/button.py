@@ -36,6 +36,10 @@ BUTTON_TYPES = (
         key="drying_stop",
         translation_key="drying_stop",
     ),
+    ButtonEntityDescription(
+        key="cancel_print",
+        translation_key="cancel_print",
+    ),
 )
 
 

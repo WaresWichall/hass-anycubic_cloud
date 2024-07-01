@@ -1,5 +1,67 @@
 import json
 import time
+from enum import IntEnum
+
+
+class AnycubicPrintStatus(IntEnum):
+    Printing = 1
+    Complete = 2
+    Cancelled = 3
+    Downloading = 4
+    Checking = 5
+    Preheating = 6
+    Slicing = 7
+
+
+class AnycubicFile:
+    def __init__(
+        self,
+        filename,
+        timestamp,
+        size,
+        is_dir,
+    ):
+        self._filename = str(filename)
+        self._timestamp = int(timestamp)
+        self._size = int(size)
+        self._is_dir = bool(is_dir)
+
+    @classmethod
+    def from_json(cls, data):
+        if data is None:
+            return None
+
+        return cls(
+            filename=data['filename'],
+            timestamp=data['timestamp'],
+            size=data['size'],
+            is_dir=data['is_dir'],
+        )
+
+    @property
+    def filename(self):
+        return self._filename
+
+    @property
+    def timestamp(self):
+        return self._timestamp
+
+    @property
+    def size(self):
+        return self._size
+
+    @property
+    def is_dir(self):
+        return self._is_dir
+
+    def __repr__(self):
+        return (
+            f"AnycubicFile("
+            f"filename={self._filename}, "
+            f"timestamp={self._timestamp}, "
+            f"size={self._size}, "
+            f"is_dir={self._is_dir})"
+        )
 
 
 class AnycubicMaterialColor:
@@ -273,14 +335,30 @@ class AnycubicProject:
         self._target_hotbed_temp = int(new_target_hotbed_temp)
         self._target_nozzle_temp = int(new_target_nozzle_temp)
 
-    def update_with_mqtt_data(self, print_in_progress: bool, mqtt_data):
+    def update_with_mqtt_data(
+        self,
+        print_status: AnycubicPrintStatus,
+        mqtt_data,
+    ):
         self._settings['curr_layer'] = int(mqtt_data['curr_layer'])
         self._settings['total_layers'] = int(mqtt_data['total_layers'])
         self._gcode_name = mqtt_data['filename']
         self._print_time = int(mqtt_data['print_time'])
         self._progress = int(mqtt_data['progress'])
         self._remain_time = int(mqtt_data['remain_time'])
-        self._print_status = 1 if print_in_progress else 2
+        self._print_status = int(print_status)
+
+    def update_slice_param(
+        self,
+        new_slice_param,
+    ):
+        self._slice_param = new_slice_param
+
+    def update_settings(
+        self,
+        new_settings,
+    ):
+        self._settings = new_settings
 
     @property
     def id(self):
@@ -326,19 +404,23 @@ class AnycubicProject:
 
     @property
     def print_in_progress(self):
-        return self._print_status == 1 or self._print_status == 6
+        return self._print_status == AnycubicPrintStatus.Printing or self._print_status == AnycubicPrintStatus.Preheating
+
+    @property
+    def print_preheating(self):
+        return self._print_status == AnycubicPrintStatus.Preheating
 
     @property
     def print_complete(self):
-        return self._print_status == 2
+        return self._print_status == AnycubicPrintStatus.Complete
 
     @property
     def print_failed(self):
-        return self._print_status == 3
+        return self._print_status == AnycubicPrintStatus.Cancelled
 
     @property
     def print_is_paused(self):
-        return self._pause != 0
+        return self._pause != 0 and not self.print_failed
 
     @property
     def print_current_layer(self):
@@ -356,7 +438,9 @@ class AnycubicProject:
 
     @property
     def print_status(self):
-        if self.print_in_progress:
+        if self.print_preheating:
+            return "preheating"
+        elif self.print_in_progress:
             return "printing"
         elif self.print_complete:
             return "finished"
@@ -706,6 +790,9 @@ class AnycubicMultiColorBox:
         self._target_nozzle_temp = int(target_nozzle_temp) if target_nozzle_temp is not None else None
         self._slots = list([AnycubicSpoolInfo.from_json(x) for x in slots])
 
+    def set_auto_feed(self, auto_feed):
+        self._auto_feed = int(auto_feed)
+
     def set_drying_status(self, drying_status):
         self._drying_status = AnycubicDryingStatus.from_json(drying_status)
 
@@ -1040,6 +1127,15 @@ class AnycubicPrinter:
 
         self._latest_project: AnycubicProject | None = None
         self._fan_speed = 0
+        self._local_file_list = None
+
+    def _set_local_file_list(self, local_file_list):
+        if local_file_list is None:
+            return
+
+        self._local_file_list = list([
+            AnycubicFile.from_json(x) for x in local_file_list
+        ])
 
     def _set_multi_color_box(self, multi_color_box):
         if multi_color_box is None or isinstance(multi_color_box, list):
@@ -1225,17 +1321,60 @@ class AnycubicPrinter:
             raise Exception('Unknown fan data.')
 
     def _process_mqtt_update_print(self, action, state, payload):
+        project_id = int(payload.get('data', {}).get('taskid', -1))
         if action == 'start' and state == 'printing':
             data = payload['data']
             self._is_printing = 2
-            if self._latest_project:
-                self._latest_project.update_with_mqtt_data(True, data)
+            if self._latest_project and project_id == self._latest_project.id:
+                self._latest_project.update_with_mqtt_data(
+                    AnycubicPrintStatus.Printing,
+                    data,
+                )
+            return
+        elif action == 'start' and state == 'preheating':
+            data = payload['data']
+            self._is_printing = 2
+            if self._latest_project and project_id == self._latest_project.id:
+                self._latest_project.update_with_mqtt_data(
+                    AnycubicPrintStatus.Preheating,
+                    data,
+                )
             return
         elif action == 'start' and state == 'finished':
             data = payload['data']
             self._is_printing = 1
-            if self._latest_project:
-                self._latest_project.update_with_mqtt_data(False, data)
+            if self._latest_project and project_id == self._latest_project.id:
+                self._latest_project.update_with_mqtt_data(
+                    AnycubicPrintStatus.Complete,
+                    data,
+                )
+            return
+        elif action == 'stop' and state in ['stoped', 'stopping']:
+            data = payload['data']
+            self._is_printing = 1
+            if self._latest_project and project_id == self._latest_project.id:
+                self._latest_project.update_with_mqtt_data(
+                    AnycubicPrintStatus.Cancelled,
+                    data,
+                )
+            return
+        elif action == 'getSliceParam' and state == 'done':
+            data = payload['data']['slice_param']
+            if self._latest_project and project_id == self._latest_project.id:
+                self._latest_project.update_slice_param(
+                    data,
+                )
+            return
+        elif action == 'update' and state == 'updated':
+            data = payload['data']
+            self._parameter.update_temps(
+                data['curr_hotbed_temp'],
+                data['curr_nozzle_temp'],
+            )
+            if self._latest_project and project_id == self._latest_project.id:
+                self._latest_project.update_settings(
+                    data['settings'],
+                )
             return
         else:
             raise Exception('Unknown print status data.')
@@ -1274,8 +1413,25 @@ class AnycubicPrinter:
 
                 self._multi_color_box[box_id].set_drying_status(box['drying_status'])
             return
+        elif action == 'setAutoFeed' and state == 'done':
+            data = payload['data']['multi_color_box']
+            for box in data:
+                box_id = int(box['id'])
+                if self._multi_color_box is None or len(self._multi_color_box) < box_id + 1:
+                    continue
+
+                self._multi_color_box[box_id].set_auto_feed(box['auto_feed'])
+            return
         else:
             raise Exception('Unknown multiColorBox data.')
+
+    def _process_mqtt_update_file(self, action, state, payload):
+        if action == 'listLocal' and state == 'done':
+            data = payload['data']['records']
+            self._set_local_file_list(data)
+            return
+        else:
+            raise Exception('Unknown file data.')
 
     def process_mqtt_update(self, topic, payload):
         msg_type = payload['type']
@@ -1305,6 +1461,9 @@ class AnycubicPrinter:
 
         elif msg_type == 'multiColorBox':
             return self._process_mqtt_update_multicolorbox(action, state, payload)
+
+        elif msg_type == 'file':
+            return self._process_mqtt_update_file(action, state, payload)
 
         else:
             raise Exception("Unknown mqtt update.")
@@ -1533,6 +1692,15 @@ class AnycubicPrinter:
         return await self._api_parent.multi_color_box_drying_stop(
             self,
             box_id=box_id,
+        )
+
+    async def cancel_print(
+        self,
+        project=None,
+    ):
+
+        return await self._api_parent.cancel_print(
+            self,
         )
 
     def __repr__(self):
