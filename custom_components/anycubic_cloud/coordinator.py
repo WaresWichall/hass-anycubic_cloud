@@ -22,6 +22,8 @@ from .const import (
     CONF_DRYING_PRESET_TEMPERATURE_,
     CONF_PRINTER_ID,
     DEFAULT_SCAN_INTERVAL,
+    FAILED_UPDATE_DELAY,
+    MAX_FAILED_UPDATES,
     MQTT_SCAN_INTERVAL,
     DOMAIN,
     LOGGER,
@@ -39,6 +41,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self.anycubic_api: AnycubicAPI | None = None
         self.anycubic_printer = None
         self._last_state_update = None
+        self._failed_updates = 0
         super().__init__(
             hass,
             LOGGER,
@@ -133,6 +136,11 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     async def get_anycubic_updates(self, start_up: bool = False) -> dict[str, Any]:
         """Fetch data from AnycubicCloud."""
 
+        if self._failed_updates >= MAX_FAILED_UPDATES:
+            self._last_state_update = int(time.time()) + FAILED_UPDATE_DELAY
+            self._failed_updates = 0
+            return
+
         self._last_state_update = int(time.time())
 
         if self.anycubic_api is None:
@@ -190,6 +198,8 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 await store.async_save(self.anycubic_api.build_token_dict())
 
             await self.anycubic_printer.update_info_from_api(True)
+            self._failed_updates = 0
+
             if (
                 not self.anycubic_api.mqtt_is_connected and
                 self.anycubic_printer.is_printing == 2 and
@@ -209,6 +219,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 await self.anycubic_api.async_disconnect_mqtt()
 
         except Exception as error:
+            self._failed_updates += 1
             raise UpdateFailed from error
 
         return True

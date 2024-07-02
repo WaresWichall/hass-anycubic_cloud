@@ -16,19 +16,16 @@ from .const import (
     CONF_DRYING_PRESET_TEMPERATURE_,
     COORDINATOR,
     DOMAIN,
+    MAX_DRYING_PRESETS,
 )
 from .coordinator import AnycubicCloudDataUpdateCoordinator
 from .entity import AnycubicCloudEntity
 
 BUTTON_PRESET_TYPES = (
     ButtonEntityDescription(
-        key="drying_start_preset_1",
-        translation_key="drying_start_preset_1",
-    ),
-    ButtonEntityDescription(
-        key="drying_start_preset_2",
-        translation_key="drying_start_preset_2",
-    ),
+        key=f"drying_start_preset_{x + 1}",
+        translation_key=f"drying_start_preset_{x + 1}",
+    ) for x in range(MAX_DRYING_PRESETS)
 )
 
 BUTTON_TYPES = (

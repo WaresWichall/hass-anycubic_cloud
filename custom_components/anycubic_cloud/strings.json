@@ -37,7 +37,11 @@
           "drying_preset_duration_1": "Dry Preset 1 Duration",
           "drying_preset_temperature_1": "Dry Preset 1 Temperature",
           "drying_preset_duration_2": "Dry Preset 2 Duration",
-          "drying_preset_temperature_2": "Dry Preset 2 Temperature"
+          "drying_preset_temperature_2": "Dry Preset 2 Temperature",
+          "drying_preset_duration_3": "Dry Preset 3 Duration",
+          "drying_preset_temperature_3": "Dry Preset 3 Temperature",
+          "drying_preset_duration_4": "Dry Preset 4 Duration",
+          "drying_preset_temperature_4": "Dry Preset 4 Temperature"
         }
       }
     }
@@ -72,6 +76,12 @@
       },
       "drying_start_preset_2": {
         "name": "Drying Preset 2"
+      },
+      "drying_start_preset_3": {
+        "name": "Drying Preset 3"
+      },
+      "drying_start_preset_4": {
+        "name": "Drying Preset 4"
       },
       "drying_stop": {
         "name": "Drying Stop"

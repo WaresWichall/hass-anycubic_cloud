@@ -17,10 +17,6 @@ CONF_PRINTER_ID = "printer_id"
 CONF_PRINTER_NAME = "printer_name"
 CONF_DRYING_PRESET_DURATION_ = "drying_preset_duration_"
 CONF_DRYING_PRESET_TEMPERATURE_ = "drying_preset_temperature_"
-CONF_DRYING_PRESET_DURATION_1 = "drying_preset_duration_1"
-CONF_DRYING_PRESET_TEMPERATURE_1 = "drying_preset_temperature_1"
-CONF_DRYING_PRESET_DURATION_2 = "drying_preset_duration_2"
-CONF_DRYING_PRESET_TEMPERATURE_2 = "drying_preset_temperature_2"
 
 UNIT_LAYERS = "Layers"
 
@@ -29,6 +25,10 @@ STORAGE_VERSION = 1
 
 DEFAULT_SCAN_INTERVAL = 60
 MQTT_SCAN_INTERVAL = 5
+FAILED_UPDATE_DELAY = DEFAULT_SCAN_INTERVAL * 4
+MAX_FAILED_UPDATES = 3
+
+MAX_DRYING_PRESETS = 4
 
 LOGGER = logging.getLogger(__package__)
 

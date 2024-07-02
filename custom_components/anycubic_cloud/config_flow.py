@@ -17,14 +17,13 @@ import homeassistant.helpers.config_validation as cv
 from .anycubic_api import AnycubicAPI
 
 from .const import (
-    CONF_DRYING_PRESET_DURATION_1,
-    CONF_DRYING_PRESET_TEMPERATURE_1,
-    CONF_DRYING_PRESET_DURATION_2,
-    CONF_DRYING_PRESET_TEMPERATURE_2,
+    CONF_DRYING_PRESET_DURATION_,
+    CONF_DRYING_PRESET_TEMPERATURE_,
     CONF_PRINTER_ID,
     CONF_PRINTER_NAME,
     DOMAIN,
     LOGGER,
+    MAX_DRYING_PRESETS,
 )
 
 DATA_SCHEMA = vol.Schema(
@@ -261,6 +260,25 @@ class AnycubicCloudOptionsFlowHandler(OptionsFlow):
         """Initialize Anycubic Cloud options flow."""
         self.entry = entry
 
+    def _build_drying_schema(self):
+        schema = dict()
+        for x in range(MAX_DRYING_PRESETS):
+            num = x + 1
+
+            dur_key = f"{CONF_DRYING_PRESET_DURATION_}{num}"
+            schema[vol.Optional(
+                dur_key,
+                default=self.entry.options.get(dur_key)
+            )] = cv.positive_int
+
+            temp_key = f"{CONF_DRYING_PRESET_TEMPERATURE_}{num}"
+            schema[vol.Optional(
+                temp_key,
+                default=self.entry.options.get(temp_key)
+            )] = cv.positive_int
+
+        return vol.Schema(schema)
+
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
@@ -272,25 +290,6 @@ class AnycubicCloudOptionsFlowHandler(OptionsFlow):
 
         return self.async_show_form(
             step_id="init",
-            data_schema=vol.Schema(
-                {
-                    vol.Optional(
-                        CONF_DRYING_PRESET_DURATION_1,
-                        default=self.entry.options.get(CONF_DRYING_PRESET_DURATION_1)
-                    ): cv.positive_int,
-                    vol.Optional(
-                        CONF_DRYING_PRESET_TEMPERATURE_1,
-                        default=self.entry.options.get(CONF_DRYING_PRESET_TEMPERATURE_1)
-                    ): cv.positive_int,
-                    vol.Optional(
-                        CONF_DRYING_PRESET_DURATION_2,
-                        default=self.entry.options.get(CONF_DRYING_PRESET_DURATION_2)
-                    ): cv.positive_int,
-                    vol.Optional(
-                        CONF_DRYING_PRESET_TEMPERATURE_2,
-                        default=self.entry.options.get(CONF_DRYING_PRESET_TEMPERATURE_2)
-                    ): cv.positive_int,
-                }
-            ),
+            data_schema=self._build_drying_schema(),
             errors=errors,
         )
