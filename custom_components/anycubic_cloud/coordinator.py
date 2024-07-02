@@ -239,7 +239,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._last_state_update = int(time.time())
 
         if self.anycubic_api is None:
-            await self._setup_anycubic_api_connection()
+            await self._setup_anycubic_api_connection(start_up=start_up)
 
         if self.anycubic_printer is None:
             await self._setup_anycubic_printer_object()
