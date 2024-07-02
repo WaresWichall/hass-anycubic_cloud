@@ -1,5 +1,3 @@
-import aiomqtt
-import asyncio
 import bcrypt
 import hashlib
 import json
@@ -7,6 +5,7 @@ import json
 import ssl
 import traceback
 from os import path
+from paho.mqtt import client as mqtt_client
 
 from .anycubic_api import (
     AnycubicAPI,
@@ -14,15 +13,11 @@ from .anycubic_api import (
 
 from .anycubic_const_mqtt import (
     MQTT_HOST,
-    MQTT_MESSAGE_TIMEOUT,
     MQTT_PORT,
-    MQTT_RECONNECT_SECONDS_LONG,
-    MQTT_RECONNECT_SECONDS_SHORT,
     MQTT_ROOT_TOPIC_PLUS,
     MQTT_ROOT_TOPIC_PRINTER,
     MQTT_ROOT_TOPIC_PUBLISH_PRINTER,
     MQTT_ROOT_TOPIC_SERVER,
-    MQTT_SUBSCRIBE_TIMEOUT,
     MQTT_TIMEOUT,
 )
 
@@ -44,12 +39,11 @@ class AnycubicMQTTAPI(AnycubicAPI):
         self._api_user_id = None
         self._mqtt_client = None
         self._mqtt_subscribed_printers = dict()
-        self._mqtt_stopped: asyncio.Event | None = None
         super().__init__(*args, **kwargs)
 
     @property
-    def mqtt_is_connected(self):
-        return self._mqtt_stopped is not None
+    def mqtt_is_started(self):
+        return self._mqtt_client is not None
 
     def _md5_hex_of_string(self, input_string):
         return hashlib.md5(input_string.encode('utf-8')).hexdigest().lower()
@@ -93,21 +87,7 @@ class AnycubicMQTTAPI(AnycubicAPI):
     def _mqtt_topic_is_user_topic(self, topic):
         return self._mqtt_topic_get_part(topic, 3) == 'server'
 
-    async def _listen_for_mqtt_messages(self):
-        if self._mqtt_client is None:
-            return
-
-        while self._mqtt_stopped is not None and not self._mqtt_stopped.is_set():
-            try:
-                async with asyncio.timeout(MQTT_MESSAGE_TIMEOUT):
-                    async for message in self._mqtt_client.messages:
-                        if self._mqtt_stopped.is_set():
-                            return
-                        await self._mqtt_message_router(message)
-            except (asyncio.TimeoutError, asyncio.CancelledError):
-                pass
-
-    async def _mqtt_message_router(self, message):
+    def _mqtt_message_router(self, message):
         topic = str(message.topic)
         payload = json.loads(message.payload.decode('utf-8'))
 
@@ -131,17 +111,17 @@ class AnycubicMQTTAPI(AnycubicAPI):
                 tb = traceback.format_exc()
                 self._debug_log(f"Anycubic MQTT Message error: {e}\n{tb}\nMQTT topic: {topic}\n    {payload}")
 
-    async def _mqtt_publish_on_topic(self, topic, payload):
+    def _mqtt_publish_on_topic(self, topic, payload):
         if self._mqtt_client is None:
             return
 
         mqtt_payload = json.dumps(payload) if isinstance(payload, dict) else payload
 
-        await self._mqtt_client.publish(topic, payload=mqtt_payload)
+        self._mqtt_client.publish(topic, payload=mqtt_payload)
 
-    async def _mqtt_publish_to_printer(self, printer, endpoint, payload):
+    def _mqtt_publish_to_printer(self, printer, endpoint, payload):
         mqtt_topic = self._build_mqtt_printer_publish_topic(printer, endpoint)
-        await self._mqtt_publish_on_topic(mqtt_topic, payload=payload)
+        self._mqtt_publish_on_topic(mqtt_topic, payload=payload)
 
     def _mqtt_build_ssl_context(self):
         ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
@@ -157,95 +137,109 @@ class AnycubicMQTTAPI(AnycubicAPI):
 
         return ssl_context
 
-    async def async_connect_mqtt(self):
-        self._mqtt_stopped = asyncio.Event()
+    def _mqtt_on_subscribe(self, client, userdata, mid, granted_qos):
+        pass
+
+    def _mqtt_on_message(
+        self,
+        client,
+        userdata,
+        message,
+    ):
+        self._mqtt_message_router(message)
+
+    def _mqtt_on_disconnect(
+        self,
+        client,
+        userdata,
+        rc,
+    ):
+        if rc == 0:
+            self._mqtt_client = None
+            self._debug_log("Anycubic MQTT Disconnected.")
+        else:
+            self._debug_log("Anycubic MQTT unintentionally disconnected, will reconnect.")
+
+    def _mqtt_on_connect(
+        self,
+        client,
+        userdata,
+        flags,
+        rc,
+    ):
+        if rc == 0:
+            self._debug_log("Anycubic MQTT Connected.")
+
+            for sub in self._build_mqtt_user_subscription():
+                self._debug_log(f"Anycubic MQTT Subscribing to USER {sub}.")
+                self._mqtt_client.subscribe(sub)
+
+            for printer_id, printer in self._mqtt_subscribed_printers.items():
+                self._mqtt_subscribe_printer_status(printer)
+
+            self._debug_log("Anycubic MQTT Subscribed.")
+        else:
+            self._debug_log(f"Anycubic MQTT Failed to connect, return code {rc}")
+
+    def connect_mqtt(self):
         mqtt_username, mqtt_password = self._build_mqtt_login_info()
 
-        while not self._mqtt_stopped.is_set():
-            try:
-                self._debug_log("Anycubic MQTT Connecting.")
+        self._debug_log("Anycubic MQTT Connecting.")
 
-                async with aiomqtt.Client(
-                    # DEBUG
-                    # logger=logger,
-                    # DEBUG
-                    hostname=MQTT_HOST,
-                    port=MQTT_PORT,
-                    username=mqtt_username,
-                    password=mqtt_password,
-                    identifier=self._build_mqtt_client_id(),
-                    tls_context=self._mqtt_build_ssl_context(),
-                    clean_session=True,
-                    tls_insecure=True,
-                    timeout=MQTT_TIMEOUT,
-                    keepalive=MQTT_TIMEOUT,
-                ) as client:
-                    self._mqtt_client = client
-                    self._debug_log("Anycubic MQTT Connected.")
+        self._mqtt_client = mqtt_client.Client(
+            client_id=self._build_mqtt_client_id(),
+            clean_session=True,
+        )
 
-                    for sub in self._build_mqtt_user_subscription():
-                        self._debug_log(f"Anycubic MQTT Subscribing to USER {sub}.")
-                        await self._mqtt_client.subscribe(sub)
+        self._mqtt_client.on_connect = self._mqtt_on_connect
+        self._mqtt_client.on_message = self._mqtt_on_message
+        self._mqtt_client.on_subscribe = self._mqtt_on_subscribe
 
-                    for printer_id, printer in self._mqtt_subscribed_printers.items():
-                        await self._mqtt_subscribe_printer_status(printer)
+        # DEBUG
+        # self._mqtt_client.enable_logger(logger)
+        # DEBUG
 
-                    self._debug_log("Anycubic MQTT Subscribed.")
+        self._mqtt_client.username_pw_set(
+            username=mqtt_username,
+            password=mqtt_password,
+        )
 
-                    await self._listen_for_mqtt_messages()
+        self._mqtt_client.tls_set_context(self._mqtt_build_ssl_context())
+        self._mqtt_client.tls_insecure_set(True)
 
-            except aiomqtt.exceptions.MqttError:
-                if self._mqtt_stopped is not None and not self._mqtt_stopped.is_set():
-                    self._mqtt_client = None
-                    self._debug_log(f"Anycubic MQTT Connection Error, waiting {MQTT_RECONNECT_SECONDS_SHORT}s to reconnect.")
-                    await asyncio.sleep(MQTT_RECONNECT_SECONDS_SHORT)
+        self._mqtt_client.connect(
+            host=MQTT_HOST,
+            port=MQTT_PORT,
+            keepalive=MQTT_TIMEOUT,
+        )
 
-            except Exception as e:
-                tb = traceback.format_exc()
-                if self._mqtt_stopped is not None and not self._mqtt_stopped.is_set():
-                    self._mqtt_client = None
-                    self._debug_log(
-                        f"Anycubic MQTT Connection Error: {e} - waiting {MQTT_RECONNECT_SECONDS_LONG}s to reconnect.\n{tb}"
-                    )
-                    await asyncio.sleep(MQTT_RECONNECT_SECONDS_LONG)
+        self._mqtt_client.loop_forever()
+        self._mqtt_client = None
 
-            finally:
-                self._mqtt_client = None
-
-        self._mqtt_stopped = None
-        self._debug_log("Anycubic MQTT Disconnected.")
-
-    async def async_disconnect_mqtt(self):
+    def disconnect_mqtt(self):
         self._debug_log("Anycubic MQTT Disconnecting.")
-        if self._mqtt_stopped is not None:
-            self._mqtt_stopped.set()
+        if self._mqtt_client is None:
+            return
 
-    async def _mqtt_subscribe_printer_status(self, printer):
+        self._mqtt_client.disconnect()
+
+    def _mqtt_subscribe_printer_status(self, printer):
         for sub in self._build_mqtt_printer_subscription(printer):
             self._debug_log(f"Anycubic MQTT Subscribing to PRINTER {sub}.")
-            await self._mqtt_client.subscribe(sub)
+            self._mqtt_client.subscribe(sub)
 
-    async def mqtt_subscribe_printer_status(self, printer):
-        async with asyncio.timeout(MQTT_SUBSCRIBE_TIMEOUT):
-            while self._mqtt_client is None:
-                await asyncio.sleep(1)
-
-        if self._mqtt_stopped is not None and self._mqtt_stopped.is_set():
-            self._mqtt_stopped = asyncio.Event()
-
+    def mqtt_add_subscribed_printer(self, printer):
         if printer.key in self._mqtt_subscribed_printers:
             return
 
         self._mqtt_subscribed_printers[printer.key] = printer
 
-        await self._mqtt_subscribe_printer_status(printer)
-
-    async def mqtt_unsubscribe_printer_status(self, printer):
+    def mqtt_unsubscribe_printer_status(self, printer):
 
         if printer.key in self._mqtt_subscribed_printers:
             if self._mqtt_client is not None:
                 for sub in self._build_mqtt_printer_subscription(printer):
                     self._debug_log(f"Anycubic MQTT Ubsubscribing to PRINTER {sub}.")
-                    await self._mqtt_client.unsubscribe(sub)
+                    self._mqtt_client.unsubscribe(sub)
 
             del self._mqtt_subscribed_printers[printer.key]

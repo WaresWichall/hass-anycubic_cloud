@@ -2,6 +2,8 @@ import json
 import time
 from enum import IntEnum
 
+from .anycubic_const import REX_GCODE_EXT
+
 
 class AnycubicPrintStatus(IntEnum):
     Printing = 1
@@ -250,7 +252,7 @@ class AnycubicProject:
         self._machine_name = str(machine_name)
         self._device_status = int(device_status)
         self._slice_result = None
-        self._gcode_name = str(gcode_name)
+        self.set_filename(gcode_name)
         self._post_title = post_title
         self._target_nozzle_temp = None
         self._target_hotbed_temp = None
@@ -327,6 +329,9 @@ class AnycubicProject:
             post_title=data['post_title'],
         )
 
+    def set_filename(self, filename):
+        self._gcode_name = REX_GCODE_EXT.sub('', str(filename))
+
     def update_extra_data(self, data):
         self._target_nozzle_temp = data.get('temp', {}).get('target_nozzle_temp')
         self._target_hotbed_temp = data.get('temp', {}).get('target_hotbed_temp')
@@ -342,7 +347,7 @@ class AnycubicProject:
     ):
         self._settings['curr_layer'] = int(mqtt_data['curr_layer'])
         self._settings['total_layers'] = int(mqtt_data['total_layers'])
-        self._gcode_name = mqtt_data['filename']
+        self.set_filename(mqtt_data['filename'])
         self._print_time = int(mqtt_data['print_time'])
         self._progress = int(mqtt_data['progress'])
         self._remain_time = int(mqtt_data['remain_time'])

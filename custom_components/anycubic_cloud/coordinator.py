@@ -9,7 +9,7 @@ from aiohttp import CookieJar
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
-from homeassistant.core import HomeAssistant
+from homeassistant.core import CoreState, HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
 from homeassistant.helpers.storage import Store
@@ -42,6 +42,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self.anycubic_printer = None
         self._last_state_update = None
         self._failed_updates = 0
+        self._mqtt_task = None
         super().__init__(
             hass,
             LOGGER,
@@ -133,6 +134,100 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "raw_print_status": latest_project.raw_print_status if latest_project else None,
         }
 
+    def _anycubic_mqtt_connection_should_start(self):
+        return (
+            not self.anycubic_api.mqtt_is_started and
+            self.anycubic_printer.is_printing == 2 and
+            not self.hass.is_stopping and
+            self.hass.state is CoreState.running
+        )
+
+    def _anycubic_mqtt_connection_should_stop(self):
+        return (
+            self.anycubic_api.mqtt_is_started and
+            (self.anycubic_printer.is_printing != 2 or self.hass.is_stopping)
+        )
+
+    async def _check_anycubic_mqtt_connection(self):
+        if self._anycubic_mqtt_connection_should_start():
+            self.anycubic_api.mqtt_add_subscribed_printer(
+                self.anycubic_printer
+            )
+
+            if self._mqtt_task is None:
+                LOGGER.debug("Starting Anycubic MQTT Task.")
+                self._mqtt_task = self.hass.async_add_executor_job(
+                    self.anycubic_api.connect_mqtt
+                )
+
+        elif self._anycubic_mqtt_connection_should_stop():
+            await self.hass.async_add_executor_job(
+                self.anycubic_api.mqtt_unsubscribe_printer_status,
+                self.anycubic_printer,
+            )
+            await self.hass.async_add_executor_job(
+                self.anycubic_api.disconnect_mqtt,
+            )
+
+            if self._mqtt_task is not None:
+                self._mqtt_task.cancel()
+
+            self._mqtt_task = None
+
+    async def _setup_anycubic_api_connection(self, start_up: bool = False):
+        store = Store[dict[str, Any]](self.hass, STORAGE_VERSION, STORAGE_KEY)
+
+        try:
+            config = await store.async_load()
+            cookie_jar = CookieJar(unsafe=True)
+            websession = async_create_clientsession(
+                self.hass,
+                cookie_jar=cookie_jar,
+            )
+            self.anycubic_api = AnycubicAPI(
+                api_username=self.entry.data[CONF_USERNAME],
+                api_password=self.entry.data[CONF_PASSWORD],
+                session=websession,
+                cookie_jar=cookie_jar,
+                debug_logger=LOGGER.debug,
+            )
+
+            if start_up and config is not None:
+                LOGGER.debug("Loading tokens from store.")
+                try:
+                    self.anycubic_api.load_tokens_from_dict(config)
+                except Exception as e:
+                    LOGGER.debug(f"Error loading tokens from store: {e}")
+
+            success = await self.anycubic_api.check_api_tokens()
+            if not success:
+                raise ConfigEntryAuthFailed("Authentication failed. Check credentials.")
+
+            if start_up:
+                # Create config
+                await store.async_save(self.anycubic_api.build_token_dict())
+
+            printer_status = await self.anycubic_api.printer_info_for_id(self.entry.data[CONF_PRINTER_ID])
+
+            if printer_status is None:
+                raise ConfigEntryAuthFailed("Printer not found. Check config.")
+
+        except Exception as error:
+            raise ConfigEntryAuthFailed(f"Authentication failed with unknown Error. Check credentials {error}")
+
+    async def _setup_anycubic_printer_object(self):
+        try:
+            self.anycubic_printer = await self.anycubic_api.printer_info_for_id(self.entry.data[CONF_PRINTER_ID])
+        except Exception as error:
+            raise UpdateFailed from error
+
+    async def _check_or_save_tokens(self):
+        await self.anycubic_api.check_api_tokens()
+
+        if self.anycubic_api.tokens_changed:
+            store = Store[dict[str, Any]](self.hass, STORAGE_VERSION, STORAGE_KEY)
+            await store.async_save(self.anycubic_api.build_token_dict())
+
     async def get_anycubic_updates(self, start_up: bool = False) -> dict[str, Any]:
         """Fetch data from AnycubicCloud."""
 
@@ -144,81 +239,21 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._last_state_update = int(time.time())
 
         if self.anycubic_api is None:
-            store = Store[dict[str, Any]](self.hass, STORAGE_VERSION, STORAGE_KEY)
-
-            try:
-                config = await store.async_load()
-                cookie_jar = CookieJar(unsafe=True)
-                websession = async_create_clientsession(
-                    self.hass,
-                    cookie_jar=cookie_jar,
-                )
-                self.anycubic_api = AnycubicAPI(
-                    api_username=self.entry.data[CONF_USERNAME],
-                    api_password=self.entry.data[CONF_PASSWORD],
-                    session=websession,
-                    cookie_jar=cookie_jar,
-                    debug_logger=LOGGER.debug,
-                )
-
-                if start_up and config is not None:
-                    LOGGER.debug("Loading tokens from store.")
-                    try:
-                        self.anycubic_api.load_tokens_from_dict(config)
-                    except Exception as e:
-                        LOGGER.debug(f"Error loading tokens from store: {e}")
-
-                success = await self.anycubic_api.check_api_tokens()
-                if not success:
-                    raise ConfigEntryAuthFailed("Authentication failed. Check credentials.")
-
-                if start_up:
-                    # Create config
-                    await store.async_save(self.anycubic_api.build_token_dict())
-
-                printer_status = await self.anycubic_api.printer_info_for_id(self.entry.data[CONF_PRINTER_ID])
-
-                if printer_status is None:
-                    raise ConfigEntryAuthFailed("Printer not found. Check config.")
-
-            except Exception as error:
-                raise ConfigEntryAuthFailed(f"Authentication failed with unknown Error. Check credentials {error}")
+            await self._setup_anycubic_api_connection()
 
         if self.anycubic_printer is None:
-            try:
-                self.anycubic_printer = await self.anycubic_api.printer_info_for_id(self.entry.data[CONF_PRINTER_ID])
-            except Exception as error:
-                raise UpdateFailed from error
+            await self._setup_anycubic_printer_object()
 
         try:
-            await self.anycubic_api.check_api_tokens()
-
-            if self.anycubic_api.tokens_changed:
-                store = Store[dict[str, Any]](self.hass, STORAGE_VERSION, STORAGE_KEY)
-                await store.async_save(self.anycubic_api.build_token_dict())
+            await self._check_or_save_tokens()
 
             await self.anycubic_printer.update_info_from_api(True)
             self._failed_updates = 0
 
-            if (
-                not self.anycubic_api.mqtt_is_connected and
-                self.anycubic_printer.is_printing == 2 and
-                not self.hass.is_stopping
-            ):
-                self.entry.async_create_background_task(
-                    self.hass,
-                    self.anycubic_api.async_connect_mqtt(),
-                    "anycubic_cloud.mqtt_connection",
-                )
-                await self.anycubic_api.mqtt_subscribe_printer_status(self.anycubic_printer)
-            elif (
-                self.anycubic_api.mqtt_is_connected and
-                (self.anycubic_printer.is_printing != 2 or self.hass.is_stopping)
-            ):
-                await self.anycubic_api.mqtt_unsubscribe_printer_status(self.anycubic_printer)
-                await self.anycubic_api.async_disconnect_mqtt()
+            await self._check_anycubic_mqtt_connection()
 
         except Exception as error:
+            LOGGER.debug(f"Anycubic update error: {error}")
             self._failed_updates += 1
             raise UpdateFailed from error
 

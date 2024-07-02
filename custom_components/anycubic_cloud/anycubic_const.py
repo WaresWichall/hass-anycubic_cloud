@@ -13,6 +13,7 @@ REX_CLIENT_ID = re.compile(r'\'(?!getEl)([a-zA-Z0-9]{20})\'')
 REX_APP_ID = re.compile(r'(?<!:)\'([a-zA-Z0-9]{32})\'')
 REX_APP_VERSION = re.compile(r'version["\']?:["\']([^"\']+)["\'],')
 REX_APP_SECRET = re.compile(r'appSecret["\']?:["\']([^"\']+)["\'],')
+REX_GCODE_EXT = re.compile(r'\.gcode$')
 
 DEFAULT_USER_AGENT = (
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) '
