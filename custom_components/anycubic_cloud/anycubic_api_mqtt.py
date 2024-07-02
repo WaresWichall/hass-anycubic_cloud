@@ -88,8 +88,12 @@ class AnycubicMQTTAPI(AnycubicAPI):
         return self._mqtt_topic_get_part(topic, 3) == 'server'
 
     def _mqtt_message_router(self, message):
-        topic = str(message.topic)
-        payload = json.loads(message.payload.decode('utf-8'))
+        try:
+            topic = str(message.topic)
+            payload = json.loads(message.payload.decode('utf-8'))
+        except Exception as e:
+            self._debug_log(f"Anycubic MQTT Message decode error: {e}\n  on MQTT topic: {message.topic}\n    {message.payload}")
+            return
 
         if self._mqtt_topic_is_user_topic(topic):
             self._debug_log(f"Anycubic MQTT USER Msg Received on `{topic}`:\n    {payload}")
@@ -109,7 +113,7 @@ class AnycubicMQTTAPI(AnycubicAPI):
                 printer.process_mqtt_update(topic, payload)
             except Exception as e:
                 tb = traceback.format_exc()
-                self._debug_log(f"Anycubic MQTT Message error: {e}\n{tb}\nMQTT topic: {topic}\n    {payload}")
+                self._debug_log(f"Anycubic MQTT Message error: {e}\n  on MQTT topic: {topic}\n    {payload}\n{tb}")
 
     def _mqtt_publish_on_topic(self, topic, payload):
         if self._mqtt_client is None:
