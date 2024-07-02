@@ -344,6 +344,7 @@ class AnycubicProject:
         self,
         print_status: AnycubicPrintStatus,
         mqtt_data,
+        paused=None,
     ):
         self._settings['curr_layer'] = int(mqtt_data['curr_layer'])
         self._settings['total_layers'] = int(mqtt_data['total_layers'])
@@ -352,6 +353,8 @@ class AnycubicProject:
         self._progress = int(mqtt_data['progress'])
         self._remain_time = int(mqtt_data['remain_time'])
         self._print_status = int(print_status)
+        if paused is not None:
+            self._pause = int(paused)
 
     def update_slice_param(
         self,
@@ -1356,6 +1359,26 @@ class AnycubicPrinter:
                 self._latest_project.update_with_mqtt_data(
                     AnycubicPrintStatus.Complete,
                     data,
+                )
+            return
+        elif action == 'pause' and state in ['pausing', 'paused']:
+            data = payload['data']
+            self._is_printing = 2
+            if self._latest_project and project_id == self._latest_project.id:
+                self._latest_project.update_with_mqtt_data(
+                    AnycubicPrintStatus.Printing,
+                    data,
+                    paused=1,
+                )
+            return
+        elif action == 'resume' and state in ['resuming', 'resumed']:
+            data = payload['data']
+            self._is_printing = 2
+            if self._latest_project and project_id == self._latest_project.id:
+                self._latest_project.update_with_mqtt_data(
+                    AnycubicPrintStatus.Printing,
+                    data,
+                    paused=0 if state == 'resumed' else 1,
                 )
             return
         elif action == 'stop' and state in ['stoped', 'stopping']:
