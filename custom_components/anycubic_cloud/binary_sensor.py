@@ -9,7 +9,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import COORDINATOR, DOMAIN
+from .const import CONF_PRINTER_ID_LIST, COORDINATOR, DOMAIN
 from .coordinator import AnycubicCloudDataUpdateCoordinator
 from .entity import AnycubicCloudEntity
 
@@ -42,6 +42,9 @@ SENSOR_TYPES = (
         key="multi_color_box_auto_feed",
         translation_key="multi_color_box_auto_feed",
     ),
+)
+
+GLOBAL_SENSOR_TYPES = (
     BinarySensorEntityDescription(
         key="manual_mqtt_connection_enabled",
         translation_key="manual_mqtt_connection_enabled",
@@ -58,8 +61,12 @@ async def async_setup_entry(
         COORDINATOR
     ]
     sensors: list[AnycubicBinarySensor] = []
-    for description in SENSOR_TYPES:
-        sensors.append(AnycubicBinarySensor(coordinator, description))
+    for printer_id in entry.data[CONF_PRINTER_ID_LIST]:
+        for description in SENSOR_TYPES:
+            sensors.append(AnycubicBinarySensor(coordinator, printer_id, description))
+
+    for description in GLOBAL_SENSOR_TYPES:
+        sensors.append(AnycubicBinarySensor(coordinator, entry.data[CONF_PRINTER_ID_LIST][0], description))
 
     async_add_entities(sensors)
 
@@ -72,16 +79,17 @@ class AnycubicBinarySensor(AnycubicCloudEntity, BinarySensorEntity):
     def __init__(
         self,
         coordinator: AnycubicCloudDataUpdateCoordinator,
+        printer_id: int,
         entity_description: BinarySensorEntityDescription,
     ) -> None:
         """Initiate Anycubic Binary Sensor."""
-        super().__init__(coordinator)
+        super().__init__(coordinator, printer_id)
         self.entity_description = entity_description
-        self._attr_unique_id = f"{coordinator.data['machine_mac']}-{entity_description.key}"
+        self._attr_unique_id = f"{coordinator.data[self._printer_id]['machine_mac']}-{entity_description.key}"
 
     @property
     def is_on(self) -> bool:
         """Return true if the binary sensor is on."""
         return bool(
-            self.coordinator.data[self.entity_description.key]
+            self.coordinator.data[self._printer_id][self.entity_description.key]
         )

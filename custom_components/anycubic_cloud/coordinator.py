@@ -20,7 +20,7 @@ from .anycubic_api_mqtt import AnycubicMQTTAPI as AnycubicAPI
 from .const import (
     CONF_DRYING_PRESET_DURATION_,
     CONF_DRYING_PRESET_TEMPERATURE_,
-    CONF_PRINTER_ID,
+    CONF_PRINTER_ID_LIST,
     DEFAULT_SCAN_INTERVAL,
     FAILED_UPDATE_DELAY,
     MAX_FAILED_UPDATES,
@@ -39,7 +39,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         """Initialize AnycubicCloud."""
         self.entry = entry
         self.anycubic_api: AnycubicAPI | None = None
-        self.anycubic_printer = None
+        self._anycubic_printers = dict()
         self._last_state_update = None
         self._failed_updates = 0
         self._mqtt_task = None
@@ -52,71 +52,77 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             always_update=False,
         )
 
-    async def _async_update_data(self) -> dict[str, Any]:
-        """Fetch data from AnycubicCloud."""
+    def _any_printers_are_printing(self):
+        return any([
+            printer.is_printing == 2 for printer_id, printer in self._anycubic_printers.items()
+        ])
 
-        if not self._last_state_update or int(time.time()) > self._last_state_update + DEFAULT_SCAN_INTERVAL:
-            await self.get_anycubic_updates()
+    def _no_printers_are_printing(self):
+        return all([
+            printer.is_printing != 2 for printer_id, printer in self._anycubic_printers.items()
+        ])
 
-        latest_project = self.anycubic_printer.latest_project
+    def _build_printer_dict(self, printer) -> dict[str, Any]:
+
+        latest_project = printer.latest_project
 
         return {
-            "id": self.anycubic_printer.id,
-            "name": self.anycubic_printer.name,
-            "device_status": self.anycubic_printer.device_status,
-            "printer_online": self.anycubic_printer.printer_online,
-            "is_printing": self.anycubic_printer.is_printing,
-            "current_status": self.anycubic_printer.current_status,
-            "curr_nozzle_temp": self.anycubic_printer.parameter.curr_nozzle_temp,
-            "curr_hotbed_temp": self.anycubic_printer.parameter.curr_hotbed_temp,
-            "machine_mac": self.anycubic_printer.machine_mac,
-            "machine_name": self.anycubic_printer.machine_name,
-            "fw_version": self.anycubic_printer.fw_version.firmware_version,
+            "id": printer.id,
+            "name": printer.name,
+            "device_status": printer.device_status,
+            "printer_online": printer.printer_online,
+            "is_printing": printer.is_printing,
+            "current_status": printer.current_status,
+            "curr_nozzle_temp": printer.parameter.curr_nozzle_temp,
+            "curr_hotbed_temp": printer.parameter.curr_hotbed_temp,
+            "machine_mac": printer.machine_mac,
+            "machine_name": printer.machine_name,
+            "fw_version": printer.fw_version.firmware_version,
             "multi_color_box_fw_version": (
-                self.anycubic_printer.multi_color_box_fw_version[0].firmware_version
-                if self.anycubic_printer.multi_color_box_fw_version and len(
-                    self.anycubic_printer.multi_color_box_fw_version
+                printer.multi_color_box_fw_version[0].firmware_version
+                if printer.multi_color_box_fw_version and len(
+                    printer.multi_color_box_fw_version
                 ) > 0
                 else None
             ),
             "multi_color_box_spools": (
-                self.anycubic_printer.primary_multi_color_box.spool_info_object
-                if self.anycubic_printer.primary_multi_color_box
+                printer.primary_multi_color_box.spool_info_object
+                if printer.primary_multi_color_box
                 else None
             ),
             "multi_color_box_auto_feed": (
-                self.anycubic_printer.primary_multi_color_box.auto_feed
-                if self.anycubic_printer.primary_multi_color_box
+                printer.primary_multi_color_box.auto_feed
+                if printer.primary_multi_color_box
                 else None
             ),
             "multi_color_box_current_temperature": (
-                self.anycubic_printer.primary_multi_color_box.current_temperature
-                if self.anycubic_printer.primary_multi_color_box
+                printer.primary_multi_color_box.current_temperature
+                if printer.primary_multi_color_box
                 else None
             ),
             "dry_status_is_drying": (
-                self.anycubic_printer.primary_drying_status.is_drying
-                if self.anycubic_printer.primary_drying_status
+                printer.primary_drying_status.is_drying
+                if printer.primary_drying_status
                 else None
             ),
             "dry_status_raw_status_code": (
-                self.anycubic_printer.primary_drying_status.raw_status_code
-                if self.anycubic_printer.primary_drying_status
+                printer.primary_drying_status.raw_status_code
+                if printer.primary_drying_status
                 else None
             ),
             "dry_status_target_temperature": (
-                self.anycubic_printer.primary_drying_status.target_temperature
-                if self.anycubic_printer.primary_drying_status
+                printer.primary_drying_status.target_temperature
+                if printer.primary_drying_status
                 else None
             ),
             "dry_status_total_duration": (
-                self.anycubic_printer.primary_drying_status.total_duration
-                if self.anycubic_printer.primary_drying_status
+                printer.primary_drying_status.total_duration
+                if printer.primary_drying_status
                 else None
             ),
             "dry_status_remaining_time": (
-                self.anycubic_printer.primary_drying_status.remaining_time
-                if self.anycubic_printer.primary_drying_status
+                printer.primary_drying_status.remaining_time
+                if printer.primary_drying_status
                 else None
             ),
             "current_project_name": latest_project.name if latest_project else None,
@@ -141,6 +147,19 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "manual_mqtt_connection_enabled": self._mqtt_manually_connected,
         }
 
+    async def _async_update_data(self) -> dict[str, Any]:
+        """Fetch data from AnycubicCloud."""
+
+        if not self._last_state_update or int(time.time()) > self._last_state_update + DEFAULT_SCAN_INTERVAL:
+            await self.get_anycubic_updates()
+
+        data_dict = dict()
+
+        for printer_id, printer in self._anycubic_printers.items():
+            data_dict[printer_id] = self._build_printer_dict(printer)
+
+        return data_dict
+
     def _anycubic_mqtt_connection_should_start(self):
 
         return (
@@ -148,7 +167,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             not self.hass.is_stopping and
             self.hass.state is CoreState.running and
             (
-                self.anycubic_printer.is_printing == 2 or
+                self._any_printers_are_printing() or
                 self._mqtt_manually_connected
             )
         )
@@ -160,7 +179,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             (
                 self.hass.is_stopping or
                 (
-                    self.anycubic_printer.is_printing != 2 and
+                    self._no_printers_are_printing() and
                     not self._mqtt_manually_connected
                 )
             )
@@ -168,9 +187,11 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     async def _check_anycubic_mqtt_connection(self):
         if self._anycubic_mqtt_connection_should_start():
-            self.anycubic_api.mqtt_add_subscribed_printer(
-                self.anycubic_printer
-            )
+
+            for printer_id, printer in self._anycubic_printers.items():
+                self.anycubic_api.mqtt_add_subscribed_printer(
+                    printer
+                )
 
             if self._mqtt_task is None:
                 LOGGER.debug("Starting Anycubic MQTT Task.")
@@ -179,10 +200,12 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 )
 
         elif self._anycubic_mqtt_connection_should_stop():
-            await self.hass.async_add_executor_job(
-                self.anycubic_api.mqtt_unsubscribe_printer_status,
-                self.anycubic_printer,
-            )
+
+            for printer_id, printer in self._anycubic_printers.items():
+                await self.hass.async_add_executor_job(
+                    self.anycubic_api.mqtt_unsubscribe_printer_status,
+                    printer,
+                )
             await self.hass.async_add_executor_job(
                 self.anycubic_api.disconnect_mqtt,
             )
@@ -227,7 +250,9 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 # Create config
                 await store.async_save(self.anycubic_api.build_token_dict())
 
-            printer_status = await self.anycubic_api.printer_info_for_id(self.entry.data[CONF_PRINTER_ID])
+            first_printer_id = self.entry.data[CONF_PRINTER_ID_LIST][0]
+
+            printer_status = await self.anycubic_api.printer_info_for_id(first_printer_id)
 
             if printer_status is None:
                 raise ConfigEntryAuthFailed("Printer not found. Check config.")
@@ -236,10 +261,11 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             raise ConfigEntryAuthFailed(f"Authentication failed with unknown Error. Check credentials {error}")
 
     async def _setup_anycubic_printer_object(self):
-        try:
-            self.anycubic_printer = await self.anycubic_api.printer_info_for_id(self.entry.data[CONF_PRINTER_ID])
-        except Exception as error:
-            raise UpdateFailed from error
+        for printer_id in self.entry.data[CONF_PRINTER_ID_LIST]:
+            try:
+                self._anycubic_printers[int(printer_id)] = await self.anycubic_api.printer_info_for_id(printer_id)
+            except Exception as error:
+                raise UpdateFailed from error
 
     async def _check_or_save_tokens(self):
         await self.anycubic_api.check_api_tokens()
@@ -261,13 +287,15 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         if self.anycubic_api is None:
             await self._setup_anycubic_api_connection(start_up=start_up)
 
-        if self.anycubic_printer is None:
+        if len(self._anycubic_printers) < 1:
             await self._setup_anycubic_printer_object()
 
         try:
             await self._check_or_save_tokens()
 
-            await self.anycubic_printer.update_info_from_api(True)
+            for printer_id, printer in self._anycubic_printers.items():
+                await printer.update_info_from_api(True)
+
             self._failed_updates = 0
 
             await self._check_anycubic_mqtt_connection()
@@ -279,30 +307,29 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         return True
 
-    async def button_press_event(self, event_key):
-        if self.anycubic_printer is None:
-            return
+    async def button_press_event(self, printer_id, event_key):
+        printer = self._anycubic_printers.get(printer_id)
 
-        if event_key.startswith('drying_start_preset_'):
+        if printer and event_key.startswith('drying_start_preset_'):
             num = event_key[-1]
             preset_duration = self.entry.options.get(f"{CONF_DRYING_PRESET_DURATION_}{num}")
             preset_temperature = self.entry.options.get(f"{CONF_DRYING_PRESET_TEMPERATURE_}{num}")
             if preset_duration is None or preset_temperature is None:
                 return
 
-            await self.anycubic_printer.multi_color_box_drying_start(
+            await printer.multi_color_box_drying_start(
                 duration=preset_duration,
                 target_temp=preset_temperature,
             )
 
-        elif event_key == 'drying_stop':
-            await self.anycubic_printer.multi_color_box_drying_stop()
+        elif printer and event_key == 'drying_stop':
+            await printer.multi_color_box_drying_stop()
 
-        elif event_key == 'cancel_print':
-            await self.anycubic_printer.cancel_print()
+        elif printer and event_key == 'cancel_print':
+            await printer.cancel_print()
 
-        elif event_key == 'toggle_auto_feed':
-            await self.anycubic_printer.multi_color_box_toggle_auto_feed()
+        elif printer and event_key == 'toggle_auto_feed':
+            await printer.multi_color_box_toggle_auto_feed()
 
         elif event_key == 'toggle_mqtt_connection':
             self._mqtt_manually_connected = not self._mqtt_manually_connected

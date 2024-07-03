@@ -8,7 +8,7 @@ from aiohttp import CookieJar
 import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntry, ConfigFlow, OptionsFlow
-from homeassistant.const import CONF_NAME, CONF_PASSWORD, CONF_USERNAME
+from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import callback
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
@@ -19,8 +19,7 @@ from .anycubic_api import AnycubicAPI
 from .const import (
     CONF_DRYING_PRESET_DURATION_,
     CONF_DRYING_PRESET_TEMPERATURE_,
-    CONF_PRINTER_ID,
-    CONF_PRINTER_NAME,
+    CONF_PRINTER_ID_LIST,
     DOMAIN,
     LOGGER,
     MAX_DRYING_PRESETS,
@@ -193,32 +192,31 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
                 LOGGER.error("No printers found. Check config.")
                 errors = {"base": "invalid_printer"}
 
-            printer_name_list = list([x.name for x in printer_list])
-            printer_name_map = {x.name: x.id for x in printer_list}
+            printer_id_map = {f"{x.id}": x.name for x in printer_list}
 
         except Exception as error:
             LOGGER.error("Authentication failed with unknown Error. Check credentials %s", error)
             errors = {"base": "cannot_connect"}
 
         if user_input and not errors:
+            printer_id_list = list([int(x) for x in user_input[CONF_PRINTER_ID_LIST]])
 
-            name = user_input[CONF_PRINTER_NAME]
-            printer = printer_name_map[user_input[CONF_PRINTER_NAME]]
+            for printer_id in printer_id_list:
+                try:
+                    printer_status = await ac.printer_info_for_id(printer_id)
 
-            try:
+                    if printer_status is None:
+                        LOGGER.error("Printer not found. Check config.")
+                        errors = {"base": "invalid_printer"}
+                        break
 
-                printer_status = await ac.printer_info_for_id(printer)
-
-                if printer_status is None:
-                    LOGGER.error("Printer not found. Check config.")
-                    errors = {"base": "invalid_printer"}
-
-            except Exception as error:
-                LOGGER.error("Authentication failed with unknown Error. Check credentials %s", error)
-                errors = {"base": "cannot_connect"}
+                except Exception as error:
+                    LOGGER.error("Authentication failed with unknown Error. Check credentials %s", error)
+                    errors = {"base": "cannot_connect"}
+                    break
 
             if not errors:
-                existing_entry = await self.async_set_unique_id(f"{self._username}-{printer}")
+                existing_entry = await self.async_set_unique_id(f"{self._username}")
                 if existing_entry and self.entry:
                     self.hass.config_entries.async_update_entry(
                         existing_entry,
@@ -226,8 +224,7 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
                             **self.entry.data,
                             CONF_USERNAME: self._username,
                             CONF_PASSWORD: self._password,
-                            CONF_NAME: name,
-                            CONF_PRINTER_ID: printer,
+                            CONF_PRINTER_ID_LIST: printer_id_list,
                         },
                     )
                     await self.hass.config_entries.async_reload(existing_entry.entry_id)
@@ -238,8 +235,7 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
                         data={
                             CONF_USERNAME: self._username,
                             CONF_PASSWORD: self._password,
-                            CONF_NAME: name,
-                            CONF_PRINTER_ID: printer,
+                            CONF_PRINTER_ID_LIST: printer_id_list,
                         },
                     )
 
@@ -247,7 +243,7 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
             step_id="printer",
             data_schema=vol.Schema(
                 {
-                    vol.Required(CONF_PRINTER_NAME): vol.In(printer_name_list),
+                    vol.Required(CONF_PRINTER_ID_LIST): cv.multi_select(printer_id_map),
                 },
             ),
         )

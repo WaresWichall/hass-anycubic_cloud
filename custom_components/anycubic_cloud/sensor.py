@@ -18,7 +18,12 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import dt as dt_util
 
-from .const import COORDINATOR, DOMAIN, UNIT_LAYERS
+from .const import (
+    CONF_PRINTER_ID_LIST,
+    COORDINATOR,
+    DOMAIN,
+    UNIT_LAYERS,
+)
 from .coordinator import AnycubicCloudDataUpdateCoordinator
 from .entity import AnycubicCloudEntity
 
@@ -159,8 +164,9 @@ async def async_setup_entry(
     ]
     sensors: list[AnycubicSensor] = []
 
-    for description in SENSOR_TYPES:
-        sensors.append(AnycubicSensor(coordinator, description))
+    for printer_id in entry.data[CONF_PRINTER_ID_LIST]:
+        for description in SENSOR_TYPES:
+            sensors.append(AnycubicSensor(coordinator, printer_id, description))
 
     async_add_entities(sensors)
 
@@ -174,12 +180,13 @@ class AnycubicSensor(AnycubicCloudEntity, SensorEntity):
     def __init__(
         self,
         coordinator: AnycubicCloudDataUpdateCoordinator,
+        printer_id: int,
         entity_description: SensorEntityDescription,
     ) -> None:
         """Initiate Anycubic Sensor."""
-        super().__init__(coordinator)
+        super().__init__(coordinator, printer_id)
         self.entity_description = entity_description
-        self._attr_unique_id = f"{coordinator.data['machine_mac']}-{entity_description.key}"
+        self._attr_unique_id = f"{coordinator.data[self._printer_id]['machine_mac']}-{entity_description.key}"
 
         if self.entity_description.native_unit_of_measurement == UnitOfTemperature.CELSIUS:
             self._attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
@@ -187,7 +194,7 @@ class AnycubicSensor(AnycubicCloudEntity, SensorEntity):
     @property
     def state(self) -> float:
         """Return the ...."""
-        state = self.coordinator.data[self.entity_description.key]
+        state = self.coordinator.data[self._printer_id][self.entity_description.key]
 
         if self.entity_description.native_unit_of_measurement == UnitOfTemperature.CELSIUS:
             return float(state)
@@ -213,7 +220,7 @@ class AnycubicSensor(AnycubicCloudEntity, SensorEntity):
         """Return state attributes."""
         if self.entity_description.key == 'multi_color_box_spools':
             return {
-                "spool_info": self.coordinator.data[self.entity_description.key]
+                "spool_info": self.coordinator.data[self._printer_id][self.entity_description.key]
             }
         else:
             return super().state_attributes

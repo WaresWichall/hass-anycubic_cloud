@@ -14,6 +14,7 @@ DOMAIN = "anycubic_cloud"
 COORDINATOR = "coordinator"
 
 CONF_PRINTER_ID = "printer_id"
+CONF_PRINTER_ID_LIST = "printer_ids"
 CONF_PRINTER_NAME = "printer_name"
 CONF_DRYING_PRESET_DURATION_ = "drying_preset_duration_"
 CONF_DRYING_PRESET_TEMPERATURE_ = "drying_preset_temperature_"
