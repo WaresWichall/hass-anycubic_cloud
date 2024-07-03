@@ -336,7 +336,7 @@ class AnycubicProject:
         self._target_nozzle_temp = data.get('temp', {}).get('target_nozzle_temp')
         self._target_hotbed_temp = data.get('temp', {}).get('target_hotbed_temp')
 
-    def update_temps(self, new_target_hotbed_temp, new_target_nozzle_temp):
+    def update_target_temps(self, new_target_hotbed_temp, new_target_nozzle_temp):
         self._target_hotbed_temp = int(new_target_hotbed_temp)
         self._target_nozzle_temp = int(new_target_nozzle_temp)
 
@@ -619,6 +619,16 @@ class AnycubicMachineExternalShelves:
             status_type=data['status_type'],
             current_status=data['current_status'],
         )
+
+    def update_with_mqtt_data(self, data):
+        if data is None:
+            return None
+
+        self._type = data['type']
+        self._color = data['color']
+        self._loaded = data['loaded']
+        self._status_type = data['status_type']
+        self._current_status = data['current_status']
 
     def __repr__(self):
         return (
@@ -954,7 +964,7 @@ class AnycubicMachineParameter:
             curr_nozzle_temp=data['curr_nozzle_temp'],
         )
 
-    def update_temps(self, new_hotbed_temp, new_nozzle_temp):
+    def update_current_temps(self, new_hotbed_temp, new_nozzle_temp):
         self._curr_hotbed_temp = int(new_hotbed_temp)
         self._curr_nozzle_temp = int(new_nozzle_temp)
 
@@ -1139,6 +1149,8 @@ class AnycubicPrinter:
 
         self._latest_project: AnycubicProject | None = None
         self._fan_speed = 0
+        self._print_speed_pct = 0
+        self._print_speed_mode = 0
         self._local_file_list = None
 
     def _set_local_file_list(self, local_file_list):
@@ -1310,12 +1322,12 @@ class AnycubicPrinter:
     def _process_mqtt_update_temperature(self, action, state, payload):
         if action == 'auto' and state == 'done':
             data = payload['data']
-            self._parameter.update_temps(
+            self._parameter.update_current_temps(
                 data['curr_hotbed_temp'],
                 data['curr_nozzle_temp'],
             )
             if self._latest_project:
-                self._latest_project.update_temps(
+                self._latest_project.update_target_temps(
                     data['target_hotbed_temp'],
                     data['target_nozzle_temp'],
                 )
@@ -1397,15 +1409,19 @@ class AnycubicPrinter:
                     data,
                 )
             return
-        elif action == 'update' and state == 'updated':
+        elif action in ['start', 'update'] and state == 'updated':
             data = payload['data']
-            self._parameter.update_temps(
+            self._parameter.update_current_temps(
                 data['curr_hotbed_temp'],
                 data['curr_nozzle_temp'],
             )
+            self._fan_speed = int(data['settings']['fan_speed_pct'])
+            self._print_speed_pct = int(data['settings']['print_speed_pct'])
+            self._print_speed_mode = int(data['settings']['print_speed_mode'])
             if self._latest_project and project_id == self._latest_project.id:
-                self._latest_project.update_settings(
-                    data['settings'],
+                self._latest_project.update_target_temps(
+                    data['settings']['target_hotbed_temp'],
+                    data['settings']['target_nozzle_temp'],
                 )
             return
         else:
@@ -1435,7 +1451,7 @@ class AnycubicPrinter:
 
             self._multi_color_box[box_id].set_slot_loaded(loaded_slot)
             return
-        elif action == 'autoUpdateDryStatus' and state == 'success':
+        elif action in ['autoUpdateDryStatus', 'setDry'] and state == 'success':
             data = payload['data']['multi_color_box']
             for box in data:
                 box_id = int(box['id'])
@@ -1456,6 +1472,14 @@ class AnycubicPrinter:
             return
         else:
             raise Exception('Unknown multiColorBox data.')
+
+    def _process_mqtt_update_shelves(self, action, state, payload):
+        if action == 'reportInfo' and state == 'success':
+            data = payload['data']
+            self.external_shelves.update_with_mqtt_data(data)
+            return
+        else:
+            raise Exception('Unknown shelves data.')
 
     def _process_mqtt_update_file(self, action, state, payload):
         if action == 'listLocal' and state == 'done':
@@ -1493,6 +1517,9 @@ class AnycubicPrinter:
 
         elif msg_type == 'multiColorBox':
             return self._process_mqtt_update_multicolorbox(action, state, payload)
+
+        elif msg_type == 'extfilbox':
+            return self._process_mqtt_update_shelves(action, state, payload)
 
         elif msg_type == 'file':
             return self._process_mqtt_update_file(action, state, payload)
