@@ -1,3 +1,4 @@
+import asyncio
 import bcrypt
 import hashlib
 import json
@@ -39,11 +40,24 @@ class AnycubicMQTTAPI(AnycubicAPI):
         self._api_user_id = None
         self._mqtt_client = None
         self._mqtt_subscribed_printers = dict()
+        self._mqtt_disconnected: asyncio.Event | None = None
         super().__init__(*args, **kwargs)
 
     @property
     def mqtt_is_started(self):
         return self._mqtt_client is not None
+
+    async def mqtt_wait_for_disconnect(self):
+        if self._mqtt_disconnected is None:
+            return True
+
+        try:
+            async with asyncio.timeout(10):
+                await self._mqtt_disconnected.wait()
+            self._mqtt_disconnected = None
+            return True
+        except (asyncio.TimeoutError, asyncio.CancelledError):
+            return False
 
     def _md5_hex_of_string(self, input_string):
         return hashlib.md5(input_string.encode('utf-8')).hexdigest().lower()
@@ -161,6 +175,8 @@ class AnycubicMQTTAPI(AnycubicAPI):
         if rc == 0:
             self._mqtt_client = None
             self._debug_log("Anycubic MQTT Disconnected.")
+            if self._mqtt_disconnected is not None:
+                self._mqtt_disconnected.set()
         else:
             self._debug_log("Anycubic MQTT unintentionally disconnected, will reconnect.")
 
@@ -186,6 +202,8 @@ class AnycubicMQTTAPI(AnycubicAPI):
             self._debug_log(f"Anycubic MQTT Failed to connect, return code {rc}")
 
     def connect_mqtt(self):
+        self._mqtt_disconnected = asyncio.Event()
+
         mqtt_username, mqtt_password = self._build_mqtt_login_info()
 
         self._debug_log("Anycubic MQTT Connecting.")
@@ -219,6 +237,10 @@ class AnycubicMQTTAPI(AnycubicAPI):
 
         self._mqtt_client.loop_forever()
         self._mqtt_client = None
+        if self._mqtt_disconnected is not None:
+            self._mqtt_disconnected.set()
+        self._mqtt_disconnected = None
+        self._debug_log("Anycubic MQTT Client removed.")
 
     def disconnect_mqtt(self):
         self._debug_log("Anycubic MQTT Disconnecting.")

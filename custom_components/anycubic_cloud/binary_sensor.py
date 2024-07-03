@@ -42,6 +42,10 @@ SENSOR_TYPES = (
         key="multi_color_box_auto_feed",
         translation_key="multi_color_box_auto_feed",
     ),
+    BinarySensorEntityDescription(
+        key="manual_mqtt_connection_enabled",
+        translation_key="manual_mqtt_connection_enabled",
+    ),
 )
 
 

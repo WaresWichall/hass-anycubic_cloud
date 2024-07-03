@@ -68,6 +68,9 @@
       },
       "multi_color_box_auto_feed": {
         "name": "Auto Switch Filament"
+      },
+      "manual_mqtt_connection_enabled": {
+        "name": "Manual MQTT Connection Enabled"
       }
     },
     "button": {
@@ -91,6 +94,9 @@
       },
       "toggle_auto_feed": {
         "name": "Toggle Auto Feed"
+      },
+      "toggle_mqtt_connection": {
+        "name": "Toggle Manual MQTT Connection"
       }
     },
     "sensor": {

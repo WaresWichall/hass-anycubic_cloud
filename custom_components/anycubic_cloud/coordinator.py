@@ -43,6 +43,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._last_state_update = None
         self._failed_updates = 0
         self._mqtt_task = None
+        self._mqtt_manually_connected = False
         super().__init__(
             hass,
             LOGGER,
@@ -137,20 +138,32 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "target_nozzle_temp": latest_project.target_nozzle_temp if latest_project else None,
             "target_hotbed_temp": latest_project.target_hotbed_temp if latest_project else None,
             "raw_print_status": latest_project.raw_print_status if latest_project else None,
+            "manual_mqtt_connection_enabled": self._mqtt_manually_connected,
         }
 
     def _anycubic_mqtt_connection_should_start(self):
+
         return (
             not self.anycubic_api.mqtt_is_started and
-            self.anycubic_printer.is_printing == 2 and
             not self.hass.is_stopping and
-            self.hass.state is CoreState.running
+            self.hass.state is CoreState.running and
+            (
+                self.anycubic_printer.is_printing == 2 or
+                self._mqtt_manually_connected
+            )
         )
 
     def _anycubic_mqtt_connection_should_stop(self):
+
         return (
             self.anycubic_api.mqtt_is_started and
-            (self.anycubic_printer.is_printing != 2 or self.hass.is_stopping)
+            (
+                self.hass.is_stopping or
+                (
+                    self.anycubic_printer.is_printing != 2 and
+                    not self._mqtt_manually_connected
+                )
+            )
         )
 
     async def _check_anycubic_mqtt_connection(self):
@@ -174,7 +187,9 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 self.anycubic_api.disconnect_mqtt,
             )
 
-            if self._mqtt_task is not None:
+            await self.anycubic_api.mqtt_wait_for_disconnect()
+
+            if self._mqtt_task is not None and not self._mqtt_task.done():
                 self._mqtt_task.cancel()
 
             self._mqtt_task = None
@@ -288,6 +303,9 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         elif event_key == 'toggle_auto_feed':
             await self.anycubic_printer.multi_color_box_toggle_auto_feed()
+
+        elif event_key == 'toggle_mqtt_connection':
+            self._mqtt_manually_connected = not self._mqtt_manually_connected
 
         else:
             return

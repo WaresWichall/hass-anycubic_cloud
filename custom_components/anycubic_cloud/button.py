@@ -41,6 +41,10 @@ BUTTON_TYPES = (
         key="toggle_auto_feed",
         translation_key="toggle_auto_feed",
     ),
+    ButtonEntityDescription(
+        key="toggle_mqtt_connection",
+        translation_key="toggle_mqtt_connection",
+    ),
 )
 
 

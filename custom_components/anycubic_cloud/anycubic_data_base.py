@@ -336,7 +336,11 @@ class AnycubicProject:
         self._target_nozzle_temp = data.get('temp', {}).get('target_nozzle_temp')
         self._target_hotbed_temp = data.get('temp', {}).get('target_hotbed_temp')
 
-    def update_target_temps(self, new_target_hotbed_temp, new_target_nozzle_temp):
+    def update_target_temps(
+        self,
+        new_target_hotbed_temp,
+        new_target_nozzle_temp,
+    ):
         self._target_hotbed_temp = int(new_target_hotbed_temp)
         self._target_nozzle_temp = int(new_target_nozzle_temp)
 
@@ -1292,6 +1296,69 @@ class AnycubicPrinter:
         self._external_shelves = AnycubicMachineExternalShelves.from_json(data['external_shelves'])
         self._set_multi_color_box(data['multi_color_box'])
 
+    def _update_latest_project_with_mqtt_data(
+        self,
+        incoming_project_id,
+        print_status: AnycubicPrintStatus,
+        mqtt_data,
+        paused=None,
+    ):
+        try:
+            project_id = int(incoming_project_id)
+        except Exception:
+            project_id = -1
+
+        if self._latest_project and (project_id < 0 or project_id == self._latest_project.id):
+            self._latest_project.update_with_mqtt_data(
+                print_status,
+                mqtt_data,
+                paused=paused,
+            )
+
+            return True
+
+        return False
+
+    def _update_latest_project_slice_param(
+        self,
+        incoming_project_id,
+        new_slice_param,
+    ):
+        try:
+            project_id = int(incoming_project_id)
+        except Exception:
+            project_id = -1
+
+        if self._latest_project and (project_id < 0 or project_id == self._latest_project.id):
+            self._latest_project.update_slice_param(
+                new_slice_param,
+            )
+
+            return True
+
+        return False
+
+    def _update_latest_project_target_temps(
+        self,
+        incoming_project_id,
+        new_target_hotbed_temp,
+        new_target_nozzle_temp,
+    ):
+        try:
+            project_id = int(incoming_project_id)
+        except Exception:
+            project_id = -1
+
+        if self._latest_project and (project_id < 0 or project_id == self._latest_project.id):
+            self._latest_project.update_target_temps(
+                new_target_hotbed_temp,
+                new_target_nozzle_temp,
+            )
+
+            return True
+
+        return False
+
     def _process_mqtt_update_lastwill(self, action, state, payload):
         if action == 'onlineReport' and state == 'online':
             self._device_status = 1
@@ -1352,69 +1419,69 @@ class AnycubicPrinter:
             raise Exception('Unknown fan data.')
 
     def _process_mqtt_update_print(self, action, state, payload):
-        project_id = int(payload.get('data', {}).get('taskid', -1))
+        project_id = payload.get('data', {}).get('taskid', -1)
         if action == 'start' and state == 'printing':
             data = payload['data']
             self._is_printing = 2
-            if self._latest_project and project_id == self._latest_project.id:
-                self._latest_project.update_with_mqtt_data(
-                    AnycubicPrintStatus.Printing,
-                    data,
-                )
+            self._update_latest_project_with_mqtt_data(
+                project_id,
+                AnycubicPrintStatus.Printing,
+                data,
+            )
             return
         elif action == 'start' and state == 'preheating':
             data = payload['data']
             self._is_printing = 2
-            if self._latest_project and project_id == self._latest_project.id:
-                self._latest_project.update_with_mqtt_data(
-                    AnycubicPrintStatus.Preheating,
-                    data,
-                )
+            self._update_latest_project_with_mqtt_data(
+                project_id,
+                AnycubicPrintStatus.Preheating,
+                data,
+            )
             return
         elif action == 'start' and state == 'finished':
             data = payload['data']
             self._is_printing = 1
-            if self._latest_project and project_id == self._latest_project.id:
-                self._latest_project.update_with_mqtt_data(
-                    AnycubicPrintStatus.Complete,
-                    data,
-                )
+            self._update_latest_project_with_mqtt_data(
+                project_id,
+                AnycubicPrintStatus.Complete,
+                data,
+            )
             return
         elif action == 'pause' and state in ['pausing', 'paused']:
             data = payload['data']
             self._is_printing = 2
-            if self._latest_project and project_id == self._latest_project.id:
-                self._latest_project.update_with_mqtt_data(
-                    AnycubicPrintStatus.Printing,
-                    data,
-                    paused=1,
-                )
+            self._update_latest_project_with_mqtt_data(
+                project_id,
+                AnycubicPrintStatus.Printing,
+                data,
+                paused=1,
+            )
             return
         elif action == 'resume' and state in ['resuming', 'resumed']:
             data = payload['data']
             self._is_printing = 2
-            if self._latest_project and project_id == self._latest_project.id:
-                self._latest_project.update_with_mqtt_data(
-                    AnycubicPrintStatus.Printing,
-                    data,
-                    paused=0 if state == 'resumed' else 1,
-                )
+            self._update_latest_project_with_mqtt_data(
+                project_id,
+                AnycubicPrintStatus.Printing,
+                data,
+                paused=0 if state == 'resumed' else 1,
+            )
             return
         elif action == 'stop' and state in ['stoped', 'stopping']:
             data = payload['data']
             self._is_printing = 1
-            if self._latest_project and project_id == self._latest_project.id:
-                self._latest_project.update_with_mqtt_data(
-                    AnycubicPrintStatus.Cancelled,
-                    data,
-                )
+            self._update_latest_project_with_mqtt_data(
+                project_id,
+                AnycubicPrintStatus.Cancelled,
+                data,
+            )
             return
         elif action == 'getSliceParam' and state == 'done':
             data = payload['data']['slice_param']
-            if self._latest_project and project_id == self._latest_project.id:
-                self._latest_project.update_slice_param(
-                    data,
-                )
+            self._update_latest_project_slice_param(
+                project_id,
+                data,
+            )
             return
         elif action in ['start', 'update'] and state == 'updated':
             data = payload['data']
@@ -1425,11 +1492,11 @@ class AnycubicPrinter:
             self._fan_speed = int(data['settings']['fan_speed_pct'])
             self._print_speed_pct = int(data['settings']['print_speed_pct'])
             self._print_speed_mode = int(data['settings']['print_speed_mode'])
-            if self._latest_project and project_id == self._latest_project.id:
-                self._latest_project.update_target_temps(
-                    data['settings']['target_hotbed_temp'],
-                    data['settings']['target_nozzle_temp'],
-                )
+            self._update_latest_project_target_temps(
+                project_id,
+                data['settings']['target_hotbed_temp'],
+                data['settings']['target_nozzle_temp'],
+            )
             return
         else:
             raise Exception('Unknown print status data.')
