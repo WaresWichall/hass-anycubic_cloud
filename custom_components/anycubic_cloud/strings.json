@@ -160,6 +160,9 @@
       "multi_color_box_spools": {
         "name": "Multi-Color Box Spools"
       },
+      "multi_color_box_current_temperature": {
+        "name": "Multi-Color Box Current Temperature"
+      },
       "dry_status_raw_status_code": {
         "name": "Drying Status Code"
       },

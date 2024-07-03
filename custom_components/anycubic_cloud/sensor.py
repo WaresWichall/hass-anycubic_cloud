@@ -121,6 +121,11 @@ SENSOR_TYPES = (
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
     ),
     SensorEntityDescription(
+        key="multi_color_box_current_temperature",
+        translation_key="multi_color_box_current_temperature",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+    ),
+    SensorEntityDescription(
         key="multi_color_box_spools",
         translation_key="multi_color_box_spools",
     ),
@@ -131,6 +136,7 @@ SENSOR_TYPES = (
     SensorEntityDescription(
         key="dry_status_target_temperature",
         translation_key="dry_status_target_temperature",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
     ),
     SensorEntityDescription(
         key="dry_status_total_duration",

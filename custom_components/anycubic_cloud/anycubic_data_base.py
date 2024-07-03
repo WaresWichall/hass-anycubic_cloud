@@ -802,7 +802,7 @@ class AnycubicMultiColorBox:
         self._auto_feed = int(auto_feed)
         self._loaded_slot = int(loaded_slot)
         self._feed_status = AnycubicFeedStatus.from_json(feed_status)
-        self._temp = int(temp)
+        self.set_current_temperature(temp)
         self.set_drying_status(drying_status)
         self._curr_nozzle_temp = int(curr_nozzle_temp) if curr_nozzle_temp is not None else None
         self._target_nozzle_temp = int(target_nozzle_temp) if target_nozzle_temp is not None else None
@@ -816,6 +816,9 @@ class AnycubicMultiColorBox:
 
     def set_slot_loaded(self, slot_num: int):
         self._loaded_slot = slot_num
+
+    def set_current_temperature(self, temp: int):
+        self._temp = int(temp)
 
     def update_slots_with_mqtt_data(self, slot_list):
         if slot_list is None:
@@ -843,6 +846,10 @@ class AnycubicMultiColorBox:
             target_nozzle_temp=data.get('target_nozzle_temp'),
             slots=data['slots'],
         )
+
+    @property
+    def current_temperature(self):
+        return self._temp
 
     @property
     def auto_feed(self):
@@ -1455,10 +1462,10 @@ class AnycubicPrinter:
             data = payload['data']['multi_color_box']
             for box in data:
                 box_id = int(box['id'])
-                # current_dry_temp = int(box['temp'])
                 if self._multi_color_box is None or len(self._multi_color_box) < box_id + 1:
                     continue
 
+                self._multi_color_box[box_id].set_current_temperature(box['temp'])
                 self._multi_color_box[box_id].set_drying_status(box['drying_status'])
             return
         elif action == 'setAutoFeed' and state == 'done':
@@ -1709,7 +1716,7 @@ class AnycubicPrinter:
         return self._multi_color_box[0] if self._multi_color_box is not None else None
 
     @property
-    def drying_status(self):
+    def primary_drying_status(self):
         if self.primary_multi_color_box is None:
             return None
 
@@ -1806,5 +1813,5 @@ class AnycubicPrinter:
                 f"multi_color_box_fw_version=\n{self.multi_color_box_fw_version},\n "
                 f"external_shelves=\n{self.external_shelves},\n "
                 f"multi_color_box=\n{self.multi_color_box},\n "
-                f"drying_status=\n{self.drying_status},\n "
+                f"primary_drying_status=\n{self.primary_drying_status},\n "
                 f")")
