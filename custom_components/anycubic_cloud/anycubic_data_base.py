@@ -1946,6 +1946,153 @@ class AnycubicPrinter:
             box_id=box_id,
         )
 
+    async def multi_color_box_set_slot(
+        self,
+        slot_index: int,
+        slot_color: AnycubicMaterialColor | None = None,
+        slot_material_type: str = "PLA",
+        slot_color_red: int | None = None,
+        slot_color_green: int | None = None,
+        slot_color_blue: int | None = None,
+        box_id=0,
+    ):
+        return await self._api_parent.multi_color_box_set_slot(
+            printer=self,
+            slot_index=slot_index,
+            slot_color=slot_color,
+            slot_material_type=slot_material_type,
+            slot_color_red=slot_color_red,
+            slot_color_green=slot_color_green,
+            slot_color_blue=slot_color_blue,
+            box_id=box_id,
+        )
+
+    async def multi_color_box_set_pla_slot(
+        self,
+        slot_index: int,
+        slot_color: AnycubicMaterialColor,
+        box_id=0,
+    ):
+
+        return await self._api_parent.multi_color_box_set_pla_slot(
+            printer=self,
+            slot_index=slot_index,
+            slot_color=slot_color,
+            box_id=box_id,
+        )
+
+    async def multi_color_box_set_petg_slot(
+        self,
+        slot_index: int,
+        slot_color: AnycubicMaterialColor,
+        box_id=0,
+    ):
+
+        return await self._api_parent.multi_color_box_set_petg_slot(
+            printer=self,
+            slot_index=slot_index,
+            slot_color=slot_color,
+            box_id=box_id,
+        )
+
+    async def multi_color_box_set_abs_slot(
+        self,
+        slot_index: int,
+        slot_color: AnycubicMaterialColor,
+        box_id=0,
+    ):
+
+        return await self._api_parent.multi_color_box_set_abs_slot(
+            printer=self,
+            slot_index=slot_index,
+            slot_color=slot_color,
+            box_id=box_id,
+        )
+
+    async def multi_color_box_set_pacf_slot(
+        self,
+        slot_index: int,
+        slot_color: AnycubicMaterialColor,
+        box_id=0,
+    ):
+
+        return await self._api_parent.multi_color_box_set_pacf_slot(
+            printer=self,
+            slot_index=slot_index,
+            slot_color=slot_color,
+            box_id=box_id,
+        )
+
+    async def multi_color_box_set_pc_slot(
+        self,
+        slot_index: int,
+        slot_color: AnycubicMaterialColor,
+        box_id=0,
+    ):
+
+        return await self._api_parent.multi_color_box_set_pc_slot(
+            printer=self,
+            slot_index=slot_index,
+            slot_color=slot_color,
+            box_id=box_id,
+        )
+
+    async def multi_color_box_set_asa_slot(
+        self,
+        slot_index: int,
+        slot_color: AnycubicMaterialColor,
+        box_id=0,
+    ):
+
+        return await self._api_parent.multi_color_box_set_asa_slot(
+            printer=self,
+            slot_index=slot_index,
+            slot_color=slot_color,
+            box_id=box_id,
+        )
+
+    async def multi_color_box_set_hips_slot(
+        self,
+        slot_index: int,
+        slot_color: AnycubicMaterialColor,
+        box_id=0,
+    ):
+
+        return await self._api_parent.multi_color_box_set_hips_slot(
+            printer=self,
+            slot_index=slot_index,
+            slot_color=slot_color,
+            box_id=box_id,
+        )
+
+    async def multi_color_box_set_pa_slot(
+        self,
+        slot_index: int,
+        slot_color: AnycubicMaterialColor,
+        box_id=0,
+    ):
+
+        return await self._api_parent.multi_color_box_set_pa_slot(
+            printer=self,
+            slot_index=slot_index,
+            slot_color=slot_color,
+            box_id=box_id,
+        )
+
+    async def multi_color_box_set_pla_se_slot(
+        self,
+        slot_index: int,
+        slot_color: AnycubicMaterialColor,
+        box_id=0,
+    ):
+
+        return await self._api_parent.multi_color_box_set_pla_se_slot(
+            printer=self,
+            slot_index=slot_index,
+            slot_color=slot_color,
+            box_id=box_id,
+        )
+
     async def cancel_print(
         self,
         project=None,
