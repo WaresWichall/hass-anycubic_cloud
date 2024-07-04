@@ -22,12 +22,12 @@ from .const import (
 from .coordinator import AnycubicCloudDataUpdateCoordinator
 from .entity import AnycubicCloudEntity
 
-BUTTON_PRESET_TYPES = (
+BUTTON_PRESET_TYPES = list([
     ButtonEntityDescription(
         key=f"drying_start_preset_{x + 1}",
         translation_key=f"drying_start_preset_{x + 1}",
     ) for x in range(MAX_DRYING_PRESETS)
-)
+])
 
 BUTTON_TYPES = (
     ButtonEntityDescription(
@@ -71,7 +71,7 @@ async def async_setup_entry(
             num = description.key[-1]
             preset_duration = entry.options.get(f"{CONF_DRYING_PRESET_DURATION_}{num}")
             preset_temperature = entry.options.get(f"{CONF_DRYING_PRESET_TEMPERATURE_}{num}")
-            if preset_duration and preset_temperature:
+            if preset_duration and preset_temperature and int(preset_temperature) > 0:
                 entity_list.append(AnycubicCloudButton(coordinator, printer_id, description))
 
         for description in BUTTON_TYPES:

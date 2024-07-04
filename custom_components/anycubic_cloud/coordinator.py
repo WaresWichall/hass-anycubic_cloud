@@ -98,7 +98,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "multi_color_box_current_temperature": (
                 printer.primary_multi_color_box.current_temperature
                 if printer.primary_multi_color_box
-                else None
+                else 0
             ),
             "dry_status_is_drying": (
                 printer.primary_drying_status.is_drying
@@ -113,7 +113,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "dry_status_target_temperature": (
                 printer.primary_drying_status.target_temperature
                 if printer.primary_drying_status
-                else None
+                else 0
             ),
             "dry_status_total_duration": (
                 printer.primary_drying_status.total_duration
@@ -337,5 +337,5 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         else:
             return
 
-        self._last_state_update = None
+        self._last_state_update = int(time.time()) - DEFAULT_SCAN_INTERVAL + 10
         await self.async_refresh()

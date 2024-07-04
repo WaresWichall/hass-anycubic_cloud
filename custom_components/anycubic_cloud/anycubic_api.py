@@ -940,11 +940,19 @@ class AnycubicAPI:
         data = resp['data']
         self._debug_log(f"printer_status output:\n{json.dumps(data)}")
 
-    async def printer_info_for_id(self, printer_id, update_object=None):
+    async def printer_info_for_id(
+        self,
+        printer_id,
+        update_object=None,
+        raw_data=False,
+    ):
         query = {
             'id': str(printer_id)
         }
         resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.printer_info, query=query)
+
+        if raw_data:
+            return resp
 
         if update_object is not None:
             update_object.update_from_info_json(resp['data'])
