@@ -28,6 +28,39 @@ from .coordinator import AnycubicCloudDataUpdateCoordinator
 from .entity import AnycubicCloudEntity
 
 
+MULTI_COLOR_BOX_SENSOR_TYPES = (
+    SensorEntityDescription(
+        key="multi_color_box_fw_version",
+        translation_key="multi_color_box_fw_version",
+    ),
+    SensorEntityDescription(
+        key="multi_color_box_current_temperature",
+        translation_key="multi_color_box_current_temperature",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+    ),
+    SensorEntityDescription(
+        key="multi_color_box_spools",
+        translation_key="multi_color_box_spools",
+    ),
+    SensorEntityDescription(
+        key="dry_status_raw_status_code",
+        translation_key="dry_status_raw_status_code",
+    ),
+    SensorEntityDescription(
+        key="dry_status_target_temperature",
+        translation_key="dry_status_target_temperature",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+    ),
+    SensorEntityDescription(
+        key="dry_status_total_duration",
+        translation_key="dry_status_total_duration",
+    ),
+    SensorEntityDescription(
+        key="dry_status_remaining_time",
+        translation_key="dry_status_remaining_time",
+    ),
+)
+
 SENSOR_TYPES = (
     SensorEntityDescription(
         key="device_status",
@@ -54,10 +87,6 @@ SENSOR_TYPES = (
     SensorEntityDescription(
         key="fw_version",
         translation_key="fw_version",
-    ),
-    SensorEntityDescription(
-        key="multi_color_box_fw_version",
-        translation_key="multi_color_box_fw_version",
     ),
     SensorEntityDescription(
         key="current_project_name",
@@ -125,32 +154,6 @@ SENSOR_TYPES = (
         translation_key="target_hotbed_temp",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
     ),
-    SensorEntityDescription(
-        key="multi_color_box_current_temperature",
-        translation_key="multi_color_box_current_temperature",
-        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
-    ),
-    SensorEntityDescription(
-        key="multi_color_box_spools",
-        translation_key="multi_color_box_spools",
-    ),
-    SensorEntityDescription(
-        key="dry_status_raw_status_code",
-        translation_key="dry_status_raw_status_code",
-    ),
-    SensorEntityDescription(
-        key="dry_status_target_temperature",
-        translation_key="dry_status_target_temperature",
-        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
-    ),
-    SensorEntityDescription(
-        key="dry_status_total_duration",
-        translation_key="dry_status_total_duration",
-    ),
-    SensorEntityDescription(
-        key="dry_status_remaining_time",
-        translation_key="dry_status_remaining_time",
-    ),
 )
 
 
@@ -165,6 +168,10 @@ async def async_setup_entry(
     sensors: list[AnycubicSensor] = []
 
     for printer_id in entry.data[CONF_PRINTER_ID_LIST]:
+        if coordinator.data[printer_id]["supports_function_multi_color_box"]:
+            for description in MULTI_COLOR_BOX_SENSOR_TYPES:
+                sensors.append(AnycubicSensor(coordinator, printer_id, description))
+
         for description in SENSOR_TYPES:
             sensors.append(AnycubicSensor(coordinator, printer_id, description))
 

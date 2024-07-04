@@ -22,25 +22,28 @@ from .const import (
 from .coordinator import AnycubicCloudDataUpdateCoordinator
 from .entity import AnycubicCloudEntity
 
-BUTTON_PRESET_TYPES = list([
+DRYING_PRESET_BUTTON_TYPES = list([
     ButtonEntityDescription(
         key=f"drying_start_preset_{x + 1}",
         translation_key=f"drying_start_preset_{x + 1}",
     ) for x in range(MAX_DRYING_PRESETS)
 ])
 
-BUTTON_TYPES = (
+MULTI_COLOR_BOX_BUTTON_TYPES = (
     ButtonEntityDescription(
         key="drying_stop",
         translation_key="drying_stop",
     ),
     ButtonEntityDescription(
-        key="cancel_print",
-        translation_key="cancel_print",
-    ),
-    ButtonEntityDescription(
         key="toggle_auto_feed",
         translation_key="toggle_auto_feed",
+    ),
+)
+
+BUTTON_TYPES = (
+    ButtonEntityDescription(
+        key="cancel_print",
+        translation_key="cancel_print",
     ),
 )
 
@@ -67,11 +70,16 @@ async def async_setup_entry(
 
     for printer_id in entry.data[CONF_PRINTER_ID_LIST]:
 
-        for description in BUTTON_PRESET_TYPES:
-            num = description.key[-1]
-            preset_duration = entry.options.get(f"{CONF_DRYING_PRESET_DURATION_}{num}")
-            preset_temperature = entry.options.get(f"{CONF_DRYING_PRESET_TEMPERATURE_}{num}")
-            if preset_duration and preset_temperature and int(preset_temperature) > 0:
+        if coordinator.data[printer_id]["supports_function_multi_color_box"]:
+
+            for description in DRYING_PRESET_BUTTON_TYPES:
+                num = description.key[-1]
+                preset_duration = entry.options.get(f"{CONF_DRYING_PRESET_DURATION_}{num}")
+                preset_temperature = entry.options.get(f"{CONF_DRYING_PRESET_TEMPERATURE_}{num}")
+                if preset_duration and preset_temperature and int(preset_temperature) > 0:
+                    entity_list.append(AnycubicCloudButton(coordinator, printer_id, description))
+
+            for description in MULTI_COLOR_BOX_BUTTON_TYPES:
                 entity_list.append(AnycubicCloudButton(coordinator, printer_id, description))
 
         for description in BUTTON_TYPES:

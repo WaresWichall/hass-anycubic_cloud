@@ -78,6 +78,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "machine_mac": printer.machine_mac,
             "machine_name": printer.machine_name,
             "fw_version": printer.fw_version.firmware_version,
+            "supports_function_multi_color_box": printer.supports_function_multi_color_box,
             "multi_color_box_fw_version": (
                 printer.multi_color_box_fw_version[0].firmware_version
                 if printer.multi_color_box_fw_version and len(
