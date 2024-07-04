@@ -2,7 +2,26 @@ import json
 import time
 from enum import IntEnum
 
-from .anycubic_const import REX_GCODE_EXT
+from .anycubic_const import (
+    FUNCTION_TYPE_ID_AXLE_MOVEMENT,
+    FUNCTION_TYPE_ID_FILE_MANAGER,
+    FUNCTION_TYPE_ID_EXPOSURE_TEST,
+    FUNCTION_TYPE_ID_LCD_PEER_VIDEO,
+    FUNCTION_TYPE_ID_FDM_AXIS_MOVE,
+    FUNCTION_TYPE_ID_FDM_PEER_VIDEO,
+    FUNCTION_TYPE_ID_DEVICE_STARTUP_SELF_TEST,
+    FUNCTION_TYPE_ID_PRINT_STARTUP_SELF_TEST,
+    FUNCTION_TYPE_ID_AUTOMATIC_OPERATION,
+    FUNCTION_TYPE_ID_RESIDUE_CLEAN,
+    FUNCTION_TYPE_ID_NOVICE_GUIDE,
+    FUNCTION_TYPE_ID_RELEASE_FILM,
+    FUNCTION_TYPE_ID_TASK_MODE,
+    FUNCTION_TYPE_ID_LCD_INTELLIGENT_MATERIALS_BOX,
+    FUNCTION_TYPE_ID_LCD_AUTO_OUT_IN_MATERIALS,
+    FUNCTION_TYPE_ID_M7PRO_AUTOMATIC_OPERATION,
+    FUNCTION_TYPE_ID_MULTI_COLOR_BOX,
+    REX_GCODE_EXT,
+)
 
 
 class AnycubicPrintStatus(IntEnum):
@@ -1143,7 +1162,7 @@ class AnycubicPrinter:
         self._delete_time = delete_time
         self._last_update_time = last_update_time
         self._machine_data = AnycubicMachineData.from_json(machine_data)
-        self._type_function_ids = type_function_ids
+        self._set_type_function_ids(type_function_ids)
         self._material_type = material_type
         self._parameter = AnycubicMachineParameter.from_json(parameter)
         self._fw_version = AnycubicMachineFirmwareInfo.from_json(fw_version)
@@ -1163,6 +1182,12 @@ class AnycubicPrinter:
         self._print_speed_pct = 0
         self._print_speed_mode = 0
         self._local_file_list = None
+
+    def _set_type_function_ids(self, type_function_ids):
+        if isinstance(type_function_ids, list):
+            self._type_function_ids = type_function_ids
+        else:
+            self._type_function_ids = list()
 
     def _set_local_file_list(self, local_file_list):
         if local_file_list is None:
@@ -1281,7 +1306,7 @@ class AnycubicPrinter:
         self._machine_mac = data['base']['machine_mac']
         self._create_time = data['base']['create_time']
         self._machine_data = AnycubicMachineData.from_json(data['machine_data'])
-        self._type_function_ids = data['type_function_ids']
+        self._set_type_function_ids(data['type_function_ids'])
         self._material_type = data['base']['material_type']
         self._parameter = AnycubicMachineParameter.from_json(data['parameter'])
         self._fw_version = AnycubicMachineFirmwareInfo.from_json(data['version'])
@@ -1737,6 +1762,74 @@ class AnycubicPrinter:
     @property
     def type_function_ids(self):
         return self._type_function_ids
+
+    @property
+    def supports_function_axle_movement(self):
+        return FUNCTION_TYPE_ID_AXLE_MOVEMENT in self._type_function_ids
+
+    @property
+    def supports_function_file_manager(self):
+        return FUNCTION_TYPE_ID_FILE_MANAGER in self._type_function_ids
+
+    @property
+    def supports_function_exposure_test(self):
+        return FUNCTION_TYPE_ID_EXPOSURE_TEST in self._type_function_ids
+
+    @property
+    def supports_function_lcd_peer_video(self):
+        return FUNCTION_TYPE_ID_LCD_PEER_VIDEO in self._type_function_ids
+
+    @property
+    def supports_function_fdm_axis_move(self):
+        return FUNCTION_TYPE_ID_FDM_AXIS_MOVE in self._type_function_ids
+
+    @property
+    def supports_function_fdm_peer_video(self):
+        return FUNCTION_TYPE_ID_FDM_PEER_VIDEO in self._type_function_ids
+
+    @property
+    def supports_function_device_startup_self_test(self):
+        return FUNCTION_TYPE_ID_DEVICE_STARTUP_SELF_TEST in self._type_function_ids
+
+    @property
+    def supports_function_print_startup_self_test(self):
+        return FUNCTION_TYPE_ID_PRINT_STARTUP_SELF_TEST in self._type_function_ids
+
+    @property
+    def supports_function_automatic_operation(self):
+        return FUNCTION_TYPE_ID_AUTOMATIC_OPERATION in self._type_function_ids
+
+    @property
+    def supports_function_residue_clean(self):
+        return FUNCTION_TYPE_ID_RESIDUE_CLEAN in self._type_function_ids
+
+    @property
+    def supports_function_novice_guide(self):
+        return FUNCTION_TYPE_ID_NOVICE_GUIDE in self._type_function_ids
+
+    @property
+    def supports_function_release_film(self):
+        return FUNCTION_TYPE_ID_RELEASE_FILM in self._type_function_ids
+
+    @property
+    def supports_function_task_mode(self):
+        return FUNCTION_TYPE_ID_TASK_MODE in self._type_function_ids
+
+    @property
+    def supports_function_lcd_intelligent_materials_box(self):
+        return FUNCTION_TYPE_ID_LCD_INTELLIGENT_MATERIALS_BOX in self._type_function_ids
+
+    @property
+    def supports_function_lcd_auto_out_in_materials(self):
+        return FUNCTION_TYPE_ID_LCD_AUTO_OUT_IN_MATERIALS in self._type_function_ids
+
+    @property
+    def supports_function_m7pro_automatic_operation(self):
+        return FUNCTION_TYPE_ID_M7PRO_AUTOMATIC_OPERATION in self._type_function_ids
+
+    @property
+    def supports_function_multi_color_box(self):
+        return FUNCTION_TYPE_ID_MULTI_COLOR_BOX in self._type_function_ids
 
     @property
     def material_type(self):
