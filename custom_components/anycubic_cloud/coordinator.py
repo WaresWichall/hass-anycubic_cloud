@@ -38,7 +38,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
         """Initialize AnycubicCloud."""
         self.entry = entry
-        self.anycubic_api: AnycubicAPI | None = None
+        self._anycubic_api: AnycubicAPI | None = None
         self._anycubic_printers = dict()
         self._last_state_update = None
         self._failed_updates = 0
@@ -51,6 +51,10 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             update_interval=timedelta(seconds=MQTT_SCAN_INTERVAL),
             always_update=False,
         )
+
+    @property
+    def anycubic_api(self) -> AnycubicAPI | None:
+        return self._anycubic_api
 
     def _any_printers_are_printing(self):
         return any([
@@ -164,7 +168,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     def _anycubic_mqtt_connection_should_start(self):
 
         return (
-            not self.anycubic_api.mqtt_is_started and
+            not self._anycubic_api.mqtt_is_started and
             not self.hass.is_stopping and
             self.hass.state is CoreState.running and
             (
@@ -176,7 +180,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     def _anycubic_mqtt_connection_should_stop(self):
 
         return (
-            self.anycubic_api.mqtt_is_started and
+            self._anycubic_api.mqtt_is_started and
             (
                 self.hass.is_stopping or
                 (
@@ -190,28 +194,28 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         if self._anycubic_mqtt_connection_should_start():
 
             for printer_id, printer in self._anycubic_printers.items():
-                self.anycubic_api.mqtt_add_subscribed_printer(
+                self._anycubic_api.mqtt_add_subscribed_printer(
                     printer
                 )
 
             if self._mqtt_task is None:
                 LOGGER.debug("Starting Anycubic MQTT Task.")
                 self._mqtt_task = self.hass.async_add_executor_job(
-                    self.anycubic_api.connect_mqtt
+                    self._anycubic_api.connect_mqtt
                 )
 
         elif self._anycubic_mqtt_connection_should_stop():
 
             for printer_id, printer in self._anycubic_printers.items():
                 await self.hass.async_add_executor_job(
-                    self.anycubic_api.mqtt_unsubscribe_printer_status,
+                    self._anycubic_api.mqtt_unsubscribe_printer_status,
                     printer,
                 )
             await self.hass.async_add_executor_job(
-                self.anycubic_api.disconnect_mqtt,
+                self._anycubic_api.disconnect_mqtt,
             )
 
-            await self.anycubic_api.mqtt_wait_for_disconnect()
+            await self._anycubic_api.mqtt_wait_for_disconnect()
 
             if self._mqtt_task is not None and not self._mqtt_task.done():
                 self._mqtt_task.cancel()
@@ -228,7 +232,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 self.hass,
                 cookie_jar=cookie_jar,
             )
-            self.anycubic_api = AnycubicAPI(
+            self._anycubic_api = AnycubicAPI(
                 api_username=self.entry.data[CONF_USERNAME],
                 api_password=self.entry.data[CONF_PASSWORD],
                 session=websession,
@@ -239,21 +243,21 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             if start_up and config is not None:
                 LOGGER.debug("Loading tokens from store.")
                 try:
-                    self.anycubic_api.load_tokens_from_dict(config)
+                    self._anycubic_api.load_tokens_from_dict(config)
                 except Exception as e:
                     LOGGER.debug(f"Error loading tokens from store: {e}")
 
-            success = await self.anycubic_api.check_api_tokens()
+            success = await self._anycubic_api.check_api_tokens()
             if not success:
                 raise ConfigEntryAuthFailed("Authentication failed. Check credentials.")
 
             if start_up:
                 # Create config
-                await store.async_save(self.anycubic_api.build_token_dict())
+                await store.async_save(self._anycubic_api.build_token_dict())
 
             first_printer_id = self.entry.data[CONF_PRINTER_ID_LIST][0]
 
-            printer_status = await self.anycubic_api.printer_info_for_id(first_printer_id)
+            printer_status = await self._anycubic_api.printer_info_for_id(first_printer_id)
 
             if printer_status is None:
                 raise ConfigEntryAuthFailed("Printer not found. Check config.")
@@ -264,16 +268,16 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     async def _setup_anycubic_printer_object(self):
         for printer_id in self.entry.data[CONF_PRINTER_ID_LIST]:
             try:
-                self._anycubic_printers[int(printer_id)] = await self.anycubic_api.printer_info_for_id(printer_id)
+                self._anycubic_printers[int(printer_id)] = await self._anycubic_api.printer_info_for_id(printer_id)
             except Exception as error:
                 raise UpdateFailed from error
 
     async def _check_or_save_tokens(self):
-        await self.anycubic_api.check_api_tokens()
+        await self._anycubic_api.check_api_tokens()
 
-        if self.anycubic_api.tokens_changed:
+        if self._anycubic_api.tokens_changed:
             store = Store[dict[str, Any]](self.hass, STORAGE_VERSION, STORAGE_KEY)
-            await store.async_save(self.anycubic_api.build_token_dict())
+            await store.async_save(self._anycubic_api.build_token_dict())
 
     async def get_anycubic_updates(self, start_up: bool = False) -> dict[str, Any]:
         """Fetch data from AnycubicCloud."""
@@ -285,7 +289,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         self._last_state_update = int(time.time())
 
-        if self.anycubic_api is None:
+        if self._anycubic_api is None:
             await self._setup_anycubic_api_connection(start_up=start_up)
 
         if len(self._anycubic_printers) < 1:
@@ -308,8 +312,14 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         return True
 
+    def get_printer_for_id(self, printer_id):
+        if printer_id is None or len(str(printer_id)) == 0:
+            return None
+
+        return self._anycubic_printers.get(int(printer_id))
+
     async def button_press_event(self, printer_id, event_key):
-        printer = self._anycubic_printers.get(printer_id)
+        printer = self.get_printer_for_id(printer_id)
 
         if printer and event_key.startswith('drying_start_preset_'):
             num = event_key[-1]
