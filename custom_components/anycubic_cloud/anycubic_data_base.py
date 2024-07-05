@@ -1946,6 +1946,30 @@ class AnycubicPrinter:
             box_id=box_id,
         )
 
+    async def multi_color_box_switch_on_auto_feed(
+        self,
+        box_id=-1,
+    ):
+        if self.primary_multi_color_box is None:
+            return None
+
+        return await self._api_parent.multi_color_box_switch_on_auto_feed(
+            self,
+            box_id=box_id,
+        )
+
+    async def multi_color_box_switch_off_auto_feed(
+        self,
+        box_id=-1,
+    ):
+        if self.primary_multi_color_box is None:
+            return None
+
+        return await self._api_parent.multi_color_box_switch_off_auto_feed(
+            self,
+            box_id=box_id,
+        )
+
     async def multi_color_box_set_slot(
         self,
         slot_index: int,

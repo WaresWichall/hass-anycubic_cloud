@@ -663,9 +663,69 @@ class AnycubicAPI:
 
         current_auto_feed = bool(printer.multi_color_box[box_id].auto_feed)
 
+        printer.multi_color_box[box_id].set_auto_feed(not current_auto_feed)
+
         resp = await self._send_order_multi_color_auto_feed(
             printer,
             (not current_auto_feed),
+            box_id,
+        )
+
+        return resp
+
+    async def multi_color_box_switch_on_auto_feed(
+        self,
+        printer,
+        box_id=-1,
+    ):
+        if not printer:
+            return
+
+        if not printer.primary_multi_color_box:
+            return
+
+        if box_id < 0:
+            box_id = 0
+
+        current_auto_feed = bool(printer.multi_color_box[box_id].auto_feed)
+
+        if current_auto_feed:
+            return
+
+        printer.multi_color_box[box_id].set_auto_feed(True)
+
+        resp = await self._send_order_multi_color_auto_feed(
+            printer,
+            True,
+            box_id,
+        )
+
+        return resp
+
+    async def multi_color_box_switch_off_auto_feed(
+        self,
+        printer,
+        box_id=-1,
+    ):
+        if not printer:
+            return
+
+        if not printer.primary_multi_color_box:
+            return
+
+        if box_id < 0:
+            box_id = 0
+
+        current_auto_feed = bool(printer.multi_color_box[box_id].auto_feed)
+
+        if not current_auto_feed:
+            return
+
+        printer.multi_color_box[box_id].set_auto_feed(False)
+
+        resp = await self._send_order_multi_color_auto_feed(
+            printer,
+            False,
             box_id,
         )
 

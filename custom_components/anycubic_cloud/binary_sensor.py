@@ -18,10 +18,6 @@ MULTI_COLOR_BOX_SENSOR_TYPES = (
         key="dry_status_is_drying",
         translation_key="dry_status_is_drying",
     ),
-    BinarySensorEntityDescription(
-        key="multi_color_box_auto_feed",
-        translation_key="multi_color_box_auto_feed",
-    ),
 )
 
 SENSOR_TYPES = (
@@ -48,10 +44,6 @@ SENSOR_TYPES = (
 )
 
 GLOBAL_SENSOR_TYPES = (
-    BinarySensorEntityDescription(
-        key="manual_mqtt_connection_enabled",
-        translation_key="manual_mqtt_connection_enabled",
-    ),
 )
 
 

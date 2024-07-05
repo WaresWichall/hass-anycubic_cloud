@@ -34,10 +34,6 @@ MULTI_COLOR_BOX_BUTTON_TYPES = (
         key="drying_stop",
         translation_key="drying_stop",
     ),
-    ButtonEntityDescription(
-        key="toggle_auto_feed",
-        translation_key="toggle_auto_feed",
-    ),
 )
 
 BUTTON_TYPES = (
@@ -48,10 +44,6 @@ BUTTON_TYPES = (
 )
 
 GLOBAL_BUTTON_TYPES = (
-    ButtonEntityDescription(
-        key="toggle_mqtt_connection",
-        translation_key="toggle_mqtt_connection",
-    ),
 )
 
 

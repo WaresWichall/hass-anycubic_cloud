@@ -345,14 +345,47 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         elif printer and event_key == 'cancel_print':
             await printer.cancel_print()
 
-        elif printer and event_key == 'toggle_auto_feed':
-            await printer.multi_color_box_toggle_auto_feed()
+        # elif printer and event_key == 'toggle_auto_feed':
+        #     await printer.multi_color_box_toggle_auto_feed()
 
-        elif event_key == 'toggle_mqtt_connection':
-            self._mqtt_manually_connected = not self._mqtt_manually_connected
+        # elif event_key == 'toggle_mqtt_connection':
+        #     self._mqtt_manually_connected = not self._mqtt_manually_connected
 
         else:
             return
 
-        self._last_state_update = int(time.time()) - DEFAULT_SCAN_INTERVAL + 10
+        self._last_state_update = None
         await self.async_refresh()
+        self._last_state_update = int(time.time()) - DEFAULT_SCAN_INTERVAL + 10
+
+    async def switch_on_event(self, printer_id, event_key):
+        printer = self.get_printer_for_id(printer_id)
+
+        if event_key == 'manual_mqtt_connection_enabled':
+            self._mqtt_manually_connected = True
+
+        elif printer and event_key == 'multi_color_box_auto_feed':
+            await printer.multi_color_box_switch_on_auto_feed()
+
+        else:
+            return
+
+        self._last_state_update = None
+        await self.async_refresh()
+        self._last_state_update = int(time.time()) - DEFAULT_SCAN_INTERVAL + 10
+
+    async def switch_off_event(self, printer_id, event_key):
+        printer = self.get_printer_for_id(printer_id)
+
+        if event_key == 'manual_mqtt_connection_enabled':
+            self._mqtt_manually_connected = False
+
+        elif printer and event_key == 'multi_color_box_auto_feed':
+            await printer.multi_color_box_switch_off_auto_feed()
+
+        else:
+            return
+
+        self._last_state_update = None
+        await self.async_refresh()
+        self._last_state_update = int(time.time()) - DEFAULT_SCAN_INTERVAL + 10
