@@ -25,4 +25,5 @@ class AnycubicCloudEntity(CoordinatorEntity[AnycubicCloudDataUpdateCoordinator],
             name=coordinator.data[self._printer_id]["name"],
             connections={(CONNECTION_NETWORK_MAC, coordinator.data[self._printer_id]["machine_mac"])},
             sw_version=coordinator.data[self._printer_id]["fw_version"],
+            hw_version=f"Printer ID: {self._printer_id}",
         )

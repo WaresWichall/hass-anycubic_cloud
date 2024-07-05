@@ -1,0 +1,58 @@
+# Describes the format for available Anycubic Cloud services
+
+multi_color_box_set_slot_pla: &multi_color_box_set_slot
+  fields:
+    config_entry:
+      required: true
+      selector:
+        config_entry:
+          integration: anycubic_cloud
+    printer_id:
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 9999999999999999999
+          step: 1
+          mode: box
+    box_id:
+      required: false
+      selector:
+        number:
+          min: 0
+          max: 7
+          step: 1
+          mode: box
+    slot_index:
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 7
+          step: 1
+          mode: box
+    slot_color_red:
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 255
+          step: 1
+          mode: box
+    slot_color_green:
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 255
+          step: 1
+          mode: box
+    slot_color_blue:
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 255
+          step: 1
+          mode: box
+multi_color_box_set_slot_petg: *multi_color_box_set_slot

@@ -183,5 +183,67 @@
       }
     }
   },
+  "services": {
+    "multi_color_box_set_slot_pla": {
+      "name": "Multi-Color Box Set Slot - PLA",
+      "description": "Sets PLA slot properties in Multi-Color Box unit.",
+      "fields": {
+        "printer_id": {
+          "name": "Printer ID",
+          "description": "Printer ID."
+        },
+        "box_id": {
+          "name": "Box ID",
+          "description": "Box ID."
+        },
+        "slot_index": {
+          "name": "Slot Index",
+          "description": "Slot Index."
+        },
+        "slot_color_red": {
+          "name": "Slot Color Red",
+          "description": "Slot Color Red."
+        },
+        "slot_color_green": {
+          "name": "Slot Color Green",
+          "description": "Slot Color Green."
+        },
+        "slot_color_blue": {
+          "name": "Slot Color Blue",
+          "description": "Slot Color Blue."
+        }
+      }
+    },
+    "multi_color_box_set_slot_petg": {
+      "name": "Multi-Color Box Set Slot - PETG",
+      "description": "Sets PETG slot properties in Multi-Color Box unit.",
+      "fields": {
+        "printer_id": {
+          "name": "Printer ID",
+          "description": "Printer ID."
+        },
+        "box_id": {
+          "name": "Box ID",
+          "description": "Box ID."
+        },
+        "slot_index": {
+          "name": "Slot Index",
+          "description": "Slot Index."
+        },
+        "slot_color_red": {
+          "name": "Slot Color Red",
+          "description": "Slot Color Red."
+        },
+        "slot_color_green": {
+          "name": "Slot Color Green",
+          "description": "Slot Color Green."
+        },
+        "slot_color_blue": {
+          "name": "Slot Color Blue",
+          "description": "Slot Color Blue."
+        }
+      }
+    }
+  },
   "exceptions": {}
 }

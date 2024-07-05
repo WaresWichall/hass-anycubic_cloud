@@ -13,11 +13,18 @@ MODEL = "main"
 DOMAIN = "anycubic_cloud"
 COORDINATOR = "coordinator"
 
+ATTR_CONFIG_ENTRY = "config_entry"
+
 CONF_PRINTER_ID = "printer_id"
 CONF_PRINTER_ID_LIST = "printer_ids"
 CONF_PRINTER_NAME = "printer_name"
 CONF_DRYING_PRESET_DURATION_ = "drying_preset_duration_"
 CONF_DRYING_PRESET_TEMPERATURE_ = "drying_preset_temperature_"
+CONF_SLOT_INDEX = "slot_index"
+CONF_SLOT_COLOR_RED = "slot_color_red"
+CONF_SLOT_COLOR_GREEN = "slot_color_green"
+CONF_SLOT_COLOR_BLUE = "slot_color_blue"
+CONF_BOX_ID = "box_id"
 
 UNIT_LAYERS = "Layers"
 

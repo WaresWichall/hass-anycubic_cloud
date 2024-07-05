@@ -205,22 +205,28 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 )
 
         elif self._anycubic_mqtt_connection_should_stop():
+            await self._stop_anycubic_mqtt_connection()
 
-            for printer_id, printer in self._anycubic_printers.items():
-                await self.hass.async_add_executor_job(
-                    self._anycubic_api.mqtt_unsubscribe_printer_status,
-                    printer,
-                )
+    async def _stop_anycubic_mqtt_connection(self):
+        for printer_id, printer in self._anycubic_printers.items():
             await self.hass.async_add_executor_job(
-                self._anycubic_api.disconnect_mqtt,
+                self._anycubic_api.mqtt_unsubscribe_printer_status,
+                printer,
             )
+        await self.hass.async_add_executor_job(
+            self._anycubic_api.disconnect_mqtt,
+        )
 
-            await self._anycubic_api.mqtt_wait_for_disconnect()
+        await self._anycubic_api.mqtt_wait_for_disconnect()
 
-            if self._mqtt_task is not None and not self._mqtt_task.done():
-                self._mqtt_task.cancel()
+        if self._mqtt_task is not None and not self._mqtt_task.done():
+            self._mqtt_task.cancel()
 
-            self._mqtt_task = None
+        self._mqtt_task = None
+
+    async def stop_anycubic_mqtt_connection_if_started(self):
+        if self._anycubic_api and self._anycubic_api.mqtt_is_started:
+            await self._stop_anycubic_mqtt_connection()
 
     async def _setup_anycubic_api_connection(self, start_up: bool = False):
         store = Store[dict[str, Any]](self.hass, STORAGE_VERSION, STORAGE_KEY)

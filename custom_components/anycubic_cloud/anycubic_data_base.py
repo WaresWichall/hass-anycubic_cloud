@@ -1531,7 +1531,7 @@ class AnycubicPrinter:
             data = payload['data']['multi_color_box']
             self._set_multi_color_box(data)
             return
-        elif action == 'refresh' and state == 'success':
+        elif action in ['setInfo', 'refresh'] and state == 'success':
             data = payload['data']['multi_color_box']
             for box in data:
                 box_id = int(box['id'])
