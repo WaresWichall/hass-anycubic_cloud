@@ -1280,9 +1280,9 @@ class AnycubicPrinter:
                 parameter=data['parameter'],
                 fw_version=data['version'],
                 tools=data['tools'],
-                multi_color_box_fw_version=data['multi_color_box_version'],
-                external_shelves=data['external_shelves'],
-                multi_color_box=data['multi_color_box'],
+                multi_color_box_fw_version=data.get('multi_color_box_version'),
+                external_shelves=data.get('external_shelves'),
+                multi_color_box=data.get('multi_color_box'),
             )
         except Exception as e:
             print(data)
@@ -1318,8 +1318,8 @@ class AnycubicPrinter:
             AnycubicMachineFirmwareInfo.from_json(x)
             for x in data['multi_color_box_version']
         ]) if data['multi_color_box_version'] is not None else None
-        self._external_shelves = AnycubicMachineExternalShelves.from_json(data['external_shelves'])
-        self._set_multi_color_box(data['multi_color_box'])
+        self._external_shelves = AnycubicMachineExternalShelves.from_json(data.get('external_shelves'))
+        self._set_multi_color_box(data.get('multi_color_box'))
 
     def _update_latest_project_with_mqtt_data(
         self,
