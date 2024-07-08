@@ -15,6 +15,7 @@ from homeassistant.helpers.aiohttp_client import async_create_clientsession
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
+from .anycubic_api_base import AnycubicAPIError
 from .anycubic_api_mqtt import AnycubicMQTTAPI as AnycubicAPI
 
 from .const import (
@@ -24,6 +25,7 @@ from .const import (
     DEFAULT_SCAN_INTERVAL,
     FAILED_UPDATE_DELAY,
     MAX_FAILED_UPDATES,
+    MQTT_IDLE_DISCONNECT_SECONDS,
     MQTT_SCAN_INTERVAL,
     DOMAIN,
     LOGGER,
@@ -44,6 +46,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._failed_updates = 0
         self._mqtt_task = None
         self._mqtt_manually_connected = False
+        self._mqtt_idle_since = None
         super().__init__(
             hass,
             LOGGER,
@@ -63,7 +66,9 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     def _no_printers_are_printing(self):
         return all([
-            printer.is_printing != 2 for printer_id, printer in self._anycubic_printers.items()
+            printer.is_printing != 2 and
+            (printer.latest_project is None or not printer.latest_project.print_in_progress)
+            for printer_id, printer in self._anycubic_printers.items()
         ])
 
     def _build_printer_dict(self, printer) -> dict[str, Any]:
@@ -184,11 +189,25 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             (
                 self.hass.is_stopping or
                 (
-                    self._no_printers_are_printing() and
+                    self._anycubic_mqtt_connection_is_idle() and
                     not self._mqtt_manually_connected
                 )
             )
         )
+
+    def _anycubic_mqtt_connection_is_idle(self):
+        if self._no_printers_are_printing():
+            if self._mqtt_idle_since is None:
+                self._mqtt_idle_since = int(time.time())
+
+            if int(time.time()) > self._mqtt_idle_since + MQTT_IDLE_DISCONNECT_SECONDS:
+                self._mqtt_idle_since = None
+                return True
+
+        else:
+            self._mqtt_idle_since = None
+
+        return False
 
     async def _check_anycubic_mqtt_connection(self):
         if self._anycubic_mqtt_connection_should_start():
@@ -327,36 +346,40 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     async def button_press_event(self, printer_id, event_key):
         printer = self.get_printer_for_id(printer_id)
 
-        if printer and event_key.startswith('drying_start_preset_'):
-            num = event_key[-1]
-            preset_duration = self.entry.options.get(f"{CONF_DRYING_PRESET_DURATION_}{num}")
-            preset_temperature = self.entry.options.get(f"{CONF_DRYING_PRESET_TEMPERATURE_}{num}")
-            if preset_duration is None or preset_temperature is None:
+        try:
+
+            if printer and event_key.startswith('drying_start_preset_'):
+                num = event_key[-1]
+                preset_duration = self.entry.options.get(f"{CONF_DRYING_PRESET_DURATION_}{num}")
+                preset_temperature = self.entry.options.get(f"{CONF_DRYING_PRESET_TEMPERATURE_}{num}")
+                if preset_duration is None or preset_temperature is None:
+                    return
+
+                await printer.multi_color_box_drying_start(
+                    duration=preset_duration,
+                    target_temp=preset_temperature,
+                )
+
+            elif printer and event_key == 'drying_stop':
+                await printer.multi_color_box_drying_stop()
+
+            elif printer and event_key == 'cancel_print':
+                await printer.cancel_print()
+
+            # elif printer and event_key == 'toggle_auto_feed':
+            #     await printer.multi_color_box_toggle_auto_feed()
+
+            # elif event_key == 'toggle_mqtt_connection':
+            #     self._mqtt_manually_connected = not self._mqtt_manually_connected
+
+            else:
                 return
 
-            await printer.multi_color_box_drying_start(
-                duration=preset_duration,
-                target_temp=preset_temperature,
-            )
-
-        elif printer and event_key == 'drying_stop':
-            await printer.multi_color_box_drying_stop()
-
-        elif printer and event_key == 'cancel_print':
-            await printer.cancel_print()
-
-        # elif printer and event_key == 'toggle_auto_feed':
-        #     await printer.multi_color_box_toggle_auto_feed()
-
-        # elif event_key == 'toggle_mqtt_connection':
-        #     self._mqtt_manually_connected = not self._mqtt_manually_connected
-
-        else:
-            return
-
-        self._last_state_update = None
-        await self.async_refresh()
-        self._last_state_update = int(time.time()) - DEFAULT_SCAN_INTERVAL + 10
+            self._last_state_update = None
+            await self.async_refresh()
+            self._last_state_update = int(time.time()) - DEFAULT_SCAN_INTERVAL + 10
+        except AnycubicAPIError as e:
+            LOGGER.error(str(e))
 
     async def switch_on_event(self, printer_id, event_key):
         printer = self.get_printer_for_id(printer_id)

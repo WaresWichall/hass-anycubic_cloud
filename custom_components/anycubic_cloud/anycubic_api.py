@@ -14,6 +14,7 @@ from .anycubic_data_base import (
 
 from .anycubic_api_base import (
     HTTP_METHODS,
+    AnycubicAPIError,
     API_ENDPOINT,
     APIAuthTokensExpired,
 )
@@ -413,6 +414,9 @@ class AnycubicAPI:
         resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.send_order, params=params)
         if raw_data:
             return resp
+
+        if resp is None or resp['data'] is None:
+            raise AnycubicAPIError('Error sending order to Anycubic Cloud, is the printer online?')
 
         data = resp['data']['msgid']
         return data
