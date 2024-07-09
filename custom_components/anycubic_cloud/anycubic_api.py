@@ -336,6 +336,27 @@ class AnycubicAPI:
         resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.project_monitor, query=query)
         self._debug_log(f"project_monitor output:\n{json.dumps(resp)}")
 
+    async def _set_printer_name(
+        self,
+        printer_id,
+        new_name,
+        raw_data=False,
+    ):
+        params = {
+            'id': str(printer_id),
+            'name': str(new_name),
+        }
+        resp = await self._fetch_api_resp(
+            endpoint=API_ENDPOINT.printer_update_name,
+            params=params
+        )
+        if raw_data:
+            return resp
+
+        data = resp['data']
+
+        return data
+
     async def _update_printer_firmware(
         self,
         printer_id,
@@ -712,6 +733,35 @@ class AnycubicAPI:
             project_id=0,
             order_data=order_data,
         )
+
+    async def set_printer_name(
+        self,
+        printer,
+        new_name,
+    ):
+        if not printer:
+            return None
+
+        if not new_name or len(str(new_name)) < 1:
+            return None
+
+        new_name = str(new_name)
+
+        old_name = printer.name
+
+        resp = await self._set_printer_name(
+            printer_id=printer.id,
+            new_name=new_name,
+        )
+
+        if resp.get('name') == new_name:
+            return new_name
+
+        elif resp.get('name') == old_name:
+            raise AnycubicAPIError('Failed to change printer name, reverted to previous.')
+
+        else:
+            raise AnycubicAPIError('Failed to change printer name, unknown error.')
 
     async def update_printer_firmware(
         self,
