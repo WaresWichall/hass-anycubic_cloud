@@ -65,6 +65,24 @@
       },
       "dry_status_is_drying": {
         "name": "Drying Active"
+      },
+      "fw_update_available": {
+        "name": "FW Update Available"
+      },
+      "fw_is_updating": {
+        "name": "FW Is Updating"
+      },
+      "fw_is_downloading": {
+        "name": "FW Is Downloading"
+      },
+      "multi_color_box_fw_update_available": {
+        "name": "ACE FW Update Available"
+      },
+      "multi_color_box_fw_is_updating": {
+        "name": "ACE FW Is Updating"
+      },
+      "multi_color_box_fw_is_downloading": {
+        "name": "ACE FW Is Downloading"
       }
     },
     "button": {
@@ -85,6 +103,12 @@
       },
       "cancel_print": {
         "name": "Cancel Print"
+      },
+      "update_printer_firmware": {
+        "name": "Update Printer Firmware"
+      },
+      "update_multi_color_box_firmware": {
+        "name": "Update ACE Firmware"
       }
     },
     "sensor": {
@@ -106,8 +130,26 @@
       "fw_version": {
         "name": "FW Version"
       },
+      "fw_update_progress": {
+        "name": "FW Update Progress"
+      },
+      "fw_download_progress": {
+        "name": "FW Download Progress"
+      },
+      "fw_available_version": {
+        "name": "FW Available Version"
+      },
       "multi_color_box_fw_version": {
         "name": "ACE FW Version"
+      },
+      "multi_color_box_fw_update_progress": {
+        "name": "ACE FW Update Progress"
+      },
+      "multi_color_box_fw_download_progress": {
+        "name": "ACE FW Download Progress"
+      },
+      "multi_color_box_fw_available_version": {
+        "name": "ACE FW Available Version"
       },
       "current_project_name": {
         "name": "Project Name"

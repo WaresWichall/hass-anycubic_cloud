@@ -10,7 +10,7 @@ from aiohttp import CookieJar
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import CoreState, HomeAssistant
-from homeassistant.exceptions import ConfigEntryAuthFailed
+from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
@@ -87,9 +87,57 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "machine_mac": printer.machine_mac,
             "machine_name": printer.machine_name,
             "fw_version": printer.fw_version.firmware_version,
+            "fw_update_available": printer.fw_version.update_available,
+            "fw_update_progress": printer.fw_version.update_progress,
+            "fw_download_progress": printer.fw_version.download_progress,
+            "fw_available_version": printer.fw_version.available_version,
+            "fw_is_updating": printer.fw_version.is_updating,
+            "fw_is_downloading": printer.fw_version.is_downloading,
             "supports_function_multi_color_box": printer.supports_function_multi_color_box,
             "multi_color_box_fw_version": (
                 printer.multi_color_box_fw_version[0].firmware_version
+                if printer.multi_color_box_fw_version and len(
+                    printer.multi_color_box_fw_version
+                ) > 0
+                else None
+            ),
+            "multi_color_box_fw_update_available": (
+                printer.multi_color_box_fw_version[0].update_available
+                if printer.multi_color_box_fw_version and len(
+                    printer.multi_color_box_fw_version
+                ) > 0
+                else None
+            ),
+            "multi_color_box_fw_update_progress": (
+                printer.multi_color_box_fw_version[0].update_progress
+                if printer.multi_color_box_fw_version and len(
+                    printer.multi_color_box_fw_version
+                ) > 0
+                else None
+            ),
+            "multi_color_box_fw_download_progress": (
+                printer.multi_color_box_fw_version[0].download_progress
+                if printer.multi_color_box_fw_version and len(
+                    printer.multi_color_box_fw_version
+                ) > 0
+                else None
+            ),
+            "multi_color_box_fw_available_version": (
+                printer.multi_color_box_fw_version[0].available_version
+                if printer.multi_color_box_fw_version and len(
+                    printer.multi_color_box_fw_version
+                ) > 0
+                else None
+            ),
+            "multi_color_box_fw_is_updating": (
+                printer.multi_color_box_fw_version[0].is_updating
+                if printer.multi_color_box_fw_version and len(
+                    printer.multi_color_box_fw_version
+                ) > 0
+                else None
+            ),
+            "multi_color_box_fw_is_downloading": (
+                printer.multi_color_box_fw_version[0].is_downloading
                 if printer.multi_color_box_fw_version and len(
                     printer.multi_color_box_fw_version
                 ) > 0
@@ -366,6 +414,18 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             elif printer and event_key == 'cancel_print':
                 await printer.cancel_print()
 
+            elif printer and event_key == 'update_printer_firmware':
+                if not self._mqtt_manually_connected:
+                    raise HomeAssistantError('Anycubic MQTT must be connected for printer firmware updates.')
+
+                await printer.update_printer_firmware()
+
+            elif printer and event_key == 'update_multi_color_box_firmware':
+                if not self._mqtt_manually_connected:
+                    raise HomeAssistantError('Anycubic MQTT must be connected for ACE firmware updates.')
+
+                await printer.update_printer_all_multi_color_box_firmware()
+
             # elif printer and event_key == 'toggle_auto_feed':
             #     await printer.multi_color_box_toggle_auto_feed()
 
@@ -378,8 +438,8 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             self._last_state_update = None
             await self.async_refresh()
             self._last_state_update = int(time.time()) - DEFAULT_SCAN_INTERVAL + 10
-        except AnycubicAPIError as e:
-            LOGGER.error(str(e))
+        except AnycubicAPIError as ex:
+            raise HomeAssistantError(ex) from ex
 
     async def switch_on_event(self, printer_id, event_key):
         printer = self.get_printer_for_id(printer_id)

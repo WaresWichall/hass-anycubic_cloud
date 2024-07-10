@@ -18,6 +18,18 @@ MULTI_COLOR_BOX_SENSOR_TYPES = (
         key="dry_status_is_drying",
         translation_key="dry_status_is_drying",
     ),
+    BinarySensorEntityDescription(
+        key="multi_color_box_fw_update_available",
+        translation_key="multi_color_box_fw_update_available",
+    ),
+    BinarySensorEntityDescription(
+        key="multi_color_box_fw_is_updating",
+        translation_key="multi_color_box_fw_is_updating",
+    ),
+    BinarySensorEntityDescription(
+        key="multi_color_box_fw_is_downloading",
+        translation_key="multi_color_box_fw_is_downloading",
+    ),
 )
 
 SENSOR_TYPES = (
@@ -40,6 +52,18 @@ SENSOR_TYPES = (
     BinarySensorEntityDescription(
         key="printer_online",
         translation_key="printer_online",
+    ),
+    BinarySensorEntityDescription(
+        key="fw_update_available",
+        translation_key="fw_update_available",
+    ),
+    BinarySensorEntityDescription(
+        key="fw_is_updating",
+        translation_key="fw_is_updating",
+    ),
+    BinarySensorEntityDescription(
+        key="fw_is_downloading",
+        translation_key="fw_is_downloading",
     ),
 )
 

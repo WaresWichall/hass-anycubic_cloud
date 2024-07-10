@@ -22,6 +22,10 @@ from .anycubic_const_mqtt import (
     MQTT_TIMEOUT,
 )
 
+from .anycubic_helpers import (
+    get_part_from_mqtt_topic,
+)
+
 # DEBUG
 # logging.basicConfig(level=logging.DEBUG)
 # logger = logging.getLogger(__name__)
@@ -91,15 +95,8 @@ class AnycubicMQTTAPI(AnycubicAPI):
 
         return list([topic_slice_report, topic_fdm_slice_report])
 
-    def _mqtt_topic_get_part(self, topic: str, part: int):
-        split_topic = topic.split("/")
-        if len(split_topic) < part + 1:
-            return None
-
-        return split_topic[part]
-
     def _mqtt_topic_is_user_topic(self, topic):
-        return self._mqtt_topic_get_part(topic, 3) == 'server'
+        return get_part_from_mqtt_topic(topic, 3) == 'server'
 
     def _mqtt_message_router(self, message):
         try:
@@ -113,9 +110,9 @@ class AnycubicMQTTAPI(AnycubicAPI):
             self._debug_log(f"Anycubic MQTT USER Msg Received on `{topic}`:\n    {payload}")
 
         else:
-            printer_key = self._mqtt_topic_get_part(topic, 6)
+            printer_key = get_part_from_mqtt_topic(topic, 6)
 
-            if self._mqtt_topic_get_part(topic, 7) == 'response' and len(payload.keys()) == 1:
+            if get_part_from_mqtt_topic(topic, 7) == 'response' and len(payload.keys()) == 1:
                 return
 
             if printer_key not in self._mqtt_subscribed_printers:

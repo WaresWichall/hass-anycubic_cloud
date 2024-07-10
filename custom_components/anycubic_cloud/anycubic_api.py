@@ -333,6 +333,48 @@ class AnycubicAPI:
         resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.project_monitor, query=query)
         self._debug_log(f"project_monitor output:\n{json.dumps(resp)}")
 
+    async def _update_printer_firmware(
+        self,
+        printer_id,
+        current_fw_version,
+        raw_data=False,
+    ):
+        query = {
+            'id': str(printer_id),
+            'target_version': str(current_fw_version),
+        }
+        resp = await self._fetch_api_resp(
+            endpoint=API_ENDPOINT.printer_firmware_update,
+            query=query
+        )
+        if raw_data:
+            return resp
+
+        data = resp['data']
+
+        return data
+
+    async def _update_muli_color_box_firmware(
+        self,
+        printer_id,
+        box_id,
+        raw_data=False,
+    ):
+        params = {
+            'id': int(printer_id),
+            'box_id': int(box_id),
+        }
+        resp = await self._fetch_api_resp(
+            endpoint=API_ENDPOINT.printer_multi_color_box_firmware_update,
+            params=params,
+        )
+        if raw_data:
+            return resp
+
+        data = resp['data']
+
+        return data
+
     async def _login_retrieve_tokens(self):
         await self._extract_current_app_vars()
         await self._init_oauth_session()
@@ -606,6 +648,91 @@ class AnycubicAPI:
             project_id=0,
             order_data=order_data,
         )
+
+    async def update_printer_firmware(
+        self,
+        printer,
+    ):
+        if not printer:
+            return None
+
+        if not printer.fw_version:
+            return None
+
+        if not printer.fw_version.update_available:
+            return None
+
+        expected_version = printer.fw_version.available_version
+
+        resp = await self._update_printer_firmware(
+            printer_id=printer.id,
+            current_fw_version=printer.fw_version.firmware_version,
+        )
+
+        if resp.get('update_status') == 1:
+            return expected_version
+
+        return None
+
+    async def update_printer_multi_color_box_firmware(
+        self,
+        printer,
+        box_id=-1,
+    ):
+        if not printer:
+            return None
+
+        if not printer.primary_multi_color_box:
+            return None
+
+        if box_id < 0:
+            box_id = 0
+
+        if (
+            not printer.multi_color_box_fw_version or
+            len(printer.multi_color_box_fw_version) < (box_id + 1)
+        ):
+            return None
+
+        if (
+            not printer.multi_color_box_fw_version[box_id].update_available
+        ):
+            return None
+
+        expected_version = printer.multi_color_box_fw_version[box_id].available_version
+
+        resp = await self._update_muli_color_box_firmware(
+            printer_id=printer.id,
+            box_id=box_id,
+        )
+
+        target_version = resp.get('target_version')
+
+        if expected_version != target_version:
+            return None
+
+        return target_version
+
+    async def update_printer_all_multi_color_box_firmware(
+        self,
+        printer,
+    ):
+        if (
+            not printer.multi_color_box_fw_version or
+            len(printer.multi_color_box_fw_version) < 0
+        ):
+            return None
+
+        updated_versions = list()
+
+        for x in range(len(printer.multi_color_box_fw_version)):
+            resp = await self.update_printer_multi_color_box_firmware(
+                printer,
+                x
+            )
+            updated_versions.append(resp)
+
+        return updated_versions
 
     async def cancel_print(
         self,

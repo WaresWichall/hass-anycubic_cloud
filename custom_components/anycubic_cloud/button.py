@@ -34,12 +34,20 @@ MULTI_COLOR_BOX_BUTTON_TYPES = (
         key="drying_stop",
         translation_key="drying_stop",
     ),
+    ButtonEntityDescription(
+        key="update_multi_color_box_firmware",
+        translation_key="update_multi_color_box_firmware",
+    ),
 )
 
 BUTTON_TYPES = (
     ButtonEntityDescription(
         key="cancel_print",
         translation_key="cancel_print",
+    ),
+    ButtonEntityDescription(
+        key="update_printer_firmware",
+        translation_key="update_printer_firmware",
     ),
 )
 

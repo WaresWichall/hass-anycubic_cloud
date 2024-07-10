@@ -10,6 +10,10 @@ class APIAuthTokensExpired(Exception):
     pass
 
 
+class AnycubicAPIError(Exception):
+    pass
+
+
 class ac_api_endpoint:
     def __init__(self, method, endpoint):
         self._method = method
@@ -42,7 +46,8 @@ class API_ENDPOINT:
     project_monitor = ac_api_endpoint(HTTP_METHODS.GET, '/v2/project/monitor')
     project_get_projects = ac_api_endpoint(HTTP_METHODS.GET, '/work/project/getProjects')
     send_order = ac_api_endpoint(HTTP_METHODS.POST, '/work/operation/sendOrder')
-
-
-class AnycubicAPIError(Exception):
-    pass
+    printer_firmware_update = ac_api_endpoint(HTTP_METHODS.GET, '/work/printer/update_version')
+    printer_multi_color_box_firmware_update = ac_api_endpoint(
+        HTTP_METHODS.POST,
+        '/v2/printer/update_multi_color_box_version'
+    )

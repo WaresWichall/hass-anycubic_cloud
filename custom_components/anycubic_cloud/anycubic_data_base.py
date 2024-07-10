@@ -23,6 +23,10 @@ from .anycubic_const import (
     REX_GCODE_EXT,
 )
 
+from .anycubic_helpers import (
+    get_part_from_mqtt_topic,
+)
+
 
 class AnycubicPrintStatus(IntEnum):
     Printing = 1
@@ -1026,10 +1030,37 @@ class AnycubicMachineFirmwareInfo:
         self._target_version = str(target_version) if target_version is not None else None
         self._time_cost = int(time_cost) if time_cost is not None else None
         self._box_id = int(box_id) if box_id is not None else None
+        self._download_progress = 0
+        self._is_downloading = False
+        self._is_updating = False
 
     @property
     def firmware_version(self):
         return self._firmware_version
+
+    @property
+    def update_available(self):
+        return self._need_update == 1
+
+    @property
+    def update_progress(self):
+        return self._update_progress
+
+    @property
+    def download_progress(self):
+        return self._download_progress
+
+    @property
+    def available_version(self):
+        return self._target_version
+
+    @property
+    def is_updating(self):
+        return self._is_updating
+
+    @property
+    def is_downloading(self):
+        return self._is_downloading
 
     @classmethod
     def from_json(cls, data):
@@ -1052,6 +1083,28 @@ class AnycubicMachineFirmwareInfo:
     def update_version(self, new_version):
         if self._firmware_version != str(new_version):
             self._firmware_version = str(new_version)
+
+            if self._is_updating:
+                self._is_updating = False
+
+            if self._is_downloading:
+                self._is_downloading = False
+
+            self._download_progress = 0
+            self._update_progress = 0
+            self._need_update = 0
+
+    def set_is_updating(self, is_updating):
+        self._is_updating = bool(is_updating)
+
+    def set_is_downloading(self, is_downloading):
+        self._is_downloading = bool(is_downloading)
+
+    def set_update_progress(self, update_progress):
+        self._update_progress = int(update_progress)
+
+    def set_download_progress(self, download_progress):
+        self._download_progress = int(download_progress)
 
     def __repr__(self):
         return f"AnycubicMachineFirmwareInfo(need_update={self._need_update}, firmware_version={self._firmware_version})"
@@ -1182,6 +1235,18 @@ class AnycubicPrinter:
         self._print_speed_pct = 0
         self._print_speed_mode = 0
         self._local_file_list = None
+        self._has_peripheral_camera = False
+        self._has_peripheral_multi_color_box = False
+        self._has_peripheral_udisk = False
+
+    def set_has_peripheral_camera(self, has_peripheral):
+        self._has_peripheral_camera = bool(has_peripheral)
+
+    def set_has_peripheral_multi_color_box(self, has_peripheral):
+        self._has_peripheral_multi_color_box = bool(has_peripheral)
+
+    def set_has_peripheral_udisk(self, has_peripheral):
+        self._has_peripheral_udisk = bool(has_peripheral)
 
     def _set_type_function_ids(self, type_function_ids):
         if isinstance(type_function_ids, list):
@@ -1410,10 +1475,63 @@ class AnycubicPrinter:
         else:
             raise Exception('Unknown status/workReport.')
 
-    def _process_mqtt_update_ota(self, action, state, payload):
+    def _process_mqtt_update_ota_multicolorbox(
+        self,
+        action,
+        state,
+        payload,
+        box_id,
+    ):
+        if (
+            self.multi_color_box_fw_version is None or
+            len(self.multi_color_box_fw_version) < (box_id + 1)
+        ):
+            return
+
+        if action == 'update' and state == 'start':
+            self.multi_color_box_fw_version[box_id].set_is_updating(True)
+            return
+        elif action == 'update' and state in ['update-success', 'updateSuccessProcessed']:
+            # Not needed
+            return
+        elif action == 'reportVersion' and state == 'done':
+            data = payload['data']
+            self.multi_color_box_fw_version[box_id].update_version(data['firmware_version'])
+            return
+        elif action == 'update' and state == 'downloading':
+            self.multi_color_box_fw_version[box_id].set_is_updating(True)
+            self.multi_color_box_fw_version[box_id].set_is_downloading(True)
+            self.multi_color_box_fw_version[box_id].set_download_progress(data['progress'])
+            return
+        elif action == 'update' and state == 'updating':
+            self.multi_color_box_fw_version[box_id].set_is_updating(True)
+            self.multi_color_box_fw_version[box_id].set_is_downloading(False)
+            self.multi_color_box_fw_version[box_id].set_update_progress(data['current_progress'])
+            return
+        else:
+            raise Exception('Unknown ota multiColorBox data.')
+
+    def _process_mqtt_update_ota_printer(self, action, state, payload):
         if action == 'reportVersion' and state == 'done':
             data = payload['data']
-            self._fw_version.update_version(data['firmware_version'])
+            if self.fw_version is not None:
+                self.fw_version.update_version(data['firmware_version'])
+            return
+        elif action == 'update' and state == 'start':
+            if self.fw_version is not None:
+                self.fw_version.set_is_updating(True)
+            return
+        elif action == 'update' and state == 'downloading':
+            if self.fw_version is not None:
+                self.fw_version.set_is_updating(True)
+                self.fw_version.set_is_downloading(True)
+                self.fw_version.set_download_progress(data['progress'])
+            return
+        elif action == 'update' and state == 'updating':
+            if self.fw_version is not None:
+                self.fw_version.set_is_updating(True)
+                self.fw_version.set_is_downloading(False)
+                self.fw_version.set_update_progress(data['current_progress'])
             return
         else:
             raise Exception('Unknown ota version.')
@@ -1588,10 +1706,29 @@ class AnycubicPrinter:
         else:
             raise Exception('Unknown file data.')
 
+    def _process_mqtt_update_peripherals(
+        self,
+        action,
+        state,
+        payload,
+    ):
+        if action == 'query' and state == 'done':
+            data = payload['data']
+            if 'camera' in data:
+                self.set_has_peripheral_camera(data['camera'])
+            if 'multiColorBox' in data:
+                self.set_has_peripheral_multi_color_box(data['multiColorBox'])
+            if 'udisk' in data:
+                self.set_has_peripheral_udisk(data['udisk'])
+            return
+        else:
+            raise Exception('Unknown file data.')
+
     def process_mqtt_update(self, topic, payload):
         msg_type = payload['type']
         action = payload['action']
         state = payload.get('state')
+        multi_color_topic = bool('multiColorBox' in topic)
 
         if msg_type == 'lastWill':
             return self._process_mqtt_update_lastwill(action, state, payload)
@@ -1602,8 +1739,12 @@ class AnycubicPrinter:
         elif msg_type == 'status':
             return self._process_mqtt_update_status(action, state, payload)
 
+        elif msg_type == 'ota' and multi_color_topic:
+            box_id = get_part_from_mqtt_topic(topic, 9)
+            return self._process_mqtt_update_ota_multicolorbox(action, state, payload, box_id)
+
         elif msg_type == 'ota':
-            return self._process_mqtt_update_ota(action, state, payload)
+            return self._process_mqtt_update_ota_printer(action, state, payload)
 
         elif msg_type == 'tempature':
             return self._process_mqtt_update_temperature(action, state, payload)
@@ -1622,6 +1763,9 @@ class AnycubicPrinter:
 
         elif msg_type == 'file':
             return self._process_mqtt_update_file(action, state, payload)
+
+        elif msg_type == 'peripherie':
+            return self._process_mqtt_update_peripherals(action, state, payload)
 
         else:
             raise Exception("Unknown mqtt update.")
@@ -1699,14 +1843,22 @@ class AnycubicPrinter:
         return self._is_printing
 
     @property
+    def is_available(self):
+        return self._is_printing == 1
+
+    @property
+    def is_busy(self):
+        return self._is_printing == 2
+
+    @property
     def reason(self):
         return self._reason
 
     @property
     def current_status(self):
-        if self._is_printing == 2:
+        if self.is_busy:
             return "busy"
-        elif self._is_printing == 1:
+        elif self.is_available:
             return "available"
         else:
             return "unknown"
@@ -2123,6 +2275,32 @@ class AnycubicPrinter:
     ):
 
         return await self._api_parent.cancel_print(
+            self,
+        )
+
+    async def update_printer_firmware(
+        self,
+    ):
+
+        return await self._api_parent.update_printer_firmware(
+            self,
+        )
+
+    async def update_printer_multi_color_box_firmware(
+        self,
+        box_id=-1,
+    ):
+
+        return await self._api_parent.update_printer_multi_color_box_firmware(
+            self,
+            box_id=box_id,
+        )
+
+    async def update_printer_all_multi_color_box_firmware(
+        self,
+    ):
+
+        return await self._api_parent.update_printer_all_multi_color_box_firmware(
             self,
         )
 
