@@ -150,7 +150,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 if printer.primary_multi_color_box
                 else None
             ),
-            "multi_color_box_auto_feed": (
+            "multi_color_box_runout_refill": (
                 printer.primary_multi_color_box.auto_feed
                 if printer.primary_multi_color_box
                 else None
@@ -455,7 +455,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         if event_key == 'manual_mqtt_connection_enabled':
             self._mqtt_manually_connected = True
 
-        elif printer and event_key == 'multi_color_box_auto_feed':
+        elif printer and event_key == 'multi_color_box_runout_refill':
             await printer.multi_color_box_switch_on_auto_feed()
 
         else:
@@ -471,7 +471,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         if event_key == 'manual_mqtt_connection_enabled':
             self._mqtt_manually_connected = False
 
-        elif printer and event_key == 'multi_color_box_auto_feed':
+        elif printer and event_key == 'multi_color_box_runout_refill':
             await printer.multi_color_box_switch_off_auto_feed()
 
         else:

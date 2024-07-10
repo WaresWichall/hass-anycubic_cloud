@@ -225,8 +225,8 @@
       }
     },
     "switch": {
-      "multi_color_box_auto_feed": {
-        "name": "Auto Switch Filament"
+      "multi_color_box_runout_refill": {
+        "name": "ACE Run-out Refill"
       },
       "manual_mqtt_connection_enabled": {
         "name": "Manual MQTT Connection Enabled"

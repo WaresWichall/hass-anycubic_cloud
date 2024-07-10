@@ -16,8 +16,8 @@ from .entity import AnycubicCloudEntity
 
 MULTI_COLOR_BOX_SWITCH_TYPES = (
     SwitchEntityDescription(
-        key="multi_color_box_auto_feed",
-        translation_key="multi_color_box_auto_feed",
+        key="multi_color_box_runout_refill",
+        translation_key="multi_color_box_runout_refill",
     ),
 )
 
