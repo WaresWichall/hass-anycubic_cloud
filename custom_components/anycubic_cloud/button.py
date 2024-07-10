@@ -42,6 +42,14 @@ MULTI_COLOR_BOX_BUTTON_TYPES = (
 
 BUTTON_TYPES = (
     ButtonEntityDescription(
+        key="pause_print",
+        translation_key="pause_print",
+    ),
+    ButtonEntityDescription(
+        key="resume_print",
+        translation_key="resume_print",
+    ),
+    ButtonEntityDescription(
         key="cancel_print",
         translation_key="cancel_print",
     ),

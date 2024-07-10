@@ -413,6 +413,12 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             elif printer and event_key == 'drying_stop':
                 await printer.multi_color_box_drying_stop()
 
+            elif printer and event_key == 'pause_print':
+                await printer.pause_print()
+
+            elif printer and event_key == 'resume_print':
+                await printer.resume_print()
+
             elif printer and event_key == 'cancel_print':
                 await printer.cancel_print()
 

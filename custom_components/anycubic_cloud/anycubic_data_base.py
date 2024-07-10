@@ -1244,6 +1244,7 @@ class AnycubicPrinter:
         self._print_speed_pct = 0
         self._print_speed_mode = 0
         self._local_file_list = None
+        self._udisk_file_list = None
         self._has_peripheral_camera = False
         self._has_peripheral_multi_color_box = False
         self._has_peripheral_udisk = False
@@ -1263,12 +1264,20 @@ class AnycubicPrinter:
         else:
             self._type_function_ids = list()
 
-    def _set_local_file_list(self, local_file_list):
-        if local_file_list is None:
+    def _set_local_file_list(self, file_list):
+        if file_list is None:
             return
 
         self._local_file_list = list([
-            AnycubicFile.from_json(x) for x in local_file_list
+            AnycubicFile.from_json(x) for x in file_list
+        ])
+
+    def _set_udisk_file_list(self, file_list):
+        if file_list is None:
+            return
+
+        self._udisk_file_list = list([
+            AnycubicFile.from_json(x) for x in file_list
         ])
 
     def _set_multi_color_box(self, multi_color_box):
@@ -1723,6 +1732,16 @@ class AnycubicPrinter:
         if action == 'listLocal' and state == 'done':
             data = payload['data']['records']
             self._set_local_file_list(data)
+            return
+        elif action == 'deleteLocal' and state == 'success':
+            # Not Yet Needed
+            return
+        elif action == 'listUdisk' and state == 'done':
+            data = payload['data']['records']
+            self._set_udisk_file_list(data)
+            return
+        elif action == 'deleteUdisk' and state == 'success':
+            # Not Yet Needed
             return
         else:
             raise Exception('Unknown file data.')
@@ -2290,6 +2309,26 @@ class AnycubicPrinter:
             box_id=box_id,
         )
 
+    async def pause_print(
+        self,
+        project=None,
+    ):
+
+        return await self._api_parent.pause_print(
+            self,
+            project=project,
+        )
+
+    async def resume_print(
+        self,
+        project=None,
+    ):
+
+        return await self._api_parent.resume_print(
+            self,
+            project=project,
+        )
+
     async def cancel_print(
         self,
         project=None,
@@ -2297,6 +2336,7 @@ class AnycubicPrinter:
 
         return await self._api_parent.cancel_print(
             self,
+            project=project,
         )
 
     async def multi_color_box_feed_filament(

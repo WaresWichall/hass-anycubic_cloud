@@ -107,6 +107,12 @@
       "drying_stop": {
         "name": "Drying Stop"
       },
+      "pause_print": {
+        "name": "Pause Print"
+      },
+      "resume_print": {
+        "name": "Resume Print"
+      },
       "cancel_print": {
         "name": "Cancel Print"
       },

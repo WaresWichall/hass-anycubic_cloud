@@ -36,13 +36,18 @@ from .anycubic_const import (
     AC_KNOWN_SEC,
     COMMAND_ID_CAMERA_OPEN,
     COMMAND_ID_FEED_FILAMENT,
+    COMMAND_ID_DELETE_LOCAL_FILE,
+    COMMAND_ID_DELETE_UDISK_FILE,
     COMMAND_ID_LIST_LOCAL_FILES,
+    COMMAND_ID_LIST_UDISK_FILES,
     COMMAND_ID_MULTI_COLOR_BOX_AUTO_FEED,
     COMMAND_ID_MULTI_COLOR_BOX_GET_INFO,
     COMMAND_ID_MULTI_COLOR_BOX_DRY,
     COMMAND_ID_MULTI_COLOR_BOX_SET_SLOT,
     COMMAND_ID_START_PRINT,
     COMMAND_ID_STOP_PRINT,
+    COMMAND_ID_PAUSE_PRINT,
+    COMMAND_ID_RESUME_PRINT,
 )
 
 
@@ -674,6 +679,50 @@ class AnycubicAPI:
             no_order_data=True,
         )
 
+    async def _send_order_pause_print(
+        self,
+        printer,
+        project,
+    ):
+        if not printer:
+            return
+
+        if not project:
+            return
+
+        return await self._send_anycubic_order(
+            order_id=COMMAND_ID_PAUSE_PRINT,
+            printer_id=printer.id,
+            project_id=project.id,
+            order_data=None,
+            extra_params={
+                'ams_info': None,
+                'settings': None,
+            },
+        )
+
+    async def _send_order_resume_print(
+        self,
+        printer,
+        project,
+    ):
+        if not printer:
+            return
+
+        if not project:
+            return
+
+        return await self._send_anycubic_order(
+            order_id=COMMAND_ID_RESUME_PRINT,
+            printer_id=printer.id,
+            project_id=project.id,
+            order_data=None,
+            extra_params={
+                'ams_info': None,
+                'settings': None,
+            },
+        )
+
     async def _send_order_stop_print(
         self,
         printer,
@@ -710,6 +759,64 @@ class AnycubicAPI:
             project_id=0,
         )
 
+    async def _send_order_list_udisk_files(
+        self,
+        printer,
+    ):
+        """ Response sent via MQTT """
+        if not printer:
+            return
+
+        return await self._send_anycubic_order(
+            order_id=COMMAND_ID_LIST_UDISK_FILES,
+            printer_id=printer.id,
+            project_id=0,
+        )
+
+    async def _send_order_delete_local_file(
+        self,
+        printer,
+        file_name: str,
+    ):
+        """ Response sent via MQTT """
+        if not printer:
+            return
+
+        order_data = {
+            'filename': file_name,
+            'filetype': -1,
+            'path': '/',
+        }
+
+        return await self._send_anycubic_order(
+            order_id=COMMAND_ID_DELETE_LOCAL_FILE,
+            printer_id=printer.id,
+            project_id=0,
+            order_data=order_data,
+        )
+
+    async def _send_order_delete_udisk_file(
+        self,
+        printer,
+        file_name: str,
+    ):
+        """ Response sent via MQTT """
+        if not printer:
+            return
+
+        order_data = {
+            'filename': file_name,
+            'filetype': -1,
+            'path': '/',
+        }
+
+        return await self._send_anycubic_order(
+            order_id=COMMAND_ID_DELETE_UDISK_FILE,
+            printer_id=printer.id,
+            project_id=0,
+            order_data=order_data,
+        )
+
     async def _send_order_print_local_file(
         self,
         printer,
@@ -722,7 +829,7 @@ class AnycubicAPI:
             'file_key': '',
             'file_name': '',
             'filename': file_name,
-            'filepath': '\\/',
+            'filepath': '/',
             'filetype': 1,
             'task_settings': {},
         }
@@ -847,6 +954,48 @@ class AnycubicAPI:
             updated_versions.append(resp)
 
         return updated_versions
+
+    async def pause_print(
+        self,
+        printer,
+        project=None,
+    ):
+        if not printer:
+            return
+
+        if not project and not printer.latest_project:
+            return
+
+        if not project:
+            project = printer.latest_project
+
+        resp = await self._send_order_pause_print(
+            printer,
+            project,
+        )
+
+        return resp
+
+    async def resume_print(
+        self,
+        printer,
+        project=None,
+    ):
+        if not printer:
+            return
+
+        if not project and not printer.latest_project:
+            return
+
+        if not project:
+            project = printer.latest_project
+
+        resp = await self._send_order_resume_print(
+            printer,
+            project,
+        )
+
+        return resp
 
     async def cancel_print(
         self,
