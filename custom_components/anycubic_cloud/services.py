@@ -21,6 +21,7 @@ from .const import (
     CONF_SLOT_COLOR_GREEN,
     CONF_SLOT_COLOR_BLUE,
     CONF_BOX_ID,
+    CONF_FINISHED,
     COORDINATOR,
     DOMAIN,
 )
@@ -277,6 +278,54 @@ class MultiColorBoxSetSlotPlaSe(BaseMultiColorBoxSetSlot):
         )
 
 
+class MultiColorBoxFilamentExtrude(AnycubicCloudServiceCall):
+    """Extrude filament."""
+
+    schema = AnycubicCloudServiceCall.schema.extend(
+        {
+            vol.Required(CONF_SLOT_INDEX): cv.positive_int,
+            vol.Optional(CONF_BOX_ID): cv.positive_int,
+            vol.Optional(CONF_FINISHED): cv.boolean,
+        }
+    )
+
+    async def async_call_service(self, service: ServiceCall) -> None:
+        """Execute service call."""
+
+        printer = self.get_printer(service)
+        box_id = service.data.get(CONF_BOX_ID)
+        finished = service.data.get(CONF_FINISHED)
+        if box_id is None:
+            box_id = 0
+        slot_index = service.data[CONF_SLOT_INDEX]
+        await printer.multi_color_box_feed_filament(
+            slot_index=slot_index,
+            box_id=box_id,
+            finish=bool(finished)
+        )
+
+
+class MultiColorBoxFilamentRetract(AnycubicCloudServiceCall):
+    """Retract filament."""
+
+    schema = AnycubicCloudServiceCall.schema.extend(
+        {
+            vol.Optional(CONF_BOX_ID): cv.positive_int,
+        }
+    )
+
+    async def async_call_service(self, service: ServiceCall) -> None:
+        """Execute service call."""
+
+        printer = self.get_printer(service)
+        box_id = service.data.get(CONF_BOX_ID)
+        if box_id is None:
+            box_id = 0
+        await printer.multi_color_box_retract_filament(
+            box_id=box_id,
+        )
+
+
 SERVICES = (
     ("multi_color_box_set_slot_pla", MultiColorBoxSetSlotPla),
     ("multi_color_box_set_slot_petg", MultiColorBoxSetSlotPetg),
@@ -287,4 +336,6 @@ SERVICES = (
     ("multi_color_box_set_slot_hips", MultiColorBoxSetSlotHips),
     ("multi_color_box_set_slot_pa", MultiColorBoxSetSlotPa),
     ("multi_color_box_set_slot_pla_se", MultiColorBoxSetSlotPlaSe),
+    ("multi_color_box_filament_extrude", MultiColorBoxFilamentExtrude),
+    ("multi_color_box_filament_retract", MultiColorBoxFilamentRetract),
 )

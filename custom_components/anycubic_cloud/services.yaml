@@ -2,12 +2,12 @@
 
 multi_color_box_set_slot_pla: &multi_color_box_set_slot
   fields:
-    config_entry:
+    config_entry: &anycubic_config_entry
       required: true
       selector:
         config_entry:
           integration: anycubic_cloud
-    printer_id:
+    printer_id: &printer_id
       required: true
       selector:
         number:
@@ -15,7 +15,7 @@ multi_color_box_set_slot_pla: &multi_color_box_set_slot
           max: 9999999999999999999
           step: 1
           mode: box
-    box_id:
+    box_id: &box_id
       required: false
       selector:
         number:
@@ -23,7 +23,7 @@ multi_color_box_set_slot_pla: &multi_color_box_set_slot
           max: 7
           step: 1
           mode: box
-    slot_index:
+    slot_index: &slot_index
       required: true
       selector:
         number:
@@ -63,3 +63,18 @@ multi_color_box_set_slot_asa: *multi_color_box_set_slot
 multi_color_box_set_slot_hips: *multi_color_box_set_slot
 multi_color_box_set_slot_pa: *multi_color_box_set_slot
 multi_color_box_set_slot_pla_se: *multi_color_box_set_slot
+multi_color_box_filament_extrude:
+  fields:
+    config_entry: *anycubic_config_entry
+    printer_id: *printer_id
+    box_id: *box_id
+    slot_index: *slot_index
+    finished:
+      required: false
+      selector:
+        boolean:
+multi_color_box_filament_retract:
+  fields:
+    config_entry: *anycubic_config_entry
+    printer_id: *printer_id
+    box_id: *box_id

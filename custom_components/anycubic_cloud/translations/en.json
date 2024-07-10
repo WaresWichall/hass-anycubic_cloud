@@ -503,6 +503,42 @@
           "description": "Slot Color Blue."
         }
       }
+    },
+    "multi_color_box_filament_extrude": {
+      "name": "Multi-Color Box Filament Extrude",
+      "description": "Activate filament extrude on ACE Multi-Color Box.",
+      "fields": {
+        "printer_id": {
+          "name": "Printer ID",
+          "description": "Printer ID."
+        },
+        "box_id": {
+          "name": "Box ID",
+          "description": "Box ID."
+        },
+        "slot_index": {
+          "name": "Slot Index",
+          "description": "Slot Index."
+        },
+        "finished": {
+          "name": "Extrude Finished",
+          "description": "End filament extrusion command."
+        }
+      }
+    },
+    "multi_color_box_filament_retract": {
+      "name": "Multi-Color Box Filament Retract",
+      "description": "Activate filament retract on ACE Multi-Color Box.",
+      "fields": {
+        "printer_id": {
+          "name": "Printer ID",
+          "description": "Printer ID."
+        },
+        "box_id": {
+          "name": "Box ID",
+          "description": "Box ID."
+        }
+      }
     }
   },
   "exceptions": {}

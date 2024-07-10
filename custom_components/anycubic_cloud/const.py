@@ -25,6 +25,7 @@ CONF_SLOT_COLOR_RED = "slot_color_red"
 CONF_SLOT_COLOR_GREEN = "slot_color_green"
 CONF_SLOT_COLOR_BLUE = "slot_color_blue"
 CONF_BOX_ID = "box_id"
+CONF_FINISHED = "finished"
 
 UNIT_LAYERS = "Layers"
 
