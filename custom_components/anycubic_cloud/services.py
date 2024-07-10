@@ -151,7 +151,140 @@ class MultiColorBoxSetSlotPetg(BaseMultiColorBoxSetSlot):
         )
 
 
+class MultiColorBoxSetSlotAbs(BaseMultiColorBoxSetSlot):
+    """Set multi color box abs slot."""
+
+    async def async_set_box_slot(
+        self,
+        printer: AnycubicPrinter,
+        slot_index: int,
+        slot_color: AnycubicMaterialColor,
+        box_id: int,
+    ) -> None:
+
+        await printer.multi_color_box_set_abs_slot(
+            slot_index=slot_index,
+            slot_color=slot_color,
+            box_id=box_id,
+        )
+
+
+class MultiColorBoxSetSlotPacf(BaseMultiColorBoxSetSlot):
+    """Set multi color box pacf slot."""
+
+    async def async_set_box_slot(
+        self,
+        printer: AnycubicPrinter,
+        slot_index: int,
+        slot_color: AnycubicMaterialColor,
+        box_id: int,
+    ) -> None:
+
+        await printer.multi_color_box_set_pacf_slot(
+            slot_index=slot_index,
+            slot_color=slot_color,
+            box_id=box_id,
+        )
+
+
+class MultiColorBoxSetSlotPc(BaseMultiColorBoxSetSlot):
+    """Set multi color box pc slot."""
+
+    async def async_set_box_slot(
+        self,
+        printer: AnycubicPrinter,
+        slot_index: int,
+        slot_color: AnycubicMaterialColor,
+        box_id: int,
+    ) -> None:
+
+        await printer.multi_color_box_set_pc_slot(
+            slot_index=slot_index,
+            slot_color=slot_color,
+            box_id=box_id,
+        )
+
+
+class MultiColorBoxSetSlotAsa(BaseMultiColorBoxSetSlot):
+    """Set multi color box asa slot."""
+
+    async def async_set_box_slot(
+        self,
+        printer: AnycubicPrinter,
+        slot_index: int,
+        slot_color: AnycubicMaterialColor,
+        box_id: int,
+    ) -> None:
+
+        await printer.multi_color_box_set_asa_slot(
+            slot_index=slot_index,
+            slot_color=slot_color,
+            box_id=box_id,
+        )
+
+
+class MultiColorBoxSetSlotHips(BaseMultiColorBoxSetSlot):
+    """Set multi color box hips slot."""
+
+    async def async_set_box_slot(
+        self,
+        printer: AnycubicPrinter,
+        slot_index: int,
+        slot_color: AnycubicMaterialColor,
+        box_id: int,
+    ) -> None:
+
+        await printer.multi_color_box_set_hips_slot(
+            slot_index=slot_index,
+            slot_color=slot_color,
+            box_id=box_id,
+        )
+
+
+class MultiColorBoxSetSlotPa(BaseMultiColorBoxSetSlot):
+    """Set multi color box pa slot."""
+
+    async def async_set_box_slot(
+        self,
+        printer: AnycubicPrinter,
+        slot_index: int,
+        slot_color: AnycubicMaterialColor,
+        box_id: int,
+    ) -> None:
+
+        await printer.multi_color_box_set_pa_slot(
+            slot_index=slot_index,
+            slot_color=slot_color,
+            box_id=box_id,
+        )
+
+
+class MultiColorBoxSetSlotPlaSe(BaseMultiColorBoxSetSlot):
+    """Set multi color box pla se slot."""
+
+    async def async_set_box_slot(
+        self,
+        printer: AnycubicPrinter,
+        slot_index: int,
+        slot_color: AnycubicMaterialColor,
+        box_id: int,
+    ) -> None:
+
+        await printer.multi_color_box_set_pla_se_slot(
+            slot_index=slot_index,
+            slot_color=slot_color,
+            box_id=box_id,
+        )
+
+
 SERVICES = (
     ("multi_color_box_set_slot_pla", MultiColorBoxSetSlotPla),
     ("multi_color_box_set_slot_petg", MultiColorBoxSetSlotPetg),
+    ("multi_color_box_set_slot_abs", MultiColorBoxSetSlotAbs),
+    ("multi_color_box_set_slot_pacf", MultiColorBoxSetSlotPacf),
+    ("multi_color_box_set_slot_pc", MultiColorBoxSetSlotPc),
+    ("multi_color_box_set_slot_asa", MultiColorBoxSetSlotAsa),
+    ("multi_color_box_set_slot_hips", MultiColorBoxSetSlotHips),
+    ("multi_color_box_set_slot_pa", MultiColorBoxSetSlotPa),
+    ("multi_color_box_set_slot_pla_se", MultiColorBoxSetSlotPlaSe),
 )

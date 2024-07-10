@@ -56,3 +56,10 @@ multi_color_box_set_slot_pla: &multi_color_box_set_slot
           step: 1
           mode: box
 multi_color_box_set_slot_petg: *multi_color_box_set_slot
+multi_color_box_set_slot_abs: *multi_color_box_set_slot
+multi_color_box_set_slot_pacf: *multi_color_box_set_slot
+multi_color_box_set_slot_pc: *multi_color_box_set_slot
+multi_color_box_set_slot_asa: *multi_color_box_set_slot
+multi_color_box_set_slot_hips: *multi_color_box_set_slot
+multi_color_box_set_slot_pa: *multi_color_box_set_slot
+multi_color_box_set_slot_pla_se: *multi_color_box_set_slot
