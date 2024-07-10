@@ -1,47 +1,18 @@
 import json
 import time
-from enum import IntEnum
 
 from .anycubic_const import (
-    FUNCTION_TYPE_ID_AXLE_MOVEMENT,
-    FUNCTION_TYPE_ID_FILE_MANAGER,
-    FUNCTION_TYPE_ID_EXPOSURE_TEST,
-    FUNCTION_TYPE_ID_LCD_PEER_VIDEO,
-    FUNCTION_TYPE_ID_FDM_AXIS_MOVE,
-    FUNCTION_TYPE_ID_FDM_PEER_VIDEO,
-    FUNCTION_TYPE_ID_DEVICE_STARTUP_SELF_TEST,
-    FUNCTION_TYPE_ID_PRINT_STARTUP_SELF_TEST,
-    FUNCTION_TYPE_ID_AUTOMATIC_OPERATION,
-    FUNCTION_TYPE_ID_RESIDUE_CLEAN,
-    FUNCTION_TYPE_ID_NOVICE_GUIDE,
-    FUNCTION_TYPE_ID_RELEASE_FILM,
-    FUNCTION_TYPE_ID_TASK_MODE,
-    FUNCTION_TYPE_ID_LCD_INTELLIGENT_MATERIALS_BOX,
-    FUNCTION_TYPE_ID_LCD_AUTO_OUT_IN_MATERIALS,
-    FUNCTION_TYPE_ID_M7PRO_AUTOMATIC_OPERATION,
-    FUNCTION_TYPE_ID_MULTI_COLOR_BOX,
     REX_GCODE_EXT,
+)
+
+from .anycubic_enums import (
+    AnycubicFunctionID,
+    AnycubicPrintStatus,
 )
 
 from .anycubic_helpers import (
     get_part_from_mqtt_topic,
 )
-
-
-class AnycubicFeedType(IntEnum):
-    Feed = 1
-    Retract = 2
-    Finish = 3
-
-
-class AnycubicPrintStatus(IntEnum):
-    Printing = 1
-    Complete = 2
-    Cancelled = 3
-    Downloading = 4
-    Checking = 5
-    Preheating = 6
-    Slicing = 7
 
 
 class AnycubicFile:
@@ -1957,71 +1928,71 @@ class AnycubicPrinter:
 
     @property
     def supports_function_axle_movement(self):
-        return FUNCTION_TYPE_ID_AXLE_MOVEMENT in self._type_function_ids
+        return AnycubicFunctionID.AXLE_MOVEMENT in self._type_function_ids
 
     @property
     def supports_function_file_manager(self):
-        return FUNCTION_TYPE_ID_FILE_MANAGER in self._type_function_ids
+        return AnycubicFunctionID.FILE_MANAGER in self._type_function_ids
 
     @property
     def supports_function_exposure_test(self):
-        return FUNCTION_TYPE_ID_EXPOSURE_TEST in self._type_function_ids
+        return AnycubicFunctionID.EXPOSURE_TEST in self._type_function_ids
 
     @property
     def supports_function_lcd_peer_video(self):
-        return FUNCTION_TYPE_ID_LCD_PEER_VIDEO in self._type_function_ids
+        return AnycubicFunctionID.LCD_PEER_VIDEO in self._type_function_ids
 
     @property
     def supports_function_fdm_axis_move(self):
-        return FUNCTION_TYPE_ID_FDM_AXIS_MOVE in self._type_function_ids
+        return AnycubicFunctionID.FDM_AXIS_MOVE in self._type_function_ids
 
     @property
     def supports_function_fdm_peer_video(self):
-        return FUNCTION_TYPE_ID_FDM_PEER_VIDEO in self._type_function_ids
+        return AnycubicFunctionID.FDM_PEER_VIDEO in self._type_function_ids
 
     @property
     def supports_function_device_startup_self_test(self):
-        return FUNCTION_TYPE_ID_DEVICE_STARTUP_SELF_TEST in self._type_function_ids
+        return AnycubicFunctionID.DEVICE_STARTUP_SELF_TEST in self._type_function_ids
 
     @property
     def supports_function_print_startup_self_test(self):
-        return FUNCTION_TYPE_ID_PRINT_STARTUP_SELF_TEST in self._type_function_ids
+        return AnycubicFunctionID.PRINT_STARTUP_SELF_TEST in self._type_function_ids
 
     @property
     def supports_function_automatic_operation(self):
-        return FUNCTION_TYPE_ID_AUTOMATIC_OPERATION in self._type_function_ids
+        return AnycubicFunctionID.AUTOMATIC_OPERATION in self._type_function_ids
 
     @property
     def supports_function_residue_clean(self):
-        return FUNCTION_TYPE_ID_RESIDUE_CLEAN in self._type_function_ids
+        return AnycubicFunctionID.RESIDUE_CLEAN in self._type_function_ids
 
     @property
     def supports_function_novice_guide(self):
-        return FUNCTION_TYPE_ID_NOVICE_GUIDE in self._type_function_ids
+        return AnycubicFunctionID.NOVICE_GUIDE in self._type_function_ids
 
     @property
     def supports_function_release_film(self):
-        return FUNCTION_TYPE_ID_RELEASE_FILM in self._type_function_ids
+        return AnycubicFunctionID.RELEASE_FILM in self._type_function_ids
 
     @property
     def supports_function_task_mode(self):
-        return FUNCTION_TYPE_ID_TASK_MODE in self._type_function_ids
+        return AnycubicFunctionID.TASK_MODE in self._type_function_ids
 
     @property
     def supports_function_lcd_intelligent_materials_box(self):
-        return FUNCTION_TYPE_ID_LCD_INTELLIGENT_MATERIALS_BOX in self._type_function_ids
+        return AnycubicFunctionID.LCD_INTELLIGENT_MATERIALS_BOX in self._type_function_ids
 
     @property
     def supports_function_lcd_auto_out_in_materials(self):
-        return FUNCTION_TYPE_ID_LCD_AUTO_OUT_IN_MATERIALS in self._type_function_ids
+        return AnycubicFunctionID.LCD_AUTO_OUT_IN_MATERIALS in self._type_function_ids
 
     @property
     def supports_function_m7pro_automatic_operation(self):
-        return FUNCTION_TYPE_ID_M7PRO_AUTOMATIC_OPERATION in self._type_function_ids
+        return AnycubicFunctionID.M7PRO_AUTOMATIC_OPERATION in self._type_function_ids
 
     @property
     def supports_function_multi_color_box(self):
-        return FUNCTION_TYPE_ID_MULTI_COLOR_BOX in self._type_function_ids
+        return AnycubicFunctionID.MULTI_COLOR_BOX in self._type_function_ids
 
     @property
     def material_type(self):

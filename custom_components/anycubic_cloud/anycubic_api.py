@@ -7,7 +7,6 @@ from os import path
 
 from .anycubic_data_base import (
     AnycubicCameraToken,
-    AnycubicFeedType,
     AnycubicMaterialColor,
     AnycubicPrinter,
     AnycubicProject,
@@ -34,20 +33,11 @@ from .anycubic_const import (
     AC_KNOWN_AID,
     AC_KNOWN_VID,
     AC_KNOWN_SEC,
-    COMMAND_ID_CAMERA_OPEN,
-    COMMAND_ID_FEED_FILAMENT,
-    COMMAND_ID_DELETE_LOCAL_FILE,
-    COMMAND_ID_DELETE_UDISK_FILE,
-    COMMAND_ID_LIST_LOCAL_FILES,
-    COMMAND_ID_LIST_UDISK_FILES,
-    COMMAND_ID_MULTI_COLOR_BOX_AUTO_FEED,
-    COMMAND_ID_MULTI_COLOR_BOX_GET_INFO,
-    COMMAND_ID_MULTI_COLOR_BOX_DRY,
-    COMMAND_ID_MULTI_COLOR_BOX_SET_SLOT,
-    COMMAND_ID_START_PRINT,
-    COMMAND_ID_STOP_PRINT,
-    COMMAND_ID_PAUSE_PRINT,
-    COMMAND_ID_RESUME_PRINT,
+)
+
+from .anycubic_enums import (
+    AnycubicFeedType,
+    AnycubicOrderID,
 )
 
 
@@ -471,7 +461,7 @@ class AnycubicAPI:
         no_order_data=False,
     ):
         params = {
-            'order_id': order_id,
+            'order_id': int(order_id),
             'printer_id': printer_id,
         }
         if not no_order_data:
@@ -503,7 +493,7 @@ class AnycubicAPI:
             return
 
         params = {
-            'order_id': COMMAND_ID_CAMERA_OPEN,
+            'order_id': int(AnycubicOrderID.CAMERA_OPEN),
             'printer_id': printer.id,
         }
         resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.send_order, params=params)
@@ -552,7 +542,7 @@ class AnycubicAPI:
         }
 
         return await self._send_anycubic_order(
-            order_id=COMMAND_ID_MULTI_COLOR_BOX_SET_SLOT,
+            order_id=AnycubicOrderID.MULTI_COLOR_BOX_SET_SLOT,
             printer_id=printer.id,
             project_id=0,
             order_data=order_data,
@@ -591,7 +581,7 @@ class AnycubicAPI:
         }
 
         return await self._send_anycubic_order(
-            order_id=COMMAND_ID_FEED_FILAMENT,
+            order_id=AnycubicOrderID.FEED_FILAMENT,
             printer_id=printer.id,
             project_id=0,
             order_data=order_data,
@@ -626,7 +616,7 @@ class AnycubicAPI:
         }
 
         return await self._send_anycubic_order(
-            order_id=COMMAND_ID_MULTI_COLOR_BOX_DRY,
+            order_id=AnycubicOrderID.MULTI_COLOR_BOX_DRY,
             printer_id=printer.id,
             project_id=0,
             order_data=order_data,
@@ -653,7 +643,7 @@ class AnycubicAPI:
         }
 
         return await self._send_anycubic_order(
-            order_id=COMMAND_ID_MULTI_COLOR_BOX_AUTO_FEED,
+            order_id=AnycubicOrderID.MULTI_COLOR_BOX_AUTO_FEED,
             printer_id=printer.id,
             project_id=0,
             order_data=order_data,
@@ -672,7 +662,7 @@ class AnycubicAPI:
             return
 
         return await self._send_anycubic_order(
-            order_id=COMMAND_ID_MULTI_COLOR_BOX_GET_INFO,
+            order_id=AnycubicOrderID.MULTI_COLOR_BOX_GET_INFO,
             printer_id=printer.id,
             project_id=0,
             order_data=None,
@@ -691,7 +681,7 @@ class AnycubicAPI:
             return
 
         return await self._send_anycubic_order(
-            order_id=COMMAND_ID_PAUSE_PRINT,
+            order_id=AnycubicOrderID.PAUSE_PRINT,
             printer_id=printer.id,
             project_id=project.id,
             order_data=None,
@@ -713,7 +703,7 @@ class AnycubicAPI:
             return
 
         return await self._send_anycubic_order(
-            order_id=COMMAND_ID_RESUME_PRINT,
+            order_id=AnycubicOrderID.RESUME_PRINT,
             printer_id=printer.id,
             project_id=project.id,
             order_data=None,
@@ -735,7 +725,7 @@ class AnycubicAPI:
             return
 
         return await self._send_anycubic_order(
-            order_id=COMMAND_ID_STOP_PRINT,
+            order_id=AnycubicOrderID.STOP_PRINT,
             printer_id=printer.id,
             project_id=project.id,
             order_data=None,
@@ -754,7 +744,7 @@ class AnycubicAPI:
             return
 
         return await self._send_anycubic_order(
-            order_id=COMMAND_ID_LIST_LOCAL_FILES,
+            order_id=AnycubicOrderID.LIST_LOCAL_FILES,
             printer_id=printer.id,
             project_id=0,
         )
@@ -768,7 +758,7 @@ class AnycubicAPI:
             return
 
         return await self._send_anycubic_order(
-            order_id=COMMAND_ID_LIST_UDISK_FILES,
+            order_id=AnycubicOrderID.LIST_UDISK_FILES,
             printer_id=printer.id,
             project_id=0,
         )
@@ -789,7 +779,7 @@ class AnycubicAPI:
         }
 
         return await self._send_anycubic_order(
-            order_id=COMMAND_ID_DELETE_LOCAL_FILE,
+            order_id=AnycubicOrderID.DELETE_LOCAL_FILE,
             printer_id=printer.id,
             project_id=0,
             order_data=order_data,
@@ -811,7 +801,7 @@ class AnycubicAPI:
         }
 
         return await self._send_anycubic_order(
-            order_id=COMMAND_ID_DELETE_UDISK_FILE,
+            order_id=AnycubicOrderID.DELETE_UDISK_FILE,
             printer_id=printer.id,
             project_id=0,
             order_data=order_data,
@@ -835,7 +825,7 @@ class AnycubicAPI:
         }
 
         return await self._send_anycubic_order(
-            order_id=COMMAND_ID_START_PRINT,
+            order_id=AnycubicOrderID.START_PRINT,
             printer_id=printer.id,
             project_id=0,
             order_data=order_data,
