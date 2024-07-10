@@ -63,6 +63,12 @@
       "printer_online": {
         "name": "Printer Online"
       },
+      "is_busy": {
+        "name": "Is Busy"
+      },
+      "is_available": {
+        "name": "Is Available"
+      },
       "dry_status_is_drying": {
         "name": "Drying Active"
       },

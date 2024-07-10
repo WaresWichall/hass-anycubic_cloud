@@ -28,6 +28,12 @@ from .anycubic_helpers import (
 )
 
 
+class AnycubicFeedType(IntEnum):
+    Feed = 1
+    Retract = 2
+    Finish = 3
+
+
 class AnycubicPrintStatus(IntEnum):
     Printing = 1
     Complete = 2
@@ -828,7 +834,7 @@ class AnycubicMultiColorBox:
         self._model_id = int(model_id)
         self._auto_feed = int(auto_feed)
         self._loaded_slot = int(loaded_slot)
-        self._feed_status = AnycubicFeedStatus.from_json(feed_status)
+        self.set_feed_status(feed_status)
         self.set_current_temperature(temp)
         self.set_drying_status(drying_status)
         self._curr_nozzle_temp = int(curr_nozzle_temp) if curr_nozzle_temp is not None else None
@@ -840,6 +846,9 @@ class AnycubicMultiColorBox:
 
     def set_drying_status(self, drying_status):
         self._drying_status = AnycubicDryingStatus.from_json(drying_status)
+
+    def set_feed_status(self, feed_status):
+        self._feed_status = AnycubicFeedStatus.from_json(feed_status)
 
     def set_slot_loaded(self, slot_num: int):
         self._loaded_slot = slot_num
@@ -1678,6 +1687,18 @@ class AnycubicPrinter:
                 self._multi_color_box[box_id].set_current_temperature(box['temp'])
                 self._multi_color_box[box_id].set_drying_status(box['drying_status'])
             return
+        elif action == 'feedFilament' and state == 'done':
+            data = payload['data']['multi_color_box']
+            for box in data:
+                box_id = int(box['id'])
+                if self._multi_color_box is None or len(self._multi_color_box) < box_id + 1:
+                    continue
+
+                loaded_slot = int(box['loaded_slot'])
+
+                self._multi_color_box[box_id].set_slot_loaded(loaded_slot)
+                self._multi_color_box[box_id].set_feed_status(box['feed_status'])
+            return
         elif action == 'setAutoFeed' and state == 'done':
             data = payload['data']['multi_color_box']
             for box in data:
@@ -2276,6 +2297,30 @@ class AnycubicPrinter:
 
         return await self._api_parent.cancel_print(
             self,
+        )
+
+    async def multi_color_box_feed_filament(
+        self,
+        slot_index: int,
+        box_id=-1,
+        finish=False,
+    ):
+
+        return await self._api_parent.multi_color_box_feed_filament(
+            self,
+            slot_index=slot_index,
+            box_id=box_id,
+            finish=finish,
+        )
+
+    async def multi_color_box_retract_filament(
+        self,
+        box_id=-1,
+    ):
+
+        return await self._api_parent.multi_color_box_retract_filament(
+            self,
+            box_id=box_id,
         )
 
     async def update_printer_firmware(

@@ -54,6 +54,14 @@ SENSOR_TYPES = (
         translation_key="printer_online",
     ),
     BinarySensorEntityDescription(
+        key="is_busy",
+        translation_key="is_busy",
+    ),
+    BinarySensorEntityDescription(
+        key="is_available",
+        translation_key="is_available",
+    ),
+    BinarySensorEntityDescription(
         key="fw_update_available",
         translation_key="fw_update_available",
     ),

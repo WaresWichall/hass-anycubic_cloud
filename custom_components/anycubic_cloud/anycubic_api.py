@@ -7,6 +7,7 @@ from os import path
 
 from .anycubic_data_base import (
     AnycubicCameraToken,
+    AnycubicFeedType,
     AnycubicMaterialColor,
     AnycubicPrinter,
     AnycubicProject,
@@ -34,8 +35,10 @@ from .anycubic_const import (
     AC_KNOWN_VID,
     AC_KNOWN_SEC,
     COMMAND_ID_CAMERA_OPEN,
+    COMMAND_ID_FEED_FILAMENT,
     COMMAND_ID_LIST_LOCAL_FILES,
     COMMAND_ID_MULTI_COLOR_BOX_AUTO_FEED,
+    COMMAND_ID_MULTI_COLOR_BOX_GET_INFO,
     COMMAND_ID_MULTI_COLOR_BOX_DRY,
     COMMAND_ID_MULTI_COLOR_BOX_SET_SLOT,
     COMMAND_ID_START_PRINT,
@@ -439,12 +442,14 @@ class AnycubicAPI:
         order_data={},
         raw_data=False,
         extra_params=None,
+        no_order_data=False,
     ):
         params = {
             'order_id': order_id,
             'printer_id': printer_id,
-            'data': order_data,
         }
+        if not no_order_data:
+            params['data'] = order_data
         if extra_params is not None:
             params = {
                 **params,
@@ -527,6 +532,45 @@ class AnycubicAPI:
             order_data=order_data,
         )
 
+    async def _send_order_multi_color_box_feed_filament(
+        self,
+        printer: AnycubicPrinter,
+        slot_index: int,
+        feed_type: int,
+        box_id=0,
+    ):
+        if not printer:
+            return
+
+        if feed_type == AnycubicFeedType.Feed and slot_index < 0:
+            return
+
+        if feed_type == AnycubicFeedType.Retract:
+            slot_index = -1
+
+        feed_params = {
+            'slot_index': slot_index,
+            'type': feed_type,
+        }
+
+        order_params = {
+            'id': box_id,
+            'feed_status': feed_params
+        }
+
+        order_data = {
+            'multi_color_box': [
+                order_params,
+            ]
+        }
+
+        return await self._send_anycubic_order(
+            order_id=COMMAND_ID_FEED_FILAMENT,
+            printer_id=printer.id,
+            project_id=0,
+            order_data=order_data,
+        )
+
     async def _send_order_multi_color_box_dry(
         self,
         printer,
@@ -587,6 +631,26 @@ class AnycubicAPI:
             printer_id=printer.id,
             project_id=0,
             order_data=order_data,
+        )
+
+    async def _send_order_multi_color_box_get_info(
+        self,
+        printer,
+        enabled: bool,
+        box_id=0,
+    ):
+        """
+        Response is sent over MQTT.
+        """
+        if not printer:
+            return
+
+        return await self._send_anycubic_order(
+            order_id=COMMAND_ID_MULTI_COLOR_BOX_GET_INFO,
+            printer_id=printer.id,
+            project_id=0,
+            order_data=None,
+            no_order_data=True,
         )
 
     async def _send_order_stop_print(
@@ -751,6 +815,61 @@ class AnycubicAPI:
         resp = await self._send_order_stop_print(
             printer,
             project,
+        )
+
+        return resp
+
+    async def multi_color_box_feed_filament(
+        self,
+        printer,
+        slot_index: int,
+        box_id=-1,
+        finish=False,
+    ):
+        """
+        Must send a finish command when done.
+        """
+        if not printer:
+            return
+
+        if not printer.primary_multi_color_box:
+            return
+
+        if box_id < 0:
+            box_id = 0
+
+        resp = await self._send_order_multi_color_box_feed_filament(
+            printer=printer,
+            slot_index=slot_index,
+            feed_type=(
+                AnycubicFeedType.Feed
+                if not finish else
+                AnycubicFeedType.Finish
+            ),
+            box_id=box_id,
+        )
+
+        return resp
+
+    async def multi_color_box_retract_filament(
+        self,
+        printer,
+        box_id=-1,
+    ):
+        if not printer:
+            return
+
+        if not printer.primary_multi_color_box:
+            return
+
+        if box_id < 0:
+            box_id = 0
+
+        resp = await self._send_order_multi_color_box_feed_filament(
+            printer=printer,
+            slot_index=-1,
+            feed_type=AnycubicFeedType.Retract,
+            box_id=box_id,
         )
 
         return resp

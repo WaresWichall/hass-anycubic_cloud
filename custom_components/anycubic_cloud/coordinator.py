@@ -81,6 +81,8 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "device_status": printer.device_status,
             "printer_online": printer.printer_online,
             "is_printing": printer.is_printing,
+            "is_busy": printer.is_busy,
+            "is_available": printer.is_available,
             "current_status": printer.current_status,
             "curr_nozzle_temp": printer.parameter.curr_nozzle_temp,
             "curr_hotbed_temp": printer.parameter.curr_hotbed_temp,
