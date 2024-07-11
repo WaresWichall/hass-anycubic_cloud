@@ -396,7 +396,7 @@ class AnycubicAPI:
 
         data = resp['data']
 
-        return data
+        return True if data == '' else False
 
     async def _claim_file_upload_from_aws(
         self,
@@ -564,11 +564,13 @@ class AnycubicAPI:
         self,
         printable=None,
         machine_type=None,
+        page=1,
+        limit=10,
         raw_data=False,
     ):
         params = {
-            'page': 1,
-            'limit': 10,
+            'page': page,
+            'limit': limit,
         }
         if printable is not None:
             params['printable'] = int(printable)

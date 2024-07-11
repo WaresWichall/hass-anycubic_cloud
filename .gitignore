@@ -1,3 +1,5 @@
 .DS_Store
 __pycache__
 test_api
+custom_components/anycubic_cloud/scripts/anycubic_credentials.py
+custom_components/anycubic_cloud/scripts/*.cache

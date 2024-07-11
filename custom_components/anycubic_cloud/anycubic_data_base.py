@@ -186,9 +186,21 @@ class AnycubicCloudFile:
     def gcode_id(self):
         return self._gcode_id
 
+    @property
+    def old_filename(self):
+        return self._old_filename
+
+    @property
+    def size(self):
+        return self._size
+
+    @property
+    def size_mb(self):
+        return self._size / 1e6 if self._size else self._size
+
     def __repr__(self):
         return (
-            f"AnycubicFile("
+            f"AnycubicCloudFile("
             f"id={self._id}, "
             f"user_id={self._user_id}, "
             f"post_id={self._post_id}, "
@@ -350,7 +362,7 @@ class AnycubicCloudStore:
 
     def __repr__(self):
         return (
-            f"AnycubicFile("
+            f"AnycubicCloudStore("
             f"used_bytes={self._used_bytes}, "
             f"total_bytes={self._total_bytes}, "
             f"used_str={self._used_str}, "
