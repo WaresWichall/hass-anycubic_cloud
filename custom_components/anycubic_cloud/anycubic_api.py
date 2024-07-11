@@ -3,10 +3,19 @@ import hashlib
 import json
 import time
 import uuid
-from os import path
+from os.path import (
+    basename as path_basename,
+)
+from aiofiles import (
+    open as aio_file_open,
+)
+from aiofiles.os import (
+    path as aio_path,
+)
 
 from .anycubic_data_base import (
     AnycubicCameraToken,
+    AnycubicCloudStore,
     AnycubicMaterialColor,
     AnycubicPrinter,
     AnycubicProject,
@@ -25,13 +34,15 @@ from .anycubic_const import (
     PUBLIC_API_ENDPOINT,
     REX_JS_FILE,
     REX_CLIENT_ID,
-    REX_APP_ID,
+    REX_APP_ID_BASIC,
+    REX_APP_ID_OBF,
     REX_APP_VERSION,
-    REX_APP_SECRET,
+    REX_APP_SECRET_BASIC,
+    REX_APP_SECRET_OBF,
     DEFAULT_USER_AGENT,
-    AC_KNOWN_CID,
+    AC_KNOWN_CID_WEB,
     AC_KNOWN_AID,
-    AC_KNOWN_VID,
+    AC_KNOWN_VID_WEB,
     AC_KNOWN_SEC,
 )
 
@@ -106,6 +117,7 @@ class AnycubicAPI:
         extra_headers={},
         with_origin=AUTH_DOMAIN,
         with_response=False,
+        put_data=None,
     ):
         url = base_url
         headers = {**self._web_headers(with_origin=with_origin), **extra_headers}
@@ -117,6 +129,8 @@ class AnycubicAPI:
             else:
                 data = None
             h_coro = self._session.post(url, params=query, data=data, headers=headers)
+        elif method == HTTP_METHODS.PUT:
+            h_coro = self._session.put(url, params=query, data=put_data, headers=headers)
         else:
             h_coro = self._session.get(url, params=query, headers=headers)
         async with h_coro as resp:
@@ -133,6 +147,14 @@ class AnycubicAPI:
             method=HTTP_METHODS.GET,
             base_url=self._build_public_root_url(endpoint),
             is_json=is_json,
+        )
+
+    async def _fetch_aws_put_resp(self, final_url, put_data):
+        return await self._fetch_ext_resp(
+            method=HTTP_METHODS.PUT,
+            base_url=final_url,
+            is_json=False,
+            put_data=put_data,
         )
 
     async def _fetch_api_resp(
@@ -163,31 +185,47 @@ class AnycubicAPI:
         js_file = js_files.group(1)
         return await self._fetch_pub_get_resp(js_file[1:], is_json=False)
 
+    def _set_known_app_vars(self):
+        self._client_id = AC_KNOWN_CID_WEB
+        self._app_id = AC_KNOWN_AID
+        self._app_version = AC_KNOWN_VID_WEB
+        self._app_secret = AC_KNOWN_SEC
+
     async def _extract_current_app_vars(self):
         js_body = await self._fetch_js_body()
+
+        basic_app_id_found = False
 
         client_matches = REX_CLIENT_ID.findall(js_body)
         if len(client_matches) == 1:
             self._client_id = client_matches[0]
         else:
             self._debug_log("Falling back to known Client ID.")
-            self._client_id = AC_KNOWN_CID
+            self._client_id = AC_KNOWN_CID_WEB
 
-        app_id_matches = REX_APP_ID.findall(js_body)
+        app_id_matches = REX_APP_ID_BASIC.findall(js_body)
         if len(app_id_matches) == 1:
             self._app_id = app_id_matches[0]
+            basic_app_id_found = True
         else:
-            self._debug_log("Falling back to known App ID.")
-            self._app_id = AC_KNOWN_AID
+            app_id_matches = REX_APP_ID_OBF.findall(js_body)
+            if len(app_id_matches) == 1:
+                self._app_id = app_id_matches[0]
+            else:
+                self._debug_log("Falling back to known App ID.")
+                self._app_id = AC_KNOWN_AID
 
         app_version_matches = REX_APP_VERSION.findall(js_body)
         if len(app_version_matches) == 1:
             self._app_version = app_version_matches[0]
         else:
             self._debug_log("Falling back to known Version.")
-            self._app_version = AC_KNOWN_VID
+            self._app_version = AC_KNOWN_VID_WEB
 
-        app_secret_matches = REX_APP_SECRET.findall(js_body)
+        if basic_app_id_found:
+            app_secret_matches = REX_APP_SECRET_OBF.findall(js_body)
+        else:
+            app_secret_matches = REX_APP_SECRET_BASIC.findall(js_body)
         if len(app_secret_matches) == 1:
             self._app_secret = app_secret_matches[0]
         else:
@@ -292,13 +330,155 @@ class AnycubicAPI:
         self._auth_sig_token = resp['data']['token']
         self._debug_log("Successfully got sig token.")
 
-    async def _get_user_store(self):
+    async def get_user_cloud_store(
+        self,
+        raw_data=False,
+    ):
         resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.user_store)
-        self._debug_log(f"user_store output:\n{json.dumps(resp)}")
+        if raw_data:
+            return resp
+
+        data = resp['data']
+
+        return AnycubicCloudStore.from_json(data)
+
+    async def _lock_storage_space(
+        self,
+        file_size,
+        file_name,
+        is_temp_file=0,
+        raw_data=False,
+    ):
+        params = {
+            'size': file_size,
+            'name': file_name,
+            'is_temp_file': is_temp_file,
+        }
+        resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.lock_storage_space, params=params)
+        if raw_data:
+            return resp
+
+        data = resp['data']
+
+        return data
+
+    async def _unlock_storage_space(
+        self,
+        file_id,
+        is_delete_cos=0,
+        raw_data=False,
+    ):
+        params = {
+            'id': file_id,
+            'is_delete_cos': is_delete_cos,
+        }
+        resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.unlock_storage_space, params=params)
+        if raw_data:
+            return resp
+
+        data = resp['data']
+
+        return data
+
+    async def delete_file_from_cloud(
+        self,
+        file_id,
+        raw_data=False,
+    ):
+        params = {
+            'idArr': [file_id],
+        }
+        resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.delete_cloud_file, params=params)
+        if raw_data:
+            return resp
+
+        data = resp['data']
+
+        return data
+
+    async def _claim_file_upload_from_aws(
+        self,
+        file_id,
+        raw_data=False,
+    ):
+        params = {
+            'user_lock_space_id': file_id,
+        }
+        resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.new_file_upload, params=params)
+        if raw_data:
+            return resp
+
+        data = resp['data']
+
+        return data['id']
+
+    async def upload_file_to_cloud(
+        self,
+        full_file_path,
+    ):
+        file_bytes = None
+
+        if not full_file_path or len(full_file_path) <= 0:
+            raise AnycubicAPIError(
+                "Cannot upload an empty file path."
+            )
+
+        file_name = path_basename(full_file_path)
+        file_size = await aio_path.getsize(full_file_path)
+
+        if file_size <= 0:
+            raise AnycubicAPIError(
+                f"Cannot upload file: {file_name} - empty file."
+            )
+
+        async with aio_file_open(full_file_path, mode='rb') as f:
+            file_bytes = await f.read()
+
+        if file_bytes is None:
+            raise AnycubicAPIError(
+                f"Cannot upload file: {file_name} - no data."
+            )
+
+        user_store = await self.get_user_cloud_store()
+
+        previous_available_bytes = user_store.available_bytes
+
+        if previous_available_bytes < file_size:
+            raise AnycubicAPIError(
+                f"Cannot upload file: {file_name} - no room on cloud."
+            )
+
+        lock_data = await self._lock_storage_space(
+            file_size=file_size,
+            file_name=file_name,
+        )
+
+        lock_file_id = lock_data['id']
+        aws_put_url = lock_data['preSignUrl']
+
+        await self._fetch_aws_put_resp(
+            final_url=aws_put_url,
+            put_data=file_bytes,
+        )
+
+        cloud_file_id = await self._claim_file_upload_from_aws(
+            lock_file_id
+        )
+
+        await self._unlock_storage_space(lock_file_id)
+
+        user_store = await self.get_user_cloud_store()
+
+        if user_store.available_bytes > (previous_available_bytes - file_size):
+            raise AnycubicAPIError(
+                f"Unknown error uploading file: {file_name} - not found in cloud storage."
+            )
+
+        return cloud_file_id
 
     async def get_user_info(
         self,
-        raw_data=False
+        raw_data=False,
     ):
         resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.user_info)
         if raw_data:
@@ -394,8 +574,14 @@ class AnycubicAPI:
 
         return data
 
-    async def _login_retrieve_tokens(self):
-        await self._extract_current_app_vars()
+    async def _login_retrieve_tokens(
+        self,
+        use_known=True,
+    ):
+        if use_known:
+            self._set_known_app_vars()
+        else:
+            await self._extract_current_app_vars()
         await self._init_oauth_session()
         await self._password_logon()
         await self._fetch_ac_code_state()
@@ -434,7 +620,7 @@ class AnycubicAPI:
         if self._cache_key_path is None:
             return False
 
-        if not path.exists(self._cache_key_path):
+        if not await aio_path.exists(self._cache_key_path):
             return False
 
         try:
@@ -1488,7 +1674,10 @@ class AnycubicAPI:
 
     # Main Func
 
-    async def check_api_tokens(self):
+    async def _check_can_access_api(
+        self,
+        use_known=True,
+    ):
         all_tokens = [
             self._client_id,
             self._app_id,
@@ -1508,7 +1697,9 @@ class AnycubicAPI:
                 self._debug_log("Tokens expired.")
         if not cached_tokens:
             try:
-                await self._login_retrieve_tokens()
+                await self._login_retrieve_tokens(
+                    use_known=use_known
+                )
                 await self._save_main_tokens()
             except Exception:
                 return False
@@ -1516,6 +1707,15 @@ class AnycubicAPI:
             await self.get_user_info()
         except Exception:
             return False
+        return True
+
+    async def check_api_tokens(self):
+        if not await self._check_can_access_api(True):
+            self._debug_log(
+                "Known app variables changed, attempting to extract new ones, please raise a github issue."
+            )
+            return await self._check_can_access_api(False)
+
         return True
 
     async def update_printer_status(self):

@@ -15,6 +15,57 @@ from .anycubic_helpers import (
 )
 
 
+class AnycubicCloudStore:
+    def __init__(
+        self,
+        used_bytes=0,
+        total_bytes=0,
+        used_str="",
+        total_str="",
+        user_file_exists=False,
+    ):
+        self._used_bytes = int(used_bytes)
+        self._total_bytes = int(total_bytes)
+        self._used_str = used_str
+        self._total_str = total_str
+        self._user_file_exists = bool(user_file_exists)
+
+    @classmethod
+    def from_json(cls, data):
+        if data is None:
+            return None
+
+        return cls(
+            used_bytes=data['used_bytes'],
+            total_bytes=data['total_bytes'],
+            used_str=data['used'],
+            total_str=data['total'],
+            user_file_exists=data['user_file_exists'],
+        )
+
+    @property
+    def used_bytes(self):
+        return self._used_bytes
+
+    @property
+    def total_bytes(self):
+        return self._total_bytes
+
+    @property
+    def available_bytes(self):
+        return self._total_bytes - self._used_bytes
+
+    def __repr__(self):
+        return (
+            f"AnycubicFile("
+            f"used_bytes={self._used_bytes}, "
+            f"total_bytes={self._total_bytes}, "
+            f"used_str={self._used_str}, "
+            f"total_str={self._total_str}, "
+            f"user_file_exists={self._user_file_exists})"
+        )
+
+
 class AnycubicFile:
     def __init__(
         self,
