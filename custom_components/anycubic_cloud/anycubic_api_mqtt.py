@@ -161,7 +161,12 @@ class AnycubicMQTTAPI(AnycubicAPI):
         userdata,
         message,
     ):
-        self._mqtt_message_router(message)
+        try:
+            self._mqtt_message_router(message)
+        except Exception as e:
+            tb = traceback.format_exc()
+            self._debug_log(f"Anycubic MQTT internal error: {e}\n{tb}")
+            return
 
     def _mqtt_on_disconnect(
         self,
