@@ -15,6 +15,299 @@ from .anycubic_helpers import (
 )
 
 
+class AnycubicCloudFile:
+    def __init__(
+        self,
+        id=None,
+        user_id=None,
+        post_id=None,
+        filename=None,
+        time=None,
+        size=None,
+        status=None,
+        ip=None,
+        old_filename=None,
+        img_status=None,
+        device_type=None,
+        file_type=None,
+        md5=None,
+        url=None,
+        thumbnail=None,
+        is_delete=None,
+        update_time=None,
+        uuid=None,
+        store_type=None,
+        bucket=None,
+        region=None,
+        path=None,
+        thumbnail_nonce=None,
+        sliceparse_nonce=None,
+        file_extension=None,
+        name_counts=None,
+        source_user_upload_id=None,
+        origin_post_id=None,
+        stl_user_upload_id=None,
+        is_official_slice=None,
+        triangles_count=None,
+        is_parse=None,
+        source_type=None,
+        file_source=None,
+        user_lock_space_id=None,
+        origin_file_md5=None,
+        is_temp_file=None,
+        official_file_key=None,
+        official_file_id=None,
+        simplify_model=None,
+        size_x=None,
+        size_y=None,
+        size_z=None,
+        estimate=None,
+        material_name=None,
+        layer_height=None,
+        supplies_usage=None,
+        gcode_id=None,
+        printer_names=None,
+        slice_param=None,
+    ):
+        self._id = id
+        self._user_id = user_id
+        self._post_id = post_id
+        self._filename = filename
+        self._time = time
+        self._size = size
+        self._status = status
+        self._ip = ip
+        self._old_filename = old_filename
+        self._img_status = img_status
+        self._device_type = device_type
+        self._file_type = file_type
+        self._md5 = md5
+        self._url = url
+        self._thumbnail = thumbnail
+        self._is_delete = is_delete
+        self._update_time = update_time
+        self._uuid = uuid
+        self._store_type = store_type
+        self._bucket = bucket
+        self._region = region
+        self._path = path
+        self._thumbnail_nonce = thumbnail_nonce
+        self._sliceparse_nonce = sliceparse_nonce
+        self._file_extension = file_extension
+        self._name_counts = name_counts
+        self._source_user_upload_id = source_user_upload_id
+        self._origin_post_id = origin_post_id
+        self._stl_user_upload_id = stl_user_upload_id
+        self._is_official_slice = is_official_slice
+        self._triangles_count = triangles_count
+        self._is_parse = is_parse
+        self._source_type = source_type
+        self._file_source = file_source
+        self._user_lock_space_id = user_lock_space_id
+        self._origin_file_md5 = origin_file_md5
+        self._is_temp_file = is_temp_file
+        self._official_file_key = official_file_key
+        self._official_file_id = official_file_id
+        self._simplify_model = simplify_model
+        self._size_x = size_x
+        self._size_y = size_y
+        self._size_z = size_z
+        self._estimate = estimate
+        self._material_name = material_name
+        self._layer_height = layer_height
+        self._supplies_usage = supplies_usage
+        self._gcode_id = gcode_id
+        self._printer_names = printer_names
+        self._slice_param = slice_param
+
+    @classmethod
+    def from_json(cls, data):
+        if data is None:
+            return None
+
+        return cls(
+            id=data.get('id'),
+            user_id=data.get('user_id'),
+            post_id=data.get('post_id'),
+            filename=data.get('filename'),
+            time=data.get('time'),
+            size=data.get('size'),
+            status=data.get('status'),
+            ip=data.get('ip'),
+            old_filename=data.get('old_filename'),
+            img_status=data.get('img_status'),
+            device_type=data.get('device_type'),
+            file_type=data.get('file_type'),
+            md5=data.get('md5'),
+            url=data.get('url'),
+            thumbnail=data.get('thumbnail'),
+            is_delete=data.get('is_delete'),
+            update_time=data.get('update_time'),
+            uuid=data.get('uuid'),
+            store_type=data.get('store_type'),
+            bucket=data.get('bucket'),
+            region=data.get('region'),
+            path=data.get('path'),
+            thumbnail_nonce=data.get('thumbnail_nonce'),
+            sliceparse_nonce=data.get('sliceparse_nonce'),
+            file_extension=data.get('file_extension'),
+            name_counts=data.get('name_counts'),
+            source_user_upload_id=data.get('source_user_upload_id'),
+            origin_post_id=data.get('origin_post_id'),
+            stl_user_upload_id=data.get('stl_user_upload_id'),
+            is_official_slice=data.get('is_official_slice'),
+            triangles_count=data.get('triangles_count'),
+            is_parse=data.get('is_parse'),
+            source_type=data.get('source_type'),
+            file_source=data.get('file_source'),
+            user_lock_space_id=data.get('user_lock_space_id'),
+            origin_file_md5=data.get('origin_file_md5'),
+            is_temp_file=data.get('is_temp_file'),
+            official_file_key=data.get('official_file_key'),
+            official_file_id=data.get('official_file_id'),
+            simplify_model=data.get('simplify_model'),
+            size_x=data.get('size_x'),
+            size_y=data.get('size_y'),
+            size_z=data.get('size_z'),
+            estimate=data.get('estimate'),
+            material_name=data.get('material_name'),
+            layer_height=data.get('layer_height'),
+            supplies_usage=data.get('supplies_usage'),
+            gcode_id=data.get('gcode_id'),
+            printer_names=data.get('printer_names'),
+            slice_param=data.get('slice_param'),
+        )
+
+    @property
+    def id(self):
+        return self._id
+
+    @property
+    def gcode_id(self):
+        return self._gcode_id
+
+    def __repr__(self):
+        return (
+            f"AnycubicFile("
+            f"id={self._id}, "
+            f"user_id={self._user_id}, "
+            f"post_id={self._post_id}, "
+            f"filename={self._filename}, "
+            f"time={self._time}, "
+            f"size={self._size}, "
+            f"status={self._status}, "
+            f"ip={self._ip}, "
+            f"old_filename={self._old_filename}, "
+            f"img_status={self._img_status}, "
+            f"device_type={self._device_type}, "
+            f"file_type={self._file_type}, "
+            f"md5={self._md5}, "
+            f"url={self._url}, "
+            f"thumbnail={self._thumbnail}, "
+            f"is_delete={self._is_delete}, "
+            f"update_time={self._update_time}, "
+            f"uuid={self._uuid}, "
+            f"store_type={self._store_type}, "
+            f"bucket={self._bucket}, "
+            f"region={self._region}, "
+            f"path={self._path}, "
+            f"thumbnail_nonce={self._thumbnail_nonce}, "
+            f"sliceparse_nonce={self._sliceparse_nonce}, "
+            f"file_extension={self._file_extension}, "
+            f"name_counts={self._name_counts}, "
+            f"source_user_upload_id={self._source_user_upload_id}, "
+            f"origin_post_id={self._origin_post_id}, "
+            f"stl_user_upload_id={self._stl_user_upload_id}, "
+            f"is_official_slice={self._is_official_slice}, "
+            f"triangles_count={self._triangles_count}, "
+            f"is_parse={self._is_parse}, "
+            f"source_type={self._source_type}, "
+            f"file_source={self._file_source}, "
+            f"user_lock_space_id={self._user_lock_space_id}, "
+            f"origin_file_md5={self._origin_file_md5}, "
+            f"is_temp_file={self._is_temp_file}, "
+            f"official_file_key={self._official_file_key}, "
+            f"official_file_id={self._official_file_id}, "
+            f"simplify_model={self._simplify_model}, "
+            f"size_x={self._size_x}, "
+            f"size_y={self._size_y}, "
+            f"size_z={self._size_z}, "
+            f"estimate={self._estimate}, "
+            f"material_name={self._material_name}, "
+            f"layer_height={self._layer_height}, "
+            f"supplies_usage={self._supplies_usage}, "
+            f"gcode_id={self._gcode_id}, "
+            f"printer_names={self._printer_names}, "
+            f"slice_param={self._slice_param})"
+        )
+
+
+class AnycubicMaterialMapping:
+    def __init__(
+        self,
+        spool_index,
+        filament_used,
+        material_type,
+        color_red,
+        color_green,
+        color_blue,
+        paint_index=0,
+    ):
+        self._spool_index = int(spool_index)
+        self._filament_used = float(filament_used)
+        self._material_type = str(material_type)
+        self._color_red = int(color_red)
+        self._color_green = int(color_green)
+        self._color_blue = int(color_blue)
+        self._paint_index = int(paint_index)
+
+    @property
+    def spool_index(self):
+        return self._spool_index
+
+    @property
+    def filament_used(self):
+        return self._filament_used
+
+    @property
+    def material_type(self):
+        return self._material_type
+
+    @property
+    def paint_index(self):
+        return self._paint_index
+
+    @property
+    def color_data(self):
+        return list([
+            self._color_red,
+            self._color_green,
+            self._color_blue,
+        ])
+
+    def as_box_mapping_data(self):
+        return {
+            'ams_color': self.color_data,
+            'ams_index': self._spool_index,
+            'filament_used': self._filament_used,
+            'material_type': self._material_type,
+            'paint_color': self.color_data,
+            'paint_index': self._paint_index,
+        }
+
+    def __repr__(self):
+        return (
+            f"AnycubicMaterialMapping("
+            f"spool_index={self._spool_index}, "
+            f"filament_used={self._filament_used}, "
+            f"material_type={self._material_type}, "
+            f"color_red={self._color_red}, "
+            f"color_green={self._color_green}, "
+            f"color_blue={self._color_blue}, "
+            f"paint_index={self._paint_index})"
+        )
+
+
 class AnycubicCloudStore:
     def __init__(
         self,
@@ -209,122 +502,128 @@ class AnycubicProject:
         api_parent,
         id,
         taskid,
-        user_id,
-        printer_id,
         gcode_id,
-        model,
-        img,
         estimate,
-        remain_time,
-        material,
-        material_type,
-        pause,
         progress,
-        connect_status,
-        print_status,
-        reason,
-        slice_data,
-        slice_status,
         status,
-        ischeck,
-        project_type,
-        printed,
         create_time,
-        start_time,
-        end_time,
-        slice_start_time,
-        slice_end_time,
-        total_time,
-        print_time,
-        slice_param,
-        delete,
-        auto_operation,
-        monitor,
-        last_update_time,
-        settings,
-        localtask,
-        source,
-        device_message,
-        signal_strength,
-        key,
-        printer_type,
-        machine_type,
-        printer_name,
-        machine_name,
-        device_status,
-        slice_result,
         gcode_name,
-        post_title,
+        slice_param=None,
+        slice_result=None,
+        user_id=None,
+        printer_id=None,
+        model=None,
+        img=None,
+        remain_time=None,
+        material=None,
+        material_type=None,
+        pause=None,
+        connect_status=None,
+        print_status=None,
+        reason=None,
+        slice_data=None,
+        slice_status=None,
+        ischeck=None,
+        project_type=None,
+        printed=None,
+        start_time=None,
+        end_time=None,
+        slice_start_time=None,
+        slice_end_time=None,
+        total_time=None,
+        print_time=None,
+        delete=None,
+        auto_operation=None,
+        monitor=None,
+        last_update_time=None,
+        settings=None,
+        localtask=None,
+        source=None,
+        device_message=None,
+        signal_strength=None,
+        key=None,
+        printer_type=None,
+        machine_type=None,
+        printer_name=None,
+        machine_name=None,
+        device_status=None,
+        post_title=None,
+        file_size=None,
+        machine_class=None,
+        material_unit=None,
     ):
         self._api_parent = api_parent
         self._id = int(id)
         self._taskid = int(taskid)
-        self._user_id = int(user_id)
-        self._printer_id = int(printer_id)
+        self._user_id = int(user_id) if user_id is not None else None
+        self._printer_id = int(printer_id) if printer_id is not None else None
         self._gcode_id = int(gcode_id)
-        self._model = int(model)
-        self._img = str(img)
+        self._model = int(model) if model is not None else None
+        self._img = str(img) if img is not None else None
         self._estimate = int(estimate)
-        self._remain_time = int(remain_time)
-        self._material = str(material)
-        self._material_type = int(material_type)
-        self._pause = int(pause)
+        self._remain_time = int(remain_time) if remain_time is not None else None
+        self._material = str(material) if material is not None else None
+        self._material_type = int(material_type) if material_type is not None else None
+        self._pause = int(pause) if pause is not None else None
         self._progress = int(progress)
-        self._connect_status = int(connect_status)
-        self._print_status = int(print_status)
-        self._reason = str(reason)
+        self._connect_status = int(connect_status) if connect_status is not None else None
+        self._print_status = int(print_status) if print_status is not None else None
+        self._reason = str(reason) if reason is not None else None
         self._slice_data = slice_data  # check
-        self._slice_status = int(slice_status)
+        self._slice_status = int(slice_status) if slice_status is not None else None
         self._status = int(status)
-        self._ischeck = int(ischeck)
-        self._project_type = int(project_type)
-        self._printed = int(printed)
+        self._ischeck = int(ischeck) if ischeck is not None else None
+        self._project_type = int(project_type) if project_type is not None else None
+        self._printed = int(printed) if printed is not None else None
         self._create_time = int(create_time)
-        self._start_time = int(start_time)
-        self._end_time = int(end_time)
-        self._slice_start_time = int(slice_start_time)
-        self._slice_end_time = int(slice_end_time)
-        self._total_time = str(total_time)
-        self._print_time = str(print_time)
-        self._slice_param = None
-        self._delete = int(delete)
+        self._start_time = int(start_time) if start_time is not None else None
+        self._end_time = int(end_time) if end_time is not None else None
+        self._slice_start_time = int(slice_start_time) if slice_start_time is not None else None
+        self._slice_end_time = int(slice_end_time) if slice_end_time is not None else None
+        self._total_time = str(total_time) if total_time is not None else None
+        self._print_time = str(print_time) if print_time is not None else None
+        self._slice_param = slice_param
+        self._delete = int(delete) if delete is not None else None
         self._auto_operation = auto_operation
         self._monitor = monitor
-        self._last_update_time = int(last_update_time)
-        self._settings = None
-        self._localtask = str(localtask)
-        self._source = str(source)
+        self._last_update_time = int(last_update_time) if last_update_time is not None else None
+        self._settings = settings
+        self._localtask = str(localtask) if localtask is not None else None
+        self._source = str(source) if source is not None else None
         self._device_message = device_message
-        self._signal_strength = int(signal_strength)
-        self._key = str(key)
-        self._printer_type = str(printer_type)
-        self._machine_type = int(machine_type)
-        self._printer_name = str(printer_name)
-        self._machine_name = str(machine_name)
-        self._device_status = int(device_status)
-        self._slice_result = None
+        self._signal_strength = int(signal_strength) if signal_strength is not None else None
+        self._key = str(key) if key is not None else None
+        self._printer_type = str(printer_type) if printer_type is not None else None
+        self._machine_type = int(machine_type) if machine_type is not None else None
+        self._printer_name = str(printer_name) if printer_name is not None else None
+        self._machine_name = str(machine_name) if machine_name is not None else None
+        self._device_status = int(device_status) if device_status is not None else None
+        self._slice_result = slice_result
         self.set_filename(gcode_name)
         self._post_title = post_title
+        self._file_size = int(file_size) if file_size is not None else None
+        self._machine_class = int(machine_class) if machine_class is not None else None
+        self._material_unit = str(material_unit) if material_unit is not None else None
         self._target_nozzle_temp = None
         self._target_hotbed_temp = None
-        if slice_param:
+        if self._slice_param and isinstance(self._slice_param, str):
             try:
-                self._slice_param = json.loads(str(slice_param))
+                self._slice_param = json.loads(str(self._slice_param))
             except Exception as e:
-                print(f"Error in json parsing slice_param: {e}\n{slice_param}")
-        if settings:
+                print(f"Error in json parsing slice_param: {e}\n{self._slice_param}")
+        if self._settings and isinstance(self._settings, str):
             try:
-                self._settings = json.loads(str(settings))
+                self._settings = json.loads(str(self._settings))
             except Exception as e:
-                print(f"Error in json parsing settings: {e}\n{settings}")
-        if slice_result:
+                print(f"Error in json parsing settings: {e}\n{self._settings}")
+        if self._slice_result and isinstance(self._slice_result, str):
             try:
-                self._slice_result = json.loads(str(slice_result))
+                self._slice_result = json.loads(str(self._slice_result))
             except Exception as e:
-                print(f"Error in json parsing slice_result: {e}\n{slice_result}")
+                print(f"Error in json parsing slice_result: {e}\n{self._slice_result}")
 
     @classmethod
-    def from_basic_json(cls, api_parent, data):
+    def from_list_json(cls, api_parent, data):
         if data is None:
             return None
 
@@ -378,6 +677,28 @@ class AnycubicProject:
             slice_result=data['slice_result'],
             gcode_name=data['gcode_name'],
             post_title=data['post_title'],
+        )
+
+    @classmethod
+    def from_gcode_json(cls, api_parent, data):
+        if data is None:
+            return None
+
+        return cls(
+            api_parent=api_parent,
+            id=data['file_id'],
+            taskid=data['file_id'],
+            create_time=data['create_time'],
+            file_size=data['size'],
+            gcode_name=data['name'],
+            estimate=data['estimate'],
+            status=data['status'],
+            progress=data['progress'],
+            gcode_id=data['gcode_id'],
+            machine_class=data['machine_class'],
+            img=data['image_id'],
+            slice_result=data['slice_result'],
+            slice_param=data['slice_param'],
         )
 
     def set_filename(self, filename):
@@ -447,6 +768,10 @@ class AnycubicProject:
     def print_approximate_completion_time(self):
         if self._end_time and self._end_time > 0:
             return self._end_time
+
+        if self._remain_time is None:
+            return 0
+
         return int(time.time() + (self._remain_time * 60))
 
     @property
@@ -521,6 +846,32 @@ class AnycubicProject:
     @property
     def target_hotbed_temp(self):
         return self._target_hotbed_temp
+
+    @property
+    def slice_material_info_list(self):
+        if not isinstance(self._slice_param, dict):
+            return None
+
+        material_info_list = self._slice_param.get('paint_infos')
+
+        if not isinstance(material_info_list, list):
+            return None
+
+        return material_info_list
+
+    @property
+    def slice_total_filament_used(self):
+        material_info_list = self.slice_material_info_list
+
+        if material_info_list is None:
+            return None
+
+        total_filament = 0.0
+
+        for material in material_info_list:
+            total_filament += material.get('filament_used', 0.0)
+
+        return total_filament
 
     def __repr__(self):
         return (
@@ -814,6 +1165,18 @@ class AnycubicSpoolInfo:
     @property
     def color(self):
         return self._color
+
+    @property
+    def color_red(self):
+        return self._color[0]
+
+    @property
+    def color_green(self):
+        return self._color[1]
+
+    @property
+    def color_blue(self):
+        return self._color[2]
 
     @property
     def status(self):

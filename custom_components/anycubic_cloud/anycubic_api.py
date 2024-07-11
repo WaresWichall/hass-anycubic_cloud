@@ -15,8 +15,10 @@ from aiofiles.os import (
 
 from .anycubic_data_base import (
     AnycubicCameraToken,
+    AnycubicCloudFile,
     AnycubicCloudStore,
     AnycubicMaterialColor,
+    AnycubicMaterialMapping,
     AnycubicPrinter,
     AnycubicProject,
 )
@@ -476,6 +478,72 @@ class AnycubicAPI:
 
         return cloud_file_id
 
+    async def print_with_multi_color_box_by_gcode_id(
+        self,
+        printer,
+        gcode_id,
+        slot_index_list,
+        box_id=0,
+    ):
+        if printer is None:
+            return None
+
+        proj = await self.fetch_project_gcode_info_fdm(gcode_id)
+
+        material_list = proj.slice_material_info_list
+
+        if len(slot_index_list) != len(material_list):
+            raise AnycubicAPIError('Slot/Material mis-match.')
+
+        multi_color_box_slots = printer.multi_color_box[box_id].slots
+
+        ams_box_mapping = list()
+
+        for x, mat_conf in enumerate(material_list):
+            slot_index = slot_index_list[x]
+            ams_slot = multi_color_box_slots[slot_index]
+            material = AnycubicMaterialMapping(
+                spool_index=slot_index,
+                filament_used=mat_conf['filament_used'],
+                material_type=mat_conf['material_type'],
+                color_red=ams_slot.color_red,
+                color_green=ams_slot.color_green,
+                color_blue=ams_slot.color_blue,
+                paint_index=mat_conf['paint_index'],
+            )
+            ams_box_mapping.append(material)
+
+        result = await self._send_order_start_print(
+            printer=printer,
+            file_id=proj.id,
+            ams_box_mapping=ams_box_mapping,
+        )
+
+        return result
+
+    async def upload_to_cloud_and_print_with_multi_color_box(
+        self,
+        printer,
+        full_file_path,
+        slot_index_list,
+        box_id=0,
+    ):
+        if printer is None:
+            return None
+
+        cloud_file_id = await self.upload_file_to_cloud(full_file_path)
+        latest_cloud_file = await self.get_latest_cloud_file()
+
+        if latest_cloud_file.id != cloud_file_id:
+            raise AnycubicAPIError('File upload mis-match, cannot print.')
+
+        return await self.print_with_multi_color_box_by_gcode_id(
+            printer=printer,
+            gcode_id=latest_cloud_file.gcode_id,
+            slot_index_list=slot_index_list,
+            box_id=box_id,
+        )
+
     async def get_user_info(
         self,
         raw_data=False,
@@ -492,13 +560,41 @@ class AnycubicAPI:
 
         return data
 
-    async def _get_user_files(self):
+    async def get_user_cloud_files(
+        self,
+        printable=None,
+        machine_type=None,
+        raw_data=False,
+    ):
         params = {
             'page': 1,
             'limit': 10,
         }
+        if printable is not None:
+            params['printable'] = int(printable)
+        if machine_type is not None:
+            params['machine_type'] = int(machine_type)
+
         resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.user_files, params=params)
-        self._debug_log(f"user_files output:\n{json.dumps(resp)}")
+        if raw_data:
+            return resp
+
+        data = resp['data']
+
+        if not data:
+            return list()
+
+        return list([AnycubicCloudFile.from_json(x) for x in data])
+
+    async def get_latest_cloud_file(
+        self
+    ):
+        cloud_files = await self.get_user_cloud_files(
+            printable=True,
+            machine_type=0,
+        )
+
+        return cloud_files[0]
 
     async def _get_print_history(self):
         resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.print_history)
@@ -531,6 +627,25 @@ class AnycubicAPI:
         data = resp['data']
 
         return data
+
+    async def fetch_project_gcode_info_fdm(
+        self,
+        project_id,
+        raw_data=False,
+    ):
+        query = {
+            'id': str(project_id),
+        }
+        resp = await self._fetch_api_resp(
+            endpoint=API_ENDPOINT.project_gcode_info_fdm,
+            query=query
+        )
+        if raw_data:
+            return resp
+
+        data = resp['data']
+
+        return AnycubicProject.from_gcode_json(self, data)
 
     async def _update_printer_firmware(
         self,
@@ -853,6 +968,68 @@ class AnycubicAPI:
             project_id=0,
             order_data=None,
             no_order_data=True,
+        )
+
+    async def _send_order_start_print(
+        self,
+        printer,
+        file_id,
+        filetype=0,
+        hollow_param=None,
+        is_delete_file=0,
+        matrix="",
+        project_type=1,
+        punching_param=None,
+        slice_param=None,
+        slice_size=None,
+        task_setting_ai_detect=0,
+        task_setting_camera_timelapse=0,
+        template_id=0,
+        file_key="",
+        file_name="",
+        ams_box_mapping: AnycubicMaterialMapping | None = None,
+    ):
+        if not printer:
+            return
+
+        ams_info = {
+            'ams_box_mapping': [
+                x.as_box_mapping_data()
+                for x in ams_box_mapping
+            ] if ams_box_mapping else None,
+            'use_ams': True if ams_box_mapping else False,
+        }
+
+        task_settings = {
+            'ai_detect': task_setting_ai_detect,
+            'camera_timelapse': task_setting_camera_timelapse,
+        }
+
+        order_data = {
+            'file_id': file_id,
+            'filetype': filetype,
+            'hollow_param': hollow_param,
+            'is_delete_file': is_delete_file,
+            'matrix': matrix,
+            'project_type': project_type,
+            'punching_param': punching_param,
+            'slice_param': slice_param,
+            'slice_size': slice_size,
+            'task_settings': task_settings,
+            'template_id': template_id,
+            'file_key': file_key,
+            'file_name': file_name,
+        }
+
+        return await self._send_anycubic_order(
+            order_id=AnycubicOrderID.START_PRINT,
+            printer_id=printer.id,
+            project_id=0,
+            order_data=order_data,
+            extra_params={
+                'ams_info': ams_info if ams_box_mapping else None,
+                'settings': None,
+            },
         )
 
     async def _send_order_pause_print(
@@ -1654,7 +1831,7 @@ class AnycubicAPI:
         if raw_data:
             return resp
 
-        data = list([AnycubicProject.from_basic_json(self, x) for x in resp['data']])
+        data = list([AnycubicProject.from_list_json(self, x) for x in resp['data']])
         return data
 
     async def project_info_for_id(self, project_id):

@@ -50,6 +50,7 @@ class API_ENDPOINT:
     project_info = ac_api_endpoint(HTTP_METHODS.GET, '/v2/project/info')
     project_monitor = ac_api_endpoint(HTTP_METHODS.GET, '/v2/project/monitor')
     project_get_projects = ac_api_endpoint(HTTP_METHODS.GET, '/work/project/getProjects')
+    project_gcode_info_fdm = ac_api_endpoint(HTTP_METHODS.GET, '/work/gcode/infoFdm')
     send_order = ac_api_endpoint(HTTP_METHODS.POST, '/work/operation/sendOrder')
     printer_update_name = ac_api_endpoint(HTTP_METHODS.POST, '/work/printer/Info')
     printer_firmware_update = ac_api_endpoint(HTTP_METHODS.GET, '/work/printer/update_version')
