@@ -23,17 +23,44 @@ class AnycubicOrderID(IntEnum):
     RESUME_PRINT = 3
     STOP_PRINT = 4
     PRINT_SETTINGS = 6
+    IGNORE = 11  # Not handled
+    DETECT = 12  # Not handled
     STOP_PRINT_FORCE = 44
     LIST_UDISK_FILES = 101
     DELETE_UDISK_FILE = 102
     LIST_LOCAL_FILES = 103
     DELETE_LOCAL_FILE = 104
+    MOVE_AXLE = 201  # Not handled
+    MOVE_AXLE_TO_COORDINATES = 202  # Not handled
+    START_EXPOSURE = 301  # Not handled
+    CANCEL_EXPOSURE = 302  # Not handled
+    START_RESIDUAL = 501  # Not handled
+    CANCEL_RESIDUAL = 502  # Not handled
+    SET_DEVICE_SELF_TEST = 601  # Not handled
+    GET_DEVICE_SELF_TEST = 602  # Not handled
+    SET_AUTO_OPERATION = 701  # Not handled
+    GET_AUTO_OPERATION = 702  # Not handled
+    RESET_RELEASE_FILM = 801  # Not handled
+    GET_RELEASE_FILM = 802  # Not handled
+    SET_PRINT_STATUS_FREE = 901  # Not handled
     CAMERA_OPEN = 1001
+    CAMERA_CLOSE = 1002  # Not handled
     MULTI_COLOR_BOX_GET_INFO = 1206
     MULTI_COLOR_BOX_DRY = 1207
     FEED_FILAMENT = 1208
+    FEED_FILAMENT_FINISH = 1209  # Not handled
+    MULTI_COLOR_BOX_REFRESH_SLOT = 1210  # Not handled
     MULTI_COLOR_BOX_SET_SLOT = 1211
     MULTI_COLOR_BOX_AUTO_FEED = 1212
+    TURN_OFF = 1213  # Not handled
+    FILAMENT_CONTROL = 1215  # Not handled
+    FEED_RESIN = 1224  # Not handled
+    M7_AUTO_OPERATION = 1225  # Not handled
+    CYCLIC_CLEANING = 1226  # Not handled
+    SET_AUTO_FEED_INFO = 1227  # Not handled
+    GET_M7_AUTO_OPERATION = 1228  # Not handled
+    EXTFILBOX = 1229  # Not handled
+    GET_EXTFILBOX_INFO = 1230  # Not handled
 
 
 class AnycubicFunctionID(IntEnum):
