@@ -775,9 +775,10 @@ class AnycubicAPI:
         printer_id,
         project_id=None,
         order_data={},
-        raw_data=False,
-        extra_params=None,
+        ams_info=-2,
+        print_settings=-2,
         no_order_data=False,
+        raw_data=False,
     ):
         params = {
             'order_id': int(order_id),
@@ -785,11 +786,13 @@ class AnycubicAPI:
         }
         if not no_order_data:
             params['data'] = order_data
-        if extra_params is not None:
-            params = {
-                **params,
-                **extra_params,
-            }
+
+        if ams_info is not -2:
+            params['ams_info'] = ams_info
+
+        if print_settings is not -2:
+            params['settings'] = print_settings
+
         if project_id is not None:
             params['project_id'] = project_id
 
@@ -1044,10 +1047,8 @@ class AnycubicAPI:
             printer_id=printer.id,
             project_id=0,
             order_data=order_data,
-            extra_params={
-                'ams_info': ams_info if ams_box_mapping else None,
-                'settings': None,
-            },
+            ams_info=ams_info if ams_box_mapping else None,
+            print_settings=None,
         )
 
     async def _send_order_pause_print(
@@ -1066,10 +1067,8 @@ class AnycubicAPI:
             printer_id=printer.id,
             project_id=project.id,
             order_data=None,
-            extra_params={
-                'ams_info': None,
-                'settings': None,
-            },
+            ams_info=None,
+            print_settings=None,
         )
 
     async def _send_order_resume_print(
@@ -1088,10 +1087,8 @@ class AnycubicAPI:
             printer_id=printer.id,
             project_id=project.id,
             order_data=None,
-            extra_params={
-                'ams_info': None,
-                'settings': None,
-            },
+            ams_info=None,
+            print_settings=None,
         )
 
     async def _send_order_stop_print(
@@ -1110,10 +1107,62 @@ class AnycubicAPI:
             printer_id=printer.id,
             project_id=project.id,
             order_data=None,
-            extra_params={
-                'ams_info': None,
-                'settings': None,
-            },
+            ams_info=None,
+            print_settings=None,
+        )
+
+    async def _send_order_change_print_settings(
+        self,
+        printer,
+        project,
+        print_speed_mode=None,
+        target_nozzle_temp=None,
+        target_hotbed_temp=None,
+        fan_speed_pct=None,
+        bottom_layers=None,
+        bottom_time=None,
+        off_time=None,
+        on_time=None,
+    ):
+        if not printer:
+            return
+
+        if not project:
+            return
+
+        print_settings = dict()
+
+        if print_speed_mode is not None:
+            print_settings['print_speed_mode'] = int(print_speed_mode)
+
+        if target_nozzle_temp is not None:
+            print_settings['target_nozzle_temp'] = int(target_nozzle_temp)
+
+        if target_hotbed_temp is not None:
+            print_settings['target_hotbed_temp'] = int(target_hotbed_temp)
+
+        if fan_speed_pct is not None:
+            print_settings['fan_speed_pct'] = int(fan_speed_pct)
+
+        if bottom_layers is not None:
+            print_settings['bottom_layers'] = int(bottom_layers)
+
+        if bottom_time is not None:
+            print_settings['bottom_time'] = float(bottom_time)
+
+        if off_time is not None:
+            print_settings['off_time'] = float(off_time)
+
+        if on_time is not None:
+            print_settings['on_time'] = float(on_time)
+
+        return await self._send_anycubic_order(
+            order_id=AnycubicOrderID.PRINT_SETTINGS,
+            printer_id=printer.id,
+            project_id=project.id,
+            order_data=None,
+            ams_info=None,
+            print_settings=print_settings,
         )
 
     async def _send_order_list_local_files(
