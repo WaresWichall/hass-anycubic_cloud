@@ -97,6 +97,10 @@ SENSOR_TYPES = (
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
     ),
     SensorEntityDescription(
+        key="file_list_local",
+        translation_key="file_list_local",
+    ),
+    SensorEntityDescription(
         key="fw_version",
         translation_key="fw_version",
     ),
@@ -244,6 +248,9 @@ class AnycubicSensor(AnycubicCloudEntity, SensorEntity):
         elif self.entity_description.key == 'multi_color_box_spools':
             return "active" if state is not None else "inactive"
 
+        elif self.entity_description.key == 'file_list_local':
+            return "loaded" if state is not None else "not loaded"
+
         return str(state)
 
     @property
@@ -252,6 +259,10 @@ class AnycubicSensor(AnycubicCloudEntity, SensorEntity):
         if self.entity_description.key == 'multi_color_box_spools':
             return {
                 "spool_info": self.coordinator.data[self._printer_id][self.entity_description.key]
+            }
+        elif self.entity_description.key == 'file_list_local':
+            return {
+                "file_info": self.coordinator.data[self._printer_id][self.entity_description.key]
             }
         else:
             return super().state_attributes

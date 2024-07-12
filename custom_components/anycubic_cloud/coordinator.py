@@ -95,6 +95,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "fw_available_version": printer.fw_version.available_version,
             "fw_is_updating": printer.fw_version.is_updating,
             "fw_is_downloading": printer.fw_version.is_downloading,
+            "file_list_local": printer.local_file_list_object,
             "supports_function_multi_color_box": printer.supports_function_multi_color_box,
             "multi_color_box_fw_version": (
                 printer.multi_color_box_fw_version[0].firmware_version
@@ -409,6 +410,9 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     duration=preset_duration,
                     target_temp=preset_temperature,
                 )
+
+            elif printer and event_key == 'request_file_list_local':
+                await printer.request_local_file_list()
 
             elif printer and event_key == 'drying_stop':
                 await printer.multi_color_box_drying_stop()

@@ -57,6 +57,10 @@ BUTTON_TYPES = (
         key="update_printer_firmware",
         translation_key="update_printer_firmware",
     ),
+    ButtonEntityDescription(
+        key="request_file_list_local",
+        translation_key="request_file_list_local",
+    ),
 )
 
 GLOBAL_BUTTON_TYPES = (

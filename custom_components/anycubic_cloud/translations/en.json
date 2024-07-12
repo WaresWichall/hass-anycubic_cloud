@@ -116,6 +116,9 @@
       "cancel_print": {
         "name": "Cancel Print"
       },
+      "request_file_list_local": {
+        "name": "Request File List (Local)"
+      },
       "update_printer_firmware": {
         "name": "Update Printer Firmware"
       },
@@ -204,6 +207,9 @@
       },
       "target_hotbed_temp": {
         "name": "Target Hotbed Temperature"
+      },
+      "file_list_local": {
+        "name": "File List (Local)"
       },
       "multi_color_box_spools": {
         "name": "Multi-Color Box Spools"

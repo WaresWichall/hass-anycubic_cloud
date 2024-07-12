@@ -409,8 +409,19 @@ class AnycubicFile:
         return self._size
 
     @property
+    def size_mb(self):
+        return self._size / 1e6 if self._size else self._size
+
+    @property
     def is_dir(self):
         return self._is_dir
+
+    @property
+    def data_object(self):
+        return {
+            'name': self._filename,
+            'size_mb': self.size_mb,
+        }
 
     def __repr__(self):
         return (
@@ -2475,11 +2486,29 @@ class AnycubicPrinter:
     def latest_project(self):
         return self._latest_project
 
+    @property
+    def local_file_list_object(self):
+        if not self._local_file_list or len(self._local_file_list) < 1:
+            return None
+
+        file_list = list([
+            file.data_object for file in self._local_file_list
+        ])
+        return file_list
+
     async def update_info_from_api(self, with_project=True):
         await self._api_parent.printer_info_for_id(self._id, self)
 
         if with_project:
             self._latest_project = await self._api_parent.get_latest_project()
+
+    async def request_local_file_list(
+        self,
+    ):
+
+        return await self._api_parent._send_order_list_local_files(
+            self,
+        )
 
     async def multi_color_box_drying_start(
         self,
