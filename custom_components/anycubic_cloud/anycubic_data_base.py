@@ -2188,7 +2188,8 @@ class AnycubicPrinter:
             return self._process_mqtt_update_status(action, state, payload)
 
         elif msg_type == 'ota' and multi_color_topic:
-            box_id = get_part_from_mqtt_topic(topic, 9)
+            box_id_str = get_part_from_mqtt_topic(topic, 9)
+            box_id = int(box_id_str) if box_id_str.isdigit() else 0
             return self._process_mqtt_update_ota_multicolorbox(action, state, payload, box_id)
 
         elif msg_type == 'ota':
