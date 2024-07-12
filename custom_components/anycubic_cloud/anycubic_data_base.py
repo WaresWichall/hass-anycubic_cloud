@@ -2510,6 +2510,16 @@ class AnycubicPrinter:
             self,
         )
 
+    async def delete_local_file(
+        self,
+        file_name: str,
+    ):
+
+        return await self._api_parent._send_order_delete_local_file(
+            self,
+            file_name=file_name,
+        )
+
     async def multi_color_box_drying_start(
         self,
         duration,
