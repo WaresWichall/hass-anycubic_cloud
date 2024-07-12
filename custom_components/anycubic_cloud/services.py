@@ -16,7 +16,7 @@ from .anycubic_data_base import (
 from .const import (
     ATTR_CONFIG_ENTRY,
     CONF_PRINTER_ID,
-    CONF_SLOT_INDEX,
+    CONF_SLOT_NUMBER,
     CONF_SLOT_COLOR_RED,
     CONF_SLOT_COLOR_GREEN,
     CONF_SLOT_COLOR_BLUE,
@@ -74,7 +74,7 @@ class BaseMultiColorBoxSetSlot(AnycubicCloudServiceCall):
     schema = AnycubicCloudServiceCall.schema.extend(
         {
             vol.Optional(CONF_BOX_ID): cv.positive_int,
-            vol.Required(CONF_SLOT_INDEX): cv.positive_int,
+            vol.Required(CONF_SLOT_NUMBER): cv.positive_int,
             vol.Required(CONF_SLOT_COLOR_RED): vol.All(
                 vol.Coerce(int), vol.Range(min=0, max=255)
             ),
@@ -102,7 +102,7 @@ class BaseMultiColorBoxSetSlot(AnycubicCloudServiceCall):
         box_id = service.data.get(CONF_BOX_ID)
         if box_id is None:
             box_id = 0
-        slot_index = service.data[CONF_SLOT_INDEX]
+        slot_index = service.data[CONF_SLOT_NUMBER] - 1
         slot_color = AnycubicMaterialColor(
             int(service.data[CONF_SLOT_COLOR_RED]),
             int(service.data[CONF_SLOT_COLOR_GREEN]),
@@ -283,7 +283,7 @@ class MultiColorBoxFilamentExtrude(AnycubicCloudServiceCall):
 
     schema = AnycubicCloudServiceCall.schema.extend(
         {
-            vol.Required(CONF_SLOT_INDEX): cv.positive_int,
+            vol.Required(CONF_SLOT_NUMBER): cv.positive_int,
             vol.Optional(CONF_BOX_ID): cv.positive_int,
             vol.Optional(CONF_FINISHED): cv.boolean,
         }
@@ -297,7 +297,7 @@ class MultiColorBoxFilamentExtrude(AnycubicCloudServiceCall):
         finished = service.data.get(CONF_FINISHED)
         if box_id is None:
             box_id = 0
-        slot_index = service.data[CONF_SLOT_INDEX]
+        slot_index = service.data[CONF_SLOT_NUMBER] - 1
         await printer.multi_color_box_feed_filament(
             slot_index=slot_index,
             box_id=box_id,

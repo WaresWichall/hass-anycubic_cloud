@@ -23,12 +23,12 @@ multi_color_box_set_slot_pla: &multi_color_box_set_slot
           max: 7
           step: 1
           mode: box
-    slot_index: &slot_index
+    slot_number: &slot_number
       required: true
       selector:
         number:
-          min: 0
-          max: 7
+          min: 1
+          max: 4
           step: 1
           mode: box
     slot_color_red:
@@ -68,7 +68,7 @@ multi_color_box_filament_extrude:
     config_entry: *anycubic_config_entry
     printer_id: *printer_id
     box_id: *box_id
-    slot_index: *slot_index
+    slot_number: *slot_number
     finished:
       required: false
       selector:

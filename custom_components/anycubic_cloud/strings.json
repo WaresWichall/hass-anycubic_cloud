@@ -252,9 +252,9 @@
           "name": "Box ID",
           "description": "Box ID."
         },
-        "slot_index": {
-          "name": "Slot Index",
-          "description": "Slot Index."
+        "slot_number": {
+          "name": "Slot Number",
+          "description": "Slot Number (1-4)."
         },
         "slot_color_red": {
           "name": "Slot Color Red",
@@ -282,9 +282,9 @@
           "name": "Box ID",
           "description": "Box ID."
         },
-        "slot_index": {
-          "name": "Slot Index",
-          "description": "Slot Index."
+        "slot_number": {
+          "name": "Slot Number",
+          "description": "Slot Number (1-4)."
         },
         "slot_color_red": {
           "name": "Slot Color Red",
@@ -312,9 +312,9 @@
           "name": "Box ID",
           "description": "Box ID."
         },
-        "slot_index": {
-          "name": "Slot Index",
-          "description": "Slot Index."
+        "slot_number": {
+          "name": "Slot Number",
+          "description": "Slot Number (1-4)."
         },
         "slot_color_red": {
           "name": "Slot Color Red",
@@ -342,9 +342,9 @@
           "name": "Box ID",
           "description": "Box ID."
         },
-        "slot_index": {
-          "name": "Slot Index",
-          "description": "Slot Index."
+        "slot_number": {
+          "name": "Slot Number",
+          "description": "Slot Number (1-4)."
         },
         "slot_color_red": {
           "name": "Slot Color Red",
@@ -372,9 +372,9 @@
           "name": "Box ID",
           "description": "Box ID."
         },
-        "slot_index": {
-          "name": "Slot Index",
-          "description": "Slot Index."
+        "slot_number": {
+          "name": "Slot Number",
+          "description": "Slot Number (1-4)."
         },
         "slot_color_red": {
           "name": "Slot Color Red",
@@ -402,9 +402,9 @@
           "name": "Box ID",
           "description": "Box ID."
         },
-        "slot_index": {
-          "name": "Slot Index",
-          "description": "Slot Index."
+        "slot_number": {
+          "name": "Slot Number",
+          "description": "Slot Number (1-4)."
         },
         "slot_color_red": {
           "name": "Slot Color Red",
@@ -432,9 +432,9 @@
           "name": "Box ID",
           "description": "Box ID."
         },
-        "slot_index": {
-          "name": "Slot Index",
-          "description": "Slot Index."
+        "slot_number": {
+          "name": "Slot Number",
+          "description": "Slot Number (1-4)."
         },
         "slot_color_red": {
           "name": "Slot Color Red",
@@ -462,9 +462,9 @@
           "name": "Box ID",
           "description": "Box ID."
         },
-        "slot_index": {
-          "name": "Slot Index",
-          "description": "Slot Index."
+        "slot_number": {
+          "name": "Slot Number",
+          "description": "Slot Number (1-4)."
         },
         "slot_color_red": {
           "name": "Slot Color Red",
@@ -492,9 +492,9 @@
           "name": "Box ID",
           "description": "Box ID."
         },
-        "slot_index": {
-          "name": "Slot Index",
-          "description": "Slot Index."
+        "slot_number": {
+          "name": "Slot Number",
+          "description": "Slot Number (1-4)."
         },
         "slot_color_red": {
           "name": "Slot Color Red",
@@ -522,9 +522,9 @@
           "name": "Box ID",
           "description": "Box ID."
         },
-        "slot_index": {
-          "name": "Slot Index",
-          "description": "Slot Index."
+        "slot_number": {
+          "name": "Slot Number",
+          "description": "Slot Number (1-4)."
         },
         "finished": {
           "name": "Extrude Finished",
