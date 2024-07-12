@@ -1,12 +1,11 @@
 """Base class for anycubic_cloud entity."""
 
-from homeassistant.const import CONF_USERNAME
-from homeassistant.helpers.device_registry import CONNECTION_NETWORK_MAC, DeviceInfo
+from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, MANUFACTURER
 from .coordinator import AnycubicCloudDataUpdateCoordinator
+from .helpers import build_printer_device_info
 
 
 class AnycubicCloudEntity(CoordinatorEntity[AnycubicCloudDataUpdateCoordinator], Entity):
@@ -18,12 +17,8 @@ class AnycubicCloudEntity(CoordinatorEntity[AnycubicCloudDataUpdateCoordinator],
         """Initialize an Anycubic device."""
         super().__init__(coordinator)
         self._printer_id = int(printer_id)
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, f"{coordinator.entry.data[CONF_USERNAME]}-{coordinator.data[self._printer_id]['id']}")},
-            manufacturer=MANUFACTURER,
-            model=coordinator.data[self._printer_id]["machine_name"],
-            name=coordinator.data[self._printer_id]["name"],
-            connections={(CONNECTION_NETWORK_MAC, coordinator.data[self._printer_id]["machine_mac"])},
-            sw_version=coordinator.data[self._printer_id]["fw_version"],
-            hw_version=f"Printer ID: {self._printer_id}",
+        self._attr_device_info: DeviceInfo = build_printer_device_info(
+            coordinator.entry.data,
+            coordinator.data,
+            self._printer_id,
         )

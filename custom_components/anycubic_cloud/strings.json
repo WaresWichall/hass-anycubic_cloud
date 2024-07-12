@@ -244,13 +244,21 @@
       "name": "Multi-Color Box Set Slot - PLA",
       "description": "Sets PLA slot properties in Multi-Color Box unit.",
       "fields": {
+        "config_entry": {
+          "name": "Config Entry",
+          "description": "The config entry to use for this service."
+        },
+        "device_id": {
+          "name": "Printer Device",
+          "description": "Printer Device (if not using ID)."
+        },
         "printer_id": {
           "name": "Printer ID",
-          "description": "Printer ID."
+          "description": "Printer ID (if not using device)."
         },
         "box_id": {
           "name": "Box ID",
-          "description": "Box ID."
+          "description": "Box ID (0-1)."
         },
         "slot_number": {
           "name": "Slot Number",
@@ -258,15 +266,15 @@
         },
         "slot_color_red": {
           "name": "Slot Color Red",
-          "description": "Slot Color Red."
+          "description": "Slot Color Red (0-255)."
         },
         "slot_color_green": {
           "name": "Slot Color Green",
-          "description": "Slot Color Green."
+          "description": "Slot Color Green (0-255)."
         },
         "slot_color_blue": {
           "name": "Slot Color Blue",
-          "description": "Slot Color Blue."
+          "description": "Slot Color Blue (0-255)."
         }
       }
     },
@@ -274,13 +282,21 @@
       "name": "Multi-Color Box Set Slot - PETG",
       "description": "Sets PETG slot properties in Multi-Color Box unit.",
       "fields": {
+        "config_entry": {
+          "name": "Config Entry",
+          "description": "The config entry to use for this service."
+        },
+        "device_id": {
+          "name": "Printer Device",
+          "description": "Printer Device (if not using ID)."
+        },
         "printer_id": {
           "name": "Printer ID",
-          "description": "Printer ID."
+          "description": "Printer ID (if not using device)."
         },
         "box_id": {
           "name": "Box ID",
-          "description": "Box ID."
+          "description": "Box ID (0-1)."
         },
         "slot_number": {
           "name": "Slot Number",
@@ -288,15 +304,15 @@
         },
         "slot_color_red": {
           "name": "Slot Color Red",
-          "description": "Slot Color Red."
+          "description": "Slot Color Red (0-255)."
         },
         "slot_color_green": {
           "name": "Slot Color Green",
-          "description": "Slot Color Green."
+          "description": "Slot Color Green (0-255)."
         },
         "slot_color_blue": {
           "name": "Slot Color Blue",
-          "description": "Slot Color Blue."
+          "description": "Slot Color Blue (0-255)."
         }
       }
     },
@@ -304,13 +320,21 @@
       "name": "Multi-Color Box Set Slot - ABS",
       "description": "Sets ABS slot properties in Multi-Color Box unit.",
       "fields": {
+        "config_entry": {
+          "name": "Config Entry",
+          "description": "The config entry to use for this service."
+        },
+        "device_id": {
+          "name": "Printer Device",
+          "description": "Printer Device (if not using ID)."
+        },
         "printer_id": {
           "name": "Printer ID",
-          "description": "Printer ID."
+          "description": "Printer ID (if not using device)."
         },
         "box_id": {
           "name": "Box ID",
-          "description": "Box ID."
+          "description": "Box ID (0-1)."
         },
         "slot_number": {
           "name": "Slot Number",
@@ -318,15 +342,15 @@
         },
         "slot_color_red": {
           "name": "Slot Color Red",
-          "description": "Slot Color Red."
+          "description": "Slot Color Red (0-255)."
         },
         "slot_color_green": {
           "name": "Slot Color Green",
-          "description": "Slot Color Green."
+          "description": "Slot Color Green (0-255)."
         },
         "slot_color_blue": {
           "name": "Slot Color Blue",
-          "description": "Slot Color Blue."
+          "description": "Slot Color Blue (0-255)."
         }
       }
     },
@@ -334,13 +358,21 @@
       "name": "Multi-Color Box Set Slot - PACF",
       "description": "Sets PACF slot properties in Multi-Color Box unit.",
       "fields": {
+        "config_entry": {
+          "name": "Config Entry",
+          "description": "The config entry to use for this service."
+        },
+        "device_id": {
+          "name": "Printer Device",
+          "description": "Printer Device (if not using ID)."
+        },
         "printer_id": {
           "name": "Printer ID",
-          "description": "Printer ID."
+          "description": "Printer ID (if not using device)."
         },
         "box_id": {
           "name": "Box ID",
-          "description": "Box ID."
+          "description": "Box ID (0-1)."
         },
         "slot_number": {
           "name": "Slot Number",
@@ -348,15 +380,15 @@
         },
         "slot_color_red": {
           "name": "Slot Color Red",
-          "description": "Slot Color Red."
+          "description": "Slot Color Red (0-255)."
         },
         "slot_color_green": {
           "name": "Slot Color Green",
-          "description": "Slot Color Green."
+          "description": "Slot Color Green (0-255)."
         },
         "slot_color_blue": {
           "name": "Slot Color Blue",
-          "description": "Slot Color Blue."
+          "description": "Slot Color Blue (0-255)."
         }
       }
     },
@@ -364,13 +396,21 @@
       "name": "Multi-Color Box Set Slot - PC",
       "description": "Sets PC slot properties in Multi-Color Box unit.",
       "fields": {
+        "config_entry": {
+          "name": "Config Entry",
+          "description": "The config entry to use for this service."
+        },
+        "device_id": {
+          "name": "Printer Device",
+          "description": "Printer Device (if not using ID)."
+        },
         "printer_id": {
           "name": "Printer ID",
-          "description": "Printer ID."
+          "description": "Printer ID (if not using device)."
         },
         "box_id": {
           "name": "Box ID",
-          "description": "Box ID."
+          "description": "Box ID (0-1)."
         },
         "slot_number": {
           "name": "Slot Number",
@@ -378,15 +418,15 @@
         },
         "slot_color_red": {
           "name": "Slot Color Red",
-          "description": "Slot Color Red."
+          "description": "Slot Color Red (0-255)."
         },
         "slot_color_green": {
           "name": "Slot Color Green",
-          "description": "Slot Color Green."
+          "description": "Slot Color Green (0-255)."
         },
         "slot_color_blue": {
           "name": "Slot Color Blue",
-          "description": "Slot Color Blue."
+          "description": "Slot Color Blue (0-255)."
         }
       }
     },
@@ -394,13 +434,21 @@
       "name": "Multi-Color Box Set Slot - ASA",
       "description": "Sets ASA slot properties in Multi-Color Box unit.",
       "fields": {
+        "config_entry": {
+          "name": "Config Entry",
+          "description": "The config entry to use for this service."
+        },
+        "device_id": {
+          "name": "Printer Device",
+          "description": "Printer Device (if not using ID)."
+        },
         "printer_id": {
           "name": "Printer ID",
-          "description": "Printer ID."
+          "description": "Printer ID (if not using device)."
         },
         "box_id": {
           "name": "Box ID",
-          "description": "Box ID."
+          "description": "Box ID (0-1)."
         },
         "slot_number": {
           "name": "Slot Number",
@@ -408,15 +456,15 @@
         },
         "slot_color_red": {
           "name": "Slot Color Red",
-          "description": "Slot Color Red."
+          "description": "Slot Color Red (0-255)."
         },
         "slot_color_green": {
           "name": "Slot Color Green",
-          "description": "Slot Color Green."
+          "description": "Slot Color Green (0-255)."
         },
         "slot_color_blue": {
           "name": "Slot Color Blue",
-          "description": "Slot Color Blue."
+          "description": "Slot Color Blue (0-255)."
         }
       }
     },
@@ -424,13 +472,21 @@
       "name": "Multi-Color Box Set Slot - HIPS",
       "description": "Sets HIPS slot properties in Multi-Color Box unit.",
       "fields": {
+        "config_entry": {
+          "name": "Config Entry",
+          "description": "The config entry to use for this service."
+        },
+        "device_id": {
+          "name": "Printer Device",
+          "description": "Printer Device (if not using ID)."
+        },
         "printer_id": {
           "name": "Printer ID",
-          "description": "Printer ID."
+          "description": "Printer ID (if not using device)."
         },
         "box_id": {
           "name": "Box ID",
-          "description": "Box ID."
+          "description": "Box ID (0-1)."
         },
         "slot_number": {
           "name": "Slot Number",
@@ -438,15 +494,15 @@
         },
         "slot_color_red": {
           "name": "Slot Color Red",
-          "description": "Slot Color Red."
+          "description": "Slot Color Red (0-255)."
         },
         "slot_color_green": {
           "name": "Slot Color Green",
-          "description": "Slot Color Green."
+          "description": "Slot Color Green (0-255)."
         },
         "slot_color_blue": {
           "name": "Slot Color Blue",
-          "description": "Slot Color Blue."
+          "description": "Slot Color Blue (0-255)."
         }
       }
     },
@@ -454,13 +510,21 @@
       "name": "Multi-Color Box Set Slot - PA",
       "description": "Sets PA slot properties in Multi-Color Box unit.",
       "fields": {
+        "config_entry": {
+          "name": "Config Entry",
+          "description": "The config entry to use for this service."
+        },
+        "device_id": {
+          "name": "Printer Device",
+          "description": "Printer Device (if not using ID)."
+        },
         "printer_id": {
           "name": "Printer ID",
-          "description": "Printer ID."
+          "description": "Printer ID (if not using device)."
         },
         "box_id": {
           "name": "Box ID",
-          "description": "Box ID."
+          "description": "Box ID (0-1)."
         },
         "slot_number": {
           "name": "Slot Number",
@@ -468,15 +532,15 @@
         },
         "slot_color_red": {
           "name": "Slot Color Red",
-          "description": "Slot Color Red."
+          "description": "Slot Color Red (0-255)."
         },
         "slot_color_green": {
           "name": "Slot Color Green",
-          "description": "Slot Color Green."
+          "description": "Slot Color Green (0-255)."
         },
         "slot_color_blue": {
           "name": "Slot Color Blue",
-          "description": "Slot Color Blue."
+          "description": "Slot Color Blue (0-255)."
         }
       }
     },
@@ -484,13 +548,21 @@
       "name": "Multi-Color Box Set Slot - PLA SE",
       "description": "Sets PLA SE slot properties in Multi-Color Box unit.",
       "fields": {
+        "config_entry": {
+          "name": "Config Entry",
+          "description": "The config entry to use for this service."
+        },
+        "device_id": {
+          "name": "Printer Device",
+          "description": "Printer Device (if not using ID)."
+        },
         "printer_id": {
           "name": "Printer ID",
-          "description": "Printer ID."
+          "description": "Printer ID (if not using device)."
         },
         "box_id": {
           "name": "Box ID",
-          "description": "Box ID."
+          "description": "Box ID (0-1)."
         },
         "slot_number": {
           "name": "Slot Number",
@@ -498,15 +570,15 @@
         },
         "slot_color_red": {
           "name": "Slot Color Red",
-          "description": "Slot Color Red."
+          "description": "Slot Color Red (0-255)."
         },
         "slot_color_green": {
           "name": "Slot Color Green",
-          "description": "Slot Color Green."
+          "description": "Slot Color Green (0-255)."
         },
         "slot_color_blue": {
           "name": "Slot Color Blue",
-          "description": "Slot Color Blue."
+          "description": "Slot Color Blue (0-255)."
         }
       }
     },
@@ -514,13 +586,21 @@
       "name": "Multi-Color Box Filament Extrude",
       "description": "Activate filament extrude on ACE Multi-Color Box.",
       "fields": {
+        "config_entry": {
+          "name": "Config Entry",
+          "description": "The config entry to use for this service."
+        },
+        "device_id": {
+          "name": "Printer Device",
+          "description": "Printer Device (if not using ID)."
+        },
         "printer_id": {
           "name": "Printer ID",
-          "description": "Printer ID."
+          "description": "Printer ID (if not using device)."
         },
         "box_id": {
           "name": "Box ID",
-          "description": "Box ID."
+          "description": "Box ID (0-1)."
         },
         "slot_number": {
           "name": "Slot Number",
@@ -536,13 +616,21 @@
       "name": "Multi-Color Box Filament Retract",
       "description": "Activate filament retract on ACE Multi-Color Box.",
       "fields": {
+        "config_entry": {
+          "name": "Config Entry",
+          "description": "The config entry to use for this service."
+        },
+        "device_id": {
+          "name": "Printer Device",
+          "description": "Printer Device (if not using ID)."
+        },
         "printer_id": {
           "name": "Printer ID",
-          "description": "Printer ID."
+          "description": "Printer ID (if not using device)."
         },
         "box_id": {
           "name": "Box ID",
-          "description": "Box ID."
+          "description": "Box ID (0-1)."
         }
       }
     }

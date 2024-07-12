@@ -12,6 +12,10 @@ from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import CoreState, HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
+from homeassistant.helpers.device_registry import (
+    DeviceInfo,
+    async_get as async_get_device_registry,
+)
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
@@ -32,6 +36,9 @@ from .const import (
     STORAGE_KEY,
     STORAGE_VERSION,
 )
+from .helpers import (
+    build_printer_device_info,
+)
 
 
 class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
@@ -47,6 +54,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._mqtt_task = None
         self._mqtt_manually_connected = False
         self._mqtt_idle_since = None
+        self._printer_device_map = None
         super().__init__(
             hass,
             LOGGER,
@@ -219,6 +227,9 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         for printer_id, printer in self._anycubic_printers.items():
             data_dict[printer_id] = self._build_printer_dict(printer)
 
+        if self._printer_device_map is None:
+            await self._register_printer_devices(data_dict)
+
         return data_dict
 
     def _anycubic_mqtt_connection_should_start(self):
@@ -341,12 +352,20 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         except Exception as error:
             raise ConfigEntryAuthFailed(f"Authentication failed with unknown Error. Check credentials {error}")
 
-    async def _setup_anycubic_printer_object(self):
+    async def _setup_anycubic_printer_objects(self):
         for printer_id in self.entry.data[CONF_PRINTER_ID_LIST]:
             try:
                 self._anycubic_printers[int(printer_id)] = await self._anycubic_api.printer_info_for_id(printer_id)
             except Exception as error:
                 raise UpdateFailed from error
+
+    async def _register_printer_devices(self, data_dict):
+        self._printer_device_map = dict()
+        dev_reg = async_get_device_registry(self.hass)
+        for printer_id in self.entry.data[CONF_PRINTER_ID_LIST]:
+            printer_device_info: DeviceInfo = build_printer_device_info(self.entry.data, data_dict, printer_id)
+            printer_device = dev_reg.async_get_or_create(config_entry_id=self.entry.entry_id, **printer_device_info)
+            self._printer_device_map[printer_device.id] = printer_id
 
     async def _check_or_save_tokens(self):
         await self._anycubic_api.check_api_tokens()
@@ -369,7 +388,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             await self._setup_anycubic_api_connection(start_up=start_up)
 
         if len(self._anycubic_printers) < 1:
-            await self._setup_anycubic_printer_object()
+            await self._setup_anycubic_printer_objects()
 
         try:
             await self._check_or_save_tokens()
@@ -390,6 +409,20 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     def get_printer_for_id(self, printer_id):
         if printer_id is None or len(str(printer_id)) == 0:
+            return None
+
+        return self._anycubic_printers.get(int(printer_id))
+
+    def get_printer_for_device_id(self, device_id):
+        if self._printer_device_map is None:
+            return None
+
+        if device_id is None or len(str(device_id)) == 0:
+            return None
+
+        printer_id = self._printer_device_map.get(device_id)
+
+        if not printer_id:
             return None
 
         return self._anycubic_printers.get(int(printer_id))

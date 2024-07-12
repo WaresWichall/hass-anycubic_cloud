@@ -2,7 +2,9 @@
 
 import voluptuous as vol
 
+from homeassistant.const import ATTR_DEVICE_ID
 from homeassistant.core import HomeAssistant, ServiceCall
+from homeassistant.exceptions import ServiceValidationError
 from homeassistant.helpers import (
     config_validation as cv,
     selector,
@@ -37,7 +39,8 @@ class AnycubicCloudServiceCall:
                 "integration": DOMAIN,
             }
         ),
-        vol.Required(CONF_PRINTER_ID): cv.positive_int,
+        vol.Optional(ATTR_DEVICE_ID): cv.string,
+        vol.Optional(CONF_PRINTER_ID): cv.positive_int,
     })
 
     def __init__(self, hass: HomeAssistant) -> None:
@@ -60,8 +63,20 @@ class AnycubicCloudServiceCall:
         """Get AnycubicPrinter object."""
 
         coordinator = self.get_coordinator(service)
-        printer_id = service.data[CONF_PRINTER_ID]
-        return coordinator.get_printer_for_id(printer_id)
+
+        if service.data.get(ATTR_DEVICE_ID) is not None:
+            device_id = service.data[ATTR_DEVICE_ID]
+            printer = coordinator.get_printer_for_device_id(device_id)
+        else:
+            printer_id = service.data[CONF_PRINTER_ID]
+            printer = coordinator.get_printer_for_id(printer_id)
+
+        if printer is None:
+            raise ServiceValidationError(
+                "Could not find Anycubic printer for service call."
+            )
+
+        return printer
 
     async def async_call_service(self, service: ServiceCall) -> None:
         """Execute service call."""
@@ -71,20 +86,28 @@ class AnycubicCloudServiceCall:
 class BaseMultiColorBoxSetSlot(AnycubicCloudServiceCall):
     """Base for setting multi color box slots."""
 
-    schema = AnycubicCloudServiceCall.schema.extend(
-        {
-            vol.Optional(CONF_BOX_ID): cv.positive_int,
-            vol.Required(CONF_SLOT_NUMBER): cv.positive_int,
-            vol.Required(CONF_SLOT_COLOR_RED): vol.All(
-                vol.Coerce(int), vol.Range(min=0, max=255)
+    schema = vol.Schema(
+        vol.All(
+            AnycubicCloudServiceCall.schema.extend(
+                {
+                    vol.Optional(CONF_BOX_ID): cv.positive_int,
+                    vol.Required(CONF_SLOT_NUMBER): cv.positive_int,
+                    vol.Required(CONF_SLOT_COLOR_RED): vol.All(
+                        vol.Coerce(int), vol.Range(min=0, max=255)
+                    ),
+                    vol.Required(CONF_SLOT_COLOR_GREEN): vol.All(
+                        vol.Coerce(int), vol.Range(min=0, max=255)
+                    ),
+                    vol.Required(CONF_SLOT_COLOR_BLUE): vol.All(
+                        vol.Coerce(int), vol.Range(min=0, max=255)
+                    ),
+                }
             ),
-            vol.Required(CONF_SLOT_COLOR_GREEN): vol.All(
-                vol.Coerce(int), vol.Range(min=0, max=255)
+            cv.has_at_least_one_key(
+                ATTR_DEVICE_ID,
+                CONF_PRINTER_ID,
             ),
-            vol.Required(CONF_SLOT_COLOR_BLUE): vol.All(
-                vol.Coerce(int), vol.Range(min=0, max=255)
-            ),
-        }
+        ),
     )
 
     async def async_set_box_slot(
@@ -281,12 +304,20 @@ class MultiColorBoxSetSlotPlaSe(BaseMultiColorBoxSetSlot):
 class MultiColorBoxFilamentExtrude(AnycubicCloudServiceCall):
     """Extrude filament."""
 
-    schema = AnycubicCloudServiceCall.schema.extend(
-        {
-            vol.Required(CONF_SLOT_NUMBER): cv.positive_int,
-            vol.Optional(CONF_BOX_ID): cv.positive_int,
-            vol.Optional(CONF_FINISHED): cv.boolean,
-        }
+    schema = vol.Schema(
+        vol.All(
+            AnycubicCloudServiceCall.schema.extend(
+                {
+                    vol.Required(CONF_SLOT_NUMBER): cv.positive_int,
+                    vol.Optional(CONF_BOX_ID): cv.positive_int,
+                    vol.Optional(CONF_FINISHED): cv.boolean,
+                }
+            ),
+            cv.has_at_least_one_key(
+                ATTR_DEVICE_ID,
+                CONF_PRINTER_ID,
+            ),
+        ),
     )
 
     async def async_call_service(self, service: ServiceCall) -> None:
@@ -308,10 +339,18 @@ class MultiColorBoxFilamentExtrude(AnycubicCloudServiceCall):
 class MultiColorBoxFilamentRetract(AnycubicCloudServiceCall):
     """Retract filament."""
 
-    schema = AnycubicCloudServiceCall.schema.extend(
-        {
-            vol.Optional(CONF_BOX_ID): cv.positive_int,
-        }
+    schema = vol.Schema(
+        vol.All(
+            AnycubicCloudServiceCall.schema.extend(
+                {
+                    vol.Optional(CONF_BOX_ID): cv.positive_int,
+                }
+            ),
+            cv.has_at_least_one_key(
+                ATTR_DEVICE_ID,
+                CONF_PRINTER_ID,
+            ),
+        ),
     )
 
     async def async_call_service(self, service: ServiceCall) -> None:
