@@ -2,7 +2,6 @@ import aiohttp
 import hashlib
 import json
 import time
-import uuid
 from os.path import (
     basename as path_basename,
 )
@@ -32,6 +31,7 @@ from .anycubic_api_base import (
 
 from .anycubic_const import (
     BASE_DOMAIN,
+    APP_REDIRECT_URI,
     AUTH_DOMAIN,
     PUBLIC_API_ENDPOINT,
     REX_JS_FILE,
@@ -42,8 +42,10 @@ from .anycubic_const import (
     REX_APP_SECRET_BASIC,
     REX_APP_SECRET_OBF,
     DEFAULT_USER_AGENT,
+    AC_KNOWN_CID_APP,
     AC_KNOWN_CID_WEB,
     AC_KNOWN_AID,
+    AC_KNOWN_VID_APP,
     AC_KNOWN_VID_WEB,
     AC_KNOWN_SEC,
 )
@@ -51,6 +53,13 @@ from .anycubic_const import (
 from .anycubic_enums import (
     AnycubicFeedType,
     AnycubicOrderID,
+)
+
+from .anycubic_helpers import (
+    generate_app_nonce,
+    generate_cookie_state,
+    generate_fake_device_id,
+    generate_web_nonce,
 )
 
 
@@ -62,6 +71,7 @@ class AnycubicAPI:
         session,
         cookie_jar,
         debug_logger=None,
+        auth_as_app=False,
     ):
         # Cache
         self._cache_key_path = None
@@ -75,14 +85,17 @@ class AnycubicAPI:
         self._api_user_id = None
         self._session: aiohttp.ClientSession = session
         self._sessionjar = cookie_jar
-        self._cookie_state = str(uuid.uuid4())[-11:]
+        self._cookie_state = generate_cookie_state()
         self._debug_logger = debug_logger
         self._tokens_changed = False
+        self._auth_as_app = auth_as_app
+        self._redirect_uri = self.base_url if not self._auth_as_app else APP_REDIRECT_URI
         # ANYCUBIC APP VARS
         self._client_id = None
         self._app_id = None
         self._app_version = None
         self._app_secret = None
+        self._device_id = None
         # ANYCUBIC AUTH VARS
         self._login_auth_code = None
         self._auth_access_token = None
@@ -188,10 +201,19 @@ class AnycubicAPI:
         js_file = js_files.group(1)
         return await self._fetch_pub_get_resp(js_file[1:], is_json=False)
 
+    def _generate_device_id(self):
+        self._device_id = generate_fake_device_id()
+
+    def _get_known_var_cid(self):
+        return AC_KNOWN_CID_WEB if not self._auth_as_app else AC_KNOWN_CID_APP
+
+    def _get_known_var_vid(self):
+        return AC_KNOWN_VID_WEB if not self._auth_as_app else AC_KNOWN_VID_APP
+
     def _set_known_app_vars(self):
-        self._client_id = AC_KNOWN_CID_WEB
+        self._client_id = self._get_known_var_cid()
         self._app_id = AC_KNOWN_AID
-        self._app_version = AC_KNOWN_VID_WEB
+        self._app_version = self._get_known_var_vid()
         self._app_secret = AC_KNOWN_SEC
 
     async def _extract_current_app_vars(self):
@@ -204,7 +226,7 @@ class AnycubicAPI:
             self._client_id = client_matches[0]
         else:
             self._debug_log("Falling back to known Client ID.")
-            self._client_id = AC_KNOWN_CID_WEB
+            self._client_id = self._get_known_var_cid()
 
         app_id_matches = REX_APP_ID_BASIC.findall(js_body)
         if len(app_id_matches) == 1:
@@ -223,7 +245,7 @@ class AnycubicAPI:
             self._app_version = app_version_matches[0]
         else:
             self._debug_log("Falling back to known Version.")
-            self._app_version = AC_KNOWN_VID_WEB
+            self._app_version = self._get_known_var_vid()
 
         if basic_app_id_found:
             app_secret_matches = REX_APP_SECRET_OBF.findall(js_body)
@@ -241,7 +263,7 @@ class AnycubicAPI:
         query = {
             'clientId': self._client_id,
             'responseType': 'code',
-            'redirectUri': self.base_url,
+            'redirectUri': self._redirect_uri,
             'scope': 'read',
             'state': self._cookie_state,
         }
@@ -256,7 +278,7 @@ class AnycubicAPI:
         query = {
             'clientId': self._client_id,
             'responseType': 'code',
-            'redirectUri': self.base_url,
+            'redirectUri': self._redirect_uri,
             'type': 'code',
             'scope': 'read',
             'state': self._cookie_state,
@@ -279,7 +301,6 @@ class AnycubicAPI:
         )
         self._login_auth_code = resp['data']
         self._debug_log("Successfully logged in.")
-        # self._debug_log(resp)
 
     async def _fetch_ac_code_state(self):
         query = {
@@ -294,22 +315,23 @@ class AnycubicAPI:
             with_response=True,
         )
         self._auth_referer = resp.url
-        # self._debug_log(_)
 
     def _build_auth_headers(self, with_token=False):
-        auth_nonce = str(uuid.uuid1())
+        auth_nonce = generate_app_nonce() if self._auth_as_app else generate_web_nonce()
         timestamp = int(time.time() * 1e3)
         sig_input = f"{self._app_id}{timestamp}{self._app_version}{self._app_secret}{auth_nonce}{self._app_id}"
         signature = hashlib.md5(sig_input.encode('utf-8'))
         auth_headers = {
-            'Xx-Device-Type': 'web',
-            'Xx-Is-Cn': '1',
+            'Xx-Device-Type': 'web' if not self._auth_as_app else 'android',
+            'Xx-Is-Cn': '1' if not self._auth_as_app else '0',
             'Xx-Nonce': auth_nonce,
             'Xx-Signature': signature.hexdigest(),
             'Xx-Timestamp': str(timestamp),
             'Xx-Version': self._app_version,
             'Content-Type': 'application/json',
         }
+        if self._auth_as_app:
+            auth_headers['XX-Device-Id'] = self._device_id
         if with_token:
             if self._auth_sig_token is None:
                 raise Exception("No sig token.")
@@ -327,7 +349,7 @@ class AnycubicAPI:
     async def _get_sig_token(self):
         params = {
             'access_token': self._auth_access_token,
-            'device_type': 'web',
+            'device_type': 'web' if not self._auth_as_app else 'android',
         }
         resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.auth_sig_token, query=None, params=params, with_token=False)
         self._auth_sig_token = resp['data']['token']
@@ -700,6 +722,7 @@ class AnycubicAPI:
             self._set_known_app_vars()
         else:
             await self._extract_current_app_vars()
+        self._generate_device_id()
         await self._init_oauth_session()
         await self._password_logon()
         await self._fetch_ac_code_state()
@@ -716,6 +739,7 @@ class AnycubicAPI:
             'app_secret': self._app_secret,
             'auth_access_token': self._auth_access_token,
             'auth_sig_token': self._auth_sig_token,
+            'device_id': self._device_id,
         }
 
     def load_tokens_from_dict(self, data):
@@ -725,6 +749,10 @@ class AnycubicAPI:
         self._app_secret = data['app_secret']
         self._auth_access_token = data['auth_access_token']
         self._auth_sig_token = data['auth_sig_token']
+        if 'device_id' in data:
+            self._device_id = data['device_id']
+        else:
+            self._generate_device_id()
 
     async def _save_main_tokens(self):
         self._tokens_changed = True
@@ -787,10 +815,10 @@ class AnycubicAPI:
         if not no_order_data:
             params['data'] = order_data
 
-        if ams_info is not -2:
+        if ams_info != -2:
             params['ams_info'] = ams_info
 
-        if print_settings is not -2:
+        if print_settings != -2:
             params['settings'] = print_settings
 
         if project_id is not None:
@@ -1918,10 +1946,7 @@ class AnycubicAPI:
 
     # Main Func
 
-    async def _check_can_access_api(
-        self,
-        use_known=True,
-    ):
+    def _api_tokens_loaded(self):
         all_tokens = [
             self._client_id,
             self._app_id,
@@ -1929,7 +1954,13 @@ class AnycubicAPI:
             self._app_secret,
             self._auth_access_token,
             self._auth_sig_token]
-        if not all([x is not None for x in all_tokens]):
+        return all([x is not None for x in all_tokens])
+
+    async def _check_can_access_api(
+        self,
+        use_known=True,
+    ):
+        if not self._api_tokens_loaded():
             cached_tokens = await self._load_main_tokens()
         else:
             cached_tokens = True
@@ -1955,10 +1986,13 @@ class AnycubicAPI:
 
     async def check_api_tokens(self):
         if not await self._check_can_access_api(True):
-            self._debug_log(
-                "Known app variables changed, attempting to extract new ones, please raise a github issue."
-            )
-            return await self._check_can_access_api(False)
+            if self._api_tokens_loaded() and not self._auth_as_app:
+                self._debug_log(
+                    "Login failed, retrying with new variables..."
+                )
+                return await self._check_can_access_api(False)
+            else:
+                return False
 
         return True
 
