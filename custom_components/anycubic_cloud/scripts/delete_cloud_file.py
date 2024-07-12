@@ -5,7 +5,7 @@ from . import script_base
 
 
 def get_sys_args():
-    parser = argparse.ArgumentParser(description='Anycubic Cloud Upload & Print')
+    parser = argparse.ArgumentParser(description='Anycubic Delete Cloud File')
     parser.add_argument(
         '--file-id',
         help='File ID.',
