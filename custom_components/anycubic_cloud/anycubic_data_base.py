@@ -2151,6 +2151,9 @@ class AnycubicPrinter:
         elif action == 'deleteUdisk' and state == 'success':
             # Not Yet Needed
             return
+        elif action == 'cloudRecommendList' and state == 'done':
+            # Not Yet Needed
+            return
         else:
             raise Exception('Unknown file data.')
 
