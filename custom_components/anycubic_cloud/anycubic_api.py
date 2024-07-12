@@ -65,6 +65,7 @@ class AnycubicAPI:
     ):
         # Cache
         self._cache_key_path = None
+        self._cache_tokens_path = None
         # API
         self.base_url = f"https://{BASE_DOMAIN}/"
         self._public_api_root = f"{self.base_url}{PUBLIC_API_ENDPOINT}"
@@ -734,22 +735,37 @@ class AnycubicAPI:
             wo.write(json.dumps(self.build_token_dict()))
 
     async def _load_main_tokens(self):
-        if self._cache_key_path is None:
-            return False
+        tokens_loaded = False
+        if self._cache_tokens_path is not None and (await aio_path.exists(self._cache_tokens_path)):
 
-        if not await aio_path.exists(self._cache_key_path):
-            return False
+            try:
+                with open(self._cache_tokens_path, "r") as wo:
+                    data = json.load(wo)
+                self.load_tokens_from_dict(data['data'])
+                tokens_loaded = True
 
-        try:
+            except Exception:
+                pass
 
-            with open(self._cache_key_path, "r") as wo:
-                data = json.load(wo)
-            self.load_tokens_from_dict(data)
+        if tokens_loaded:
             return True
 
-        except Exception:
-            self._debug_log("No cached tokens found.")
-            return False
+        if self._cache_key_path is not None and (await aio_path.exists(self._cache_key_path)):
+
+            try:
+                with open(self._cache_key_path, "r") as wo:
+                    data = json.load(wo)
+                self.load_tokens_from_dict(data)
+                tokens_loaded = True
+
+            except Exception:
+                pass
+
+        if tokens_loaded:
+            return True
+
+        self._debug_log("No cached tokens found.")
+        return False
 
     # Confirmed API Calls
 

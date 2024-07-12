@@ -17,6 +17,7 @@ class anycubic_api_with_script(AnycubicMQTTAPI):
         self._args = sys_args
         script_dir_path = path.dirname(path.realpath(__file__))
         self._cache_key_path = path.join(script_dir_path, "anycubic_cached_tokens.cache")
+        self._cache_tokens_path = path.join(script_dir_path, "anycubic_cached_tokens.json")
 
     async def script_runner(self):
         """Execute script."""
