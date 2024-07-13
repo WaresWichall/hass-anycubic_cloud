@@ -106,6 +106,12 @@ class AnycubicAPI:
     def tokens_changed(self):
         return self._tokens_changed
 
+    def _debug_log(self, msg):
+        if self._debug_logger:
+            self._debug_logger(msg)
+
+    # API Functions
+
     def _web_headers(self, with_origin=AUTH_DOMAIN):
         header_dict = {
             'User-Agent': DEFAULT_USER_AGENT
@@ -192,6 +198,8 @@ class AnycubicAPI:
             extra_headers=self._build_auth_headers(with_token=with_token),
             with_origin=with_origin,
         )
+
+    # Login Functions
 
     async def _fetch_js_body(self):
         body = await self._fetch_pub_get_resp("ai", is_json=False)
@@ -355,365 +363,6 @@ class AnycubicAPI:
         self._auth_sig_token = resp['data']['token']
         self._debug_log("Successfully got sig token.")
 
-    async def get_user_cloud_store(
-        self,
-        raw_data=False,
-    ):
-        resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.user_store)
-        if raw_data:
-            return resp
-
-        data = resp['data']
-
-        return AnycubicCloudStore.from_json(data)
-
-    async def _lock_storage_space(
-        self,
-        file_size,
-        file_name,
-        is_temp_file=0,
-        raw_data=False,
-    ):
-        params = {
-            'size': file_size,
-            'name': file_name,
-            'is_temp_file': is_temp_file,
-        }
-        resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.lock_storage_space, params=params)
-        if raw_data:
-            return resp
-
-        data = resp['data']
-
-        return data
-
-    async def _unlock_storage_space(
-        self,
-        file_id,
-        is_delete_cos=0,
-        raw_data=False,
-    ):
-        params = {
-            'id': file_id,
-            'is_delete_cos': is_delete_cos,
-        }
-        resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.unlock_storage_space, params=params)
-        if raw_data:
-            return resp
-
-        data = resp['data']
-
-        return data
-
-    async def delete_file_from_cloud(
-        self,
-        file_id,
-        raw_data=False,
-    ):
-        params = {
-            'idArr': [file_id],
-        }
-        resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.delete_cloud_file, params=params)
-        if raw_data:
-            return resp
-
-        data = resp['data']
-
-        return True if data == '' else False
-
-    async def _claim_file_upload_from_aws(
-        self,
-        file_id,
-        raw_data=False,
-    ):
-        params = {
-            'user_lock_space_id': file_id,
-        }
-        resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.new_file_upload, params=params)
-        if raw_data:
-            return resp
-
-        data = resp['data']
-
-        return data['id']
-
-    async def upload_file_to_cloud(
-        self,
-        full_file_path,
-    ):
-        file_bytes = None
-
-        if not full_file_path or len(full_file_path) <= 0:
-            raise AnycubicAPIError(
-                "Cannot upload an empty file path."
-            )
-
-        file_name = path_basename(full_file_path)
-        file_size = await aio_path.getsize(full_file_path)
-
-        if file_size <= 0:
-            raise AnycubicAPIError(
-                f"Cannot upload file: {file_name} - empty file."
-            )
-
-        async with aio_file_open(full_file_path, mode='rb') as f:
-            file_bytes = await f.read()
-
-        if file_bytes is None:
-            raise AnycubicAPIError(
-                f"Cannot upload file: {file_name} - no data."
-            )
-
-        user_store = await self.get_user_cloud_store()
-
-        previous_available_bytes = user_store.available_bytes
-
-        if previous_available_bytes < file_size:
-            raise AnycubicAPIError(
-                f"Cannot upload file: {file_name} - no room on cloud."
-            )
-
-        lock_data = await self._lock_storage_space(
-            file_size=file_size,
-            file_name=file_name,
-        )
-
-        lock_file_id = lock_data['id']
-        aws_put_url = lock_data['preSignUrl']
-
-        await self._fetch_aws_put_resp(
-            final_url=aws_put_url,
-            put_data=file_bytes,
-        )
-
-        cloud_file_id = await self._claim_file_upload_from_aws(
-            lock_file_id
-        )
-
-        await self._unlock_storage_space(lock_file_id)
-
-        user_store = await self.get_user_cloud_store()
-
-        if user_store.available_bytes > (previous_available_bytes - file_size):
-            raise AnycubicAPIError(
-                f"Unknown error uploading file: {file_name} - not found in cloud storage."
-            )
-
-        return cloud_file_id
-
-    async def print_with_multi_color_box_by_gcode_id(
-        self,
-        printer,
-        gcode_id,
-        slot_index_list,
-        box_id=0,
-    ):
-        if printer is None:
-            return None
-
-        proj = await self.fetch_project_gcode_info_fdm(gcode_id)
-
-        material_list = proj.slice_material_info_list
-
-        if len(slot_index_list) != len(material_list):
-            raise AnycubicAPIError('Slot/Material mis-match.')
-
-        multi_color_box_slots = printer.multi_color_box[box_id].slots
-
-        ams_box_mapping = list()
-
-        for x, mat_conf in enumerate(material_list):
-            slot_index = slot_index_list[x]
-            ams_slot = multi_color_box_slots[slot_index]
-            material = AnycubicMaterialMapping(
-                spool_index=slot_index,
-                filament_used=mat_conf['filament_used'],
-                material_type=mat_conf['material_type'],
-                color_red=ams_slot.color_red,
-                color_green=ams_slot.color_green,
-                color_blue=ams_slot.color_blue,
-                paint_index=mat_conf['paint_index'],
-            )
-            ams_box_mapping.append(material)
-
-        result = await self._send_order_start_print(
-            printer=printer,
-            file_id=proj.id,
-            ams_box_mapping=ams_box_mapping,
-        )
-
-        return result
-
-    async def upload_to_cloud_and_print_with_multi_color_box(
-        self,
-        printer,
-        full_file_path,
-        slot_index_list,
-        box_id=0,
-    ):
-        if printer is None:
-            return None
-
-        cloud_file_id = await self.upload_file_to_cloud(full_file_path)
-        latest_cloud_file = await self.get_latest_cloud_file()
-
-        if latest_cloud_file.id != cloud_file_id:
-            raise AnycubicAPIError('File upload mis-match, cannot print.')
-
-        return await self.print_with_multi_color_box_by_gcode_id(
-            printer=printer,
-            gcode_id=latest_cloud_file.gcode_id,
-            slot_index_list=slot_index_list,
-            box_id=box_id,
-        )
-
-    async def get_user_info(
-        self,
-        raw_data=False,
-    ):
-        resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.user_info)
-        if raw_data:
-            return resp
-
-        data = resp['data']
-        if data is None:
-            raise APIAuthTokensExpired('Invalid credentials.')
-
-        self._api_user_id = data['id']
-
-        return data
-
-    async def get_user_cloud_files(
-        self,
-        printable=None,
-        machine_type=None,
-        page=1,
-        limit=10,
-        raw_data=False,
-    ):
-        params = {
-            'page': page,
-            'limit': limit,
-        }
-        if printable is not None:
-            params['printable'] = int(printable)
-        if machine_type is not None:
-            params['machine_type'] = int(machine_type)
-
-        resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.user_files, params=params)
-        if raw_data:
-            return resp
-
-        data = resp['data']
-
-        if not data:
-            return list()
-
-        return list([AnycubicCloudFile.from_json(x) for x in data])
-
-    async def get_latest_cloud_file(
-        self
-    ):
-        cloud_files = await self.get_user_cloud_files(
-            printable=True,
-            machine_type=0,
-        )
-
-        return cloud_files[0]
-
-    async def _get_print_history(self):
-        resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.print_history)
-        self._debug_log(f"print_history output:\n{json.dumps(resp)}")
-
-    async def _get_project_monitor(self, project_id):
-        query = {
-            'id': str(project_id)
-        }
-        resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.project_monitor, query=query)
-        self._debug_log(f"project_monitor output:\n{json.dumps(resp)}")
-
-    async def _set_printer_name(
-        self,
-        printer_id,
-        new_name,
-        raw_data=False,
-    ):
-        params = {
-            'id': str(printer_id),
-            'name': str(new_name),
-        }
-        resp = await self._fetch_api_resp(
-            endpoint=API_ENDPOINT.printer_update_name,
-            params=params
-        )
-        if raw_data:
-            return resp
-
-        data = resp['data']
-
-        return data
-
-    async def fetch_project_gcode_info_fdm(
-        self,
-        project_id,
-        raw_data=False,
-    ):
-        query = {
-            'id': str(project_id),
-        }
-        resp = await self._fetch_api_resp(
-            endpoint=API_ENDPOINT.project_gcode_info_fdm,
-            query=query
-        )
-        if raw_data:
-            return resp
-
-        data = resp['data']
-
-        return AnycubicProject.from_gcode_json(self, data)
-
-    async def _update_printer_firmware(
-        self,
-        printer_id,
-        current_fw_version,
-        raw_data=False,
-    ):
-        query = {
-            'id': str(printer_id),
-            'target_version': str(current_fw_version),
-        }
-        resp = await self._fetch_api_resp(
-            endpoint=API_ENDPOINT.printer_firmware_update,
-            query=query
-        )
-        if raw_data:
-            return resp
-
-        data = resp['data']
-
-        return data
-
-    async def _update_muli_color_box_firmware(
-        self,
-        printer_id,
-        box_id,
-        raw_data=False,
-    ):
-        params = {
-            'id': int(printer_id),
-            'box_id': int(box_id),
-        }
-        resp = await self._fetch_api_resp(
-            endpoint=API_ENDPOINT.printer_multi_color_box_firmware_update,
-            params=params,
-        )
-        if raw_data:
-            return resp
-
-        data = resp['data']
-
-        return data
-
     async def _login_retrieve_tokens(
         self,
         use_known=True,
@@ -795,7 +444,278 @@ class AnycubicAPI:
         self._debug_log("No cached tokens found.")
         return False
 
-    # Confirmed API Calls
+    def _api_tokens_loaded(self):
+        all_tokens = [
+            self._client_id,
+            self._app_id,
+            self._app_version,
+            self._app_secret,
+            self._auth_access_token,
+            self._auth_sig_token]
+        return all([x is not None for x in all_tokens])
+
+    async def _check_can_access_api(
+        self,
+        use_known=True,
+    ):
+        if not self._api_tokens_loaded():
+            cached_tokens = await self._load_main_tokens()
+        else:
+            cached_tokens = True
+        if cached_tokens:
+            try:
+                await self.get_user_info()
+            except APIAuthTokensExpired:
+                cached_tokens = None
+                self._debug_log("Tokens expired.")
+        if not cached_tokens:
+            try:
+                await self._login_retrieve_tokens(
+                    use_known=use_known
+                )
+                await self._save_main_tokens()
+            except Exception:
+                return False
+        try:
+            await self.get_user_info()
+        except Exception:
+            return False
+        return True
+
+    async def check_api_tokens(self):
+        if not await self._check_can_access_api(True):
+            if self._api_tokens_loaded() and not self._auth_as_app:
+                self._debug_log(
+                    "Login failed, retrying with new variables..."
+                )
+                return await self._check_can_access_api(False)
+            else:
+                return False
+
+        return True
+
+    # General API Calls
+
+    async def _lock_storage_space(
+        self,
+        file_size,
+        file_name,
+        is_temp_file=0,
+        raw_data=False,
+    ):
+        params = {
+            'size': file_size,
+            'name': file_name,
+            'is_temp_file': is_temp_file,
+        }
+        resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.lock_storage_space, params=params)
+        if raw_data:
+            return resp
+
+        data = resp['data']
+
+        return data
+
+    async def _unlock_storage_space(
+        self,
+        file_id,
+        is_delete_cos=0,
+        raw_data=False,
+    ):
+        params = {
+            'id': file_id,
+            'is_delete_cos': is_delete_cos,
+        }
+        resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.unlock_storage_space, params=params)
+        if raw_data:
+            return resp
+
+        data = resp['data']
+
+        return data
+
+    async def _claim_file_upload_from_aws(
+        self,
+        file_id,
+        raw_data=False,
+    ):
+        params = {
+            'user_lock_space_id': file_id,
+        }
+        resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.new_file_upload, params=params)
+        if raw_data:
+            return resp
+
+        data = resp['data']
+
+        return data['id']
+
+    async def _get_print_history(self):
+        resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.print_history)
+        self._debug_log(f"print_history output:\n{json.dumps(resp)}")
+
+    async def _get_project_monitor(self, project_id):
+        query = {
+            'id': str(project_id)
+        }
+        resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.project_monitor, query=query)
+        self._debug_log(f"project_monitor output:\n{json.dumps(resp)}")
+
+    async def _set_printer_name(
+        self,
+        printer_id,
+        new_name,
+        raw_data=False,
+    ):
+        params = {
+            'id': str(printer_id),
+            'name': str(new_name),
+        }
+        resp = await self._fetch_api_resp(
+            endpoint=API_ENDPOINT.printer_update_name,
+            params=params
+        )
+        if raw_data:
+            return resp
+
+        data = resp['data']
+
+        return data
+
+    async def _update_printer_firmware(
+        self,
+        printer_id,
+        current_fw_version,
+        raw_data=False,
+    ):
+        query = {
+            'id': str(printer_id),
+            'target_version': str(current_fw_version),
+        }
+        resp = await self._fetch_api_resp(
+            endpoint=API_ENDPOINT.printer_firmware_update,
+            query=query
+        )
+        if raw_data:
+            return resp
+
+        data = resp['data']
+
+        return data
+
+    async def _update_muli_color_box_firmware(
+        self,
+        printer_id,
+        box_id,
+        raw_data=False,
+    ):
+        params = {
+            'id': int(printer_id),
+            'box_id': int(box_id),
+        }
+        resp = await self._fetch_api_resp(
+            endpoint=API_ENDPOINT.printer_multi_color_box_firmware_update,
+            params=params,
+        )
+        if raw_data:
+            return resp
+
+        data = resp['data']
+
+        return data
+
+    async def get_user_info(
+        self,
+        raw_data=False,
+    ):
+        resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.user_info)
+        if raw_data:
+            return resp
+
+        data = resp['data']
+        if data is None:
+            raise APIAuthTokensExpired('Invalid credentials.')
+
+        self._api_user_id = data['id']
+
+        return data
+
+    async def get_user_cloud_store(
+        self,
+        raw_data=False,
+    ):
+        resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.user_store)
+        if raw_data:
+            return resp
+
+        data = resp['data']
+
+        return AnycubicCloudStore.from_json(data)
+
+    async def get_user_cloud_files(
+        self,
+        printable=None,
+        machine_type=None,
+        page=1,
+        limit=10,
+        raw_data=False,
+    ):
+        params = {
+            'page': page,
+            'limit': limit,
+        }
+        if printable is not None:
+            params['printable'] = int(printable)
+        if machine_type is not None:
+            params['machine_type'] = int(machine_type)
+
+        resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.user_files, params=params)
+        if raw_data:
+            return resp
+
+        data = resp['data']
+
+        if not data:
+            return list()
+
+        return list([AnycubicCloudFile.from_json(x) for x in data])
+
+    async def fetch_project_gcode_info_fdm(
+        self,
+        project_id,
+        raw_data=False,
+    ):
+        query = {
+            'id': str(project_id),
+        }
+        resp = await self._fetch_api_resp(
+            endpoint=API_ENDPOINT.project_gcode_info_fdm,
+            query=query
+        )
+        if raw_data:
+            return resp
+
+        data = resp['data']
+
+        return AnycubicProject.from_gcode_json(self, data)
+
+    async def delete_file_from_cloud(
+        self,
+        file_id,
+        raw_data=False,
+    ):
+        params = {
+            'idArr': [file_id],
+        }
+        resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.delete_cloud_file, params=params)
+        if raw_data:
+            return resp
+
+        data = resp['data']
+
+        return True if data == '' else False
+
+    # ORDER Functions
 
     async def _send_anycubic_order(
         self,
@@ -1289,6 +1209,8 @@ class AnycubicAPI:
             order_data=order_data,
         )
 
+    # Main API Functions
+
     async def set_printer_name(
         self,
         printer,
@@ -1402,6 +1324,16 @@ class AnycubicAPI:
             updated_versions.append(resp)
 
         return updated_versions
+
+    async def get_latest_cloud_file(
+        self
+    ):
+        cloud_files = await self.get_user_cloud_files(
+            printable=True,
+            machine_type=0,
+        )
+
+        return cloud_files[0]
 
     async def pause_print(
         self,
@@ -1944,61 +1876,132 @@ class AnycubicAPI:
             latest_project.update_extra_data(extra_proj_data)
         return latest_project
 
-    # Main Func
-
-    def _api_tokens_loaded(self):
-        all_tokens = [
-            self._client_id,
-            self._app_id,
-            self._app_version,
-            self._app_secret,
-            self._auth_access_token,
-            self._auth_sig_token]
-        return all([x is not None for x in all_tokens])
-
-    async def _check_can_access_api(
+    async def upload_file_to_cloud(
         self,
-        use_known=True,
+        full_file_path,
     ):
-        if not self._api_tokens_loaded():
-            cached_tokens = await self._load_main_tokens()
-        else:
-            cached_tokens = True
-        if cached_tokens:
-            try:
-                await self.get_user_info()
-            except APIAuthTokensExpired:
-                cached_tokens = None
-                self._debug_log("Tokens expired.")
-        if not cached_tokens:
-            try:
-                await self._login_retrieve_tokens(
-                    use_known=use_known
-                )
-                await self._save_main_tokens()
-            except Exception:
-                return False
-        try:
-            await self.get_user_info()
-        except Exception:
-            return False
-        return True
+        file_bytes = None
 
-    async def check_api_tokens(self):
-        if not await self._check_can_access_api(True):
-            if self._api_tokens_loaded() and not self._auth_as_app:
-                self._debug_log(
-                    "Login failed, retrying with new variables..."
-                )
-                return await self._check_can_access_api(False)
-            else:
-                return False
+        if not full_file_path or len(full_file_path) <= 0:
+            raise AnycubicAPIError(
+                "Cannot upload an empty file path."
+            )
 
-        return True
+        file_name = path_basename(full_file_path)
+        file_size = await aio_path.getsize(full_file_path)
 
-    async def update_printer_status(self):
-        await self.check_api_tokens()
+        if file_size <= 0:
+            raise AnycubicAPIError(
+                f"Cannot upload file: {file_name} - empty file."
+            )
 
-    def _debug_log(self, msg):
-        if self._debug_logger:
-            self._debug_logger(msg)
+        async with aio_file_open(full_file_path, mode='rb') as f:
+            file_bytes = await f.read()
+
+        if file_bytes is None:
+            raise AnycubicAPIError(
+                f"Cannot upload file: {file_name} - no data."
+            )
+
+        user_store = await self.get_user_cloud_store()
+
+        previous_available_bytes = user_store.available_bytes
+
+        if previous_available_bytes < file_size:
+            raise AnycubicAPIError(
+                f"Cannot upload file: {file_name} - no room on cloud."
+            )
+
+        lock_data = await self._lock_storage_space(
+            file_size=file_size,
+            file_name=file_name,
+        )
+
+        lock_file_id = lock_data['id']
+        aws_put_url = lock_data['preSignUrl']
+
+        await self._fetch_aws_put_resp(
+            final_url=aws_put_url,
+            put_data=file_bytes,
+        )
+
+        cloud_file_id = await self._claim_file_upload_from_aws(
+            lock_file_id
+        )
+
+        await self._unlock_storage_space(lock_file_id)
+
+        user_store = await self.get_user_cloud_store()
+
+        if user_store.available_bytes > (previous_available_bytes - file_size):
+            raise AnycubicAPIError(
+                f"Unknown error uploading file: {file_name} - not found in cloud storage."
+            )
+
+        return cloud_file_id
+
+    async def print_with_multi_color_box_by_gcode_id(
+        self,
+        printer,
+        gcode_id,
+        slot_index_list,
+        box_id=0,
+    ):
+        if printer is None:
+            return None
+
+        proj = await self.fetch_project_gcode_info_fdm(gcode_id)
+
+        material_list = proj.slice_material_info_list
+
+        if len(slot_index_list) != len(material_list):
+            raise AnycubicAPIError('Slot/Material mis-match.')
+
+        multi_color_box_slots = printer.multi_color_box[box_id].slots
+
+        ams_box_mapping = list()
+
+        for x, mat_conf in enumerate(material_list):
+            slot_index = slot_index_list[x]
+            ams_slot = multi_color_box_slots[slot_index]
+            material = AnycubicMaterialMapping(
+                spool_index=slot_index,
+                filament_used=mat_conf['filament_used'],
+                material_type=mat_conf['material_type'],
+                color_red=ams_slot.color_red,
+                color_green=ams_slot.color_green,
+                color_blue=ams_slot.color_blue,
+                paint_index=mat_conf['paint_index'],
+            )
+            ams_box_mapping.append(material)
+
+        result = await self._send_order_start_print(
+            printer=printer,
+            file_id=proj.id,
+            ams_box_mapping=ams_box_mapping,
+        )
+
+        return result
+
+    async def upload_to_cloud_and_print_with_multi_color_box(
+        self,
+        printer,
+        full_file_path,
+        slot_index_list,
+        box_id=0,
+    ):
+        if printer is None:
+            return None
+
+        cloud_file_id = await self.upload_file_to_cloud(full_file_path)
+        latest_cloud_file = await self.get_latest_cloud_file()
+
+        if latest_cloud_file.id != cloud_file_id:
+            raise AnycubicAPIError('File upload mis-match, cannot print.')
+
+        return await self.print_with_multi_color_box_by_gcode_id(
+            printer=printer,
+            gcode_id=latest_cloud_file.gcode_id,
+            slot_index_list=slot_index_list,
+            box_id=box_id,
+        )
