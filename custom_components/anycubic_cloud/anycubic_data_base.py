@@ -2477,7 +2477,11 @@ class AnycubicPrinter:
 
     @property
     def primary_multi_color_box(self):
-        return self._multi_color_box[0] if self._multi_color_box is not None else None
+        return (
+            self._multi_color_box[0]
+            if self._multi_color_box is not None and len(self._multi_color_box) > 0
+            else None
+        )
 
     @property
     def primary_drying_status(self):
