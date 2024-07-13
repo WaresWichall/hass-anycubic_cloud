@@ -73,6 +73,10 @@ SENSOR_TYPES = (
         key="fw_is_downloading",
         translation_key="fw_is_downloading",
     ),
+    BinarySensorEntityDescription(
+        key="mqtt_connection_active",
+        translation_key="mqtt_connection_active",
+    ),
 )
 
 GLOBAL_SENSOR_TYPES = (

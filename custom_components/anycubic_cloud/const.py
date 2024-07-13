@@ -26,6 +26,7 @@ CONF_SLOT_COLOR_GREEN = "slot_color_green"
 CONF_SLOT_COLOR_BLUE = "slot_color_blue"
 CONF_BOX_ID = "box_id"
 CONF_FINISHED = "finished"
+CONF_MQTT_CONNECT_MODE = "mqtt_connect_mode"
 
 UNIT_LAYERS = "Layers"
 

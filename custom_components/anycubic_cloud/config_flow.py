@@ -19,10 +19,15 @@ from .anycubic_api import AnycubicAPI
 from .const import (
     CONF_DRYING_PRESET_DURATION_,
     CONF_DRYING_PRESET_TEMPERATURE_,
+    CONF_MQTT_CONNECT_MODE,
     CONF_PRINTER_ID_LIST,
     DOMAIN,
     LOGGER,
     MAX_DRYING_PRESETS,
+)
+
+from .helpers import (
+    AnycubicMQTTConnectMode,
 )
 
 DATA_SCHEMA = vol.Schema(
@@ -38,6 +43,13 @@ DATA_SCHEMA_AUTH = vol.Schema(
         vol.Required(CONF_PASSWORD): cv.string,
     }
 )
+
+MQTT_CONNECT_MODES = {
+    AnycubicMQTTConnectMode.Printing_Only: "Printing Only",
+    AnycubicMQTTConnectMode.Printing_Drying: "Printing & Drying",
+    AnycubicMQTTConnectMode.Device_Online: "Device Online",
+    AnycubicMQTTConnectMode.Always: "Always",
+}
 
 
 class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -272,6 +284,11 @@ class AnycubicCloudOptionsFlowHandler(OptionsFlow):
                 temp_key,
                 default=self.entry.options.get(temp_key)
             )] = cv.positive_int
+
+        schema[vol.Optional(
+            CONF_MQTT_CONNECT_MODE,
+            default=self.entry.options.get(CONF_MQTT_CONNECT_MODE)
+        )] = vol.In(MQTT_CONNECT_MODES)
 
         return vol.Schema(schema)
 

@@ -34,6 +34,7 @@
     "step": {
       "init": {
         "data": {
+          "mqtt_connect_mode": "MQTT Connection Mode",
           "drying_preset_duration_1": "Dry Preset 1 Duration",
           "drying_preset_temperature_1": "Dry Preset 1 Temperature",
           "drying_preset_duration_2": "Dry Preset 2 Duration",
@@ -62,6 +63,9 @@
       },
       "printer_online": {
         "name": "Printer Online"
+      },
+      "mqtt_connection_active": {
+        "name": "MQTT Connection Active"
       },
       "is_busy": {
         "name": "Is Busy"

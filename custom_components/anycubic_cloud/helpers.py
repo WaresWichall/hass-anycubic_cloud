@@ -1,3 +1,5 @@
+from enum import IntEnum
+
 from homeassistant.const import CONF_USERNAME
 from homeassistant.helpers.device_registry import CONNECTION_NETWORK_MAC, DeviceInfo
 
@@ -14,3 +16,10 @@ def build_printer_device_info(entry_data, coordinator_data, printer_id: int) -> 
         sw_version=coordinator_data[printer_id]["fw_version"],
         hw_version=f"Printer ID: {printer_id}",
     )
+
+
+class AnycubicMQTTConnectMode(IntEnum):
+    Printing_Only = 1
+    Printing_Drying = 2
+    Device_Online = 3
+    Always = 4

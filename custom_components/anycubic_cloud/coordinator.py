@@ -25,6 +25,7 @@ from .anycubic_api_mqtt import AnycubicMQTTAPI as AnycubicAPI
 from .const import (
     CONF_DRYING_PRESET_DURATION_,
     CONF_DRYING_PRESET_TEMPERATURE_,
+    CONF_MQTT_CONNECT_MODE,
     CONF_PRINTER_ID_LIST,
     DEFAULT_SCAN_INTERVAL,
     FAILED_UPDATE_DELAY,
@@ -37,6 +38,7 @@ from .const import (
     STORAGE_VERSION,
 )
 from .helpers import (
+    AnycubicMQTTConnectMode,
     build_printer_device_info,
 )
 
@@ -44,7 +46,11 @@ from .helpers import (
 class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     """AnycubicCloud Data Update Coordinator."""
 
-    def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        entry: ConfigEntry,
+    ) -> None:
         """Initialize AnycubicCloud."""
         self.entry = entry
         self._anycubic_api: AnycubicAPI | None = None
@@ -55,6 +61,12 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._mqtt_manually_connected = False
         self._mqtt_idle_since = None
         self._printer_device_map = None
+        mqtt_connect_mode = self.entry.options.get(CONF_MQTT_CONNECT_MODE)
+        self._mqtt_connection_mode = (
+            AnycubicMQTTConnectMode.Printing_Only
+            if mqtt_connect_mode is None
+            else mqtt_connect_mode
+        )
         super().__init__(
             hass,
             LOGGER,
@@ -72,12 +84,79 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             printer.is_printing == 2 for printer_id, printer in self._anycubic_printers.items()
         ])
 
+    def _any_printers_are_drying(self):
+        return any([
+            (
+                printer.primary_drying_status is not None and
+                printer.primary_drying_status.is_drying
+            ) for printer_id, printer in self._anycubic_printers.items()
+        ])
+
+    def _any_printers_are_online(self):
+        return any([
+            printer.printer_online for printer_id, printer in self._anycubic_printers.items()
+        ])
+
     def _no_printers_are_printing(self):
         return all([
             printer.is_printing != 2 and
             (printer.latest_project is None or not printer.latest_project.print_in_progress)
             for printer_id, printer in self._anycubic_printers.items()
         ])
+
+    def _check_mqtt_connection_modes_active(self):
+        if (
+            self._mqtt_connection_mode == AnycubicMQTTConnectMode.Printing_Only and
+            self._any_printers_are_printing()
+        ):
+            return True
+
+        elif (
+            self._mqtt_connection_mode == AnycubicMQTTConnectMode.Printing_Drying and
+            (self._any_printers_are_printing() or self._any_printers_are_drying())
+        ):
+            return True
+
+        elif (
+            self._mqtt_connection_mode == AnycubicMQTTConnectMode.Device_Online and
+            self._any_printers_are_online()
+        ):
+            return True
+
+        elif (
+            self._mqtt_connection_mode == AnycubicMQTTConnectMode.Always
+        ):
+            return True
+
+        else:
+            return False
+
+    def _check_mqtt_connection_modes_inactive(self):
+        if (
+            self._mqtt_connection_mode == AnycubicMQTTConnectMode.Printing_Only and
+            self._no_printers_are_printing()
+        ):
+            return True
+
+        elif (
+            self._mqtt_connection_mode == AnycubicMQTTConnectMode.Printing_Drying and
+            (self._no_printers_are_printing() and not self._any_printers_are_drying())
+        ):
+            return True
+
+        elif (
+            self._mqtt_connection_mode == AnycubicMQTTConnectMode.Device_Online and
+            not self._any_printers_are_online()
+        ):
+            return True
+
+        elif (
+            self._mqtt_connection_mode == AnycubicMQTTConnectMode.Always
+        ):
+            return False
+
+        else:
+            return False
 
     def _build_printer_dict(self, printer) -> dict[str, Any]:
 
@@ -214,6 +293,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "target_hotbed_temp": latest_project.target_hotbed_temp if latest_project else None,
             "raw_print_status": latest_project.raw_print_status if latest_project else None,
             "manual_mqtt_connection_enabled": self._mqtt_manually_connected,
+            "mqtt_connection_active": self._anycubic_api.mqtt_is_started,
         }
 
     async def _async_update_data(self) -> dict[str, Any]:
@@ -239,7 +319,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             not self.hass.is_stopping and
             self.hass.state is CoreState.running and
             (
-                self._any_printers_are_printing() or
+                self._check_mqtt_connection_modes_active() or
                 self._mqtt_manually_connected
             )
         )
@@ -258,7 +338,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         )
 
     def _anycubic_mqtt_connection_is_idle(self):
-        if self._no_printers_are_printing():
+        if self._check_mqtt_connection_modes_inactive():
             if self._mqtt_idle_since is None:
                 self._mqtt_idle_since = int(time.time())
 
