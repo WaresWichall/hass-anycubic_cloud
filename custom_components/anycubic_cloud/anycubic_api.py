@@ -13,6 +13,7 @@ from aiofiles.os import (
 )
 
 from .anycubic_data_base import (
+    AnycubicBaseStartPrintRequest,
     AnycubicCameraToken,
     AnycubicCloudFile,
     AnycubicCloudStore,
@@ -20,6 +21,8 @@ from .anycubic_data_base import (
     AnycubicMaterialMapping,
     AnycubicPrinter,
     AnycubicProject,
+    AnycubicStartPrintRequestCloud,
+    AnycubicStartPrintRequestLocal,
 )
 
 from .anycubic_api_base import (
@@ -942,20 +945,7 @@ class AnycubicAPI:
     async def _send_order_start_print(
         self,
         printer,
-        file_id,
-        filetype=0,
-        hollow_param=None,
-        is_delete_file=0,
-        matrix="",
-        project_type=1,
-        punching_param=None,
-        slice_param=None,
-        slice_size=None,
-        task_setting_ai_detect=0,
-        task_setting_camera_timelapse=0,
-        template_id=0,
-        file_key="",
-        file_name="",
+        print_request: AnycubicBaseStartPrintRequest,
         ams_box_mapping: AnycubicMaterialMapping | None = None,
     ):
         if not printer:
@@ -969,34 +959,30 @@ class AnycubicAPI:
             'use_ams': True if ams_box_mapping else False,
         }
 
-        task_settings = {
-            'ai_detect': task_setting_ai_detect,
-            'camera_timelapse': task_setting_camera_timelapse,
-        }
-
-        order_data = {
-            'file_id': file_id,
-            'filetype': filetype,
-            'hollow_param': hollow_param,
-            'is_delete_file': is_delete_file,
-            'matrix': matrix,
-            'project_type': project_type,
-            'punching_param': punching_param,
-            'slice_param': slice_param,
-            'slice_size': slice_size,
-            'task_settings': task_settings,
-            'template_id': template_id,
-            'file_key': file_key,
-            'file_name': file_name,
-        }
-
         return await self._send_anycubic_order(
             order_id=AnycubicOrderID.START_PRINT,
             printer_id=printer.id,
             project_id=0,
-            order_data=order_data,
+            order_data=print_request.data,
             ams_info=ams_info if ams_box_mapping else None,
             print_settings=None,
+        )
+
+    async def _send_order_print_local_file(
+        self,
+        printer,
+        file_name: str,
+    ):
+        if not printer:
+            return
+
+        print_request = AnycubicStartPrintRequestLocal(
+            filename=file_name
+        )
+
+        return await self._send_order_start_print(
+            printer=printer,
+            print_request=print_request
         )
 
     async def _send_order_pause_print(
@@ -1180,30 +1166,6 @@ class AnycubicAPI:
 
         return await self._send_anycubic_order(
             order_id=AnycubicOrderID.DELETE_UDISK_FILE,
-            printer_id=printer.id,
-            project_id=0,
-            order_data=order_data,
-        )
-
-    async def _send_order_print_local_file(
-        self,
-        printer,
-        file_name: str,
-    ):
-        if not printer:
-            return
-
-        order_data = {
-            'file_key': '',
-            'file_name': '',
-            'filename': file_name,
-            'filepath': '/',
-            'filetype': 1,
-            'task_settings': {},
-        }
-
-        return await self._send_anycubic_order(
-            order_id=AnycubicOrderID.START_PRINT,
             printer_id=printer.id,
             project_id=0,
             order_data=order_data,
@@ -1975,9 +1937,13 @@ class AnycubicAPI:
             )
             ams_box_mapping.append(material)
 
+        print_request = AnycubicStartPrintRequestCloud(
+            file_id=proj.id,
+        )
+
         result = await self._send_order_start_print(
             printer=printer,
-            file_id=proj.id,
+            print_request=print_request,
             ams_box_mapping=ams_box_mapping,
         )
 

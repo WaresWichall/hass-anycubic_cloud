@@ -15,6 +15,143 @@ from .anycubic_helpers import (
 )
 
 
+class AnycubicBaseStartPrintRequest:
+    def __init__(
+        self,
+        file_key="",
+        file_name="",
+        filetype=0,
+        task_setting_ai_detect=0,
+        task_setting_camera_timelapse=0,
+    ):
+        self._file_key = file_key
+        self._file_name = file_name
+        self._filetype = filetype
+        self._task_setting_ai_detect = task_setting_ai_detect
+        self._task_setting_camera_timelapse = task_setting_camera_timelapse
+
+    @property
+    def task_settings(self):
+        return {
+            'ai_detect': self._task_setting_ai_detect,
+            'camera_timelapse': self._task_setting_camera_timelapse,
+        }
+
+    @property
+    def data(self):
+        return {
+            'filetype': self._filetype,
+            'file_key': self._file_key,
+            'file_name': self._file_name,
+            'task_settings': self.task_settings,
+        }
+
+    def __repr__(self):
+        return (
+            f"AnycubicBaseStartPrintRequest("
+            f"filetype={self._filetype}, "
+            f"file_name={self._file_name}, "
+            f"task_settings={self.task_settings})"
+        )
+
+
+class AnycubicStartPrintRequestLocal(AnycubicBaseStartPrintRequest):
+    def __init__(
+        self,
+        filename="",
+        filepath="",
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self._filename = filename
+        self._filepath = filepath
+        self._filetype = 1
+
+    @property
+    def data(self):
+        return {
+            **super().data,
+            'filename': self._filename,
+            'filepath': f"/{self._filepath}",
+        }
+
+    def __repr__(self):
+        return (
+            f"AnycubicStartPrintRequestLocal("
+            f"filetype={self._filetype}, "
+            f"filename={self._filename}, "
+            f"filepath={self._filepath}, "
+            f"task_settings={self.task_settings})"
+        )
+
+
+class AnycubicStartPrintRequestUdisk(AnycubicStartPrintRequestLocal):
+    def __init__(
+        self,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self._filetype = 2
+
+    def __repr__(self):
+        return (
+            f"AnycubicStartPrintRequestUdisk("
+            f"filetype={self._filetype}, "
+            f"filename={self._filename}, "
+            f"filepath={self._filepath}, "
+            f"task_settings={self.task_settings})"
+        )
+
+
+class AnycubicStartPrintRequestCloud(AnycubicBaseStartPrintRequest):
+    def __init__(
+        self,
+        file_id="",
+        hollow_param=None,
+        is_delete_file=0,
+        matrix="",
+        project_type=1,
+        punching_param=None,
+        slice_param=None,
+        slice_size=None,
+        template_id=0,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self._file_id = file_id
+        self._hollow_param = hollow_param
+        self._is_delete_file = is_delete_file
+        self._matrix = matrix
+        self._project_type = project_type
+        self._punching_param = punching_param
+        self._slice_param = slice_param
+        self._slice_size = slice_size
+        self._template_id = template_id
+
+    @property
+    def data(self):
+        return {
+            **super().data,
+            'file_id': self._file_id,
+            'hollow_param': self._hollow_param,
+            'is_delete_file': self._is_delete_file,
+            'matrix': self._matrix,
+            'project_type': self._project_type,
+            'punching_param': self._punching_param,
+            'slice_param': self._slice_param,
+            'slice_size': self._slice_size,
+            'template_id': self._template_id,
+        }
+
+    def __repr__(self):
+        return (
+            f"AnycubicStartPrintRequestCloud("
+            f"filetype={self._filetype}, "
+            f"file_id={self._file_name}, "
+            f"task_settings={self.task_settings})"
+        )
+
+
 class AnycubicCloudFile:
     def __init__(
         self,
