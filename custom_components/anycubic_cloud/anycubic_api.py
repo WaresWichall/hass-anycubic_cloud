@@ -1932,23 +1932,10 @@ class AnycubicAPI:
         if len(slot_index_list) != len(material_list):
             raise AnycubicAPIError('Slot/Material mis-match.')
 
-        multi_color_box_slots = printer.multi_color_box[box_id].slots
-
-        ams_box_mapping = list()
-
-        for x, mat_conf in enumerate(material_list):
-            slot_index = slot_index_list[x]
-            ams_slot = multi_color_box_slots[slot_index]
-            material = AnycubicMaterialMapping(
-                spool_index=slot_index,
-                filament_used=mat_conf['filament_used'],
-                material_type=mat_conf['material_type'],
-                color_red=ams_slot.color_red,
-                color_green=ams_slot.color_green,
-                color_blue=ams_slot.color_blue,
-                paint_index=mat_conf['paint_index'],
-            )
-            ams_box_mapping.append(material)
+        ams_box_mapping = printer.multi_color_box[box_id].build_mapping_for_material_list(
+            slot_index_list=slot_index_list,
+            material_list=material_list,
+        )
 
         print_request = AnycubicStartPrintRequestCloud(
             file_id=proj.id,
