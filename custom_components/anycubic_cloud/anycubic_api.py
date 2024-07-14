@@ -946,21 +946,13 @@ class AnycubicAPI:
         if not printer:
             return
 
-        ams_info = {
-            'ams_box_mapping': [
-                x.as_box_mapping_data()
-                for x in ams_box_mapping
-            ] if ams_box_mapping else None,
-            'use_ams': True if ams_box_mapping else False,
-        }
-
         return await self._send_anycubic_order(
             order_request=AnycubicProjectCtrlOrderRequest(
                 order_id=AnycubicOrderID.START_PRINT,
                 printer_id=printer.id,
                 project_id=0,
                 order_data=print_request.data,
-                ams_info=ams_info if ams_box_mapping else None,
+                ams_box_mapping=ams_box_mapping,
                 print_settings=None,
             ),
         )
@@ -999,7 +991,7 @@ class AnycubicAPI:
                 printer_id=printer.id,
                 project_id=project.id,
                 order_data=None,
-                ams_info=None,
+                ams_box_mapping=None,
                 print_settings=None,
             ),
         )
@@ -1021,7 +1013,7 @@ class AnycubicAPI:
                 printer_id=printer.id,
                 project_id=project.id,
                 order_data=None,
-                ams_info=None,
+                ams_box_mapping=None,
                 print_settings=None,
             ),
         )
@@ -1043,7 +1035,7 @@ class AnycubicAPI:
                 printer_id=printer.id,
                 project_id=project.id,
                 order_data=None,
-                ams_info=None,
+                ams_box_mapping=None,
                 print_settings=None,
             ),
         )
@@ -1099,7 +1091,7 @@ class AnycubicAPI:
                 printer_id=printer.id,
                 project_id=project.id,
                 order_data=None,
-                ams_info=None,
+                ams_box_mapping=None,
                 print_settings=print_settings,
             ),
         )

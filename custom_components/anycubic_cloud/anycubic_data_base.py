@@ -93,13 +93,29 @@ class AnycubicProjectOrderRequest(AnycubicBaseProjectOrderRequest):
 class AnycubicProjectCtrlOrderRequest(AnycubicProjectOrderRequest):
     def __init__(
         self,
-        ams_info,
-        print_settings,
+        ams_box_mapping=None,
+        print_settings=None,
         **kwargs,
     ):
         super().__init__(**kwargs)
-        self._ams_info = ams_info
+        self._set_ams_info(ams_box_mapping)
         self._print_settings = print_settings
+
+    def _set_ams_info(self, ams_box_mapping):
+        if ams_box_mapping:
+            self._ams_info = {
+                'ams_box_mapping': [
+                    x.as_box_mapping_data()
+                    for x in ams_box_mapping
+                ],
+                'use_ams': (
+                    True
+                    if len(ams_box_mapping) > 0 else
+                    False
+                ),
+            }
+        else:
+            self._ams_info = None
 
     @property
     def order_request_data(self):
