@@ -13,6 +13,8 @@ from aiofiles.os import (
 )
 
 from .anycubic_data_base import (
+    AnycubicBaseOrderRequest,
+    AnycubicBaseProjectOrderRequest,
     AnycubicBaseStartPrintRequest,
     AnycubicCameraToken,
     AnycubicCloudFile,
@@ -21,6 +23,8 @@ from .anycubic_data_base import (
     AnycubicMaterialMapping,
     AnycubicPrinter,
     AnycubicProject,
+    AnycubicProjectCtrlOrderRequest,
+    AnycubicProjectOrderRequest,
     AnycubicStartPrintRequestCloud,
     AnycubicStartPrintRequestLocal,
 )
@@ -722,30 +726,10 @@ class AnycubicAPI:
 
     async def _send_anycubic_order(
         self,
-        order_id,
-        printer_id,
-        project_id=None,
-        order_data={},
-        ams_info=-2,
-        print_settings=-2,
-        no_order_data=False,
+        order_request,
         raw_data=False,
     ):
-        params = {
-            'order_id': int(order_id),
-            'printer_id': printer_id,
-        }
-        if not no_order_data:
-            params['data'] = order_data
-
-        if ams_info != -2:
-            params['ams_info'] = ams_info
-
-        if print_settings != -2:
-            params['settings'] = print_settings
-
-        if project_id is not None:
-            params['project_id'] = project_id
+        params = order_request.order_request_data
 
         resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.send_order, params=params)
         if raw_data:
@@ -765,11 +749,14 @@ class AnycubicAPI:
         if not printer:
             return
 
-        params = {
-            'order_id': int(AnycubicOrderID.CAMERA_OPEN),
-            'printer_id': printer.id,
-        }
-        resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.send_order, params=params)
+        order_request = AnycubicBaseOrderRequest(
+            order_id=int(AnycubicOrderID.CAMERA_OPEN),
+            printer_id=printer.id,
+        )
+        resp = await self._fetch_api_resp(
+            endpoint=API_ENDPOINT.send_order,
+            params=order_request.order_request_data
+        )
         if raw_data:
             return resp
 
@@ -815,10 +802,12 @@ class AnycubicAPI:
         }
 
         return await self._send_anycubic_order(
-            order_id=AnycubicOrderID.MULTI_COLOR_BOX_SET_SLOT,
-            printer_id=printer.id,
-            project_id=0,
-            order_data=order_data,
+            order_request=AnycubicProjectOrderRequest(
+                order_id=AnycubicOrderID.MULTI_COLOR_BOX_SET_SLOT,
+                printer_id=printer.id,
+                project_id=0,
+                order_data=order_data,
+            ),
         )
 
     async def _send_order_multi_color_box_feed_filament(
@@ -854,10 +843,12 @@ class AnycubicAPI:
         }
 
         return await self._send_anycubic_order(
-            order_id=AnycubicOrderID.FEED_FILAMENT,
-            printer_id=printer.id,
-            project_id=0,
-            order_data=order_data,
+            order_request=AnycubicProjectOrderRequest(
+                order_id=AnycubicOrderID.FEED_FILAMENT,
+                printer_id=printer.id,
+                project_id=0,
+                order_data=order_data,
+            ),
         )
 
     async def _send_order_multi_color_box_dry(
@@ -889,10 +880,12 @@ class AnycubicAPI:
         }
 
         return await self._send_anycubic_order(
-            order_id=AnycubicOrderID.MULTI_COLOR_BOX_DRY,
-            printer_id=printer.id,
-            project_id=0,
-            order_data=order_data,
+            order_request=AnycubicProjectOrderRequest(
+                order_id=AnycubicOrderID.MULTI_COLOR_BOX_DRY,
+                printer_id=printer.id,
+                project_id=0,
+                order_data=order_data,
+            ),
         )
 
     async def _send_order_multi_color_auto_feed(
@@ -916,10 +909,12 @@ class AnycubicAPI:
         }
 
         return await self._send_anycubic_order(
-            order_id=AnycubicOrderID.MULTI_COLOR_BOX_AUTO_FEED,
-            printer_id=printer.id,
-            project_id=0,
-            order_data=order_data,
+            order_request=AnycubicProjectOrderRequest(
+                order_id=AnycubicOrderID.MULTI_COLOR_BOX_AUTO_FEED,
+                printer_id=printer.id,
+                project_id=0,
+                order_data=order_data,
+            ),
         )
 
     async def _send_order_multi_color_box_get_info(
@@ -935,11 +930,11 @@ class AnycubicAPI:
             return
 
         return await self._send_anycubic_order(
-            order_id=AnycubicOrderID.MULTI_COLOR_BOX_GET_INFO,
-            printer_id=printer.id,
-            project_id=0,
-            order_data=None,
-            no_order_data=True,
+            order_request=AnycubicBaseProjectOrderRequest(
+                order_id=AnycubicOrderID.MULTI_COLOR_BOX_GET_INFO,
+                printer_id=printer.id,
+                project_id=0,
+            ),
         )
 
     async def _send_order_start_print(
@@ -960,12 +955,14 @@ class AnycubicAPI:
         }
 
         return await self._send_anycubic_order(
-            order_id=AnycubicOrderID.START_PRINT,
-            printer_id=printer.id,
-            project_id=0,
-            order_data=print_request.data,
-            ams_info=ams_info if ams_box_mapping else None,
-            print_settings=None,
+            order_request=AnycubicProjectCtrlOrderRequest(
+                order_id=AnycubicOrderID.START_PRINT,
+                printer_id=printer.id,
+                project_id=0,
+                order_data=print_request.data,
+                ams_info=ams_info if ams_box_mapping else None,
+                print_settings=None,
+            ),
         )
 
     async def _send_order_print_local_file(
@@ -997,12 +994,14 @@ class AnycubicAPI:
             return
 
         return await self._send_anycubic_order(
-            order_id=AnycubicOrderID.PAUSE_PRINT,
-            printer_id=printer.id,
-            project_id=project.id,
-            order_data=None,
-            ams_info=None,
-            print_settings=None,
+            order_request=AnycubicProjectCtrlOrderRequest(
+                order_id=AnycubicOrderID.PAUSE_PRINT,
+                printer_id=printer.id,
+                project_id=project.id,
+                order_data=None,
+                ams_info=None,
+                print_settings=None,
+            ),
         )
 
     async def _send_order_resume_print(
@@ -1017,12 +1016,14 @@ class AnycubicAPI:
             return
 
         return await self._send_anycubic_order(
-            order_id=AnycubicOrderID.RESUME_PRINT,
-            printer_id=printer.id,
-            project_id=project.id,
-            order_data=None,
-            ams_info=None,
-            print_settings=None,
+            order_request=AnycubicProjectCtrlOrderRequest(
+                order_id=AnycubicOrderID.RESUME_PRINT,
+                printer_id=printer.id,
+                project_id=project.id,
+                order_data=None,
+                ams_info=None,
+                print_settings=None,
+            ),
         )
 
     async def _send_order_stop_print(
@@ -1037,12 +1038,14 @@ class AnycubicAPI:
             return
 
         return await self._send_anycubic_order(
-            order_id=AnycubicOrderID.STOP_PRINT,
-            printer_id=printer.id,
-            project_id=project.id,
-            order_data=None,
-            ams_info=None,
-            print_settings=None,
+            order_request=AnycubicProjectCtrlOrderRequest(
+                order_id=AnycubicOrderID.STOP_PRINT,
+                printer_id=printer.id,
+                project_id=project.id,
+                order_data=None,
+                ams_info=None,
+                print_settings=None,
+            ),
         )
 
     async def _send_order_change_print_settings(
@@ -1091,12 +1094,14 @@ class AnycubicAPI:
             print_settings['on_time'] = float(on_time)
 
         return await self._send_anycubic_order(
-            order_id=AnycubicOrderID.PRINT_SETTINGS,
-            printer_id=printer.id,
-            project_id=project.id,
-            order_data=None,
-            ams_info=None,
-            print_settings=print_settings,
+            order_request=AnycubicProjectCtrlOrderRequest(
+                order_id=AnycubicOrderID.PRINT_SETTINGS,
+                printer_id=printer.id,
+                project_id=project.id,
+                order_data=None,
+                ams_info=None,
+                print_settings=print_settings,
+            ),
         )
 
     async def _send_order_list_local_files(
@@ -1108,9 +1113,11 @@ class AnycubicAPI:
             return
 
         return await self._send_anycubic_order(
-            order_id=AnycubicOrderID.LIST_LOCAL_FILES,
-            printer_id=printer.id,
-            project_id=0,
+            order_request=AnycubicProjectOrderRequest(
+                order_id=AnycubicOrderID.LIST_LOCAL_FILES,
+                printer_id=printer.id,
+                project_id=0,
+            ),
         )
 
     async def _send_order_list_udisk_files(
@@ -1122,9 +1129,11 @@ class AnycubicAPI:
             return
 
         return await self._send_anycubic_order(
-            order_id=AnycubicOrderID.LIST_UDISK_FILES,
-            printer_id=printer.id,
-            project_id=0,
+            order_request=AnycubicProjectOrderRequest(
+                order_id=AnycubicOrderID.LIST_UDISK_FILES,
+                printer_id=printer.id,
+                project_id=0,
+            ),
         )
 
     async def _send_order_delete_local_file(
@@ -1143,10 +1152,12 @@ class AnycubicAPI:
         }
 
         return await self._send_anycubic_order(
-            order_id=AnycubicOrderID.DELETE_LOCAL_FILE,
-            printer_id=printer.id,
-            project_id=0,
-            order_data=order_data,
+            order_request=AnycubicProjectOrderRequest(
+                order_id=AnycubicOrderID.DELETE_LOCAL_FILE,
+                printer_id=printer.id,
+                project_id=0,
+                order_data=order_data,
+            ),
         )
 
     async def _send_order_delete_udisk_file(
@@ -1165,10 +1176,12 @@ class AnycubicAPI:
         }
 
         return await self._send_anycubic_order(
-            order_id=AnycubicOrderID.DELETE_UDISK_FILE,
-            printer_id=printer.id,
-            project_id=0,
-            order_data=order_data,
+            order_request=AnycubicProjectOrderRequest(
+                order_id=AnycubicOrderID.DELETE_UDISK_FILE,
+                printer_id=printer.id,
+                project_id=0,
+                order_data=order_data,
+            ),
         )
 
     # Main API Functions

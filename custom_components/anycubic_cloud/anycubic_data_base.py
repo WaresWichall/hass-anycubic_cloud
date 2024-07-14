@@ -15,6 +15,112 @@ from .anycubic_helpers import (
 )
 
 
+class AnycubicBaseOrderRequest:
+    def __init__(
+        self,
+        order_id=None,
+        printer_id=None,
+    ):
+        self._order_id = int(order_id)
+        self._printer_id = int(printer_id)
+
+    @property
+    def order_request_data(self):
+        return {
+            'order_id': self._order_id,
+            'printer_id': self._printer_id,
+        }
+
+    def __repr__(self):
+        return (
+            f"AnycubicBaseOrderRequest("
+            f"order_id={self._order_id}, "
+            f"printer_id={self._printer_id})"
+        )
+
+
+class AnycubicBaseProjectOrderRequest(AnycubicBaseOrderRequest):
+    def __init__(
+        self,
+        project_id,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self._project_id = int(project_id)
+
+    @property
+    def order_request_data(self):
+        return {
+            **super().order_request_data,
+            'project_id': self._project_id,
+        }
+
+    def __repr__(self):
+        return (
+            f"AnycubicBaseProjectOrderRequest("
+            f"order_id={self._order_id}, "
+            f"printer_id={self._printer_id}, "
+            f"project_id={self._project_id})"
+        )
+
+
+class AnycubicProjectOrderRequest(AnycubicBaseProjectOrderRequest):
+    def __init__(
+        self,
+        order_data={},
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self._order_data = order_data
+
+    @property
+    def order_request_data(self):
+        return {
+            **super().order_request_data,
+            'data': self._order_data,
+        }
+
+    def __repr__(self):
+        return (
+            f"AnycubicProjectOrderRequest("
+            f"order_id={self._order_id}, "
+            f"printer_id={self._printer_id}, "
+            f"project_id={self._project_id}, "
+            f"order_data={self._order_data})"
+        )
+
+
+class AnycubicProjectCtrlOrderRequest(AnycubicProjectOrderRequest):
+    def __init__(
+        self,
+        ams_info,
+        print_settings,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self._ams_info = ams_info
+        self._print_settings = print_settings
+
+    @property
+    def order_request_data(self):
+        return {
+            **super().order_request_data,
+            'ams_info': self._ams_info,
+            'settings': self._print_settings,
+        }
+
+    def __repr__(self):
+        return (
+            f"AnycubicProjectCtrlOrderRequest("
+            f"order_id={self._order_id}, "
+            f"printer_id={self._printer_id}, "
+            f"project_id={self._project_id}, "
+            f"order_data={self._order_data}, "
+            f"ams_info={self._ams_info}, "
+            f"print_settings={self._print_settings})"
+        )
+
+
 class AnycubicBaseStartPrintRequest:
     def __init__(
         self,
