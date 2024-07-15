@@ -961,12 +961,14 @@ class AnycubicAPI:
         self,
         printer,
         file_name: str,
+        file_path: str = "",
     ):
         if not printer:
             return
 
         print_request = AnycubicStartPrintRequestLocal(
-            filename=file_name
+            filename=file_name,
+            filepath=file_path,
         )
 
         return await self._send_order_start_print(
