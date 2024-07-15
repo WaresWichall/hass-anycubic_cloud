@@ -23,6 +23,7 @@ from .anycubic_api_base import AnycubicAPIError
 from .anycubic_api_mqtt import AnycubicMQTTAPI as AnycubicAPI
 
 from .const import (
+    CONF_DEBUG,
     CONF_DRYING_PRESET_DURATION_,
     CONF_DRYING_PRESET_TEMPERATURE_,
     CONF_MQTT_CONNECT_MODE,
@@ -408,6 +409,8 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 cookie_jar=cookie_jar,
                 debug_logger=LOGGER.debug,
             )
+
+            self._anycubic_api.set_mqtt_log_all_messages(self.entry.options.get(CONF_DEBUG))
 
             if start_up and config is not None:
                 LOGGER.debug("Loading tokens from store.")

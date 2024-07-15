@@ -17,6 +17,7 @@ import homeassistant.helpers.config_validation as cv
 from .anycubic_api import AnycubicAPI
 
 from .const import (
+    CONF_DEBUG,
     CONF_DRYING_PRESET_DURATION_,
     CONF_DRYING_PRESET_TEMPERATURE_,
     CONF_MQTT_CONNECT_MODE,
@@ -268,7 +269,7 @@ class AnycubicCloudOptionsFlowHandler(OptionsFlow):
         """Initialize Anycubic Cloud options flow."""
         self.entry = entry
 
-    def _build_drying_schema(self):
+    def _build_options_schema(self):
         schema = dict()
         for x in range(MAX_DRYING_PRESETS):
             num = x + 1
@@ -290,6 +291,11 @@ class AnycubicCloudOptionsFlowHandler(OptionsFlow):
             default=self.entry.options.get(CONF_MQTT_CONNECT_MODE)
         )] = vol.In(MQTT_CONNECT_MODES)
 
+        schema[vol.Optional(
+            CONF_DEBUG,
+            default=self.entry.options.get(CONF_DEBUG, False)
+        )] = cv.boolean
+
         return vol.Schema(schema)
 
     async def async_step_init(
@@ -303,6 +309,6 @@ class AnycubicCloudOptionsFlowHandler(OptionsFlow):
 
         return self.async_show_form(
             step_id="init",
-            data_schema=self._build_drying_schema(),
+            data_schema=self._build_options_schema(),
             errors=errors,
         )

@@ -44,12 +44,16 @@ class AnycubicMQTTAPI(AnycubicAPI):
         self._api_user_id = None
         self._mqtt_client = None
         self._mqtt_subscribed_printers = dict()
+        self._mqtt_log_all_messages = False
         self._mqtt_disconnected: asyncio.Event | None = None
         super().__init__(*args, **kwargs)
 
     @property
     def mqtt_is_started(self):
         return self._mqtt_client is not None
+
+    def set_mqtt_log_all_messages(self, val):
+        self._mqtt_log_all_messages = bool(val)
 
     async def mqtt_wait_for_disconnect(self):
         if self._mqtt_disconnected is None:
@@ -125,6 +129,9 @@ class AnycubicMQTTAPI(AnycubicAPI):
             except Exception as e:
                 tb = traceback.format_exc()
                 self._debug_log(f"Anycubic MQTT Message error: {e}\n  on MQTT topic: {topic}\n    {payload}\n{tb}")
+
+            if self._mqtt_log_all_messages:
+                self._debug_log(f"Anycubic MQTT Message processed on topic: {topic}\n    {payload}")
 
     def _mqtt_publish_on_topic(self, topic, payload):
         if self._mqtt_client is None:

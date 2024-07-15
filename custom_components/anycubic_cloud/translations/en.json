@@ -35,6 +35,7 @@
       "init": {
         "data": {
           "mqtt_connect_mode": "MQTT Connection Mode",
+          "debug": "Debug Mode",
           "drying_preset_duration_1": "Dry Preset 1 Duration",
           "drying_preset_temperature_1": "Dry Preset 1 Temperature",
           "drying_preset_duration_2": "Dry Preset 2 Duration",
