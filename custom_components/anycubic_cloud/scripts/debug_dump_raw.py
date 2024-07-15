@@ -1,6 +1,7 @@
 import argparse
 import asyncio
 import json
+from os import path
 from aiofiles import (
     open as aio_file_open,
 )
@@ -10,6 +11,12 @@ from . import script_base
 
 def get_sys_args():
     parser = argparse.ArgumentParser(description='Anycubic Debug Dump')
+    parser.add_argument(
+        '--dump-file',
+        help='Path to dump output to.',
+        type=str,
+        required=True,
+    )
     return vars(parser.parse_args())
 
 
@@ -18,7 +25,10 @@ class anycubic_api_with_script(script_base.anycubic_api_with_script):
     async def script_runner(self):
         await self.check_api_tokens()
 
-        output_file = 'debug_dump.json'
+        if not self._args['dump_file'] or len(self._args['dump_file']) < 1:
+            raise Exception('Invalid file path.')
+
+        output_file = path.expanduser(self._args['dump_file'])
 
         user_info = await self.get_user_info(raw_data=True)
         printer_info = await self.list_my_printers(raw_data=True)
@@ -41,7 +51,7 @@ class anycubic_api_with_script(script_base.anycubic_api_with_script):
             "detailed_printer_info": detailed_printer_info,
         }
 
-        json_dump = json.dumps(dump)
+        json_dump = json.dumps(dump, indent=2)
 
         async with aio_file_open(output_file, mode='w') as f:
             await f.write(json_dump)
