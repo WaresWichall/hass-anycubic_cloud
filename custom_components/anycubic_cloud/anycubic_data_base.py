@@ -2319,7 +2319,7 @@ class AnycubicPrinter:
                 paused=0 if state == 'resumed' else 1,
             )
             return
-        elif action == 'stop' and state in ['stoped', 'stopping']:
+        elif action in ['start', 'stop'] and state in ['stoped', 'stopping']:
             data = payload['data']
             self._is_printing = 1
             self._update_latest_project_with_mqtt_data(
