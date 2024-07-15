@@ -81,7 +81,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     def _any_printers_are_printing(self):
         return any([
-            printer.is_printing == 2 for printer_id, printer in self._anycubic_printers.items()
+            printer.is_busy for printer_id, printer in self._anycubic_printers.items()
         ])
 
     def _any_printers_are_drying(self):
@@ -94,12 +94,14 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     def _any_printers_are_online(self):
         return any([
-            printer.printer_online for printer_id, printer in self._anycubic_printers.items()
+            (
+                printer.printer_online or printer.is_busy
+            ) for printer_id, printer in self._anycubic_printers.items()
         ])
 
     def _no_printers_are_printing(self):
         return all([
-            printer.is_printing != 2 and
+            not printer.is_busy and
             (printer.latest_project is None or not printer.latest_project.print_in_progress)
             for printer_id, printer in self._anycubic_printers.items()
         ])
