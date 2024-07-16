@@ -1939,6 +1939,7 @@ class AnycubicPrinter:
         self._has_peripheral_camera = False
         self._has_peripheral_multi_color_box = False
         self._has_peripheral_udisk = False
+        self._is_bound_to_user = True
 
     def set_has_peripheral_camera(self, has_peripheral):
         self._has_peripheral_camera = bool(has_peripheral)
@@ -2170,9 +2171,13 @@ class AnycubicPrinter:
 
     def _process_mqtt_update_user(self, action, state, payload):
         if action == 'bindQuery' and state == 'done':
+            self._is_bound_to_user = True
+            return
+        elif action == 'unbind' and state == 'done':
+            self._is_bound_to_user = False
             return
         else:
-            raise Exception('Unknown user bindQuery state.')
+            raise Exception('Unknown user update.')
 
     def _process_mqtt_update_status(self, action, state, payload):
         if action == 'workReport' and state == 'free':
