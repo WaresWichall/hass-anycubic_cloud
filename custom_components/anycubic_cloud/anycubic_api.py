@@ -32,6 +32,7 @@ from .anycubic_data_base import (
 from .anycubic_api_base import (
     HTTP_METHODS,
     AnycubicAPIError,
+    AnycubicAPIParsingError,
     API_ENDPOINT,
     APIAuthTokensExpired,
 )
@@ -162,11 +163,16 @@ class AnycubicAPI:
             h_coro = self._session.put(url, params=query, data=put_data, headers=headers)
         else:
             h_coro = self._session.get(url, params=query, headers=headers)
-        async with h_coro as resp:
-            if is_json:
-                resp_data = await resp.json()
-            else:
-                resp_data = await resp.text()
+
+        try:
+            async with h_coro as resp:
+                if is_json:
+                    resp_data = await resp.json()
+                else:
+                    resp_data = await resp.text()
+        except Exception:
+            raise AnycubicAPIParsingError('Unexpected error parsing Anycubic response, server maintenance?')
+
         if with_response:
             return resp_data, resp
         return resp_data
@@ -409,6 +415,15 @@ class AnycubicAPI:
             self._device_id = data['device_id']
         else:
             self._generate_device_id()
+
+    def clear_all_tokens(self):
+        self._client_id = None
+        self._app_id = None
+        self._app_version = None
+        self._app_secret = None
+        self._auth_access_token = None
+        self._auth_sig_token = None
+        self._device_id = None
 
     async def _save_main_tokens(self):
         self._tokens_changed = True

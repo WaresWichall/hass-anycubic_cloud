@@ -4,6 +4,7 @@ from __future__ import annotations
 from datetime import timedelta
 from typing import Any
 import time
+import traceback
 
 from aiohttp import CookieJar
 
@@ -19,7 +20,7 @@ from homeassistant.helpers.device_registry import (
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .anycubic_api_base import AnycubicAPIError
+from .anycubic_api_base import AnycubicAPIError, AnycubicAPIParsingError
 from .anycubic_api_mqtt import AnycubicMQTTAPI as AnycubicAPI
 
 from .const import (
@@ -442,7 +443,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             try:
                 self._anycubic_printers[int(printer_id)] = await self._anycubic_api.printer_info_for_id(printer_id)
             except Exception as error:
-                raise UpdateFailed from error
+                raise UpdateFailed(error) from error
 
     async def _register_printer_devices(self, data_dict):
         self._printer_device_map = dict()
@@ -485,10 +486,22 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
             await self._check_anycubic_mqtt_connection()
 
-        except Exception as error:
-            LOGGER.debug(f"Anycubic update error: {error}")
+        except AnycubicAPIParsingError as error:
+            # self._anycubic_api.clear_all_tokens()
             self._failed_updates += 1
-            raise UpdateFailed from error
+            raise UpdateFailed(error) from error
+
+        except AnycubicAPIError as error:
+            self._failed_updates += 1
+            raise UpdateFailed(error) from error
+
+        except Exception as error:
+            tb = traceback.format_exc()
+            LOGGER.debug(f"Anycubic update error: {error}\n{tb}")
+            self._failed_updates += 1
+            raise UpdateFailed(error) from error
+
+        self._last_state_update = int(time.time())
 
         return True
 

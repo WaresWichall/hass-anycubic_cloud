@@ -15,6 +15,10 @@ class AnycubicAPIError(Exception):
     pass
 
 
+class AnycubicAPIParsingError(AnycubicAPIError):
+    pass
+
+
 class ac_api_endpoint:
     def __init__(self, method, endpoint):
         self._method = method
