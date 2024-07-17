@@ -12,9 +12,10 @@ from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import callback
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
+from homeassistant.helpers.storage import Store
 import homeassistant.helpers.config_validation as cv
 
-from .anycubic_api import AnycubicAPI
+from .anycubic_api_mqtt import AnycubicMQTTAPI as AnycubicAPI
 
 from .const import (
     CONF_DEBUG,
@@ -25,6 +26,8 @@ from .const import (
     DOMAIN,
     LOGGER,
     MAX_DRYING_PRESETS,
+    STORAGE_KEY,
+    STORAGE_VERSION,
 )
 
 from .helpers import (
@@ -65,6 +68,7 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
         self._password: str | None = None
         self._username: str | None = None
         self._is_reconfigure: bool = False
+        self._anycubic_api: AnycubicAPI | None = None
 
     @staticmethod
     @callback
@@ -77,6 +81,43 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
         self.entry = self.hass.config_entries.async_get_entry(self.context["entry_id"])
         return await self.async_step_reauth_confirm()
 
+    def _async_create_anycubic_api(self):
+        cookie_jar = CookieJar(unsafe=True)
+        websession = async_create_clientsession(
+            self.hass,
+            cookie_jar=cookie_jar,
+        )
+        return AnycubicAPI(
+            api_username=self._username,
+            api_password=self._password,
+            session=websession,
+            cookie_jar=cookie_jar,
+            debug_logger=LOGGER.debug,
+        )
+
+    async def _async_check_anycubic_api_instance_exists(self):
+        if self._anycubic_api is not None:
+            return
+
+        self._anycubic_api = self._async_create_anycubic_api()
+
+        if not self.entry:
+            return
+
+        store = Store[dict[str, Any]](self.hass, STORAGE_VERSION, STORAGE_KEY)
+        config = await store.async_load()
+
+        if config:
+            self._anycubic_api.load_tokens_from_dict(config)
+
+    async def _async_check_login_errors(self):
+        success = await self._anycubic_api.check_api_tokens()
+        if not success:
+            LOGGER.error("Authentication failed. Check credentials.")
+            return {"base": "invalid_auth"}
+
+        return {}
+
     async def async_step_reauth_confirm(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
@@ -84,27 +125,12 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
         errors = {}
 
         if user_input is not None:
-            cookie_jar = CookieJar(unsafe=True)
-            websession = async_create_clientsession(
-                self.hass,
-                cookie_jar=cookie_jar,
-            )
-
             self._username = user_input[CONF_USERNAME]
             self._password = user_input[CONF_PASSWORD]
 
             try:
-                ac = AnycubicAPI(
-                    api_username=self._username,
-                    api_password=self._password,
-                    session=websession,
-                    cookie_jar=cookie_jar,
-                    debug_logger=LOGGER.debug,
-                )
-                success = await ac.check_api_tokens()
-                if not success:
-                    LOGGER.error("Authentication failed. Check credentials.")
-                    errors = {"base": "invalid_auth"}
+                await self._async_check_anycubic_api_instance_exists()
+                errors = await self._async_check_login_errors()
 
             except Exception as error:
                 LOGGER.error("Authentication failed with unknown Error. Check credentials %s", error)
@@ -135,27 +161,12 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
         errors = {}
 
         if user_input is not None:
-            cookie_jar = CookieJar(unsafe=True)
-            websession = async_create_clientsession(
-                self.hass,
-                cookie_jar=cookie_jar,
-            )
-
             self._username = user_input[CONF_USERNAME]
             self._password = user_input[CONF_PASSWORD]
 
             try:
-                ac = AnycubicAPI(
-                    api_username=self._username,
-                    api_password=self._password,
-                    session=websession,
-                    cookie_jar=cookie_jar,
-                    debug_logger=LOGGER.debug,
-                )
-                success = await ac.check_api_tokens()
-                if not success:
-                    LOGGER.error("Authentication failed. Check credentials.")
-                    errors = {"base": "invalid_auth"}
+                await self._async_check_anycubic_api_instance_exists()
+                errors = await self._async_check_login_errors()
 
             except Exception as error:
                 LOGGER.error("Authentication failed with unknown Error. Check credentials %s", error)
@@ -176,31 +187,16 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
         """Handle the printer step."""
         errors = {}
 
-        cookie_jar = CookieJar(unsafe=True)
-        websession = async_create_clientsession(
-            self.hass,
-            cookie_jar=cookie_jar,
-        )
-
         try:
             if self._username is None or self._password is None:
                 self.entry = self.hass.config_entries.async_get_entry(self.context["entry_id"])
                 self._username = self.entry.data[CONF_USERNAME]
                 self._password = self.entry.data[CONF_PASSWORD]
 
-            ac = AnycubicAPI(
-                api_username=self._username,
-                api_password=self._password,
-                session=websession,
-                cookie_jar=cookie_jar,
-                debug_logger=LOGGER.debug,
-            )
-            success = await ac.check_api_tokens()
-            if not success:
-                LOGGER.error("Authentication failed. Check credentials.")
-                errors = {"base": "invalid_auth"}
+            await self._async_check_anycubic_api_instance_exists()
+            errors = await self._async_check_login_errors()
 
-            printer_list = await ac.list_my_printers()
+            printer_list = await self._anycubic_api.list_my_printers()
 
             if printer_list is None or len(printer_list) < 1:
                 LOGGER.error("No printers found. Check config.")
@@ -217,7 +213,7 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
 
             for printer_id in printer_id_list:
                 try:
-                    printer_status = await ac.printer_info_for_id(printer_id)
+                    printer_status = await self._anycubic_api.printer_info_for_id(printer_id)
 
                     if printer_status is None:
                         LOGGER.error("Printer not found. Check config.")
