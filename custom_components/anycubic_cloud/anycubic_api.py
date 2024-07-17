@@ -487,6 +487,7 @@ class AnycubicAPI:
         if cached_tokens:
             try:
                 await self.get_user_info()
+                return True
             except APIAuthTokensExpired:
                 cached_tokens = None
                 self._debug_log("Tokens expired.")
