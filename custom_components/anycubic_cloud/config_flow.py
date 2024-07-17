@@ -64,6 +64,7 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
         """Initialize."""
         self._password: str | None = None
         self._username: str | None = None
+        self._is_reconfigure: bool = False
 
     @staticmethod
     @callback
@@ -241,7 +242,11 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
                         },
                     )
                     await self.hass.config_entries.async_reload(existing_entry.entry_id)
-                    return self.async_abort(reason="reauth_successful")
+                    if self._is_reconfigure:
+                        self._is_reconfigure = False
+                        return self.async_abort(reason="reconfigure_successful")
+                    else:
+                        return self.async_abort(reason="reauth_successful")
                 else:
                     return self.async_create_entry(
                         title=self._username,
@@ -260,6 +265,15 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
                 },
             ),
         )
+
+    async def async_step_reconfigure(
+        self, _: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Handle a reconfiguration flow initialized by the user."""
+
+        self._is_reconfigure = True
+
+        return await self.async_step_printer()
 
 
 class AnycubicCloudOptionsFlowHandler(OptionsFlow):
