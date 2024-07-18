@@ -1,7 +1,7 @@
 import aiohttp
 from os import path
 
-from ..anycubic_api_mqtt import AnycubicMQTTAPI
+from ..anycubic_cloud_api.anycubic_api_mqtt import AnycubicMQTTAPI
 from . import anycubic_credentials
 
 

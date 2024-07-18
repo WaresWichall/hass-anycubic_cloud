@@ -20,8 +20,8 @@ from homeassistant.helpers.device_registry import (
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .anycubic_api_base import AnycubicAPIError, AnycubicAPIParsingError
-from .anycubic_api_mqtt import AnycubicMQTTAPI as AnycubicAPI
+from .anycubic_cloud_api.anycubic_api_base import AnycubicAPIError, AnycubicAPIParsingError
+from .anycubic_cloud_api.anycubic_api_mqtt import AnycubicMQTTAPI as AnycubicAPI
 
 from .const import (
     CONF_DEBUG,

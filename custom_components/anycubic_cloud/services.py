@@ -10,7 +10,7 @@ from homeassistant.helpers import (
     selector,
 )
 
-from .anycubic_data_base import (
+from .anycubic_cloud_api.anycubic_data_base import (
     AnycubicMaterialColor,
     AnycubicPrinter,
 )

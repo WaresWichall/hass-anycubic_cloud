@@ -15,7 +15,7 @@ from homeassistant.helpers.aiohttp_client import async_create_clientsession
 from homeassistant.helpers.storage import Store
 import homeassistant.helpers.config_validation as cv
 
-from .anycubic_api_mqtt import AnycubicMQTTAPI as AnycubicAPI
+from .anycubic_cloud_api.anycubic_api_mqtt import AnycubicMQTTAPI as AnycubicAPI
 
 from .const import (
     CONF_DEBUG,
