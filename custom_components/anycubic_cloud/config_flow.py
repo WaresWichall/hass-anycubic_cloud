@@ -200,7 +200,7 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
 
             if printer_list is None or len(printer_list) < 1:
                 LOGGER.error("No printers found. Check config.")
-                errors = {"base": "invalid_printer"}
+                errors = {"base": "no_printers"}
 
             printer_id_map = {f"{x.id}": x.name for x in printer_list}
 

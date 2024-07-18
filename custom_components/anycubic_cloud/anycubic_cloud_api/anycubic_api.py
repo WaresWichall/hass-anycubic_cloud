@@ -1832,7 +1832,12 @@ class AnycubicAPI:
             update_object.update_from_info_json(resp['data'])
             return None
 
-        data = AnycubicPrinter.from_info_json(self, resp['data'])
+        try:
+            data = AnycubicPrinter.from_info_json(self, resp['data'])
+        except Exception as e:
+            self._debug_log(f"Failed to load printer from anycubic response: {resp}")
+            raise e
+
         return data
 
     async def list_all_projects(

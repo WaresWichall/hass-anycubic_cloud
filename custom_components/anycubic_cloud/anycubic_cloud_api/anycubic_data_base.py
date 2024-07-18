@@ -2004,27 +2004,27 @@ class AnycubicPrinter:
             key=data['key'],
             machine_type=data['machine_type'],
             machine_name=data['model'],
-            user_img=data['img'],
-            description=data['description'],
+            user_img=data.get('img'),
+            description=data.get('description'),
             printer_type=data['type'],
             device_status=data['device_status'],
             ready_status=data['ready_status'],
             is_printing=data['is_printing'],
-            reason=data['reason'],
-            video_taskid=data['video_taskid'],
-            msg=data['msg'],
-            material_used=data['material_used'],
-            print_totaltime=data['print_totaltime'],
+            reason=data.get('reason'),
+            video_taskid=data.get('video_taskid'),
+            msg=data.get('msg'),
+            material_used=data.get('material_used'),
+            print_totaltime=data.get('print_totaltime'),
             status=data['status'],
-            machine_mac=data['machine_mac'],
+            machine_mac=data.get('machine_mac'),
             delete=data['delete'],
-            create_time=data['create_time'],
+            create_time=data.get('create_time'),
             delete_time=data['delete_time'],
             last_update_time=data['last_update_time'],
             machine_data=data['machine_data'],
             type_function_ids=data['type_function_ids'],
-            material_type=data['material_type'],
-            parameter=data['parameter'],
+            material_type=data.get('material_type'),
+            parameter=data.get('parameter'),
             fw_version=data['version'],
             available=data.get('available'),
             color=data.get('color'),
@@ -2033,6 +2033,7 @@ class AnycubicPrinter:
     @classmethod
     def from_info_json(cls, api_parent, data):
         try:
+            extra_data = data.get('base', {})
             return cls(
                 api_parent=api_parent,
                 id=data['id'],
@@ -2040,21 +2041,21 @@ class AnycubicPrinter:
                 key=data['key'],
                 machine_type=data['machine_type'],
                 machine_name=data['model'],
-                user_img=data['img'],
-                description=data['base']['description'],
+                user_img=data.get('img'),
+                description=extra_data.get('description'),
                 device_status=data['device_status'],
                 is_printing=data['is_printing'],
-                material_used=data['base']['material_used'],
-                print_totaltime=data['base']['print_totaltime'],
-                print_count=data['base']['print_count'],
-                machine_mac=data['base']['machine_mac'],
-                create_time=data['base']['create_time'],
-                machine_data=data['machine_data'],
+                material_used=extra_data.get('material_used'),
+                print_totaltime=extra_data.get('print_totaltime'),
+                print_count=extra_data.get('print_count'),
+                machine_mac=extra_data.get('machine_mac'),
+                create_time=extra_data.get('create_time'),
+                machine_data=data.get('machine_data'),
                 type_function_ids=data['type_function_ids'],
-                material_type=data['base']['material_type'],
-                parameter=data['parameter'],
+                material_type=extra_data.get('material_type'),
+                parameter=data.get('parameter'),
                 fw_version=data['version'],
-                tools=data['tools'],
+                tools=data.get('tools'),
                 multi_color_box_fw_version=data.get('multi_color_box_version'),
                 external_shelves=data.get('external_shelves'),
                 multi_color_box=data.get('multi_color_box'),
@@ -2067,32 +2068,34 @@ class AnycubicPrinter:
         if str(self._id) != str(data['id']):
             return
 
+        extra_data = data.get('base', {})
+
         self._name = data['name']
         self._key = data['key']
         self._machine_type = data['machine_type']
         self._machine_name = data['model']
         self._user_img = data['img']
-        self._description = data['base']['description']
+        self._description = extra_data.get('description')
         self._device_status = data['device_status']
         self._is_printing = data['is_printing']
-        self._material_used = data['base']['material_used']
-        self._print_totaltime = data['base']['print_totaltime']
-        self._print_count = data['base']['print_count']
-        self._machine_mac = data['base']['machine_mac']
-        self._create_time = data['base']['create_time']
-        self._machine_data = AnycubicMachineData.from_json(data['machine_data'])
+        self._material_used = extra_data.get('material_used')
+        self._print_totaltime = extra_data.get('print_totaltime')
+        self._print_count = extra_data.get('print_count')
+        self._machine_mac = extra_data.get('machine_mac')
+        self._create_time = extra_data.get('create_time')
+        self._machine_data = AnycubicMachineData.from_json(data.get('machine_data'))
         self._set_type_function_ids(data['type_function_ids'])
-        self._material_type = data['base']['material_type']
-        self._parameter = AnycubicMachineParameter.from_json(data['parameter'])
+        self._material_type = extra_data.get('material_type')
+        self._parameter = AnycubicMachineParameter.from_json(data.get('parameter'))
         self._fw_version = AnycubicMachineFirmwareInfo.from_json(data['version'])
         self._tools = list([
             AnycubicMachineToolInfo.from_json(x)
             for x in data['tools']
-        ]) if data['tools'] is not None else None
+        ]) if data.get('tools') is not None else None
         self._multi_color_box_fw_version = list([
             AnycubicMachineFirmwareInfo.from_json(x)
             for x in data['multi_color_box_version']
-        ]) if data['multi_color_box_version'] is not None else None
+        ]) if data.get('multi_color_box_version') is not None else None
         self._external_shelves = AnycubicMachineExternalShelves.from_json(data.get('external_shelves'))
         self._set_multi_color_box(data.get('multi_color_box'))
 

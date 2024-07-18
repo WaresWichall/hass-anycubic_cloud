@@ -6,7 +6,9 @@
     },
     "error": {
       "invalid_auth": "Invalid authentication.",
-      "cannot_connect": "Cannot connect."
+      "cannot_connect": "Cannot connect.",
+      "no_printers": "No printers found.",
+      "invalid_printer": "Invalid printer."
     },
     "step": {
       "user": {
