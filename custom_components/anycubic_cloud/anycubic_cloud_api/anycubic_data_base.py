@@ -987,6 +987,9 @@ class AnycubicProject:
         self._gcode_name = REX_GCODE_EXT.sub('', str(filename))
 
     def update_extra_data(self, data):
+        if data is None:
+            return
+
         self._target_nozzle_temp = data.get('temp', {}).get('target_nozzle_temp')
         self._target_hotbed_temp = data.get('temp', {}).get('target_hotbed_temp')
 
