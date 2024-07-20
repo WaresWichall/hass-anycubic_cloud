@@ -49,10 +49,10 @@ class anycubic_api_with_script(script_base.anycubic_api_with_script):
 
         slot_indexes = list([x - 1 for x in self._args['slots']])
 
-        response = await self.upload_to_cloud_and_print_with_multi_color_box(
-            printer,
-            file_path,
-            slot_indexes,
+        response = await self.print_and_upload_save_in_cloud(
+            printer=printer,
+            full_file_path=file_path,
+            slot_index_list=slot_indexes,
         )
         self._debug_log(f"Success: {response}")
 

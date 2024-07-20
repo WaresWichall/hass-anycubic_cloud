@@ -33,6 +33,7 @@ from .anycubic_api_base import (
     HTTP_METHODS,
     AnycubicAPIError,
     AnycubicAPIParsingError,
+    AnycubicErrorMessage,
     API_ENDPOINT,
     APIAuthTokensExpired,
 )
@@ -1965,21 +1966,24 @@ class AnycubicAPI:
 
         return cloud_file_id
 
-    async def print_with_multi_color_box_with_box_mapping(
+    async def print_with_cloud_file_id(
         self,
         printer,
-        file_id,
-        ams_box_mapping,
+        cloud_file_id,
+        ams_box_mapping=None,
         temp_file=False,
     ):
         if printer is None:
-            return None
+            raise AnycubicErrorMessage.no_printer_to_print
 
-        if not printer.primary_multi_color_box:
-            return None
+        if ams_box_mapping and not printer.primary_multi_color_box:
+            raise AnycubicErrorMessage.no_multi_color_box_for_map
+
+        if ams_box_mapping is None and printer.primary_multi_color_box:
+            raise AnycubicErrorMessage.no_map_for_multi_color_box
 
         print_request = AnycubicStartPrintRequestCloud(
-            file_id=file_id,
+            file_id=cloud_file_id,
             is_delete_file=temp_file,
         )
 
@@ -1991,52 +1995,65 @@ class AnycubicAPI:
 
         return result
 
-    async def print_with_multi_color_box_by_gcode_id(
+    async def print_with_cloud_gcode_id(
         self,
         printer,
         gcode_id,
-        slot_index_list,
+        slot_index_list=None,
         box_id=0,
     ):
         if printer is None:
-            return None
+            raise AnycubicErrorMessage.no_printer_to_print
 
-        if not printer.primary_multi_color_box:
-            return None
+        if slot_index_list is not None and not printer.primary_multi_color_box:
+            raise AnycubicErrorMessage.no_multi_color_box_for_slot_list
+
+        if slot_index_list is None and printer.primary_multi_color_box:
+            raise AnycubicErrorMessage.no_slot_list_for_multi_color_box
 
         proj = await self.fetch_project_gcode_info_fdm(gcode_id)
 
-        material_list = proj.slice_material_info_list
+        if slot_index_list is not None:
 
-        if not material_list:
-            raise AnycubicAPIError('Empty material list.')
+            material_list = proj.slice_material_info_list
 
-        if len(slot_index_list) != len(material_list):
-            raise AnycubicAPIError('Slot/Material mis-match.')
+            if not material_list:
+                raise AnycubicAPIError('Empty material list in gcode file.')
 
-        ams_box_mapping = printer.multi_color_box[box_id].build_mapping_for_material_list(
-            slot_index_list=slot_index_list,
-            material_list=material_list,
-        )
+            if len(slot_index_list) != len(material_list):
+                raise AnycubicAPIError(
+                    f"{len(slot_index_list)} slots supplied but {len(material_list)} materials found in gcode file."
+                )
 
-        return await self.print_with_multi_color_box_with_box_mapping(
+            ams_box_mapping = printer.multi_color_box[box_id].build_mapping_for_material_list(
+                slot_index_list=slot_index_list,
+                material_list=material_list,
+            )
+
+        else:
+            ams_box_mapping = None
+
+        return await self.print_with_cloud_file_id(
             printer=printer,
-            file_id=proj.id,
+            cloud_file_id=proj.id,
             ams_box_mapping=ams_box_mapping,
         )
 
-    async def upload_to_cloud_and_print_with_multi_color_box(
+    async def print_and_upload_save_in_cloud(
         self,
         printer,
         full_file_path,
-        slot_index_list,
+        slot_index_list=None,
         box_id=0,
     ):
         if printer is None:
-            return None
+            raise AnycubicErrorMessage.no_printer_to_print
 
-        if not printer.primary_multi_color_box:
-            return None
+        if slot_index_list is not None and not printer.primary_multi_color_box:
+            raise AnycubicErrorMessage.no_multi_color_box_for_slot_list
+
+        if slot_index_list is None and printer.primary_multi_color_box:
+            raise AnycubicErrorMessage.no_slot_list_for_multi_color_box
 
         cloud_file_id = await self.upload_file_to_cloud(full_file_path)
         latest_cloud_file = await self.get_latest_cloud_file()
@@ -2044,41 +2061,56 @@ class AnycubicAPI:
         if latest_cloud_file.id != cloud_file_id:
             raise AnycubicAPIError('File upload mis-match, cannot print.')
 
-        return await self.print_with_multi_color_box_by_gcode_id(
+        return await self.print_with_cloud_gcode_id(
             printer=printer,
             gcode_id=latest_cloud_file.gcode_id,
             slot_index_list=slot_index_list,
             box_id=box_id,
         )
 
-    async def cloud_direct_print_with_multi_color_box(
+    async def print_and_upload_no_cloud_save(
         self,
         printer,
         full_file_path,
-        slot_index_list,
+        slot_index_list=None,
         box_id=0,
     ):
         if printer is None:
-            return None
+            raise AnycubicErrorMessage.no_printer_to_print
 
-        if not printer.primary_multi_color_box:
-            return None
+        if slot_index_list is not None and not printer.primary_multi_color_box:
+            raise AnycubicErrorMessage.no_multi_color_box_for_slot_list
 
-        material_list = await self.read_material_list_from_gcode_file(full_file_path)
+        if slot_index_list is None and printer.primary_multi_color_box:
+            raise AnycubicErrorMessage.no_slot_list_for_multi_color_box
 
-        ams_box_mapping = printer.multi_color_box[box_id].build_mapping_for_material_list(
-            slot_index_list=slot_index_list,
-            material_list=material_list,
-        )
+        if slot_index_list is not None:
+            material_list = await self.read_material_list_from_gcode_file(full_file_path)
+
+            if not material_list:
+                raise AnycubicAPIError('Empty material list read from gcode file.')
+
+            if len(slot_index_list) != len(material_list):
+                raise AnycubicAPIError(
+                    f"{len(slot_index_list)} slots supplied but {len(material_list)} materials read from gcode file."
+                )
+
+            ams_box_mapping = printer.multi_color_box[box_id].build_mapping_for_material_list(
+                slot_index_list=slot_index_list,
+                material_list=material_list,
+            )
+
+        else:
+            ams_box_mapping = None
 
         cloud_file_id = await self.upload_file_to_cloud(
             full_file_path,
             temp_file=True,
         )
 
-        return await self.print_with_multi_color_box_with_box_mapping(
+        return await self.print_with_cloud_file_id(
             printer=printer,
-            file_id=cloud_file_id,
+            cloud_file_id=cloud_file_id,
             ams_box_mapping=ams_box_mapping,
             temp_file=True,
         )
