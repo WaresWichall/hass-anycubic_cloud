@@ -1911,14 +1911,15 @@ class AnycubicAPI:
                 f"Cannot upload file: {file_name} - no data."
             )
 
-        user_store = await self.get_user_cloud_store()
+        if not temp_file:
+            user_store = await self.get_user_cloud_store()
 
-        previous_available_bytes = user_store.available_bytes
+            previous_available_bytes = user_store.available_bytes
 
-        if previous_available_bytes < file_size:
-            raise AnycubicAPIError(
-                f"Cannot upload file: {file_name} - no room on cloud."
-            )
+            if previous_available_bytes < file_size:
+                raise AnycubicAPIError(
+                    f"Cannot upload file: {file_name} - no room on cloud."
+                )
 
         lock_data = await self._lock_storage_space(
             file_size=file_size,
@@ -1955,12 +1956,12 @@ class AnycubicAPI:
                 f"Error uploading file: {file_name} - {upload_error}."
             )
 
-        user_store = await self.get_user_cloud_store()
-
-        if not temp_file and user_store.available_bytes > (previous_available_bytes - file_size):
-            raise AnycubicAPIError(
-                f"Unknown error uploading file: {file_name} - not found in cloud storage."
-            )
+        if not temp_file:
+            user_store = await self.get_user_cloud_store()
+            if user_store.available_bytes > (previous_available_bytes - file_size):
+                raise AnycubicAPIError(
+                    f"Unknown error uploading file: {file_name} - not found in cloud storage."
+                )
 
         return cloud_file_id
 
