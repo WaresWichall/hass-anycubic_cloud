@@ -547,7 +547,7 @@ class AnycubicAPI:
     ):
         params = {
             'id': file_id,
-            'is_delete_cos': is_delete_cos,
+            'is_delete_cos': int(is_delete_cos),
         }
         resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.unlock_storage_space, params=params)
         if raw_data:
@@ -1907,19 +1907,34 @@ class AnycubicAPI:
             file_name=file_name,
         )
 
+        upload_error = None
+
         lock_file_id = lock_data['id']
-        aws_put_url = lock_data['preSignUrl']
 
-        await self._fetch_aws_put_resp(
-            final_url=aws_put_url,
-            put_data=file_bytes,
+        try:
+            aws_put_url = lock_data['preSignUrl']
+
+            await self._fetch_aws_put_resp(
+                final_url=aws_put_url,
+                put_data=file_bytes,
+            )
+
+            cloud_file_id = await self._claim_file_upload_from_aws(
+                lock_file_id
+            )
+
+        except Exception as e:
+            upload_error = e
+
+        await self._unlock_storage_space(
+            lock_file_id,
+            is_delete_cos=(upload_error is not None),
         )
 
-        cloud_file_id = await self._claim_file_upload_from_aws(
-            lock_file_id
-        )
-
-        await self._unlock_storage_space(lock_file_id)
+        if upload_error:
+            raise AnycubicAPIError(
+                f"Error uploading file: {file_name} - {upload_error}."
+            )
 
         user_store = await self.get_user_cloud_store()
 
