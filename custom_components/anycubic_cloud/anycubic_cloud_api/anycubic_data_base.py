@@ -888,6 +888,7 @@ class AnycubicProject:
         self._material_unit = str(material_unit) if material_unit is not None else None
         self._target_nozzle_temp = None
         self._target_hotbed_temp = None
+        self._download_progress = 0
         if self._slice_param and isinstance(self._slice_param, str):
             try:
                 self._slice_param = json.loads(str(self._slice_param))
@@ -1001,7 +1002,7 @@ class AnycubicProject:
         self._target_hotbed_temp = int(new_target_hotbed_temp)
         self._target_nozzle_temp = int(new_target_nozzle_temp)
 
-    def update_with_mqtt_data(
+    def update_with_mqtt_print_status_data(
         self,
         print_status: AnycubicPrintStatus,
         mqtt_data,
@@ -1016,6 +1017,18 @@ class AnycubicProject:
         self._print_status = int(print_status)
         if paused is not None:
             self._pause = int(paused)
+
+    def update_with_mqtt_download_status_data(
+        self,
+        mqtt_data,
+    ):
+        self._download_progress = int(mqtt_data['progress'])
+        self._print_status = int(AnycubicPrintStatus.Downloading)
+
+    def update_with_mqtt_checking_status_data(
+        self,
+    ):
+        self._print_status = int(AnycubicPrintStatus.Checking)
 
     def update_slice_param(
         self,
@@ -1070,6 +1083,10 @@ class AnycubicProject:
     @property
     def progress_percentage(self):
         return self._progress
+
+    @property
+    def download_progress_percentage(self):
+        return self._download_progress
 
     @property
     def raw_print_status(self):
@@ -2102,7 +2119,7 @@ class AnycubicPrinter:
         self._external_shelves = AnycubicMachineExternalShelves.from_json(data.get('external_shelves'))
         self._set_multi_color_box(data.get('multi_color_box'))
 
-    def _update_latest_project_with_mqtt_data(
+    def _update_latest_project_with_mqtt_print_status_data(
         self,
         incoming_project_id,
         print_status: AnycubicPrintStatus,
@@ -2115,11 +2132,46 @@ class AnycubicPrinter:
             project_id = -1
 
         if self._latest_project and (project_id < 0 or project_id == self._latest_project.id):
-            self._latest_project.update_with_mqtt_data(
+            self._latest_project.update_with_mqtt_print_status_data(
                 print_status,
                 mqtt_data,
                 paused=paused,
             )
+
+            return True
+
+        return False
+
+    def _update_latest_project_with_mqtt_download_status_data(
+        self,
+        incoming_project_id,
+        mqtt_data,
+    ):
+        try:
+            project_id = int(incoming_project_id)
+        except Exception:
+            project_id = -1
+
+        if self._latest_project and (project_id < 0 or project_id == self._latest_project.id):
+            self._latest_project.update_with_mqtt_download_status_data(
+                mqtt_data,
+            )
+
+            return True
+
+        return False
+
+    def _update_latest_project_with_mqtt_checking_status_data(
+        self,
+        incoming_project_id,
+    ):
+        try:
+            project_id = int(incoming_project_id)
+        except Exception:
+            project_id = -1
+
+        if self._latest_project and (project_id < 0 or project_id == self._latest_project.id):
+            self._latest_project.update_with_mqtt_checking_status_data()
 
             return True
 
@@ -2286,16 +2338,30 @@ class AnycubicPrinter:
         if action == 'start' and state == 'printing':
             data = payload['data']
             self._is_printing = 2
-            self._update_latest_project_with_mqtt_data(
+            self._update_latest_project_with_mqtt_print_status_data(
                 project_id,
                 AnycubicPrintStatus.Printing,
                 data,
             )
             return
+        elif action == 'start' and state == 'downloading':
+            data = payload['data']
+            self._is_printing = 2
+            self._update_latest_project_with_mqtt_download_status_data(
+                project_id,
+                data,
+            )
+            return
+        elif action == 'start' and state == 'checking':
+            self._is_printing = 2
+            self._update_latest_project_with_mqtt_checking_status_data(
+                project_id,
+            )
+            return
         elif action == 'start' and state == 'preheating':
             data = payload['data']
             self._is_printing = 2
-            self._update_latest_project_with_mqtt_data(
+            self._update_latest_project_with_mqtt_print_status_data(
                 project_id,
                 AnycubicPrintStatus.Preheating,
                 data,
@@ -2304,7 +2370,7 @@ class AnycubicPrinter:
         elif action == 'start' and state == 'finished':
             data = payload['data']
             self._is_printing = 1
-            self._update_latest_project_with_mqtt_data(
+            self._update_latest_project_with_mqtt_print_status_data(
                 project_id,
                 AnycubicPrintStatus.Complete,
                 data,
@@ -2313,7 +2379,7 @@ class AnycubicPrinter:
         elif action == 'pause' and state in ['pausing', 'paused']:
             data = payload['data']
             self._is_printing = 2
-            self._update_latest_project_with_mqtt_data(
+            self._update_latest_project_with_mqtt_print_status_data(
                 project_id,
                 AnycubicPrintStatus.Printing,
                 data,
@@ -2323,7 +2389,7 @@ class AnycubicPrinter:
         elif action == 'resume' and state in ['resuming', 'resumed']:
             data = payload['data']
             self._is_printing = 2
-            self._update_latest_project_with_mqtt_data(
+            self._update_latest_project_with_mqtt_print_status_data(
                 project_id,
                 AnycubicPrintStatus.Printing,
                 data,
@@ -2333,7 +2399,7 @@ class AnycubicPrinter:
         elif action in ['start', 'stop'] and state in ['stoped', 'stopping']:
             data = payload['data']
             self._is_printing = 1
-            self._update_latest_project_with_mqtt_data(
+            self._update_latest_project_with_mqtt_print_status_data(
                 project_id,
                 AnycubicPrintStatus.Cancelled,
                 data,
