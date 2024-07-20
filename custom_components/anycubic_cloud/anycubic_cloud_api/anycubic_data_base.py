@@ -242,7 +242,7 @@ class AnycubicStartPrintRequestCloud(AnycubicBaseStartPrintRequest):
         super().__init__(**kwargs)
         self._file_id = file_id
         self._hollow_param = hollow_param
-        self._is_delete_file = is_delete_file
+        self._is_delete_file = int(is_delete_file)
         self._matrix = matrix
         self._project_type = project_type
         self._punching_param = punching_param

@@ -19,6 +19,9 @@ class anycubic_api_with_script(script_base.anycubic_api_with_script):
             machine_type=0,
         )
 
+        if len(cloud_files) < 1:
+            self._debug_log("No files.")
+
         for file in cloud_files:
             self._debug_log(f"File ID: {file.id}, Name: {file.old_filename}, Size: {file.size_mb:.2f}MB")
 

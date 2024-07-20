@@ -64,6 +64,7 @@ from .anycubic_enums import (
 )
 
 from .anycubic_helpers import (
+    async_read_material_list_from_gcode_file,
     generate_app_nonce,
     generate_cookie_state,
     generate_fake_device_id,
@@ -529,7 +530,7 @@ class AnycubicAPI:
         params = {
             'size': file_size,
             'name': file_name,
-            'is_temp_file': is_temp_file,
+            'is_temp_file': int(is_temp_file),
         }
         resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.lock_storage_space, params=params)
         if raw_data:
@@ -1866,9 +1867,26 @@ class AnycubicAPI:
             latest_project.update_extra_data(extra_proj_data)
         return latest_project
 
+    async def read_material_list_from_gcode_file(
+        self,
+        full_file_path,
+    ):
+        if not full_file_path or len(full_file_path) <= 0:
+            raise AnycubicAPIError(
+                "Cannot parse an empty file path."
+            )
+
+        if not full_file_path.endswith('.gcode'):
+            raise AnycubicAPIError(
+                "Can only parse gcode files."
+            )
+
+        return await async_read_material_list_from_gcode_file(full_file_path)
+
     async def upload_file_to_cloud(
         self,
         full_file_path,
+        temp_file=False,
     ):
         file_bytes = None
 
@@ -1905,6 +1923,7 @@ class AnycubicAPI:
         lock_data = await self._lock_storage_space(
             file_size=file_size,
             file_name=file_name,
+            is_temp_file=temp_file,
         )
 
         upload_error = None
@@ -1938,12 +1957,38 @@ class AnycubicAPI:
 
         user_store = await self.get_user_cloud_store()
 
-        if user_store.available_bytes > (previous_available_bytes - file_size):
+        if not temp_file and user_store.available_bytes > (previous_available_bytes - file_size):
             raise AnycubicAPIError(
                 f"Unknown error uploading file: {file_name} - not found in cloud storage."
             )
 
         return cloud_file_id
+
+    async def print_with_multi_color_box_with_box_mapping(
+        self,
+        printer,
+        file_id,
+        ams_box_mapping,
+        temp_file=False,
+    ):
+        if printer is None:
+            return None
+
+        if not printer.primary_multi_color_box:
+            return None
+
+        print_request = AnycubicStartPrintRequestCloud(
+            file_id=file_id,
+            is_delete_file=temp_file,
+        )
+
+        result = await self._send_order_start_print(
+            printer=printer,
+            print_request=print_request,
+            ams_box_mapping=ams_box_mapping,
+        )
+
+        return result
 
     async def print_with_multi_color_box_by_gcode_id(
         self,
@@ -1955,9 +2000,15 @@ class AnycubicAPI:
         if printer is None:
             return None
 
+        if not printer.primary_multi_color_box:
+            return None
+
         proj = await self.fetch_project_gcode_info_fdm(gcode_id)
 
         material_list = proj.slice_material_info_list
+
+        if not material_list:
+            raise AnycubicAPIError('Empty material list.')
 
         if len(slot_index_list) != len(material_list):
             raise AnycubicAPIError('Slot/Material mis-match.')
@@ -1967,17 +2018,11 @@ class AnycubicAPI:
             material_list=material_list,
         )
 
-        print_request = AnycubicStartPrintRequestCloud(
-            file_id=proj.id,
-        )
-
-        result = await self._send_order_start_print(
+        return await self.print_with_multi_color_box_with_box_mapping(
             printer=printer,
-            print_request=print_request,
+            file_id=proj.id,
             ams_box_mapping=ams_box_mapping,
         )
-
-        return result
 
     async def upload_to_cloud_and_print_with_multi_color_box(
         self,
@@ -1987,6 +2032,9 @@ class AnycubicAPI:
         box_id=0,
     ):
         if printer is None:
+            return None
+
+        if not printer.primary_multi_color_box:
             return None
 
         cloud_file_id = await self.upload_file_to_cloud(full_file_path)
@@ -2000,4 +2048,36 @@ class AnycubicAPI:
             gcode_id=latest_cloud_file.gcode_id,
             slot_index_list=slot_index_list,
             box_id=box_id,
+        )
+
+    async def cloud_direct_print_with_multi_color_box(
+        self,
+        printer,
+        full_file_path,
+        slot_index_list,
+        box_id=0,
+    ):
+        if printer is None:
+            return None
+
+        if not printer.primary_multi_color_box:
+            return None
+
+        material_list = await self.read_material_list_from_gcode_file(full_file_path)
+
+        ams_box_mapping = printer.multi_color_box[box_id].build_mapping_for_material_list(
+            slot_index_list=slot_index_list,
+            material_list=material_list,
+        )
+
+        cloud_file_id = await self.upload_file_to_cloud(
+            full_file_path,
+            temp_file=True,
+        )
+
+        return await self.print_with_multi_color_box_with_box_mapping(
+            printer=printer,
+            file_id=cloud_file_id,
+            ams_box_mapping=ams_box_mapping,
+            temp_file=True,
         )
