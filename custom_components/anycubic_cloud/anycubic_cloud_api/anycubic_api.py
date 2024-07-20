@@ -2,12 +2,6 @@ import aiohttp
 import hashlib
 import json
 import time
-from os.path import (
-    basename as path_basename,
-)
-from aiofiles import (
-    open as aio_file_open,
-)
 from aiofiles.os import (
     path as aio_path,
 )
@@ -27,6 +21,10 @@ from .anycubic_data_base import (
     AnycubicProjectOrderRequest,
     AnycubicStartPrintRequestCloud,
     AnycubicStartPrintRequestLocal,
+)
+
+from .anycubic_model_base import (
+    AnycubicCloudUpload,
 )
 
 from .anycubic_api_base import (
@@ -1870,101 +1868,45 @@ class AnycubicAPI:
 
     async def read_material_list_from_gcode_file(
         self,
-        full_file_path,
+        full_file_path=None,
+        file_name=None,
+        file_bytes=None,
     ):
-        if not full_file_path or len(full_file_path) <= 0:
+        if (not full_file_path or len(full_file_path) <= 0) and file_bytes is None:
             raise AnycubicAPIError(
                 "Cannot parse an empty file path."
             )
 
-        if not full_file_path.endswith('.gcode'):
+        elif (
+            (full_file_path and not full_file_path.endswith('.gcode'))
+            or
+            (file_name and not file_name.endswith('.gcode'))
+        ):
             raise AnycubicAPIError(
                 "Can only parse gcode files."
             )
 
-        return await async_read_material_list_from_gcode_file(full_file_path)
+        return await async_read_material_list_from_gcode_file(
+            full_file_path=full_file_path,
+            file_bytes=file_bytes,
+        )
 
     async def upload_file_to_cloud(
         self,
-        full_file_path,
+        full_file_path=None,
+        file_name=None,
+        file_bytes=None,
         temp_file=False,
     ):
-        file_bytes = None
-
-        if not full_file_path or len(full_file_path) <= 0:
-            raise AnycubicAPIError(
-                "Cannot upload an empty file path."
-            )
-
-        file_name = path_basename(full_file_path)
-        file_size = await aio_path.getsize(full_file_path)
-
-        if file_size <= 0:
-            raise AnycubicAPIError(
-                f"Cannot upload file: {file_name} - empty file."
-            )
-
-        async with aio_file_open(full_file_path, mode='rb') as f:
-            file_bytes = await f.read()
-
-        if file_bytes is None:
-            raise AnycubicAPIError(
-                f"Cannot upload file: {file_name} - no data."
-            )
-
-        if not temp_file:
-            user_store = await self.get_user_cloud_store()
-
-            previous_available_bytes = user_store.available_bytes
-
-            if previous_available_bytes < file_size:
-                raise AnycubicAPIError(
-                    f"Cannot upload file: {file_name} - no room on cloud."
-                )
-
-        lock_data = await self._lock_storage_space(
-            file_size=file_size,
+        file_upload = AnycubicCloudUpload(
+            api_parent=self,
+            full_file_path=full_file_path,
             file_name=file_name,
-            is_temp_file=temp_file,
+            file_bytes=file_bytes,
+            is_temp_file=temp_file
         )
 
-        upload_error = None
-
-        lock_file_id = lock_data['id']
-
-        try:
-            aws_put_url = lock_data['preSignUrl']
-
-            await self._fetch_aws_put_resp(
-                final_url=aws_put_url,
-                put_data=file_bytes,
-            )
-
-            cloud_file_id = await self._claim_file_upload_from_aws(
-                lock_file_id
-            )
-
-        except Exception as e:
-            upload_error = e
-
-        await self._unlock_storage_space(
-            lock_file_id,
-            is_delete_cos=(upload_error is not None),
-        )
-
-        if upload_error:
-            raise AnycubicAPIError(
-                f"Error uploading file: {file_name} - {upload_error}."
-            )
-
-        if not temp_file:
-            user_store = await self.get_user_cloud_store()
-            if user_store.available_bytes > (previous_available_bytes - file_size):
-                raise AnycubicAPIError(
-                    f"Unknown error uploading file: {file_name} - not found in cloud storage."
-                )
-
-        return cloud_file_id
+        return await file_upload.async_process_upload()
 
     async def print_with_cloud_file_id(
         self,
@@ -2042,7 +1984,9 @@ class AnycubicAPI:
     async def print_and_upload_save_in_cloud(
         self,
         printer,
-        full_file_path,
+        full_file_path=None,
+        file_name=None,
+        file_bytes=None,
         slot_index_list=None,
         box_id=0,
     ):
@@ -2055,7 +1999,11 @@ class AnycubicAPI:
         if slot_index_list is None and printer.primary_multi_color_box:
             raise AnycubicErrorMessage.no_slot_list_for_multi_color_box
 
-        cloud_file_id = await self.upload_file_to_cloud(full_file_path)
+        cloud_file_id = await self.upload_file_to_cloud(
+            full_file_path=full_file_path,
+            file_name=file_name,
+            file_bytes=file_bytes,
+        )
         latest_cloud_file = await self.get_latest_cloud_file()
 
         if latest_cloud_file.id != cloud_file_id:
@@ -2071,7 +2019,9 @@ class AnycubicAPI:
     async def print_and_upload_no_cloud_save(
         self,
         printer,
-        full_file_path,
+        full_file_path=None,
+        file_name=None,
+        file_bytes=None,
         slot_index_list=None,
         box_id=0,
     ):
@@ -2085,7 +2035,11 @@ class AnycubicAPI:
             raise AnycubicErrorMessage.no_slot_list_for_multi_color_box
 
         if slot_index_list is not None:
-            material_list = await self.read_material_list_from_gcode_file(full_file_path)
+            material_list = await self.read_material_list_from_gcode_file(
+                full_file_path=full_file_path,
+                file_name=file_name,
+                file_bytes=file_bytes,
+            )
 
             if not material_list:
                 raise AnycubicAPIError('Empty material list read from gcode file.')
@@ -2104,7 +2058,9 @@ class AnycubicAPI:
             ams_box_mapping = None
 
         cloud_file_id = await self.upload_file_to_cloud(
-            full_file_path,
+            full_file_path=full_file_path,
+            file_name=file_name,
+            file_bytes=file_bytes,
             temp_file=True,
         )
 

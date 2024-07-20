@@ -622,10 +622,8 @@ class AnycubicCloudStore:
     def __repr__(self):
         return (
             f"AnycubicCloudStore("
-            f"used_bytes={self._used_bytes}, "
-            f"total_bytes={self._total_bytes}, "
-            f"used_str={self._used_str}, "
-            f"total_str={self._total_str}, "
+            f"used={self._used_str}, "
+            f"total={self._total_str}, "
             f"user_file_exists={self._user_file_exists})"
         )
 

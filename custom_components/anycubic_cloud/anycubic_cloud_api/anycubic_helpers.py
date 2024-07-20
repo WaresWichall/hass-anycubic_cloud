@@ -102,14 +102,20 @@ def gcode_key_value_pair_to_dict(
 
 
 async def async_read_slicer_data_from_gcode_file(
-    full_file_path,
+    full_file_path=None,
+    file_bytes=None,
 ):
     data_found = False
     file_lines = list()
     slicer_data = dict()
 
-    async with aio_file_open(full_file_path, mode='r') as f:
-        file_lines = await f.readlines()
+    if full_file_path is not None:
+        async with aio_file_open(full_file_path, mode='r') as f:
+            file_lines = await f.readlines()
+    elif file_bytes is not None:
+        file_lines = file_bytes.decode('utf-8').split('\n')
+    else:
+        raise Exception('Cannot read slicer data without file path or bytes.')
 
     for line in file_lines:
         if not data_found and line.startswith(GCODE_STRING_FIRST_ATTR_LINE):
@@ -122,9 +128,13 @@ async def async_read_slicer_data_from_gcode_file(
 
 
 async def async_read_material_list_from_gcode_file(
-    full_file_path,
+    full_file_path=None,
+    file_bytes=None,
 ):
-    slicer_data = await async_read_slicer_data_from_gcode_file(full_file_path)
+    slicer_data = await async_read_slicer_data_from_gcode_file(
+        full_file_path=full_file_path,
+        file_bytes=file_bytes,
+    )
 
     filament_used = slicer_data.get('filament_used_g')
     ams_data = slicer_data.get('paint_info')
