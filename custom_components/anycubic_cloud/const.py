@@ -28,6 +28,7 @@ CONF_BOX_ID = "box_id"
 CONF_FINISHED = "finished"
 CONF_MQTT_CONNECT_MODE = "mqtt_connect_mode"
 CONF_DEBUG = "debug"
+CONF_UPLOADED_GCODE_FILE = "uploaded_gcode_file"
 
 UNIT_LAYERS = "Layers"
 

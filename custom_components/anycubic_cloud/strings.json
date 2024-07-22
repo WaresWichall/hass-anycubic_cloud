@@ -640,6 +640,66 @@
           "description": "Box ID (0-1)."
         }
       }
+    },
+    "print_and_upload_save_in_cloud": {
+      "name": "Print and upload (save in user cloud).",
+      "description": "Print and upload, save in user cloud store.",
+      "fields": {
+        "config_entry": {
+          "name": "Config Entry",
+          "description": "The config entry to use for this service."
+        },
+        "device_id": {
+          "name": "Printer Device",
+          "description": "Printer Device (if not using ID)."
+        },
+        "printer_id": {
+          "name": "Printer ID",
+          "description": "Printer ID (if not using device)."
+        },
+        "box_id": {
+          "name": "Box ID",
+          "description": "Box ID (0-1)."
+        },
+        "slot_number": {
+          "name": "Slot Number List",
+          "description": "Slot Number List (1-4) to map to print colours."
+        },
+        "uploaded_gcode_file": {
+          "name": "Gcode File",
+          "description": "Gcode File"
+        }
+      }
+    },
+    "print_and_upload_no_cloud_save": {
+      "name": "Print and upload (no cloud save).",
+      "description": "Print and upload, but don't save in user cloud store.",
+      "fields": {
+        "config_entry": {
+          "name": "Config Entry",
+          "description": "The config entry to use for this service."
+        },
+        "device_id": {
+          "name": "Printer Device",
+          "description": "Printer Device (if not using ID)."
+        },
+        "printer_id": {
+          "name": "Printer ID",
+          "description": "Printer ID (if not using device)."
+        },
+        "box_id": {
+          "name": "Box ID",
+          "description": "Box ID (0-1)."
+        },
+        "slot_number": {
+          "name": "Slot Number List",
+          "description": "Slot Number List (1-4) to map to print colours."
+        },
+        "uploaded_gcode_file": {
+          "name": "Gcode File",
+          "description": "Gcode File"
+        }
+      }
     }
   },
   "exceptions": {}

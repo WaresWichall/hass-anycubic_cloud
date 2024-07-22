@@ -2,6 +2,7 @@
 
 import voluptuous as vol
 
+from homeassistant.components.file_upload import process_uploaded_file
 from homeassistant.const import ATTR_DEVICE_ID
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.exceptions import ServiceValidationError
@@ -24,8 +25,10 @@ from .const import (
     CONF_SLOT_COLOR_BLUE,
     CONF_BOX_ID,
     CONF_FINISHED,
+    CONF_UPLOADED_GCODE_FILE,
     COORDINATOR,
     DOMAIN,
+    LOGGER,
 )
 from .coordinator import AnycubicCloudDataUpdateCoordinator
 
@@ -47,7 +50,7 @@ class AnycubicCloudServiceCall:
         """Initialize service call."""
         self.hass = hass
 
-    def get_coordinator(self, service: ServiceCall) -> AnycubicCloudDataUpdateCoordinator:
+    def _get_coordinator(self, service: ServiceCall) -> AnycubicCloudDataUpdateCoordinator:
         """Get AnycubicCloudDataUpdateCoordinator object."""
         entry_id = service.data[ATTR_CONFIG_ENTRY]
 
@@ -59,10 +62,10 @@ class AnycubicCloudServiceCall:
 
         return coordinator
 
-    def get_printer(self, service: ServiceCall) -> AnycubicPrinter:
+    def _get_printer(self, service: ServiceCall) -> AnycubicPrinter:
         """Get AnycubicPrinter object."""
 
-        coordinator = self.get_coordinator(service)
+        coordinator = self._get_coordinator(service)
 
         if service.data.get(ATTR_DEVICE_ID) is not None:
             device_id = service.data[ATTR_DEVICE_ID]
@@ -77,6 +80,22 @@ class AnycubicCloudServiceCall:
             )
 
         return printer
+
+    def _get_box_id(self, service: ServiceCall) -> int:
+        box_id = service.data.get(CONF_BOX_ID)
+        if box_id is None:
+            box_id = 0
+
+        return box_id
+
+    def _get_slot_num_list(self, service: ServiceCall) -> list:
+        slot_idx_list = None
+        slot_num_list = service.data.get(CONF_SLOT_NUMBER)
+
+        if slot_num_list is not None:
+            slot_idx_list = list([x - 1 for x in slot_num_list])
+
+        return slot_idx_list
 
     async def async_call_service(self, service: ServiceCall) -> None:
         """Execute service call."""
@@ -121,10 +140,8 @@ class BaseMultiColorBoxSetSlot(AnycubicCloudServiceCall):
     async def async_call_service(self, service: ServiceCall) -> None:
         """Execute service call."""
 
-        printer = self.get_printer(service)
-        box_id = service.data.get(CONF_BOX_ID)
-        if box_id is None:
-            box_id = 0
+        printer = self._get_printer(service)
+        box_id = self._get_box_id(service)
         slot_index = service.data[CONF_SLOT_NUMBER] - 1
         slot_color = AnycubicMaterialColor(
             int(service.data[CONF_SLOT_COLOR_RED]),
@@ -323,11 +340,9 @@ class MultiColorBoxFilamentExtrude(AnycubicCloudServiceCall):
     async def async_call_service(self, service: ServiceCall) -> None:
         """Execute service call."""
 
-        printer = self.get_printer(service)
-        box_id = service.data.get(CONF_BOX_ID)
+        printer = self._get_printer(service)
+        box_id = self._get_box_id(service)
         finished = service.data.get(CONF_FINISHED)
-        if box_id is None:
-            box_id = 0
         slot_index = service.data[CONF_SLOT_NUMBER] - 1
         await printer.multi_color_box_feed_filament(
             slot_index=slot_index,
@@ -356,11 +371,91 @@ class MultiColorBoxFilamentRetract(AnycubicCloudServiceCall):
     async def async_call_service(self, service: ServiceCall) -> None:
         """Execute service call."""
 
-        printer = self.get_printer(service)
-        box_id = service.data.get(CONF_BOX_ID)
-        if box_id is None:
-            box_id = 0
+        printer = self._get_printer(service)
+        box_id = self._get_box_id(service)
         await printer.multi_color_box_retract_filament(
+            box_id=box_id,
+        )
+
+
+class BasePrintWithFile(AnycubicCloudServiceCall):
+    """ Base for print with file service calls """
+
+    schema = vol.Schema(
+        vol.All(
+            AnycubicCloudServiceCall.schema.extend(
+                {
+                    vol.Required(CONF_UPLOADED_GCODE_FILE): selector.FileSelector(
+                        selector.FileSelectorConfig(accept=".gcode")
+                    ),
+                    vol.Optional(CONF_BOX_ID): cv.positive_int,
+                    vol.Optional(CONF_SLOT_NUMBER): vol.All(cv.ensure_list, [cv.positive_int]),
+                }
+            ),
+            cv.has_at_least_one_key(
+                ATTR_DEVICE_ID,
+                CONF_PRINTER_ID,
+            ),
+        ),
+    )
+
+    def _read_uploaded_file_bytes(
+        self, uploaded_file_id: str
+    ):
+        with process_uploaded_file(self.hass, uploaded_file_id) as file_path:
+            filename = file_path.name
+            contents = file_path.read_bytes()
+
+        return filename, contents
+
+    async def _get_gcode_data(self, service: ServiceCall):
+        try:
+            file_name, gcode_bytes = await self.hass.async_add_executor_job(
+                self._read_uploaded_file_bytes, service.data[CONF_UPLOADED_GCODE_FILE]
+            )
+        except Exception as e:
+            LOGGER.debug(f"Gcode file read error: {e}")
+            raise ServiceValidationError(
+                "Could not read gcode file."
+            )
+
+        return file_name, gcode_bytes
+
+
+class PrintAndUploadSaveInCloud(BasePrintWithFile):
+    """Print and upload (save in user cloud)."""
+
+    async def async_call_service(self, service: ServiceCall) -> None:
+        """Execute service call."""
+
+        file_name, gcode_bytes = await self._get_gcode_data(service)
+        printer = self._get_printer(service)
+        box_id = self._get_box_id(service)
+        slot_idx_list = self._get_slot_num_list(service)
+
+        await printer.print_and_upload_save_in_cloud(
+            file_name=file_name,
+            file_bytes=gcode_bytes,
+            slot_index_list=slot_idx_list,
+            box_id=box_id,
+        )
+
+
+class PrintAndUploadNoCloudSave(BasePrintWithFile):
+    """Print and upload (no user cloud save)."""
+
+    async def async_call_service(self, service: ServiceCall) -> None:
+        """Execute service call."""
+
+        file_name, gcode_bytes = await self._get_gcode_data(service)
+        printer = self._get_printer(service)
+        box_id = self._get_box_id(service)
+        slot_idx_list = self._get_slot_num_list(service)
+
+        await printer.print_and_upload_no_cloud_save(
+            file_name=file_name,
+            file_bytes=gcode_bytes,
+            slot_index_list=slot_idx_list,
             box_id=box_id,
         )
 
@@ -377,4 +472,6 @@ SERVICES = (
     ("multi_color_box_set_slot_pla_se", MultiColorBoxSetSlotPlaSe),
     ("multi_color_box_filament_extrude", MultiColorBoxFilamentExtrude),
     ("multi_color_box_filament_retract", MultiColorBoxFilamentRetract),
+    ("print_and_upload_save_in_cloud", PrintAndUploadSaveInCloud),
+    ("print_and_upload_no_cloud_save", PrintAndUploadNoCloudSave),
 )
