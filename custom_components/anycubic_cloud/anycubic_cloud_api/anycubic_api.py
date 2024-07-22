@@ -1,4 +1,5 @@
 import aiohttp
+import asyncio
 import hashlib
 import json
 import time
@@ -32,6 +33,7 @@ from .anycubic_api_base import (
     AnycubicAPIError,
     AnycubicAPIParsingError,
     AnycubicErrorMessage,
+    AnycubicSliceNotFoundError,
     API_ENDPOINT,
     APIAuthTokensExpired,
 )
@@ -751,7 +753,9 @@ class AnycubicAPI:
         if raw_data:
             return resp
 
-        if resp is None or resp['data'] is None:
+        if resp is not None and resp['data'] is None and resp.get('msg') == "没有找到切片":
+            raise AnycubicSliceNotFoundError('Slice not found.')
+        elif resp is None or resp['data'] is None:
             raise AnycubicAPIError('Error sending order to Anycubic Cloud, is the printer online?')
 
         data = resp['data']['msgid']
@@ -1929,11 +1933,20 @@ class AnycubicAPI:
             is_delete_file=temp_file,
         )
 
-        result = await self._send_order_start_print(
-            printer=printer,
-            print_request=print_request,
-            ams_box_mapping=ams_box_mapping,
-        )
+        result = None
+        try_count = 0
+
+        while result is None and try_count < 3:
+            try:
+                result = await self._send_order_start_print(
+                    printer=printer,
+                    print_request=print_request,
+                    ams_box_mapping=ams_box_mapping,
+                )
+            except AnycubicSliceNotFoundError:
+                await asyncio.sleep(3)
+
+            try_count += 1
 
         return result
 
