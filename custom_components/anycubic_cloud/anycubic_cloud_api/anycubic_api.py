@@ -753,12 +753,21 @@ class AnycubicAPI:
         if raw_data:
             return resp
 
-        if resp is not None and resp['data'] is None and resp.get('msg') == "没有找到切片":
-            raise AnycubicSliceNotFoundError('Slice not found.')
-        elif resp is None or resp['data'] is None:
-            raise AnycubicAPIError('Error sending order to Anycubic Cloud, is the printer online?')
+        error_message = resp.get('msg') if resp is not None else None
 
-        data = resp['data']['msgid']
+        if resp is None or resp.get('data') is None:
+            if resp is not None and resp.get('data') is None and error_message == "没有找到切片":
+                raise AnycubicSliceNotFoundError('Slice not found.')
+            else:
+                raise AnycubicAPIError(
+                    f"Error sending order to Anycubic Cloud, is the printer online? Message: {error_message}"
+                )
+
+        data = resp['data'].get('msgid')
+
+        if data is None:
+            self._debug_log(f"Empty reply when sending order to Anycubic Cloud, message: {error_message}")
+
         return data
 
     async def _send_anycubic_camera_open_order(
