@@ -3191,6 +3191,66 @@ class AnycubicPrinter:
             self,
         )
 
+    async def print_with_cloud_file_id(
+        self,
+        cloud_file_id,
+        ams_box_mapping=None,
+        temp_file=False,
+    ):
+        return await self._api_parent.print_with_cloud_file_id(
+            printer=self,
+            cloud_file_id=cloud_file_id,
+            ams_box_mapping=ams_box_mapping,
+            temp_file=temp_file,
+        )
+
+    async def print_with_cloud_gcode_id(
+        self,
+        gcode_id,
+        slot_index_list=None,
+        box_id=0,
+    ):
+        return await self._api_parent.print_with_cloud_gcode_id(
+            printer=self,
+            gcode_id=gcode_id,
+            slot_index_list=slot_index_list,
+            box_id=box_id,
+        )
+
+    async def print_and_upload_save_in_cloud(
+        self,
+        full_file_path=None,
+        file_name=None,
+        file_bytes=None,
+        slot_index_list=None,
+        box_id=0,
+    ):
+        return await self._api_parent.print_and_upload_save_in_cloud(
+            printer=self,
+            full_file_path=full_file_path,
+            file_name=file_name,
+            file_bytes=file_bytes,
+            slot_index_list=slot_index_list,
+            box_id=box_id,
+        )
+
+    async def print_and_upload_no_cloud_save(
+        self,
+        full_file_path=None,
+        file_name=None,
+        file_bytes=None,
+        slot_index_list=None,
+        box_id=0,
+    ):
+        return await self._api_parent.print_and_upload_no_cloud_save(
+            printer=self,
+            full_file_path=full_file_path,
+            file_name=file_name,
+            file_bytes=file_bytes,
+            slot_index_list=slot_index_list,
+            box_id=box_id,
+        )
+
     def __repr__(self):
         if self._id is None:
             return f"AnycubicPrinter(machine_type={self._machine_type}, machine_name={self._machine_name})"
