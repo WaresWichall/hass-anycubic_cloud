@@ -11,8 +11,11 @@ from homeassistant.helpers import (
     selector,
 )
 
-from .anycubic_cloud_api.anycubic_data_base import (
+from .anycubic_cloud_api.anycubic_data_model_printer_properties import (
     AnycubicMaterialColor,
+)
+
+from .anycubic_cloud_api.anycubic_data_model_printer import (
     AnycubicPrinter,
 )
 
