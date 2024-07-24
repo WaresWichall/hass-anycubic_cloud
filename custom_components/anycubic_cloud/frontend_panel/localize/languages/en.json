@@ -1,0 +1,68 @@
+{
+  "title": "Anycubic Cloud",
+  "panels": {
+    "initial": {
+      "fields": {
+        "printer_select": {
+          "heading": "Select a printer."
+        }
+      }
+    },
+    "main": {
+      "title": "Main",
+      "cards": {
+        "main": {
+          "description": "General information about the printer.",
+          "fields": {
+            "printer_name": {
+              "heading": "Name"
+            },
+            "printer_id": {
+              "heading": "ID"
+            },
+            "printer_mac": {
+              "heading": "MAC"
+            },
+            "printer_model": {
+              "heading": "Model"
+            },
+            "printer_fw_version": {
+              "heading": "FW Version"
+            },
+            "printer_online": {
+              "heading": "Online"
+            },
+            "printer_available": {
+              "heading": "Available"
+            },
+            "ace_fw_version": {
+              "heading": "ACE FW Version"
+            },
+            "drying_active": {
+              "heading": "ACE Drying Status"
+            },
+            "drying_progress": {
+              "heading": "ACE Drying Progress"
+            }
+          }
+        }
+      }
+    },
+    "files_cloud": {
+      "title": "Cloud Files",
+      "cards": {}
+    },
+    "files_local": {
+      "title": "Local Files",
+      "cards": {}
+    },
+    "files_udisk": {
+      "title": "USB Files",
+      "cards": {}
+    },
+    "debug": {
+      "title": "Debug",
+      "cards": {}
+    }
+  }
+}

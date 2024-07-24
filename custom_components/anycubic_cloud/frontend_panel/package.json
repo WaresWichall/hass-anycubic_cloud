@@ -1,0 +1,41 @@
+{
+  "name": "hass-anycubic-cloud-panel",
+  "version": "0.0.1",
+  "description": "anycubic panel for hass",
+  "main": "src/index.ts",
+  "scripts": {
+    "build": "npm run lint && npm run rollup && npm run babel",
+    "rollup": "rollup -c",
+    "babel": "./node_modules/.bin/babel dist/anycubic-cloud-panel.js --out-file dist/anycubic-cloud-panel.js",
+    "lint": "eslint src/**/*.ts --fix",
+    "start": "rollup -c --watch"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@babel/cli": "^7.24.8",
+    "@babel/core": "^7.24.9",
+    "@babel/plugin-proposal-decorators": "^7.24.7",
+    "@babel/plugin-transform-class-properties": "^7.24.7",
+    "@eslint/js": "^9.7.0",
+    "@rollup/plugin-babel": "^6.0.4",
+    "@rollup/plugin-commonjs": "^26.0.1",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-typescript": "^11.1.6",
+    "@typescript-eslint/eslint-plugin": "^7.17.0",
+    "@typescript-eslint/parser": "^7.17.0",
+    "eslint": "^8.56.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-lit": "^1.14.0",
+    "eslint-plugin-prettier": "^5.2.1",
+    "home-assistant-js-websocket": "^9.4.0",
+    "intl-messageformat": "^10.5.14",
+    "lit": "^3.1.4",
+    "prettier": "^3.3.3",
+    "rollup": "^2.79.1",
+    "typescript": "^5.5.4",
+    "typescript-eslint": "^7.17.0"
+  }
+}

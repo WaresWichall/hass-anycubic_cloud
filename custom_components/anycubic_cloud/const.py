@@ -13,6 +13,14 @@ MODEL = "main"
 DOMAIN = "anycubic_cloud"
 COORDINATOR = "coordinator"
 
+CUSTOM_COMPONENTS = "custom_components"
+INTEGRATION_FOLDER = DOMAIN
+PANEL_FOLDER = "frontend_panel"
+PANEL_FILENAME = "dist/anycubic-cloud-panel.js"
+PANEL_NAME = "anycubic-cloud-panel"
+PANEL_TITLE = "Anycubic Cloud"
+PANEL_ICON = "mdi:printer-3d"
+
 ATTR_CONFIG_ENTRY = "config_entry"
 
 CONF_PRINTER_ID = "printer_id"

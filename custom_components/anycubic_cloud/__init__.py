@@ -7,6 +7,10 @@ from homeassistant.exceptions import ConfigEntryAuthFailed
 
 from .const import COORDINATOR, DOMAIN, PLATFORMS
 from .coordinator import AnycubicCloudDataUpdateCoordinator
+from .panel import (
+    async_register_panel,
+    async_unregister_panel,
+)
 from .services import SERVICES
 
 
@@ -32,6 +36,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 DOMAIN, service_name, service(hass).async_call_service, service.schema
             )
 
+    # register panel
+    await async_register_panel(hass)
+
     return True
 
 
@@ -55,5 +62,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if unload_ok and not hass.data[DOMAIN]:  # check if this is the last entry to unload
         for service_name, _ in SERVICES:
             hass.services.async_remove(DOMAIN, service_name)
+
+    # unregister panel
+    async_unregister_panel(hass)
 
     return unload_ok
