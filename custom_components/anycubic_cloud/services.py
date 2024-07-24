@@ -1,11 +1,15 @@
 """Service calls related dependencies for Anycubic Cloud component."""
 
+import asyncio
 import voluptuous as vol
 
 from homeassistant.components.file_upload import process_uploaded_file
-from homeassistant.const import ATTR_DEVICE_ID
+from homeassistant.const import (
+    ATTR_DEVICE_ID,
+    CONF_FILENAME,
+)
 from homeassistant.core import HomeAssistant, ServiceCall
-from homeassistant.exceptions import ServiceValidationError
+from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers import (
     config_validation as cv,
     selector,
@@ -21,6 +25,7 @@ from .anycubic_cloud_api.anycubic_data_model_printer import (
 
 from .const import (
     ATTR_CONFIG_ENTRY,
+    CONF_FILE_ID,
     CONF_PRINTER_ID,
     CONF_SLOT_NUMBER,
     CONF_SLOT_COLOR_RED,
@@ -463,6 +468,107 @@ class PrintAndUploadNoCloudSave(BasePrintWithFile):
         )
 
 
+class BaseDeletePrinterFile(AnycubicCloudServiceCall):
+    """ Base for printer file deletions """
+
+    schema = vol.Schema(
+        vol.All(
+            AnycubicCloudServiceCall.schema.extend(
+                {
+                    vol.Required(CONF_FILENAME): cv.string,
+                }
+            ),
+            cv.has_at_least_one_key(
+                ATTR_DEVICE_ID,
+                CONF_PRINTER_ID,
+            ),
+        ),
+    )
+
+
+class DeleteFileLocal(BaseDeletePrinterFile):
+    """Delete a file (local)"""
+
+    async def async_call_service(self, service: ServiceCall) -> None:
+        """Execute service call."""
+
+        file_name = service.data[CONF_FILENAME]
+        printer = self._get_printer(service)
+
+        try:
+
+            await printer.delete_local_file(
+                file_name=file_name,
+            )
+            await asyncio.sleep(5)
+            await printer.request_local_file_list()
+
+        except Exception as error:
+            raise HomeAssistantError(error) from error
+
+
+class DeleteFileUdisk(BaseDeletePrinterFile):
+    """Delete a file (USB Disk)"""
+
+    async def async_call_service(self, service: ServiceCall) -> None:
+        """Execute service call."""
+
+        file_name = service.data[CONF_FILENAME]
+        printer = self._get_printer(service)
+
+        try:
+
+            await printer.delete_udisk_file(
+                file_name=file_name,
+            )
+            await asyncio.sleep(5)
+            await printer.request_udisk_file_list()
+
+        except Exception as error:
+            raise HomeAssistantError(error) from error
+
+
+class DeleteFileCloud(AnycubicCloudServiceCall):
+    """Delete a file (Cloud)"""
+
+    schema = vol.Schema(
+        vol.All(
+            AnycubicCloudServiceCall.schema.extend(
+                {
+                    vol.Required(CONF_FILE_ID): cv.positive_int,
+                }
+            ),
+            cv.has_at_least_one_key(
+                ATTR_DEVICE_ID,
+                CONF_PRINTER_ID,
+            ),
+        ),
+    )
+
+    async def async_call_service(self, service: ServiceCall) -> None:
+        """Execute service call."""
+
+        file_id = service.data[CONF_FILE_ID]
+
+        coordinator = self._get_coordinator(service)
+
+        try:
+
+            success = await coordinator.anycubic_api.delete_file_from_cloud(
+                file_id=file_id,
+            )
+
+        except Exception as error:
+            raise HomeAssistantError(error) from error
+
+        if not success:
+            raise HomeAssistantError("Failed to delete cloud file.")
+
+        else:
+            await asyncio.sleep(5)
+            await coordinator.refresh_cloud_files()
+
+
 SERVICES = (
     ("multi_color_box_set_slot_pla", MultiColorBoxSetSlotPla),
     ("multi_color_box_set_slot_petg", MultiColorBoxSetSlotPetg),
@@ -477,4 +583,7 @@ SERVICES = (
     ("multi_color_box_filament_retract", MultiColorBoxFilamentRetract),
     ("print_and_upload_save_in_cloud", PrintAndUploadSaveInCloud),
     ("print_and_upload_no_cloud_save", PrintAndUploadNoCloudSave),
+    ("delete_file_local", DeleteFileLocal),
+    ("delete_file_udisk", DeleteFileUdisk),
+    ("delete_file_cloud", DeleteFileCloud),
 )

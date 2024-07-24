@@ -108,3 +108,26 @@ print_and_upload_no_cloud_save:
     box_id: *box_id
     slot_number: *slot_number_list
     uploaded_gcode_file: *uploaded_gcode_file
+delete_file_local: &delete_file_printer
+  fields:
+    config_entry: *anycubic_config_entry
+    device_id: *device_id
+    printer_id: *printer_id
+    filename:
+      required: true
+      selector:
+        text:
+delete_file_udisk: *delete_file_printer
+delete_file_cloud:
+  fields:
+    config_entry: *anycubic_config_entry
+    device_id: *device_id
+    printer_id: *printer_id
+    file_id:
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 9999999999999999999
+          step: 1
+          mode: box

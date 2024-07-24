@@ -712,6 +712,72 @@
           "description": "Gcode File"
         }
       }
+    },
+    "delete_file_local": {
+      "name": "Delete file (Local)",
+      "description": "Delete a file from printer local storage.",
+      "fields": {
+        "config_entry": {
+          "name": "Config Entry",
+          "description": "The config entry to use for this service."
+        },
+        "device_id": {
+          "name": "Printer Device",
+          "description": "Printer Device (if not using ID)."
+        },
+        "printer_id": {
+          "name": "Printer ID",
+          "description": "Printer ID (if not using device)."
+        },
+        "filename": {
+          "name": "File Name",
+          "description": "Full file name (with extension)"
+        }
+      }
+    },
+    "delete_file_udisk": {
+      "name": "Delete file (USB Disk)",
+      "description": "Delete a file from printer USB disk.",
+      "fields": {
+        "config_entry": {
+          "name": "Config Entry",
+          "description": "The config entry to use for this service."
+        },
+        "device_id": {
+          "name": "Printer Device",
+          "description": "Printer Device (if not using ID)."
+        },
+        "printer_id": {
+          "name": "Printer ID",
+          "description": "Printer ID (if not using device)."
+        },
+        "filename": {
+          "name": "File Name",
+          "description": "Full file name (with extension)"
+        }
+      }
+    },
+    "delete_file_cloud": {
+      "name": "Delete file (Cloud)",
+      "description": "Delete a file from user cloud store.",
+      "fields": {
+        "config_entry": {
+          "name": "Config Entry",
+          "description": "The config entry to use for this service."
+        },
+        "device_id": {
+          "name": "Printer Device",
+          "description": "Printer Device (if not using ID)."
+        },
+        "printer_id": {
+          "name": "Printer ID",
+          "description": "Printer ID (if not using device)."
+        },
+        "file_id": {
+          "name": "File ID",
+          "description": "Cloud file ID"
+        }
+      }
     }
   },
   "exceptions": {}

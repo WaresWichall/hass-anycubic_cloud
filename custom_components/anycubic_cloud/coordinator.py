@@ -528,6 +528,9 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         return self._anycubic_printers.get(int(printer_id))
 
+    async def refresh_cloud_files(self):
+        self._cloud_file_list = await self.anycubic_api.get_user_cloud_files_data_object()
+
     async def button_press_event(self, printer_id, event_key):
         printer = self.get_printer_for_id(printer_id)
 
@@ -546,7 +549,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 )
 
             elif printer and event_key == 'request_file_list_cloud':
-                self._cloud_file_list = await self.anycubic_api.get_user_cloud_files_data_object()
+                await self.refresh_cloud_files()
 
             elif printer and event_key == 'request_file_list_local':
                 await printer.request_local_file_list()
