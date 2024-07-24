@@ -126,6 +126,12 @@
       "request_file_list_local": {
         "name": "Request File List (Local)"
       },
+      "request_file_list_udisk": {
+        "name": "Request File List (USB Disk)"
+      },
+      "request_file_list_cloud": {
+        "name": "Request File List (Cloud)"
+      },
       "update_printer_firmware": {
         "name": "Update Printer Firmware"
       },
@@ -217,6 +223,12 @@
       },
       "file_list_local": {
         "name": "File List (Local)"
+      },
+      "file_list_udisk": {
+        "name": "File List (USB Disk)"
+      },
+      "file_list_cloud": {
+        "name": "File List (Cloud)"
       },
       "multi_color_box_spools": {
         "name": "Multi-Color Box Spools"

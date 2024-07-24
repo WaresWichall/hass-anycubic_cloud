@@ -715,7 +715,31 @@ class AnycubicAPI:
         if not data:
             return list()
 
-        return list([AnycubicCloudFile.from_json(x) for x in data])
+        file_list = list([AnycubicCloudFile.from_json(x) for x in data])
+
+        return file_list
+
+    async def get_user_cloud_files_data_object(
+        self,
+        printable=None,
+        machine_type=None,
+        page=1,
+        limit=10,
+    ):
+        file_list = await self.get_user_cloud_files(
+            printable=printable,
+            machine_type=machine_type,
+            page=page,
+            limit=limit,
+        )
+
+        if not file_list or len(file_list) < 1:
+            return None
+
+        file_list = list([
+            file.data_object for file in file_list
+        ])
+        return file_list
 
     async def fetch_project_gcode_info_fdm(
         self,

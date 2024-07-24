@@ -1032,6 +1032,16 @@ class AnycubicPrinter:
         ])
         return file_list
 
+    @property
+    def udisk_file_list_object(self):
+        if not self._udisk_file_list or len(self._udisk_file_list) < 1:
+            return None
+
+        file_list = list([
+            file.data_object for file in self._udisk_file_list
+        ])
+        return file_list
+
     async def update_info_from_api(self, with_project=True):
         await self._api_parent.printer_info_for_id(self._id, self)
 
@@ -1043,6 +1053,14 @@ class AnycubicPrinter:
     ):
 
         return await self._api_parent._send_order_list_local_files(
+            self,
+        )
+
+    async def request_udisk_file_list(
+        self,
+    ):
+
+        return await self._api_parent._send_order_list_udisk_files(
             self,
         )
 

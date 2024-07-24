@@ -61,9 +61,17 @@ BUTTON_TYPES = (
         key="request_file_list_local",
         translation_key="request_file_list_local",
     ),
+    ButtonEntityDescription(
+        key="request_file_list_udisk",
+        translation_key="request_file_list_udisk",
+    ),
 )
 
 GLOBAL_BUTTON_TYPES = (
+    ButtonEntityDescription(
+        key="request_file_list_cloud",
+        translation_key="request_file_list_cloud",
+    ),
 )
 
 

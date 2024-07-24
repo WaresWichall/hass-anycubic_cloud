@@ -101,6 +101,14 @@ SENSOR_TYPES = (
         translation_key="file_list_local",
     ),
     SensorEntityDescription(
+        key="file_list_udisk",
+        translation_key="file_list_udisk",
+    ),
+    SensorEntityDescription(
+        key="file_list_cloud",
+        translation_key="file_list_cloud",
+    ),
+    SensorEntityDescription(
         key="fw_version",
         translation_key="fw_version",
     ),
@@ -184,6 +192,12 @@ SENSOR_TYPES = (
     ),
 )
 
+FILE_LIST_KEYS = [
+    'file_list_local',
+    'file_list_udisk',
+    'file_list_cloud',
+]
+
 
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
@@ -248,7 +262,7 @@ class AnycubicSensor(AnycubicCloudEntity, SensorEntity):
         elif self.entity_description.key == 'multi_color_box_spools':
             return "active" if state is not None else "inactive"
 
-        elif self.entity_description.key == 'file_list_local':
+        elif self.entity_description.key in FILE_LIST_KEYS:
             return "loaded" if state is not None else "not loaded"
 
         return str(state)
@@ -260,7 +274,7 @@ class AnycubicSensor(AnycubicCloudEntity, SensorEntity):
             return {
                 "spool_info": self.coordinator.data[self._printer_id][self.entity_description.key]
             }
-        elif self.entity_description.key == 'file_list_local':
+        elif self.entity_description.key in FILE_LIST_KEYS:
             return {
                 "file_info": self.coordinator.data[self._printer_id][self.entity_description.key]
             }

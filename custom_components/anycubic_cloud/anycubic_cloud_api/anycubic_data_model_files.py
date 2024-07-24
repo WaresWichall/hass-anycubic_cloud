@@ -181,6 +181,14 @@ class AnycubicCloudFile:
     def size_mb(self):
         return self._size / 1e6 if self._size else self._size
 
+    @property
+    def data_object(self):
+        return {
+            'id': self.id,
+            'name': self.old_filename,
+            'size_mb': self.size_mb,
+        }
+
     def __repr__(self):
         return (
             f"AnycubicCloudFile("

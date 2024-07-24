@@ -57,6 +57,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self.entry = entry
         self._anycubic_api: AnycubicAPI | None = None
         self._anycubic_printers = dict()
+        self._cloud_file_list = None
         self._last_state_update = None
         self._failed_updates = 0
         self._mqtt_task = None
@@ -187,6 +188,8 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "fw_is_updating": printer.fw_version.is_updating,
             "fw_is_downloading": printer.fw_version.is_downloading,
             "file_list_local": printer.local_file_list_object,
+            "file_list_udisk": printer.udisk_file_list_object,
+            "file_list_cloud": self._cloud_file_list,
             "supports_function_multi_color_box": printer.supports_function_multi_color_box,
             "multi_color_box_fw_version": (
                 printer.multi_color_box_fw_version[0].firmware_version
@@ -542,8 +545,14 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     target_temp=preset_temperature,
                 )
 
+            elif printer and event_key == 'request_file_list_cloud':
+                self._cloud_file_list = await self.anycubic_api.get_user_cloud_files_data_object()
+
             elif printer and event_key == 'request_file_list_local':
                 await printer.request_local_file_list()
+
+            elif printer and event_key == 'request_file_list_udisk':
+                await printer.request_udisk_file_list()
 
             elif printer and event_key == 'drying_stop':
                 await printer.multi_color_box_drying_stop()
