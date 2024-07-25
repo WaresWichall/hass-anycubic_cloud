@@ -60,6 +60,20 @@
       "title": "USB Files",
       "cards": {}
     },
+    "print_save_in_cloud": {
+      "title": "Print (Save in user cloud)",
+      "cards": {},
+      "actions": {
+        "print": "Print"
+      }
+    },
+    "print_no_cloud_save": {
+      "title": "Print (No Cloud Save)",
+      "cards": {},
+      "actions": {
+        "print": "Print"
+      }
+    },
     "debug": {
       "title": "Debug",
       "cards": {}

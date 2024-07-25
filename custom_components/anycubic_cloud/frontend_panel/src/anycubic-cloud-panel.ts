@@ -6,6 +6,8 @@ import "./views/main/view-main.ts";
 import "./views/files/view-files_cloud.ts";
 import "./views/files/view-files_local.ts";
 import "./views/files/view-files_udisk.ts";
+import "./views/print/view-print-no_cloud_save.ts";
+import "./views/print/view-print-save_in_cloud.ts";
 
 import { localize } from "../localize/localize";
 
@@ -73,6 +75,12 @@ export class AnycubicCloudPanel extends LitElement {
           </paper-tab>
           <paper-tab page-name="cloud-files">
             ${localize("panels.files_cloud.title", this.hass.language)}
+          </paper-tab>
+          <paper-tab page-name="print-no_cloud_save">
+            ${localize("panels.print_no_cloud_save.title", this.hass.language)}
+          </paper-tab>
+          <paper-tab page-name="print-save_in_cloud">
+            ${localize("panels.print_save_in_cloud.title", this.hass.language)}
           </paper-tab>
           ${DEBUG
             ? html`
@@ -142,6 +150,7 @@ export class AnycubicCloudPanel extends LitElement {
       case "local-files":
         return html`
           <anycubic-view-files_local
+            class="ac_wide_view"
             .hass=${this.hass}
             .narrow=${this.narrow}
             .route=${route}
@@ -152,6 +161,7 @@ export class AnycubicCloudPanel extends LitElement {
       case "udisk-files":
         return html`
           <anycubic-view-files_udisk
+            class="ac_wide_view"
             .hass=${this.hass}
             .narrow=${this.narrow}
             .route=${route}
@@ -162,12 +172,33 @@ export class AnycubicCloudPanel extends LitElement {
       case "cloud-files":
         return html`
           <anycubic-view-files_cloud
+            class="ac_wide_view"
             .hass=${this.hass}
             .narrow=${this.narrow}
             .route=${route}
             .panel=${this.panel}
             .printers=${this.printers}
           ></anycubic-view-files_cloud>
+        `;
+      case "print-no_cloud_save":
+        return html`
+          <anycubic-view-print-no_cloud_save
+            class="ac_wide_view"
+            .hass=${this.hass}
+            .route=${route}
+            .panel=${this.panel}
+            .printers=${this.printers}
+          ></anycubic-view-print-no_cloud_save>
+        `;
+      case "print-save_in_cloud":
+        return html`
+          <anycubic-view-print-save_in_cloud
+            class="ac_wide_view"
+            .hass=${this.hass}
+            .route=${route}
+            .panel=${this.panel}
+            .printers=${this.printers}
+          ></anycubic-view-print-save_in_cloud>
         `;
       case "main":
         return html`
@@ -272,12 +303,16 @@ export class AnycubicCloudPanel extends LitElement {
       }
 
       .view > * {
-        width: 600px;
+        min-width: 600px;
         max-width: 1024px;
       }
 
       .view > *:last-child {
         margin-bottom: 20px;
+      }
+
+      .ac_wide_view {
+        width: 100%;
       }
 
       .printers-container {
