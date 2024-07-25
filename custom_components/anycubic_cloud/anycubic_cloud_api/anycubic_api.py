@@ -1854,13 +1854,28 @@ class AnycubicAPI:
 
     async def list_my_printers(
         self,
-        raw_data=False
+        ignore_init_errors=False,
+        raw_data=False,
     ):
         resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.printer_get_printers)
         if raw_data:
             return resp
 
-        data = list([AnycubicPrinter.from_status_json(self, x) for x in resp['data']])
+        data = list([
+            AnycubicPrinter.from_status_json(
+                self,
+                x,
+                ignore_init_errors=ignore_init_errors,
+            ) for x in resp['data']
+        ])
+        if ignore_init_errors:
+            for x in data:
+                if x is None or x.initialisation_error:
+                    self._log_to_error(
+                        f"Failed to load data for printer list from response: {resp}"
+                    )
+                    break
+
         return data
 
     async def printer_status_for_id(self, printer_id):
@@ -1875,6 +1890,7 @@ class AnycubicAPI:
         self,
         printer_id,
         update_object=None,
+        ignore_init_errors=False,
         raw_data=False,
     ):
         query = {
@@ -1890,7 +1906,17 @@ class AnycubicAPI:
             return None
 
         try:
-            data = AnycubicPrinter.from_info_json(self, resp['data'])
+            data = AnycubicPrinter.from_info_json(
+                self,
+                resp['data'],
+                ignore_init_errors=ignore_init_errors,
+            )
+
+            if ignore_init_errors:
+                if data is None or data.initialisation_error:
+                    self._log_to_error(
+                        f"Failed to load data for printer list from response: {resp}"
+                    )
         except Exception as e:
             self._log_to_error(f"Failed to load printer from anycubic response: {resp}")
             raise e

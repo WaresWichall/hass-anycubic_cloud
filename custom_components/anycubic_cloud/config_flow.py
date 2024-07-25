@@ -196,7 +196,7 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
             await self._async_check_anycubic_api_instance_exists()
             errors = await self._async_check_login_errors()
 
-            printer_list = await self._anycubic_api.list_my_printers()
+            printer_list = await self._anycubic_api.list_my_printers(ignore_init_errors=True)
 
             if printer_list is None or len(printer_list) < 1:
                 LOGGER.error("No printers found. Check config.")
@@ -213,7 +213,7 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
 
             for printer_id in printer_id_list:
                 try:
-                    printer_status = await self._anycubic_api.printer_info_for_id(printer_id)
+                    printer_status = await self._anycubic_api.printer_info_for_id(printer_id, ignore_init_errors=True)
 
                     if printer_status is None:
                         LOGGER.error("Printer not found. Check config.")

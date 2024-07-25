@@ -71,8 +71,12 @@ class AnycubicPrinter:
         multi_color_box_fw_version=None,
         external_shelves=None,
         multi_color_box=None,
+        ignore_init_errors=False,
         # base_info=None,
     ):
+        self._ignore_init_errors = ignore_init_errors
+        self._initialisation_error = False
+
         self._api_parent = api_parent
         self._machine_type = machine_type
         self._machine_name = machine_name
@@ -102,20 +106,17 @@ class AnycubicPrinter:
         self._create_time = create_time
         self._delete_time = delete_time
         self._last_update_time = last_update_time
-        self._machine_data = AnycubicMachineData.from_json(machine_data)
+        self._set_machine_data(machine_data)
         self._set_type_function_ids(type_function_ids)
         self._material_type = material_type
-        self._parameter = AnycubicMachineParameter.from_json(parameter)
-        self._fw_version = AnycubicMachineFirmwareInfo.from_json(fw_version)
+        self._set_parameter(parameter)
+        self._set_fw_version(fw_version)
         self._available = available
-        self._color = AnycubicMachineColorInfo.from_json(color)
+        self._set_color(color)
         self._advance = advance
-        self._tools = list([AnycubicMachineToolInfo.from_json(x) for x in tools]) if tools is not None else None
-        self._multi_color_box_fw_version = (
-            list([AnycubicMachineFirmwareInfo.from_json(x) for x in multi_color_box_fw_version])
-            if multi_color_box_fw_version is not None else None
-        )
-        self._external_shelves = AnycubicMachineExternalShelves.from_json(external_shelves)
+        self._set_tools(tools)
+        self._set_multi_color_box_fw_version(multi_color_box_fw_version)
+        self._set_external_shelves(external_shelves)
         self._set_multi_color_box(multi_color_box)
 
         self._latest_project: AnycubicProject | None = None
@@ -128,6 +129,8 @@ class AnycubicPrinter:
         self._has_peripheral_multi_color_box = False
         self._has_peripheral_udisk = False
         self._is_bound_to_user = True
+
+        self._ignore_init_errors = False
 
     def set_has_peripheral_camera(self, has_peripheral):
         self._has_peripheral_camera = bool(has_peripheral)
@@ -161,14 +164,102 @@ class AnycubicPrinter:
         ])
 
     def _set_multi_color_box(self, multi_color_box):
-        if multi_color_box is None or isinstance(multi_color_box, list):
-            multi_color_box_list = multi_color_box
-        else:
-            multi_color_box_list = list([multi_color_box])
-        self._multi_color_box = (
-            list([AnycubicMultiColorBox.from_json(x) for x in multi_color_box_list])
-            if multi_color_box_list is not None else None
-        )
+        try:
+            if multi_color_box is None or isinstance(multi_color_box, list):
+                multi_color_box_list = multi_color_box
+            else:
+                multi_color_box_list = list([multi_color_box])
+            self._multi_color_box = (
+                list([AnycubicMultiColorBox.from_json(x) for x in multi_color_box_list])
+                if multi_color_box_list is not None else None
+            )
+        except Exception as e:
+            self._initialisation_error = True
+            if not self._ignore_init_errors:
+                raise e
+
+    def _set_machine_data(
+        self,
+        machine_data,
+    ):
+        try:
+            self._machine_data = AnycubicMachineData.from_json(machine_data)
+        except Exception as e:
+            self._initialisation_error = True
+            if not self._ignore_init_errors:
+                raise e
+
+    def _set_parameter(
+        self,
+        parameter,
+    ):
+        try:
+            self._parameter = AnycubicMachineParameter.from_json(parameter)
+        except Exception as e:
+            self._initialisation_error = True
+            if not self._ignore_init_errors:
+                raise e
+
+    def _set_fw_version(
+        self,
+        fw_version,
+    ):
+        try:
+            self._fw_version = AnycubicMachineFirmwareInfo.from_json(fw_version)
+        except Exception as e:
+            self._initialisation_error = True
+            if not self._ignore_init_errors:
+                raise e
+
+    def _set_color(
+        self,
+        color,
+    ):
+        try:
+            self._color = AnycubicMachineColorInfo.from_json(color)
+        except Exception as e:
+            self._initialisation_error = True
+            if not self._ignore_init_errors:
+                raise e
+
+    def _set_tools(
+        self,
+        tools,
+    ):
+        try:
+            self._tools = (
+                list([AnycubicMachineToolInfo.from_json(x) for x in tools])
+                if tools is not None else None
+            )
+        except Exception as e:
+            self._initialisation_error = True
+            if not self._ignore_init_errors:
+                raise e
+
+    def _set_multi_color_box_fw_version(
+        self,
+        multi_color_box_fw_version,
+    ):
+        try:
+            self._multi_color_box_fw_version = (
+                list([AnycubicMachineFirmwareInfo.from_json(x) for x in multi_color_box_fw_version])
+                if multi_color_box_fw_version is not None else None
+            )
+        except Exception as e:
+            self._initialisation_error = True
+            if not self._ignore_init_errors:
+                raise e
+
+    def _set_external_shelves(
+        self,
+        external_shelves,
+    ):
+        try:
+            self._external_shelves = AnycubicMachineExternalShelves.from_json(external_shelves)
+        except Exception as e:
+            self._initialisation_error = True
+            if not self._ignore_init_errors:
+                raise e
 
     @classmethod
     def from_basic_json(cls, api_parent, data):
@@ -182,7 +273,12 @@ class AnycubicPrinter:
         )
 
     @classmethod
-    def from_status_json(cls, api_parent, data):
+    def from_status_json(
+        cls,
+        api_parent,
+        data,
+        ignore_init_errors=False,
+    ):
         return cls(
             api_parent=api_parent,
             id=data['id'],
@@ -216,10 +312,16 @@ class AnycubicPrinter:
             fw_version=data['version'],
             available=data.get('available'),
             color=data.get('color'),
+            ignore_init_errors=ignore_init_errors,
         )
 
     @classmethod
-    def from_info_json(cls, api_parent, data):
+    def from_info_json(
+        cls,
+        api_parent,
+        data,
+        ignore_init_errors=False,
+    ):
         try:
             extra_data = data.get('base', {})
             return cls(
@@ -247,6 +349,7 @@ class AnycubicPrinter:
                 multi_color_box_fw_version=data.get('multi_color_box_version'),
                 external_shelves=data.get('external_shelves'),
                 multi_color_box=data.get('multi_color_box'),
+                ignore_init_errors=ignore_init_errors,
             )
         except Exception as e:
             print(data)
@@ -274,20 +377,14 @@ class AnycubicPrinter:
         self._print_count = extra_data.get('print_count')
         self._machine_mac = extra_data.get('machine_mac')
         self._create_time = extra_data.get('create_time')
-        self._machine_data = AnycubicMachineData.from_json(data.get('machine_data'))
+        self._set_machine_data(data.get('machine_data'))
         self._set_type_function_ids(data['type_function_ids'])
         self._material_type = extra_data.get('material_type')
-        self._parameter = AnycubicMachineParameter.from_json(data.get('parameter'))
-        self._fw_version = AnycubicMachineFirmwareInfo.from_json(data['version'])
-        self._tools = list([
-            AnycubicMachineToolInfo.from_json(x)
-            for x in data['tools']
-        ]) if data.get('tools') is not None else None
-        self._multi_color_box_fw_version = list([
-            AnycubicMachineFirmwareInfo.from_json(x)
-            for x in data['multi_color_box_version']
-        ]) if data.get('multi_color_box_version') is not None else None
-        self._external_shelves = AnycubicMachineExternalShelves.from_json(data.get('external_shelves'))
+        self._set_parameter(data.get('parameter'))
+        self._set_fw_version(data['version'])
+        self._set_tools(data.get('tools'))
+        self._set_multi_color_box_fw_version(data.get('multi_color_box_version'))
+        self._set_external_shelves(data.get('external_shelves'))
         self._set_multi_color_box(data.get('multi_color_box'))
 
     def _update_latest_project_with_mqtt_print_status_data(
@@ -752,6 +849,10 @@ class AnycubicPrinter:
 
         else:
             raise Exception("Unknown mqtt update.")
+
+    @property
+    def initialisation_error(self):
+        return self._initialisation_error
 
     @property
     def machine_type(self):
