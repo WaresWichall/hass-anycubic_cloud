@@ -9,6 +9,16 @@ import {
   HassRoute,
 } from "./types";
 
+export function toTitleCase(str: any) {
+  return str
+    .toLowerCase()
+    .split(" ")
+    .map((word: any) => {
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    })
+    .join(" ");
+}
+
 export function getEntityState(
   hass: HomeAssistant,
   entityInfo: HassEntityInfo,
@@ -83,6 +93,40 @@ export function getMatchingEntity(
 
     if (domain === match_domain && entity_id.endsWith(match_suffix)) {
       return ent;
+    }
+  }
+  return undefined;
+}
+
+export function getStrictMatchingEntity(
+  entities: HassEntityInfos,
+  printerEntityIdPart: string | undefined,
+  match_domain: string,
+  match_suffix: string,
+): HassEntityInfo | undefined {
+  for (const key in entities) {
+    const ent = entities[key];
+    const splitID = key.split(".");
+    const domain: string = splitID[0];
+    const entityIdPart: string = splitID[1].split(printerEntityIdPart)[1];
+
+    if (domain === match_domain && entityIdPart === match_suffix) {
+      return ent;
+    }
+  }
+  return undefined;
+}
+
+export function getPrinterEntityIdPart(
+  entities: HassEntityInfos,
+): string | undefined {
+  for (const key in entities) {
+    const splitID = key.split(".");
+    const domain: string = splitID[0];
+    const entity_id: string = splitID[1];
+
+    if (domain === "binary_sensor" && entity_id.endsWith("printer_online")) {
+      return entity_id.split("printer_online")[0];
     }
   }
   return undefined;

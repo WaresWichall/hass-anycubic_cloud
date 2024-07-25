@@ -29,14 +29,38 @@
             "printer_fw_version": {
               "heading": "FW Version"
             },
+            "printer_fw_update_available": {
+              "heading": "FW Status"
+            },
             "printer_online": {
               "heading": "Online"
             },
             "printer_available": {
               "heading": "Available"
             },
+            "curr_nozzle_temp": {
+              "heading": "Current Nozzle Temperature"
+            },
+            "curr_hotbed_temp": {
+              "heading": "Current Hotbed Temperature"
+            },
+            "target_nozzle_temp": {
+              "heading": "Target Nozzle Temperature"
+            },
+            "target_hotbed_temp": {
+              "heading": "Target Hotbed Temperature"
+            },
+            "print_state": {
+              "heading": "Project State"
+            },
+            "project_progress": {
+              "heading": "Project Progress"
+            },
             "ace_fw_version": {
               "heading": "ACE FW Version"
+            },
+            "ace_fw_update_available": {
+              "heading": "ACE FW Status"
             },
             "drying_active": {
               "heading": "ACE Drying Status"
