@@ -1,8 +1,17 @@
 import aiohttp
+import logging
+import sys
 from os import path
 
 from ..anycubic_cloud_api.anycubic_api_mqtt import AnycubicMQTTAPI
 from . import anycubic_credentials
+
+
+LOGGER = logging.getLogger(__name__)
+LOGGER.setLevel(logging.DEBUG)
+handler = logging.StreamHandler(sys.stdout)
+handler.setLevel(logging.DEBUG)
+LOGGER.addHandler(handler)
 
 
 class anycubic_api_with_script(AnycubicMQTTAPI):
@@ -13,7 +22,7 @@ class anycubic_api_with_script(AnycubicMQTTAPI):
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
-        self._debug_logger = print
+        self._debug_logger = LOGGER
         self._args = sys_args
         script_dir_path = path.dirname(path.realpath(__file__))
         self._cache_key_path = path.join(script_dir_path, "anycubic_cached_tokens.cache")

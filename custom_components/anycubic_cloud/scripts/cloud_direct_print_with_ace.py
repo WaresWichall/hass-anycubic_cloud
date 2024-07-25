@@ -54,7 +54,7 @@ class anycubic_api_with_script(script_base.anycubic_api_with_script):
             full_file_path=file_path,
             slot_index_list=slot_indexes,
         )
-        self._debug_log(f"Success: {response}")
+        self._log_to_debug(f"Success: {response}")
 
 
 def main():

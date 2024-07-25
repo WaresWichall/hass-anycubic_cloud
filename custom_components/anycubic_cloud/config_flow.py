@@ -92,7 +92,7 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
             api_password=self._password,
             session=websession,
             cookie_jar=cookie_jar,
-            debug_logger=LOGGER.debug,
+            debug_logger=LOGGER,
         )
 
     async def _async_check_anycubic_api_instance_exists(self):

@@ -36,7 +36,7 @@ class anycubic_api_with_script(script_base.anycubic_api_with_script):
 
         response = await printer.delete_local_file(self._args['filename'])
 
-        self._debug_log(f"Success: {response}")
+        self._log_to_debug(f"Success: {response}")
 
 
 def main():

@@ -56,7 +56,7 @@ class anycubic_api_with_script(script_base.anycubic_api_with_script):
         async with aio_file_open(output_file, mode='w') as f:
             await f.write(json_dump)
 
-        self._debug_log(f"Dumped to {output_file}")
+        self._log_to_debug(f"Dumped to {output_file}")
 
 
 def main():

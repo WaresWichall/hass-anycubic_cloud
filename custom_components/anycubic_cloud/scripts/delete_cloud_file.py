@@ -24,7 +24,7 @@ class anycubic_api_with_script(script_base.anycubic_api_with_script):
             raise Exception('Invalid file ID.')
 
         response = await self.delete_file_from_cloud(self._args['file_id'])
-        self._debug_log(f"Success: {response}")
+        self._log_to_debug(f"Success: {response}")
 
 
 def main():

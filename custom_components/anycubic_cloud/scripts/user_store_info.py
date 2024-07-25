@@ -16,7 +16,7 @@ class anycubic_api_with_script(script_base.anycubic_api_with_script):
 
         user_store = await self.get_user_cloud_store()
 
-        self._debug_log(user_store)
+        self._log_to_debug(user_store)
 
 
 def main():

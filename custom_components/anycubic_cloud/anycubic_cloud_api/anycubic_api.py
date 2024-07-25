@@ -128,9 +128,17 @@ class AnycubicAPI:
     def tokens_changed(self):
         return self._tokens_changed
 
-    def _debug_log(self, msg):
+    def _log_to_debug(self, msg):
         if self._debug_logger:
-            self._debug_logger(msg)
+            self._debug_logger.debug(msg)
+
+    def _log_to_warn(self, msg):
+        if self._debug_logger:
+            self._debug_logger.warn(msg)
+
+    def _log_to_error(self, msg):
+        if self._debug_logger:
+            self._debug_logger.error(msg)
 
     # API Functions
 
@@ -260,7 +268,7 @@ class AnycubicAPI:
         if len(client_matches) == 1:
             self._client_id = client_matches[0]
         else:
-            self._debug_log("Falling back to known Client ID.")
+            self._log_to_debug("Falling back to known Client ID.")
             self._client_id = self._get_known_var_cid()
 
         app_id_matches = REX_APP_ID_BASIC.findall(js_body)
@@ -272,14 +280,14 @@ class AnycubicAPI:
             if len(app_id_matches) == 1:
                 self._app_id = app_id_matches[0]
             else:
-                self._debug_log("Falling back to known App ID.")
+                self._log_to_debug("Falling back to known App ID.")
                 self._app_id = AC_KNOWN_AID
 
         app_version_matches = REX_APP_VERSION.findall(js_body)
         if len(app_version_matches) == 1:
             self._app_version = app_version_matches[0]
         else:
-            self._debug_log("Falling back to known Version.")
+            self._log_to_debug("Falling back to known Version.")
             self._app_version = self._get_known_var_vid()
 
         if basic_app_id_found:
@@ -289,7 +297,7 @@ class AnycubicAPI:
         if len(app_secret_matches) == 1:
             self._app_secret = app_secret_matches[0]
         else:
-            self._debug_log("Falling back to known Secret.")
+            self._log_to_debug("Falling back to known Secret.")
             self._app_secret = AC_KNOWN_SEC
 
         return self._client_id
@@ -335,7 +343,7 @@ class AnycubicAPI:
             params=params
         )
         self._login_auth_code = resp['data']
-        self._debug_log("Successfully logged in.")
+        self._log_to_debug("Successfully logged in.")
 
     async def _fetch_ac_code_state(self):
         query = {
@@ -379,7 +387,7 @@ class AnycubicAPI:
         }
         resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.oauth_token_url, query=query, with_token=False)
         self._auth_access_token = resp['data']['access_token']
-        self._debug_log("Successfully got auth token.")
+        self._log_to_debug("Successfully got auth token.")
 
     async def _get_sig_token(self):
         params = {
@@ -388,7 +396,7 @@ class AnycubicAPI:
         }
         resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.auth_sig_token, query=None, params=params, with_token=False)
         self._auth_sig_token = resp['data']['token']
-        self._debug_log("Successfully got sig token.")
+        self._log_to_debug("Successfully got sig token.")
 
     async def _login_retrieve_tokens(
         self,
@@ -477,7 +485,7 @@ class AnycubicAPI:
         if tokens_loaded:
             return True
 
-        self._debug_log("No cached tokens found.")
+        self._log_to_debug("No cached tokens found.")
         return False
 
     def _api_tokens_loaded(self):
@@ -504,7 +512,7 @@ class AnycubicAPI:
                 return True
             except APIAuthTokensExpired:
                 cached_tokens = None
-                self._debug_log("Tokens expired.")
+                self._log_to_debug("Tokens expired.")
         if not cached_tokens:
             try:
                 await self._login_retrieve_tokens(
@@ -522,7 +530,7 @@ class AnycubicAPI:
     async def check_api_tokens(self):
         if not await self._check_can_access_api(True):
             if self._api_tokens_loaded() and not self._auth_as_app:
-                self._debug_log(
+                self._log_to_debug(
                     "Login failed, retrying with new variables..."
                 )
                 return await self._check_can_access_api(False)
@@ -589,14 +597,14 @@ class AnycubicAPI:
 
     async def _get_print_history(self):
         resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.print_history)
-        self._debug_log(f"print_history output:\n{json.dumps(resp)}")
+        self._log_to_debug(f"print_history output:\n{json.dumps(resp)}")
 
     async def _get_project_monitor(self, project_id):
         query = {
             'id': str(project_id)
         }
         resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.project_monitor, query=query)
-        self._debug_log(f"project_monitor output:\n{json.dumps(resp)}")
+        self._log_to_debug(f"project_monitor output:\n{json.dumps(resp)}")
 
     async def _set_printer_name(
         self,
@@ -802,7 +810,7 @@ class AnycubicAPI:
         data = resp['data'].get('msgid')
 
         if data is None:
-            self._debug_log(f"Empty reply when sending order to Anycubic Cloud, message: {error_message}")
+            self._log_to_error(f"Empty reply when sending order to Anycubic Cloud, message: {error_message}")
 
         return data
 
@@ -1861,7 +1869,7 @@ class AnycubicAPI:
         }
         resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.printer_status, query=query)
         data = resp['data']
-        self._debug_log(f"printer_status output:\n{json.dumps(data)}")
+        self._log_to_debug(f"printer_status output:\n{json.dumps(data)}")
 
     async def printer_info_for_id(
         self,
@@ -1884,7 +1892,7 @@ class AnycubicAPI:
         try:
             data = AnycubicPrinter.from_info_json(self, resp['data'])
         except Exception as e:
-            self._debug_log(f"Failed to load printer from anycubic response: {resp}")
+            self._log_to_error(f"Failed to load printer from anycubic response: {resp}")
             raise e
 
         return data

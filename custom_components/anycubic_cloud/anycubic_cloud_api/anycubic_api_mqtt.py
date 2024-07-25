@@ -111,11 +111,11 @@ class AnycubicMQTTAPI(AnycubicAPI):
             topic = str(message.topic)
             payload = json.loads(message.payload.decode('utf-8'))
         except Exception as e:
-            self._debug_log(f"Anycubic MQTT Message decode error: {e}\n  on MQTT topic: {message.topic}\n    {message.payload}")
+            self._log_to_error(f"Anycubic MQTT Message decode error: {e}\n  on MQTT topic: {message.topic}\n    {message.payload}")
             return
 
         if self._mqtt_topic_is_user_topic(topic):
-            self._debug_log(f"Anycubic MQTT USER Msg Received on `{topic}`:\n    {payload}")
+            self._log_to_debug(f"Anycubic MQTT USER Msg Received on `{topic}`:\n    {payload}")
 
         else:
             printer_key = get_part_from_mqtt_topic(topic, 6)
@@ -132,10 +132,10 @@ class AnycubicMQTTAPI(AnycubicAPI):
                 printer.process_mqtt_update(topic, payload)
             except Exception as e:
                 tb = traceback.format_exc()
-                self._debug_log(f"Anycubic MQTT Message error: {e}\n  on MQTT topic: {topic}\n    {payload}\n{tb}")
+                self._log_to_error(f"Anycubic MQTT Message error: {e}\n  on MQTT topic: {topic}\n    {payload}\n{tb}")
 
             if self._mqtt_log_all_messages:
-                self._debug_log(f"Anycubic MQTT Message processed on topic: {topic}\n    {payload}")
+                self._log_to_debug(f"Anycubic MQTT Message processed on topic: {topic}\n    {payload}")
 
     def _mqtt_publish_on_topic(self, topic, payload):
         if self._mqtt_client is None:
@@ -158,7 +158,7 @@ class AnycubicMQTTAPI(AnycubicAPI):
         crt_path = path.join(ssl_root, 'anycubic_mqqt_tls_client.crt')
 
         if not path.exists(crt_path):
-            self._debug_log(f"Anycubic MQTT unable to start, no certificate found in root: {ssl_root}.")
+            self._log_to_error(f"Anycubic MQTT unable to start, no certificate found in root: {ssl_root}.")
             raise AnycubicAPIError('Unable to load MQTT Certificate.')
 
         ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
@@ -187,7 +187,7 @@ class AnycubicMQTTAPI(AnycubicAPI):
             self._mqtt_message_router(message)
         except Exception as e:
             tb = traceback.format_exc()
-            self._debug_log(f"Anycubic MQTT internal error: {e}\n{tb}")
+            self._log_to_error(f"Anycubic MQTT internal error: {e}\n{tb}")
             return
 
     def _mqtt_on_disconnect(
@@ -198,11 +198,11 @@ class AnycubicMQTTAPI(AnycubicAPI):
     ):
         if rc == 0:
             self._mqtt_client = None
-            self._debug_log("Anycubic MQTT Disconnected.")
+            self._log_to_debug("Anycubic MQTT Disconnected.")
             if self._mqtt_disconnected is not None:
                 self._mqtt_disconnected.set()
         else:
-            self._debug_log("Anycubic MQTT unintentionally disconnected, will reconnect.")
+            self._log_to_debug("Anycubic MQTT unintentionally disconnected, will reconnect.")
 
     def _mqtt_on_connect(
         self,
@@ -212,25 +212,25 @@ class AnycubicMQTTAPI(AnycubicAPI):
         rc,
     ):
         if rc == 0:
-            self._debug_log("Anycubic MQTT Connected.")
+            self._log_to_debug("Anycubic MQTT Connected.")
 
             for sub in self._build_mqtt_user_subscription():
-                self._debug_log(f"Anycubic MQTT Subscribing to USER {sub}.")
+                self._log_to_debug(f"Anycubic MQTT Subscribing to USER {sub}.")
                 self._mqtt_client.subscribe(sub)
 
             for printer_id, printer in self._mqtt_subscribed_printers.items():
                 self._mqtt_subscribe_printer_status(printer)
 
-            self._debug_log("Anycubic MQTT Subscribed.")
+            self._log_to_debug("Anycubic MQTT Subscribed.")
         else:
-            self._debug_log(f"Anycubic MQTT Failed to connect, return code {rc}")
+            self._log_to_warn(f"Anycubic MQTT Failed to connect, return code {rc}")
 
     def connect_mqtt(self):
         self._mqtt_disconnected = asyncio.Event()
 
         mqtt_username, mqtt_password = self._build_mqtt_login_info()
 
-        self._debug_log("Anycubic MQTT Connecting.")
+        self._log_to_debug("Anycubic MQTT Connecting.")
 
         self._mqtt_client = mqtt_client.Client(
             client_id=self._build_mqtt_client_id(),
@@ -264,10 +264,10 @@ class AnycubicMQTTAPI(AnycubicAPI):
         if self._mqtt_disconnected is not None:
             self._mqtt_disconnected.set()
         self._mqtt_disconnected = None
-        self._debug_log("Anycubic MQTT Client removed.")
+        self._log_to_debug("Anycubic MQTT Client removed.")
 
     def disconnect_mqtt(self):
-        self._debug_log("Anycubic MQTT Disconnecting.")
+        self._log_to_debug("Anycubic MQTT Disconnecting.")
         if self._mqtt_client is None:
             return
 
@@ -275,7 +275,7 @@ class AnycubicMQTTAPI(AnycubicAPI):
 
     def _mqtt_subscribe_printer_status(self, printer):
         for sub in self._build_mqtt_printer_subscription(printer):
-            self._debug_log(f"Anycubic MQTT Subscribing to PRINTER {sub}.")
+            self._log_to_debug(f"Anycubic MQTT Subscribing to PRINTER {sub}.")
             self._mqtt_client.subscribe(sub)
 
     def mqtt_add_subscribed_printer(self, printer):
@@ -289,7 +289,7 @@ class AnycubicMQTTAPI(AnycubicAPI):
         if printer.key in self._mqtt_subscribed_printers:
             if self._mqtt_client is not None:
                 for sub in self._build_mqtt_printer_subscription(printer):
-                    self._debug_log(f"Anycubic MQTT Ubsubscribing to PRINTER {sub}.")
+                    self._log_to_debug(f"Anycubic MQTT Ubsubscribing to PRINTER {sub}.")
                     self._mqtt_client.unsubscribe(sub)
 
             del self._mqtt_subscribed_printers[printer.key]

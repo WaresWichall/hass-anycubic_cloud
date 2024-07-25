@@ -411,7 +411,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 api_password=self.entry.data[CONF_PASSWORD],
                 session=websession,
                 cookie_jar=cookie_jar,
-                debug_logger=LOGGER.debug,
+                debug_logger=LOGGER,
             )
 
             self._anycubic_api.set_mqtt_log_all_messages(self.entry.options.get(CONF_DEBUG))

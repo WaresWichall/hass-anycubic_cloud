@@ -253,6 +253,9 @@ class AnycubicPrinter:
             raise e
 
     def update_from_info_json(self, data):
+        if data is None:
+            return
+
         if str(self._id) != str(data['id']):
             return
 
