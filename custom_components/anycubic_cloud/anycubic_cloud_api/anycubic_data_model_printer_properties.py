@@ -238,9 +238,9 @@ class AnycubicMachineExternalShelves:
             id=data['id'],
             type=data['type'],
             color=data['color'],
-            loaded=data['loaded'],
-            status_type=data['status_type'],
-            current_status=data['current_status'],
+            loaded=data.get('loaded', False),
+            status_type=data.get('status_type', False),
+            current_status=data.get('current_status', False),
         )
 
     def update_with_mqtt_data(self, data):
