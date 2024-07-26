@@ -8,8 +8,9 @@ Should work with multiple printers but untested until someone buys me a second p
 
 ## Gallery
 
-![The card with Kobra 2 printer info](https://github.com/user-attachments/assets/430d4094-5255-4f39-8692-aa3979ffa7ab)
-![Some of the sensors and buttons exposed by the integration](https://github.com/user-attachments/assets/2447d2d9-466c-4357-87db-198e4e616887)
+
+<img width="400" alt="" src="https://github.com/user-attachments/assets/80d15c03-fdbd-495c-be04-2d07fc68cc3a">
+<img width="400" alt="Screenshot 2024-07-25 at 3 55 16 PM" src="https://github.com/user-attachments/assets/f557f362-2e08-461e-8416-83257a65f02e">
 
 
 
