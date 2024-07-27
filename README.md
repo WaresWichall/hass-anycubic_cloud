@@ -6,6 +6,14 @@ Component is working very well so far with a Kobra 3 Combo but will still have b
 
 Should work with multiple printers but untested until someone buys me a second printer :)
 
+## Gallery
+
+
+<img width="400" alt="" src="https://github.com/user-attachments/assets/80d15c03-fdbd-495c-be04-2d07fc68cc3a">
+<img width="400" alt="Screenshot 2024-07-25 at 3 55 16 PM" src="https://github.com/user-attachments/assets/f557f362-2e08-461e-8416-83257a65f02e">
+
+
+
 ## Features
 
 - Pause/Resume/Cancel print buttons
