@@ -1,18 +1,17 @@
-import { LitElement, html, css } from "lit";
-import { property, customElement } from "lit/decorators.js";
+import { LitElement, html, css, PropertyValues } from "lit";
+import { property, customElement, state } from "lit/decorators.js";
 
 import { platform } from "../../const";
 import {
-  getPrinterDevID,
   getPrinterEntities,
   getFileListCloudFilesEntity,
   getFileListCloudRefreshEntity,
-  getSelectedPrinter,
 } from "../../helpers";
 import {
   AnycubicCloudFileListEntity,
   HomeAssistant,
-  HassDeviceList,
+  HassDevice,
+  HassEntityInfos,
   HassPanel,
   HassRoute,
 } from "../../types";
@@ -33,15 +32,32 @@ export class AnycubicViewFilesCloud extends LitElement {
   public panel!: HassPanel;
 
   @property()
-  public printers?: HassDeviceList;
+  public selectedPrinterID: string | undefined;
+
+  @property()
+  public selectedPrinterDevice: HassDevice | undefined;
+
+  @state()
+  private printerEntities: HassEntityInfos;
+
+  protected willUpdate(changedProperties: PropertyValues<this>) {
+    super.willUpdate(changedProperties);
+
+    if (!changedProperties.has("selectedPrinterID")) {
+      return;
+    }
+
+    this.printerEntities = getPrinterEntities(
+      this.hass,
+      this.selectedPrinterID,
+    );
+  }
 
   render() {
-    const selectedPrinterID = getPrinterDevID(this.route);
-
-    const printerEntities = getPrinterEntities(this.hass, selectedPrinterID);
-
-    const fileListEntity = getFileListCloudFilesEntity(printerEntities);
-    const listRefreshEntity = getFileListCloudRefreshEntity(printerEntities);
+    const fileListEntity = getFileListCloudFilesEntity(this.printerEntities);
+    const listRefreshEntity = getFileListCloudRefreshEntity(
+      this.printerEntities,
+    );
 
     const fileListState: AnycubicCloudFileListEntity = fileListEntity
       ? this.hass.states[fileListEntity.entity_id]
@@ -89,17 +105,10 @@ export class AnycubicViewFilesCloud extends LitElement {
   }
 
   deleteFile(fileId) {
-    const selectedPrinterID = getPrinterDevID(this.route);
-
-    const selectedPrinter = getSelectedPrinter(
-      this.printers,
-      selectedPrinterID,
-    );
-
-    if (selectedPrinter && fileId)
+    if (this.selectedPrinterDevice && fileId)
       this.hass.callService(platform, "delete_file_cloud", {
-        config_entry: selectedPrinter.primary_config_entry,
-        device_id: selectedPrinter.id,
+        config_entry: this.selectedPrinterDevice.primary_config_entry,
+        device_id: this.selectedPrinterDevice.id,
         file_id: fileId,
       });
   }

@@ -1,14 +1,12 @@
-import { LitElement, html, css } from "lit";
-import { property, customElement } from "lit/decorators.js";
+import { LitElement, html, css, PropertyValues } from "lit";
+import { property, customElement, state } from "lit/decorators.js";
 
-import {
-  getPrinterDevID,
-  getPrinterEntities,
-  getSelectedPrinter,
-} from "../../helpers";
+import { getPrinterEntities } from "../../helpers";
 import {
   HomeAssistant,
+  HassDevice,
   HassDeviceList,
+  HassEntityInfos,
   HassPanel,
   HassRoute,
 } from "../../types";
@@ -30,15 +28,29 @@ export class AnycubicViewDebug extends LitElement {
   @property()
   public printers?: HassDeviceList;
 
-  render() {
-    const selectedPrinterID = getPrinterDevID(this.route);
-    const selectedPrinter = getSelectedPrinter(
-      this.printers,
-      selectedPrinterID,
+  @property()
+  public selectedPrinterID: string | undefined;
+
+  @property()
+  public selectedPrinterDevice: HassDevice | undefined;
+
+  @state()
+  private printerEntities: HassEntityInfos;
+
+  protected willUpdate(changedProperties: PropertyValues<this>) {
+    super.willUpdate(changedProperties);
+
+    if (!changedProperties.has("selectedPrinterID")) {
+      return;
+    }
+
+    this.printerEntities = getPrinterEntities(
+      this.hass,
+      this.selectedPrinterID,
     );
+  }
 
-    const printerEntities = getPrinterEntities(this.hass, selectedPrinterID);
-
+  render() {
     return html`
       <debug-data elevation="2">
         <p>There are ${Object.keys(this.hass.states).length} entities.</p>
@@ -50,9 +62,9 @@ export class AnycubicViewDebug extends LitElement {
         Printers
         <pre>${JSON.stringify(this.printers, undefined, 2)}</pre>
         Printer Entities
-        <pre>${JSON.stringify(printerEntities, undefined, 2)}</pre>
+        <pre>${JSON.stringify(this.printerEntities, undefined, 2)}</pre>
         Selected Printer
-        <pre>${JSON.stringify(selectedPrinter, undefined, 2)}</pre>
+        <pre>${JSON.stringify(this.selectedPrinterDevice, undefined, 2)}</pre>
       </debug-data>
     `;
   }

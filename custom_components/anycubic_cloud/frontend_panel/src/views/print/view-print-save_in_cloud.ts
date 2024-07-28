@@ -1,17 +1,11 @@
 import { mdiPlay } from "@mdi/js";
-import { LitElement, html, css } from "lit";
+import { LitElement, html, css, PropertyValues } from "lit";
 import { property, customElement, state } from "lit/decorators.js";
 
 import { localize } from "../../../localize/localize";
 
-import { getPrinterDevID, getSelectedPrinter } from "../../helpers";
 import { loadHaServiceControl } from "../../load-ha-elements";
-import {
-  HomeAssistant,
-  HassDeviceList,
-  HassPanel,
-  HassRoute,
-} from "../../types";
+import { HomeAssistant, HassDevice, HassPanel, HassRoute } from "../../types";
 
 @customElement("anycubic-view-print-save_in_cloud")
 export class AnycubicViewPrintSaveInCloud extends LitElement {
@@ -24,7 +18,10 @@ export class AnycubicViewPrintSaveInCloud extends LitElement {
   public panel!: HassPanel;
 
   @property()
-  public printers?: HassDeviceList;
+  public selectedPrinterID: string | undefined;
+
+  @property()
+  public selectedPrinterDevice: HassDevice | undefined;
 
   @state() private _scriptData: Record<string, any> = {
     service: "anycubic_cloud.print_and_upload_save_in_cloud",
@@ -40,19 +37,17 @@ export class AnycubicViewPrintSaveInCloud extends LitElement {
   protected override willUpdate(changedProperties: PropertyValues): void {
     super.willUpdate(changedProperties);
 
-    const selectedPrinterID = getPrinterDevID(this.route);
-    const selectedPrinter = getSelectedPrinter(
-      this.printers,
-      selectedPrinterID,
-    );
+    if (!changedProperties.has("selectedPrinterDevice")) {
+      return;
+    }
 
-    if (selectedPrinter) {
+    if (this.selectedPrinterDevice) {
       this._scriptData = {
         ...this._scriptData,
         data: {
           ...(this._scriptData.data || {}),
-          config_entry: selectedPrinter.primary_config_entry,
-          device_id: selectedPrinter.id,
+          config_entry: this.selectedPrinterDevice.primary_config_entry,
+          device_id: this.selectedPrinterDevice.id,
         },
       };
     }

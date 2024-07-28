@@ -1,5 +1,5 @@
-import { LitElement, html, css } from "lit";
-import { property, customElement } from "lit/decorators.js";
+import { LitElement, html, css, PropertyValues } from "lit";
+import { property, customElement, state } from "lit/decorators.js";
 
 import { localize } from "../../../localize/localize";
 
@@ -7,18 +7,17 @@ import {
   getEntityStateBinary,
   getEntityStateFloat,
   getEntityStateString,
-  getPrinterDevID,
   getPrinterEntities,
   getPrinterEntityIdPart,
   getPrinterID,
   getPrinterMAC,
-  getSelectedPrinter,
   getStrictMatchingEntity,
   toTitleCase,
 } from "../../helpers";
 import {
   HomeAssistant,
-  HassDeviceList,
+  HassDevice,
+  HassEntityInfos,
   HassPanel,
   HassRoute,
 } from "../../types";
@@ -38,7 +37,26 @@ export class AnycubicViewMain extends LitElement {
   public panel!: HassPanel;
 
   @property()
-  public printers?: HassDeviceList;
+  public selectedPrinterID: string | undefined;
+
+  @property()
+  public selectedPrinterDevice: HassDevice | undefined;
+
+  @state()
+  private printerEntities: HassEntityInfos;
+
+  protected willUpdate(changedProperties: PropertyValues<this>) {
+    super.willUpdate(changedProperties);
+
+    if (!changedProperties.has("selectedPrinterID")) {
+      return;
+    }
+
+    this.printerEntities = getPrinterEntities(
+      this.hass,
+      this.selectedPrinterID,
+    );
+  }
 
   private _renderInfoRow(fieldKey, rowData) {
     const languageKey = `panels.main.cards.main.fields.${fieldKey}.heading`;
@@ -57,96 +75,90 @@ export class AnycubicViewMain extends LitElement {
   }
 
   render() {
-    const selectedPrinterID = getPrinterDevID(this.route);
+    const printerID = getPrinterID(this.selectedPrinterDevice);
+    const printerMAC = getPrinterMAC(this.selectedPrinterDevice);
 
-    const selectedPrinter = getSelectedPrinter(
-      this.printers,
-      selectedPrinterID,
-    );
-    const printerID = getPrinterID(selectedPrinter);
-    const printerMAC = getPrinterMAC(selectedPrinter);
-    const printerEntities = getPrinterEntities(this.hass, selectedPrinterID);
-    const printerEntityIdPart = getPrinterEntityIdPart(printerEntities);
+    const printerEntityIdPart = getPrinterEntityIdPart(this.printerEntities);
     const aceEntityFwVersion = getStrictMatchingEntity(
-      printerEntities,
+      this.printerEntities,
       printerEntityIdPart,
       "sensor",
       "ace_fw_version",
     );
     const aceEntityDryingActive = getStrictMatchingEntity(
-      printerEntities,
+      this.printerEntities,
       printerEntityIdPart,
       "binary_sensor",
       "drying_active",
     );
     const aceEntityDryingRemaining = getStrictMatchingEntity(
-      printerEntities,
+      this.printerEntities,
       printerEntityIdPart,
       "sensor",
       "drying_remaining_time",
     );
     const aceEntityDryingTotal = getStrictMatchingEntity(
-      printerEntities,
+      this.printerEntities,
       printerEntityIdPart,
       "sensor",
       "drying_total_duration",
     );
     const aceEntityFwUpdateAvailable = getStrictMatchingEntity(
-      printerEntities,
+      this.printerEntities,
       printerEntityIdPart,
       "binary_sensor",
       "ace_firmware_update_available",
     );
     const printerEntityFwUpdateAvailable = getStrictMatchingEntity(
-      printerEntities,
+      this.printerEntities,
       printerEntityIdPart,
       "binary_sensor",
       "firmware_update_available",
     );
     const printerEntityAvailable = getStrictMatchingEntity(
-      printerEntities,
+      this.printerEntities,
       printerEntityIdPart,
       "binary_sensor",
       "is_available",
     );
     const printerEntityOnline = getStrictMatchingEntity(
-      printerEntities,
+      this.printerEntities,
       printerEntityIdPart,
       "binary_sensor",
       "printer_online",
     );
     const printerEntityCurrNozzleTemp = getStrictMatchingEntity(
-      printerEntities,
+      this.printerEntities,
       printerEntityIdPart,
       "sensor",
       "nozzle_temperature",
     );
     const printerEntityCurrHotbedTemp = getStrictMatchingEntity(
-      printerEntities,
+      this.printerEntities,
       printerEntityIdPart,
       "sensor",
       "hotbed_temperature",
     );
     const printerEntityTargetNozzleTemp = getStrictMatchingEntity(
-      printerEntities,
+      this.printerEntities,
       printerEntityIdPart,
       "sensor",
       "target_nozzle_temperature",
     );
     const printerEntityTargetHotbedTemp = getStrictMatchingEntity(
-      printerEntities,
+      this.printerEntities,
       printerEntityIdPart,
       "sensor",
       "target_hotbed_temperature",
     );
     const projectEntityProgress = getStrictMatchingEntity(
-      printerEntities,
+      this.printerEntities,
       printerEntityIdPart,
       "sensor",
       "project_progress",
     );
     const projectEntityPrintState = getStrictMatchingEntity(
-      printerEntities,
+      this.printerEntities,
       printerEntityIdPart,
       "sensor",
       "print_state",
@@ -229,17 +241,19 @@ export class AnycubicViewMain extends LitElement {
       <printer-card elevation="2">
         ${this._renderInfoRow(
           "printer_name",
-          selectedPrinter ? selectedPrinter.name : null,
+          this.selectedPrinterDevice ? this.selectedPrinterDevice.name : null,
         )}
         ${this._renderInfoRow("printer_id", printerID)}
         ${this._renderInfoRow("printer_mac", printerMAC)}
         ${this._renderInfoRow(
           "printer_model",
-          selectedPrinter ? selectedPrinter.model : null,
+          this.selectedPrinterDevice ? this.selectedPrinterDevice.model : null,
         )}
         ${this._renderInfoRow(
           "printer_fw_version",
-          selectedPrinter ? selectedPrinter.sw_version : null,
+          this.selectedPrinterDevice
+            ? this.selectedPrinterDevice.sw_version
+            : null,
         )}
         ${this._renderInfoRow(
           "printer_fw_update_available",
