@@ -1,5 +1,8 @@
+import moment from "moment";
+
 import { fireEvent } from "./fire_event";
 import {
+  CalculatedTimeType,
   HomeAssistant,
   HassDevice,
   HassDeviceList,
@@ -7,7 +10,29 @@ import {
   HassEntityInfo,
   HassEntityInfos,
   HassRoute,
+  PrinterCardStatType,
+  TemperatureUnit,
 } from "./types";
+
+const stylePxKeys = ["width", "height", "left", "top"];
+
+export function updateElementStyleWithObject(
+  el: HTMLElement | undefined,
+  updateObj: any,
+) {
+  Object.keys(updateObj).forEach((key) => {
+    if (stylePxKeys.includes(key) && !isNaN(updateObj[key])) {
+      updateObj[key] = updateObj[key].toString() + "px";
+    }
+  });
+  if (el) {
+    Object.assign(el.style, updateObj);
+  }
+}
+
+export function numberFromString(str: string) {
+  return Number(str.match(/\d+/)[0]);
+}
 
 export function toTitleCase(str: any) {
   return str
@@ -46,11 +71,11 @@ export function getEntityStateString(
 export function getEntityStateBinary(
   hass: HomeAssistant,
   entityInfo: HassEntityInfo,
-  onString: string,
-  offString: string,
-): string {
+  onValue: string | boolean,
+  offValue: string | boolean,
+): string | boolean {
   const entityState = getEntityStateString(hass, entityInfo);
-  return entityState == "on" ? onString : offString;
+  return entityState == "on" ? onValue : offValue;
 }
 
 export function getPrinterDevices(hass: HomeAssistant): HassDeviceList {
@@ -130,6 +155,83 @@ export function getPrinterEntityIdPart(
     }
   }
   return undefined;
+}
+
+export function getPrinterSensorStateObj(
+  hass: HomeAssistant,
+  entities: HassEntityInfos,
+  printerEntityIdPart: string | undefined,
+  suffix: string,
+  defaultState: any = "unavailable",
+  defaultAttributes: any = {},
+): HassEntity {
+  const entInfo = getStrictMatchingEntity(
+    entities,
+    printerEntityIdPart,
+    "sensor",
+    suffix,
+  );
+  const stateObj = getEntityState(hass, entInfo);
+  return stateObj || { state: defaultState, attributes: defaultAttributes };
+}
+
+export function getPrinterSensorStateString(
+  hass: HomeAssistant,
+  entities: HassEntityInfos,
+  printerEntityIdPart: string | undefined,
+  suffix: string,
+  titleCase: boolean = false,
+): string | undefined {
+  const entInfo = getStrictMatchingEntity(
+    entities,
+    printerEntityIdPart,
+    "sensor",
+    suffix,
+  );
+  if (entInfo) {
+    const str = getEntityStateString(hass, entInfo);
+    if (titleCase) {
+      return toTitleCase(str);
+    } else {
+      return str;
+    }
+  } else {
+    return undefined;
+  }
+}
+
+export function getPrinterSensorStateFloat(
+  hass: HomeAssistant,
+  entities: HassEntityInfos,
+  printerEntityIdPart: string | undefined,
+  suffix: string,
+): number | undefined {
+  const entInfo = getStrictMatchingEntity(
+    entities,
+    printerEntityIdPart,
+    "sensor",
+    suffix,
+  );
+  return entInfo ? getEntityStateFloat(hass, entInfo) : undefined;
+}
+
+export function getPrinterBinarySensorState(
+  hass: HomeAssistant,
+  entities: HassEntityInfos,
+  printerEntityIdPart: string | undefined,
+  suffix: string,
+  onValue: string | boolean,
+  offValue: string | boolean,
+): string | boolean | undefined {
+  const entInfo = getStrictMatchingEntity(
+    entities,
+    printerEntityIdPart,
+    "binary_sensor",
+    suffix,
+  );
+  return entInfo
+    ? getEntityStateBinary(hass, entInfo, onValue, offValue)
+    : undefined;
 }
 
 export function getFileListLocalFilesEntity(
@@ -233,3 +335,123 @@ export const navigateToPage = (
     replace,
   });
 };
+
+export const formatDuration = (time: number, round: boolean): string => {
+  return round
+    ? moment.duration(time, "seconds").humanize()
+    : (() => {
+        const t = moment.duration(time, "seconds");
+
+        const d = t.days();
+        const h = t.hours();
+        const m = t.minutes();
+        const s = t.seconds();
+
+        return `${d > 0 ? `${d}d` : ""}${h > 0 ? ` ${h}h` : ""}${m > 0 ? ` ${m}m` : ""}${s > 0 ? ` ${s}s` : ""}`;
+      })();
+};
+
+export const calculateTimeStat = (
+  time: number,
+  timeType: CalculatedTimeType,
+  round: boolean = false,
+  use_24hr: boolean = false,
+): string => {
+  switch (timeType) {
+    case CalculatedTimeType.Remaining:
+      return formatDuration(time, round);
+    case CalculatedTimeType.ETA:
+      return moment()
+        .add(time, "seconds")
+        .format(use_24hr ? "HH:mm" : "h:mm a");
+    case CalculatedTimeType.Elapsed:
+      return formatDuration(time, round);
+    default:
+      return "<unknown>";
+  }
+};
+
+export function getEntityTotalSeconds(
+  timeEntity: HassEntity,
+  isSeconds: boolean = false,
+): number {
+  let result;
+  if (timeEntity.state) {
+    if (timeEntity.state.includes(", ")) {
+      const [days_string, time_string] = timeEntity.state.split(", ");
+      const [hours, minutes, seconds] = time_string.split(":");
+      const days = days_string.match(/\d+/)[0];
+      result =
+        +days * 60 * 60 * 24 + +hours * 60 * 60 + +minutes * 60 + +seconds;
+    } else if (timeEntity.state.includes(":")) {
+      const [hours, minutes, seconds] = timeEntity.state.split(":");
+      result = +hours * 60 * 60 + +minutes * 60 + +seconds;
+    } else if (isSeconds) {
+      const seconds = timeEntity.state;
+      result = +seconds;
+    } else {
+      const minutes = timeEntity.state;
+      result = +minutes * 60;
+    }
+  } else {
+    result = 0;
+  }
+  return result;
+}
+
+export const temperatureUnitFromEntity = (entity: HassEntity) => {
+  switch (entity.attributes?.unit_of_measurement) {
+    case "°C":
+      return TemperatureUnit.C;
+    case "°F":
+      return TemperatureUnit.F;
+    default:
+      return TemperatureUnit.C;
+  }
+};
+
+const temperatureMap = {
+  [TemperatureUnit.C]: {
+    [TemperatureUnit.C]: (t) => t,
+    [TemperatureUnit.F]: (t) => (t * 9.0) / 5.0 + 32.0,
+  },
+  [TemperatureUnit.F]: {
+    [TemperatureUnit.C]: (t) => ((t - 32.0) * 5.0) / 9.0,
+    [TemperatureUnit.F]: (t) => t,
+  },
+};
+
+export const convertTemperature = (
+  temperature: number,
+  from: TemperatureUnit,
+  to: TemperatureUnit,
+) => {
+  if (!temperatureMap[from] || !temperatureMap[from][to]) return -1;
+
+  return temperatureMap[from][to](temperature);
+};
+
+export const getEntityTemperature = (
+  temperatureEntity: HassEntity,
+  temperatureUnit: TemperatureUnit,
+  round: boolean = false,
+) => {
+  const t: number = parseFloat(temperatureEntity.state);
+  const u: TemperatureUnit = temperatureUnitFromEntity(temperatureEntity);
+  const tc: number = convertTemperature(t, u, temperatureUnit || u);
+
+  return `${round ? Math.round(tc) : tc.toFixed(2)}°${temperatureUnit || u}`;
+};
+
+export function getDefaultMonitoredStats() {
+  return [
+    PrinterCardStatType.Status,
+    PrinterCardStatType.ETA,
+    PrinterCardStatType.Elapsed,
+    PrinterCardStatType.HotendCurrent,
+    PrinterCardStatType.BedCurrent,
+    PrinterCardStatType.Remaining,
+    PrinterCardStatType.HotendTarget,
+    PrinterCardStatType.BedTarget,
+  ];
+}

@@ -119,3 +119,90 @@ export interface AnycubicCloudFileListEntity extends HassEntity {
     file_info?: AnycubicFileCloud[];
   };
 }
+
+export enum CalculatedTimeType {
+  ETA = "ETA",
+  Elapsed = "Elapsed",
+  Remaining = "Remaining",
+}
+
+export enum TemperatureUnit {
+  F = "F",
+  C = "C",
+}
+
+export enum TextStatType {
+  Status = "Status",
+  HotendCurrent = "Hotend",
+  BedCurrent = "Bed",
+  HotendTarget = "Target Hotend",
+  BedTarget = "Target Bed",
+}
+
+export const PrinterCardStatType = { ...CalculatedTimeType, ...TextStatType };
+export type PrinterCardStatType = typeof PrinterCardStatType;
+
+export interface AnimatedPrinterBasicDimension {
+  width: number;
+  height: number;
+}
+
+export interface AnimatedPrinterXYDimension {
+  X: number;
+  Y: number;
+}
+
+export interface AnimatedPrinterLTDimension
+  extends AnimatedPrinterBasicDimension {
+  left: number;
+  top: number;
+}
+
+export interface AnimatedPrinterLTWidth {
+  width: number;
+  left: number;
+  top: number;
+}
+
+export interface AnimatedPrinterBuildPlateDimension {
+  maxWidth: number;
+  maxHeight: number;
+  verticalOffset: number;
+}
+
+export interface AnimatedPrinterAxisConfig
+  extends AnimatedPrinterBasicDimension {
+  stepper: boolean;
+  offsetLeft: number;
+  extruder: AnimatedPrinterBasicDimension;
+}
+
+export interface AnimatedPrinterConfig {
+  top: AnimatedPrinterBasicDimension;
+  bottom: AnimatedPrinterBasicDimension;
+  left: AnimatedPrinterBasicDimension;
+  right: AnimatedPrinterBasicDimension;
+  buildplate: AnimatedPrinterBuildPlateDimension;
+  xAxis: AnimatedPrinterAxisConfig;
+}
+
+export interface AnimatedPrinterDimensions {
+  Scalable: AnimatedPrinterBasicDimension;
+  Frame: AnimatedPrinterBasicDimension;
+  Hole: AnimatedPrinterLTDimension;
+  BuildArea: AnimatedPrinterLTDimension;
+  BuildPlate: AnimatedPrinterLTWidth;
+  XAxis: AnimatedPrinterLTDimension;
+  Track: AnimatedPrinterBasicDimension;
+  Basis: AnimatedPrinterXYDimension;
+  Gantry: AnimatedPrinterLTDimension;
+  Nozzle: AnimatedPrinterLTDimension;
+  GantryMaxLeft: number;
+}
+
+export interface AnycubicSpoolInfo {
+  material_type: string;
+  color: number[];
+  status: number;
+  spool_loaded: boolean;
+}

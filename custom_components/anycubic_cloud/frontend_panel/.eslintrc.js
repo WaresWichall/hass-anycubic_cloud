@@ -27,10 +27,15 @@ module.exports = {
     document: "writable",
     history: "writable",
     window: "writable",
+    clearInterval: "readonly",
+    setInterval: "readonly",
+    clearTimeout: "readonly",
+    setTimeout: "readonly",
     CustomEvent: "readonly",
     HTMLElement: "readonly",
     Window: "readonly",
     Event: "readonly",
+    FillMode: "readonly",
     scrollTo: "readonly"
   }
 };

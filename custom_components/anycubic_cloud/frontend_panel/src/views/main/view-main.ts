@@ -4,15 +4,13 @@ import { property, customElement, state } from "lit/decorators.js";
 import { localize } from "../../../localize/localize";
 
 import {
-  getEntityStateBinary,
-  getEntityStateFloat,
-  getEntityStateString,
   getPrinterEntities,
   getPrinterEntityIdPart,
   getPrinterID,
   getPrinterMAC,
-  getStrictMatchingEntity,
-  toTitleCase,
+  getPrinterSensorStateFloat,
+  getPrinterSensorStateString,
+  getPrinterBinarySensorState,
 } from "../../helpers";
 import {
   HomeAssistant,
@@ -21,6 +19,8 @@ import {
   HassPanel,
   HassRoute,
 } from "../../types";
+
+import "../../components/printer_card/card/card.ts";
 
 @customElement("anycubic-view-main")
 export class AnycubicViewMain extends LitElement {
@@ -45,17 +45,192 @@ export class AnycubicViewMain extends LitElement {
   @state()
   private printerEntities: HassEntityInfos;
 
+  @state()
+  private printerEntityIdPart: string | undefined;
+
+  @state()
+  private printerID: string | undefined;
+
+  @state()
+  private printerMAC: string | null;
+
+  @state()
+  private printerStateFwUpdateAvailable: string | boolean | undefined;
+
+  @state()
+  private printerStateAvailable: string | boolean | undefined;
+
+  @state()
+  private printerStateOnline: string | boolean | undefined;
+
+  @state()
+  private printerStateCurrNozzleTemp: number | undefined;
+
+  @state()
+  private printerStateCurrHotbedTemp: number | undefined;
+
+  @state()
+  private printerStateTargetNozzleTemp: number | undefined;
+
+  @state()
+  private printerStateTargetHotbedTemp: number | undefined;
+
+  @state()
+  private projectStateProgress: string | undefined;
+
+  @state()
+  private projectStatePrintState: string | undefined;
+
+  @state()
+  private aceStateFwUpdateAvailable: string | boolean | undefined;
+
+  @state()
+  private aceStateDryingActive: string | boolean | undefined;
+
+  @state()
+  private aceStateFwVersion: string | undefined;
+
+  @state()
+  private aceStateDryingRemaining: number | undefined;
+
+  @state()
+  private aceStateDryingTotal: number | undefined;
+
+  @state()
+  private aceDryingProgress: string | undefined;
+
   protected willUpdate(changedProperties: PropertyValues<this>) {
     super.willUpdate(changedProperties);
 
-    if (!changedProperties.has("selectedPrinterID")) {
-      return;
+    if (changedProperties.has("selectedPrinterDevice")) {
+      this.printerID = getPrinterID(this.selectedPrinterDevice);
+      this.printerMAC = getPrinterMAC(this.selectedPrinterDevice);
     }
 
-    this.printerEntities = getPrinterEntities(
-      this.hass,
-      this.selectedPrinterID,
-    );
+    if (changedProperties.has("selectedPrinterID")) {
+      this.printerEntities = getPrinterEntities(
+        this.hass,
+        this.selectedPrinterID,
+      );
+      this.printerEntityIdPart = getPrinterEntityIdPart(this.printerEntities);
+    }
+
+    if (
+      changedProperties.has("hass") ||
+      changedProperties.has("selectedPrinterID")
+    ) {
+      this.printerStateFwUpdateAvailable = getPrinterBinarySensorState(
+        this.hass,
+        this.printerEntities,
+        this.printerEntityIdPart,
+        "firmware_update_available",
+        "Update Available",
+        "Up To Date",
+      );
+      this.printerStateAvailable = getPrinterBinarySensorState(
+        this.hass,
+        this.printerEntities,
+        this.printerEntityIdPart,
+        "is_available",
+        "Available",
+        "Busy",
+      );
+      this.printerStateOnline = getPrinterBinarySensorState(
+        this.hass,
+        this.printerEntities,
+        this.printerEntityIdPart,
+        "printer_online",
+        "Online",
+        "Offline",
+      );
+      this.printerStateCurrNozzleTemp = getPrinterSensorStateFloat(
+        this.hass,
+        this.printerEntities,
+        this.printerEntityIdPart,
+        "nozzle_temperature",
+      );
+      this.printerStateCurrHotbedTemp = getPrinterSensorStateFloat(
+        this.hass,
+        this.printerEntities,
+        this.printerEntityIdPart,
+        "hotbed_temperature",
+      );
+      this.printerStateTargetNozzleTemp = getPrinterSensorStateFloat(
+        this.hass,
+        this.printerEntities,
+        this.printerEntityIdPart,
+        "target_nozzle_temperature",
+      );
+      this.printerStateTargetHotbedTemp = getPrinterSensorStateFloat(
+        this.hass,
+        this.printerEntities,
+        this.printerEntityIdPart,
+        "target_hotbed_temperature",
+      );
+      const projProgress = getPrinterSensorStateFloat(
+        this.hass,
+        this.printerEntities,
+        this.printerEntityIdPart,
+        "project_progress",
+      );
+      this.projectStateProgress =
+        typeof projProgress !== "undefined" ? `${projProgress}%` : "0%";
+      this.projectStatePrintState = getPrinterSensorStateString(
+        this.hass,
+        this.printerEntities,
+        this.printerEntityIdPart,
+        "print_state",
+        true,
+      );
+      this.aceStateFwUpdateAvailable = getPrinterBinarySensorState(
+        this.hass,
+        this.printerEntities,
+        this.printerEntityIdPart,
+        "ace_firmware_update_available",
+        "Update Available",
+        "Up To Date",
+      );
+      this.aceStateDryingActive = getPrinterBinarySensorState(
+        this.hass,
+        this.printerEntities,
+        this.printerEntityIdPart,
+        "drying_active",
+        "Drying",
+        "Not Drying",
+      );
+      this.aceStateFwVersion = getPrinterSensorStateString(
+        this.hass,
+        this.printerEntities,
+        this.printerEntityIdPart,
+        "ace_fw_version",
+      );
+      this.aceStateDryingRemaining = getPrinterSensorStateFloat(
+        this.hass,
+        this.printerEntities,
+        this.printerEntityIdPart,
+        "drying_remaining_time",
+      );
+      this.aceStateDryingTotal = getPrinterSensorStateFloat(
+        this.hass,
+        this.printerEntities,
+        this.printerEntityIdPart,
+        "drying_total_duration",
+      );
+      this.aceDryingProgress =
+        typeof this.aceStateDryingRemaining !== "undefined" &&
+        typeof this.aceStateDryingTotal !== "undefined"
+          ? String(
+              (this.aceStateDryingTotal > 0
+                ? Math.round(
+                    (1 -
+                      this.aceStateDryingRemaining / this.aceStateDryingTotal) *
+                      10000,
+                  ) / 100
+                : 0
+              ).toFixed(2),
+            ) + "%"
+          : undefined;
+    }
   }
 
   private _renderInfoRow(fieldKey, rowData) {
@@ -70,232 +245,89 @@ export class AnycubicViewMain extends LitElement {
     `;
   }
 
-  private _renderOptionalInfoRow(shouldRender, fieldKey, rowData) {
-    return shouldRender ? this._renderInfoRow(fieldKey, rowData) : null;
+  private _renderOptionalInfoRow(fieldKey, rowData) {
+    return typeof rowData !== "undefined"
+      ? this._renderInfoRow(fieldKey, rowData)
+      : null;
   }
 
   render() {
-    const printerID = getPrinterID(this.selectedPrinterDevice);
-    const printerMAC = getPrinterMAC(this.selectedPrinterDevice);
-
-    const printerEntityIdPart = getPrinterEntityIdPart(this.printerEntities);
-    const aceEntityFwVersion = getStrictMatchingEntity(
-      this.printerEntities,
-      printerEntityIdPart,
-      "sensor",
-      "ace_fw_version",
-    );
-    const aceEntityDryingActive = getStrictMatchingEntity(
-      this.printerEntities,
-      printerEntityIdPart,
-      "binary_sensor",
-      "drying_active",
-    );
-    const aceEntityDryingRemaining = getStrictMatchingEntity(
-      this.printerEntities,
-      printerEntityIdPart,
-      "sensor",
-      "drying_remaining_time",
-    );
-    const aceEntityDryingTotal = getStrictMatchingEntity(
-      this.printerEntities,
-      printerEntityIdPart,
-      "sensor",
-      "drying_total_duration",
-    );
-    const aceEntityFwUpdateAvailable = getStrictMatchingEntity(
-      this.printerEntities,
-      printerEntityIdPart,
-      "binary_sensor",
-      "ace_firmware_update_available",
-    );
-    const printerEntityFwUpdateAvailable = getStrictMatchingEntity(
-      this.printerEntities,
-      printerEntityIdPart,
-      "binary_sensor",
-      "firmware_update_available",
-    );
-    const printerEntityAvailable = getStrictMatchingEntity(
-      this.printerEntities,
-      printerEntityIdPart,
-      "binary_sensor",
-      "is_available",
-    );
-    const printerEntityOnline = getStrictMatchingEntity(
-      this.printerEntities,
-      printerEntityIdPart,
-      "binary_sensor",
-      "printer_online",
-    );
-    const printerEntityCurrNozzleTemp = getStrictMatchingEntity(
-      this.printerEntities,
-      printerEntityIdPart,
-      "sensor",
-      "nozzle_temperature",
-    );
-    const printerEntityCurrHotbedTemp = getStrictMatchingEntity(
-      this.printerEntities,
-      printerEntityIdPart,
-      "sensor",
-      "hotbed_temperature",
-    );
-    const printerEntityTargetNozzleTemp = getStrictMatchingEntity(
-      this.printerEntities,
-      printerEntityIdPart,
-      "sensor",
-      "target_nozzle_temperature",
-    );
-    const printerEntityTargetHotbedTemp = getStrictMatchingEntity(
-      this.printerEntities,
-      printerEntityIdPart,
-      "sensor",
-      "target_hotbed_temperature",
-    );
-    const projectEntityProgress = getStrictMatchingEntity(
-      this.printerEntities,
-      printerEntityIdPart,
-      "sensor",
-      "project_progress",
-    );
-    const projectEntityPrintState = getStrictMatchingEntity(
-      this.printerEntities,
-      printerEntityIdPart,
-      "sensor",
-      "print_state",
-    );
-    const printerStateFwUpdateAvailable = getEntityStateBinary(
-      this.hass,
-      printerEntityFwUpdateAvailable,
-      "Update Available",
-      "Up To Date",
-    );
-    const printerStateAvailable = getEntityStateBinary(
-      this.hass,
-      printerEntityAvailable,
-      "Available",
-      "Busy",
-    );
-    const printerStateOnline = getEntityStateBinary(
-      this.hass,
-      printerEntityOnline,
-      "Online",
-      "Offline",
-    );
-    const printerStateCurrNozzleTemp = getEntityStateFloat(
-      this.hass,
-      printerEntityCurrNozzleTemp,
-    );
-    const printerStateCurrHotbedTemp = getEntityStateFloat(
-      this.hass,
-      printerEntityCurrHotbedTemp,
-    );
-    const printerStateTargetNozzleTemp = getEntityStateFloat(
-      this.hass,
-      printerEntityTargetNozzleTemp,
-    );
-    const printerStateTargetHotbedTemp = getEntityStateFloat(
-      this.hass,
-      printerEntityTargetHotbedTemp,
-    );
-    const projectStateProgress = getEntityStateFloat(
-      this.hass,
-      projectEntityProgress,
-    );
-    const projectStatePrintState = getEntityStateString(
-      this.hass,
-      projectEntityPrintState,
-    );
-    const aceStateFwUpdateAvailable = getEntityStateBinary(
-      this.hass,
-      aceEntityFwUpdateAvailable,
-      "Update Available",
-      "Up To Date",
-    );
-    const aceStateDryingActive = getEntityStateBinary(
-      this.hass,
-      aceEntityDryingActive,
-      "Drying",
-      "Not Drying",
-    );
-    const aceStateFwVersion = getEntityStateString(
-      this.hass,
-      aceEntityFwVersion,
-    );
-    const aceStateDryingRemaining = getEntityStateFloat(
-      this.hass,
-      aceEntityDryingRemaining,
-    );
-    const aceStateDryingTotal = getEntityStateFloat(
-      this.hass,
-      aceEntityDryingTotal,
-    );
-
-    // prettier-ignore
-    const aceDryingProgress = (
-      aceStateDryingTotal > 0
-        ? Math.round((1 - (aceStateDryingRemaining / aceStateDryingTotal)) * 10000) / 100
-        : 0
-    ).toFixed(2);
-
     return html`
       <printer-card elevation="2">
-        ${this._renderInfoRow(
-          "printer_name",
-          this.selectedPrinterDevice ? this.selectedPrinterDevice.name : null,
-        )}
-        ${this._renderInfoRow("printer_id", printerID)}
-        ${this._renderInfoRow("printer_mac", printerMAC)}
-        ${this._renderInfoRow(
-          "printer_model",
-          this.selectedPrinterDevice ? this.selectedPrinterDevice.model : null,
-        )}
-        ${this._renderInfoRow(
-          "printer_fw_version",
-          this.selectedPrinterDevice
-            ? this.selectedPrinterDevice.sw_version
-            : null,
-        )}
-        ${this._renderInfoRow(
-          "printer_fw_update_available",
-          printerStateFwUpdateAvailable,
-        )}
-        ${this._renderInfoRow("printer_online", printerStateOnline)}
-        ${this._renderInfoRow("printer_available", printerStateAvailable)}
-        ${this._renderInfoRow("curr_nozzle_temp", printerStateCurrNozzleTemp)}
-        ${this._renderInfoRow("curr_hotbed_temp", printerStateCurrHotbedTemp)}
-        ${this._renderInfoRow(
-          "target_nozzle_temp",
-          printerStateTargetNozzleTemp,
-        )}
-        ${this._renderInfoRow(
-          "target_hotbed_temp",
-          printerStateTargetHotbedTemp,
-        )}
-        ${this._renderInfoRow(
-          "print_state",
-          toTitleCase(projectStatePrintState),
-        )}
-        ${this._renderInfoRow("project_progress", `${projectStateProgress}%`)}
-        ${this._renderOptionalInfoRow(
-          aceEntityFwVersion,
-          "ace_fw_version",
-          aceStateFwVersion,
-        )}
-        ${this._renderOptionalInfoRow(
-          aceEntityFwUpdateAvailable,
-          "ace_fw_update_available",
-          aceStateFwUpdateAvailable,
-        )}
-        ${this._renderOptionalInfoRow(
-          aceEntityDryingActive,
-          "drying_active",
-          aceStateDryingActive,
-        )}
-        ${this._renderOptionalInfoRow(
-          aceEntityDryingRemaining,
-          "drying_progress",
-          `${aceDryingProgress}%`,
-        )}
+        <anycubic-printercard-card
+          .hass=${this.hass}
+          .narrow=${this.narrow}
+          .route=${this.route}
+          .panel=${this.panel}
+          .selectedPrinterID=${this.selectedPrinterID}
+          .selectedPrinterDevice=${this.selectedPrinterDevice}
+          .showPercent=${true}
+          .round=${false}
+          .use_24hr=${true}
+        ></anycubic-printercard-card>
+        <div class="ac-extra-printer-info">
+          ${this._renderInfoRow(
+            "printer_name",
+            this.selectedPrinterDevice ? this.selectedPrinterDevice.name : null,
+          )}
+          ${this._renderInfoRow("printer_id", this.printerID)}
+          ${this._renderInfoRow("printer_mac", this.printerMAC)}
+          ${this._renderInfoRow(
+            "printer_model",
+            this.selectedPrinterDevice
+              ? this.selectedPrinterDevice.model
+              : null,
+          )}
+          ${this._renderInfoRow(
+            "printer_fw_version",
+            this.selectedPrinterDevice
+              ? this.selectedPrinterDevice.sw_version
+              : null,
+          )}
+          ${this._renderInfoRow(
+            "printer_fw_update_available",
+            this.printerStateFwUpdateAvailable,
+          )}
+          ${this._renderInfoRow("printer_online", this.printerStateOnline)}
+          ${this._renderInfoRow(
+            "printer_available",
+            this.printerStateAvailable,
+          )}
+          ${this._renderInfoRow(
+            "curr_nozzle_temp",
+            this.printerStateCurrNozzleTemp,
+          )}
+          ${this._renderInfoRow(
+            "curr_hotbed_temp",
+            this.printerStateCurrHotbedTemp,
+          )}
+          ${this._renderInfoRow(
+            "target_nozzle_temp",
+            this.printerStateTargetNozzleTemp,
+          )}
+          ${this._renderInfoRow(
+            "target_hotbed_temp",
+            this.printerStateTargetHotbedTemp,
+          )}
+          ${this._renderInfoRow("print_state", this.projectStatePrintState)}
+          ${this._renderInfoRow("project_progress", this.projectStateProgress)}
+          ${this._renderOptionalInfoRow(
+            "ace_fw_version",
+            this.aceStateFwVersion,
+          )}
+          ${this._renderOptionalInfoRow(
+            "ace_fw_update_available",
+            this.aceStateFwUpdateAvailable,
+          )}
+          ${this._renderOptionalInfoRow(
+            "drying_active",
+            this.aceStateDryingActive,
+          )}
+          ${this._renderOptionalInfoRow(
+            "drying_progress",
+            this.aceDryingProgress,
+          )}
+        </div>
       </printer-card>
     `;
   }
@@ -314,8 +346,18 @@ export class AnycubicViewMain extends LitElement {
         margin: 0 auto;
       }
 
+      .ac-extra-printer-info {
+        padding: 20px 40px;
+      }
+
       .info-row {
         margin-bottom: 6px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-direction: row;
+        box-sizing: border-box;
+        width: 100%;
       }
 
       .info-heading {
