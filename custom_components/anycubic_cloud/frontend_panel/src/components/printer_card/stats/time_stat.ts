@@ -51,7 +51,7 @@ export class AnycubicPrintercardStatTime extends LitElement {
     clearInterval(this.lastIntervalId);
   }
 
-  render() {
+  render(): any {
     return html`<anycubic-printercard-stat-line
       .name=${this.timeType}
       .value=${calculateTimeStat(
@@ -63,11 +63,11 @@ export class AnycubicPrintercardStatTime extends LitElement {
     ></anycubic-printercard-stat-line>`;
   }
 
-  incTime() {
+  incTime(): void {
     this.currentTime = parseInt(this.currentTime) + parseInt(this.direction);
   }
 
-  static get styles() {
+  static get styles(): any {
     return css`
       :host {
         box-sizing: border-box;

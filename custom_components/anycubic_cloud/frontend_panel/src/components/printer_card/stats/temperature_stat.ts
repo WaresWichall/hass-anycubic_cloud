@@ -20,7 +20,7 @@ export class AnycubicPrintercardStatTemperature extends LitElement {
   @property({ type: String })
   public temperatureUnit: TemperatureUnit;
 
-  render() {
+  render(): any {
     return html`<anycubic-printercard-stat-line
       .name=${this.name}
       .value=${getEntityTemperature(
@@ -31,7 +31,7 @@ export class AnycubicPrintercardStatTemperature extends LitElement {
     ></anycubic-printercard-stat-line>`;
   }
 
-  static get styles() {
+  static get styles(): any {
     return css`
       :host {
         box-sizing: border-box;

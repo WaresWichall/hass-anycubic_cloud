@@ -99,7 +99,7 @@ export class AnycubicViewMain extends LitElement {
   @state()
   private aceDryingProgress: string | undefined;
 
-  protected willUpdate(changedProperties: PropertyValues<this>) {
+  protected willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
 
     if (changedProperties.has("selectedPrinterDevice")) {
@@ -233,7 +233,7 @@ export class AnycubicViewMain extends LitElement {
     }
   }
 
-  private _renderInfoRow(fieldKey, rowData) {
+  private _renderInfoRow(fieldKey, rowData): HTMLElement {
     const languageKey = `panels.main.cards.main.fields.${fieldKey}.heading`;
     return html`
       <div class="info-row">
@@ -245,13 +245,13 @@ export class AnycubicViewMain extends LitElement {
     `;
   }
 
-  private _renderOptionalInfoRow(fieldKey, rowData) {
+  private _renderOptionalInfoRow(fieldKey, rowData): HTMLElement | null {
     return typeof rowData !== "undefined"
       ? this._renderInfoRow(fieldKey, rowData)
       : null;
   }
 
-  render() {
+  render(): any {
     return html`
       <printer-card elevation="2">
         <anycubic-printercard-card
@@ -332,7 +332,7 @@ export class AnycubicViewMain extends LitElement {
     `;
   }
 
-  static get styles() {
+  static get styles(): any {
     return css`
       :host {
         padding: 16px;

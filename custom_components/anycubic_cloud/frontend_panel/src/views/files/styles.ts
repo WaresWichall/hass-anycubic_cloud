@@ -1,6 +1,6 @@
 import { css } from "lit";
 
-export const commonFilesStyle = css`
+export const commonFilesStyle: any = css`
   .files-card {
     padding: 16px;
     display: block;

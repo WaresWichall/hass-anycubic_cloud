@@ -95,7 +95,7 @@ export class AnycubicPrintercardAnimatedPrinter extends LitElement {
   @state({ type: Boolean })
   private _isPrinting: boolean = false;
 
-  public connectedCallback() {
+  public connectedCallback(): void {
     super.connectedCallback();
 
     this._observer = new ResizeController(this, {
@@ -103,11 +103,11 @@ export class AnycubicPrintercardAnimatedPrinter extends LitElement {
     });
   }
 
-  public disconnectedCallback() {
+  public disconnectedCallback(): void {
     super.disconnectedCallback();
   }
 
-  protected willUpdate(changedProperties: PropertyValues<this>) {
+  protected willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
 
     if (
@@ -134,7 +134,7 @@ export class AnycubicPrintercardAnimatedPrinter extends LitElement {
     }
   }
 
-  protected update(changedProperties: PropertyValues<this>) {
+  protected update(changedProperties: PropertyValues<this>): void {
     super.update(changedProperties);
 
     if (
@@ -183,7 +183,7 @@ export class AnycubicPrintercardAnimatedPrinter extends LitElement {
     }
   }
 
-  render() {
+  render(): any {
     return html`
       <div class="ac-printercard-animatedprinter">
         ${this.dimensions
@@ -217,7 +217,7 @@ export class AnycubicPrintercardAnimatedPrinter extends LitElement {
     `;
   }
 
-  private _onResizeEvent = () => {
+  private _onResizeEvent = (): void => {
     if (this._rootElement) {
       const height = this._rootElement.clientHeight;
       const width = this._rootElement.clientWidth;
@@ -225,7 +225,7 @@ export class AnycubicPrintercardAnimatedPrinter extends LitElement {
     }
   };
 
-  setDimensions(width: number, height: number) {
+  setDimensions(width: number, height: number): void {
     this.dimensions = getDimensions(
       this.printerConfig,
       { width, height },
@@ -233,11 +233,11 @@ export class AnycubicPrintercardAnimatedPrinter extends LitElement {
     );
   }
 
-  moveGantry() {
+  moveGantry(): void {
     this.animKeyframeGantry = !this.animKeyframeGantry;
   }
 
-  static get styles() {
+  static get styles(): any {
     return css`
       :host {
         width: 100%;

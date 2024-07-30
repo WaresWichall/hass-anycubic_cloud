@@ -40,7 +40,7 @@ export class AnycubicViewFilesCloud extends LitElement {
   @state()
   private printerEntities: HassEntityInfos;
 
-  protected willUpdate(changedProperties: PropertyValues<this>) {
+  protected willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
 
     if (!changedProperties.has("selectedPrinterID")) {
@@ -53,7 +53,7 @@ export class AnycubicViewFilesCloud extends LitElement {
     );
   }
 
-  render() {
+  render(): any {
     const fileListEntity = getFileListCloudFilesEntity(this.printerEntities);
     const listRefreshEntity = getFileListCloudRefreshEntity(
       this.printerEntities,
@@ -69,7 +69,7 @@ export class AnycubicViewFilesCloud extends LitElement {
 
     return html`
       <div class="files-card" elevation="2">
-        <button class="file-refresh-button" @click="${(_e) => {
+        <button class="file-refresh-button" @click="${(_e): void => {
           this.refreshList(listRefreshEntity);
         }}"><ha-icon class="file-refresh-icon" icon="mdi:refresh"></ha-icon></button>
         <ul class="files-container">
@@ -81,7 +81,7 @@ export class AnycubicViewFilesCloud extends LitElement {
                     <div class="file-name">${fileInfo.name}</div>
                     <button
                       class="file-delete-button"
-                      @click="${(_e) => {
+                      @click="${(_e): void => {
                         this.deleteFile(fileInfo.id);
                       }}"
                     >
@@ -99,12 +99,12 @@ export class AnycubicViewFilesCloud extends LitElement {
     `;
   }
 
-  refreshList(entity) {
+  refreshList(entity): void {
     if (entity)
       this.hass.callService("button", "press", { entity_id: entity.entity_id });
   }
 
-  deleteFile(fileId) {
+  deleteFile(fileId): void {
     if (this.selectedPrinterDevice && fileId)
       this.hass.callService(platform, "delete_file_cloud", {
         config_entry: this.selectedPrinterDevice.primary_config_entry,
@@ -113,7 +113,7 @@ export class AnycubicViewFilesCloud extends LitElement {
       });
   }
 
-  static get styles() {
+  static get styles(): any {
     return css`
       ${commonFilesStyle} :host {
         padding: 16px;

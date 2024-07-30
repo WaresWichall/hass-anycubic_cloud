@@ -19,7 +19,7 @@ const stylePxKeys = ["width", "height", "left", "top"];
 export function updateElementStyleWithObject(
   el: HTMLElement | undefined,
   updateObj: any,
-) {
+): void {
   Object.keys(updateObj).forEach((key) => {
     if (stylePxKeys.includes(key) && !isNaN(updateObj[key])) {
       updateObj[key] = updateObj[key].toString() + "px";
@@ -30,11 +30,11 @@ export function updateElementStyleWithObject(
   }
 }
 
-export function numberFromString(str: string) {
+export function numberFromString(str: string): number {
   return Number(str.match(/\d+/)[0]);
 }
 
-export function toTitleCase(str: any) {
+export function toTitleCase(str: any): string {
   return str
     .toLowerCase()
     .split(" ")
@@ -305,7 +305,7 @@ export const navigateToPrinter = (
   node: any,
   printerID: string,
   replace: boolean = false,
-) => {
+): void => {
   const endpoint = printerID ? `${printerID}/main` : "";
   const url = `${node.route.prefix}/${endpoint}`;
   if (replace) {
@@ -322,7 +322,7 @@ export const navigateToPage = (
   node: any,
   path: string,
   replace: boolean = false,
-) => {
+): void => {
   const printerID = getPrinterDevID(node.route);
   const endpoint = printerID ? `${printerID}/${path}` : "";
   const url = `${node.route.prefix}/${endpoint}`;
@@ -339,7 +339,7 @@ export const navigateToPage = (
 export const formatDuration = (time: number, round: boolean): string => {
   return round
     ? moment.duration(time, "seconds").humanize()
-    : (() => {
+    : ((): string => {
         const t = moment.duration(time, "seconds");
 
         const d = t.days();
@@ -399,7 +399,9 @@ export function getEntityTotalSeconds(
   return result;
 }
 
-export const temperatureUnitFromEntity = (entity: HassEntity) => {
+export const temperatureUnitFromEntity = (
+  entity: HassEntity,
+): TemperatureUnit => {
   switch (entity.attributes?.unit_of_measurement) {
     case "°C":
       return TemperatureUnit.C;
@@ -412,12 +414,12 @@ export const temperatureUnitFromEntity = (entity: HassEntity) => {
 
 const temperatureMap = {
   [TemperatureUnit.C]: {
-    [TemperatureUnit.C]: (t) => t,
-    [TemperatureUnit.F]: (t) => (t * 9.0) / 5.0 + 32.0,
+    [TemperatureUnit.C]: (t): number => t,
+    [TemperatureUnit.F]: (t): number => (t * 9.0) / 5.0 + 32.0,
   },
   [TemperatureUnit.F]: {
-    [TemperatureUnit.C]: (t) => ((t - 32.0) * 5.0) / 9.0,
-    [TemperatureUnit.F]: (t) => t,
+    [TemperatureUnit.C]: (t): number => ((t - 32.0) * 5.0) / 9.0,
+    [TemperatureUnit.F]: (t): number => t,
   },
 };
 
@@ -425,7 +427,7 @@ export const convertTemperature = (
   temperature: number,
   from: TemperatureUnit,
   to: TemperatureUnit,
-) => {
+): number => {
   if (!temperatureMap[from] || !temperatureMap[from][to]) return -1;
 
   return temperatureMap[from][to](temperature);
@@ -435,7 +437,7 @@ export const getEntityTemperature = (
   temperatureEntity: HassEntity,
   temperatureUnit: TemperatureUnit,
   round: boolean = false,
-) => {
+): string => {
   const t: number = parseFloat(temperatureEntity.state);
   const u: TemperatureUnit = temperatureUnitFromEntity(temperatureEntity);
   const tc: number = convertTemperature(t, u, temperatureUnit || u);
@@ -443,7 +445,7 @@ export const getEntityTemperature = (
   return `${round ? Math.round(tc) : tc.toFixed(2)}°${temperatureUnit || u}`;
 };
 
-export function getDefaultMonitoredStats() {
+export function getDefaultMonitoredStats(): PrinterCardStatType[] {
   return [
     PrinterCardStatType.Status,
     PrinterCardStatType.ETA,

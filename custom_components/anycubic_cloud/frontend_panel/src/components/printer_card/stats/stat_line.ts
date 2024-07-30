@@ -9,7 +9,7 @@ export class AnycubicPrintercardStatLine extends LitElement {
   @property({ type: String })
   public value: string;
 
-  render() {
+  render(): any {
     return html`
       <div class="ac-stat-line">
         <p class="ac-stat-text ac-stat-heading">${this.name}</p>
@@ -18,7 +18,7 @@ export class AnycubicPrintercardStatLine extends LitElement {
     `;
   }
 
-  static get styles() {
+  static get styles(): any {
     return css`
       :host {
         box-sizing: border-box;

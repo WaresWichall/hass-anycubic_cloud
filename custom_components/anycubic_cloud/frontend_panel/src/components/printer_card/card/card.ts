@@ -84,7 +84,7 @@ export class AnycubicPrintercardCard extends LitElement {
   @state()
   private printerEntityIdPart: string | undefined;
 
-  protected willUpdate(changedProperties: PropertyValues<this>) {
+  protected willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
 
     if (changedProperties.has("selectedPrinterID")) {
@@ -138,7 +138,7 @@ export class AnycubicPrintercardCard extends LitElement {
     }
   }
 
-  render() {
+  render(): any {
     return html`
       <div class="ac-printer-card">
         <div class="ac-printer-card-mainview">
@@ -148,7 +148,7 @@ export class AnycubicPrintercardCard extends LitElement {
     `;
   }
 
-  renderHeader() {
+  renderHeader(): HTMLElement {
     const classesHeader = {
       "ac-h-justifycenter":
         this.powerEntityId && this.lightEntityId ? false : true,
@@ -164,7 +164,7 @@ export class AnycubicPrintercardCard extends LitElement {
           ? html`
               <button
                 class="ac-printer-card-button-small"
-                @click="${(_e) => {
+                @click="${(_e): void => {
                   this.togglePowerEntity();
                 }}"
               >
@@ -175,7 +175,7 @@ export class AnycubicPrintercardCard extends LitElement {
 
         <button
           class="ac-printer-card-button-name"
-          @click="${(_e) => {
+          @click="${(_e): void => {
             this.toggleHiddenOveride();
           }}"
         >
@@ -191,7 +191,7 @@ export class AnycubicPrintercardCard extends LitElement {
           ? html`
               <button
                 class="ac-printer-card-button-small"
-                @click="${(_e) => {
+                @click="${(_e): void => {
                   this.toggleLightEntity();
                 }}"
               >
@@ -205,7 +205,7 @@ export class AnycubicPrintercardCard extends LitElement {
     `;
   }
 
-  renderPrinterContainer() {
+  renderPrinterContainer(): HTMLElement {
     return html`
       <div class="ac-printer-card-infocontainer">
         <div class="ac-printer-card-info-animcontainer">
@@ -235,7 +235,7 @@ export class AnycubicPrintercardCard extends LitElement {
     `;
   }
 
-  renderMultiColorBoxContainer() {
+  renderMultiColorBoxContainer(): HTMLElement {
     return this.hasColorbox
       ? html`
           <div class="ac-printer-card-infocontainer">
@@ -251,25 +251,25 @@ export class AnycubicPrintercardCard extends LitElement {
       : null;
   }
 
-  toggleLightEntity() {
+  toggleLightEntity(): void {
     if (this.lightEntityId)
       this.hass.callService("homeassistant", "toggle", {
         entity_id: this.lightEntityId,
       });
   }
 
-  togglePowerEntity() {
+  togglePowerEntity(): void {
     if (this.powerEntityId)
       this.hass.callService("homeassistant", "toggle", {
         entity_id: this.powerEntityId,
       });
   }
 
-  toggleHiddenOveride() {
+  toggleHiddenOveride(): void {
     this.hiddenOverride = !this.hiddenOverride;
   }
 
-  static get styles() {
+  static get styles(): any {
     return css`
       :host {
         display: block;

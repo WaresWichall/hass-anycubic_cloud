@@ -24,7 +24,7 @@ export class AnycubicPrintercardMulticolorboxview extends LitElement {
   @state()
   private spoolList: AnycubicSpoolInfo[] = [];
 
-  protected willUpdate(changedProperties: PropertyValues<this>) {
+  protected willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
 
     if (
@@ -43,7 +43,7 @@ export class AnycubicPrintercardMulticolorboxview extends LitElement {
     }
   }
 
-  render() {
+  render(): any {
     return html`
       <div class="ac-printercard-mcbview">${this.renderSpools()}</div>
     `;
@@ -69,7 +69,7 @@ export class AnycubicPrintercardMulticolorboxview extends LitElement {
     });
   }
 
-  static get styles() {
+  static get styles(): any {
     return css`
       :host {
         box-sizing: border-box;

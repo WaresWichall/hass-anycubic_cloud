@@ -41,7 +41,7 @@ export interface HASSDomEvent<T> extends Event {
   detail: T;
 }
 
-export const fireEvent = (
+export const fireEvent: Event = (
   node: HTMLElement | Window,
   type: string,
   detail?: object,

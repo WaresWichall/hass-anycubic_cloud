@@ -13,7 +13,7 @@ export class AnycubicPrintercardPrinterview extends LitElement {
   public hass!: HomeAssistant;
 
   @property({ type: Function })
-  public toggleVideo?: void | undefined;
+  public toggleVideo?: () => void;
 
   @property({ type: Boolean })
   public hasCamera: boolean = false;
@@ -24,18 +24,18 @@ export class AnycubicPrintercardPrinterview extends LitElement {
   @property()
   public printerEntityIdPart: string | undefined;
 
-  public connectedCallback() {
+  public connectedCallback(): void {
     super.connectedCallback();
     if (this.hasCamera && this.toggleVideo)
       window.addEventListener("click", this.toggleVideo);
   }
-  public disconnectedCallback() {
+  public disconnectedCallback(): void {
     if (this.hasCamera && this.toggleVideo)
       window.removeEventListener("click", this.toggleVideo);
     super.disconnectedCallback();
   }
 
-  render() {
+  render(): any {
     return html`
       <div class="ac-printercard-printerview">
         <anycubic-printercard-animated_printer
@@ -48,7 +48,7 @@ export class AnycubicPrintercardPrinterview extends LitElement {
     `;
   }
 
-  static get styles() {
+  static get styles(): any {
     return css`
       :host {
         box-sizing: border-box;

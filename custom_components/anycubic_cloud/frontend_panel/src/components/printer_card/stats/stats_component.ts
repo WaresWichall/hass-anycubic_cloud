@@ -54,7 +54,7 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
   @state()
   private _progressPercent: number = 0;
 
-  protected willUpdate(changedProperties: PropertyValues<this>) {
+  protected willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
 
     if (
@@ -66,7 +66,7 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
     }
   }
 
-  render() {
+  render(): any {
     return html`
       <div class="ac-stats-component">
         ${this.showPercent
@@ -234,7 +234,7 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
     );
   }
 
-  static get styles() {
+  static get styles(): any {
     return css`
       :host {
         box-sizing: border-box;

@@ -37,7 +37,7 @@ export class AnycubicViewDebug extends LitElement {
   @state()
   private printerEntities: HassEntityInfos;
 
-  protected willUpdate(changedProperties: PropertyValues<this>) {
+  protected willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
 
     if (!changedProperties.has("selectedPrinterID")) {
@@ -50,7 +50,7 @@ export class AnycubicViewDebug extends LitElement {
     );
   }
 
-  render() {
+  render(): any {
     return html`
       <debug-data elevation="2">
         <p>There are ${Object.keys(this.hass.states).length} entities.</p>
@@ -69,7 +69,7 @@ export class AnycubicViewDebug extends LitElement {
     `;
   }
 
-  static get styles() {
+  static get styles(): any {
     return css`
       :host {
         padding: 16px;

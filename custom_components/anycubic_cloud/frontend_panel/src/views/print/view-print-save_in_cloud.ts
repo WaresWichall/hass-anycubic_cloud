@@ -30,7 +30,7 @@ export class AnycubicViewPrintSaveInCloud extends LitElement {
 
   @state() private narrow = false;
 
-  async firstUpdated() {
+  async firstUpdated(): void {
     await loadHaServiceControl();
   }
 
@@ -53,7 +53,7 @@ export class AnycubicViewPrintSaveInCloud extends LitElement {
     }
   }
 
-  render() {
+  render(): any {
     return html`
       <ac-print-view elevation="2">
         <ha-service-control
@@ -79,7 +79,7 @@ export class AnycubicViewPrintSaveInCloud extends LitElement {
     `;
   }
 
-  static get styles() {
+  static get styles(): any {
     return css`
       :host {
         padding: 16px;
@@ -105,7 +105,7 @@ export class AnycubicViewPrintSaveInCloud extends LitElement {
     this._scriptData = { ...this._scriptData, ...ev.detail.value };
   }
 
-  private async _runScript(ev: Event) {
+  private async _runScript(ev: Event): void {
     ev.stopPropagation();
     this.hass.callService(
       "anycubic_cloud",

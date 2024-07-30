@@ -1,4 +1,4 @@
-export const loadHaServiceControl = async () => {
+export const loadHaServiceControl = async (): void => {
   if (customElements.get("ha-service-control")) return;
 
   // Load in ha-service-control from developer-tools-service

@@ -11,15 +11,15 @@ class Scale {
     this.scale_factor = scale_factor;
   }
 
-  val(value) {
+  val(value): number {
     return this.scale_factor * value;
   }
 
-  og(value) {
+  og(value): number {
     return value / this.scale_factor;
   }
 
-  scaleFactor() {
+  scaleFactor(): number {
     return this.scale_factor;
   }
 }
@@ -157,7 +157,7 @@ export function getDimensions(
   };
 }
 
-export const printerConfigAnycubic = {
+export const printerConfigAnycubic: AnimatedPrinterConfig = {
   top: {
     width: 350,
     height: 20,
