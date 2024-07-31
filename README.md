@@ -2,21 +2,29 @@
 
 ## WORK IN PROGRESS 
 
-Component is working very well so far with a Kobra 3 Combo but will still have bugs that I'll need help ironing out.
+Component is working very well so far with Kobra 3 Combos and Kobra 2s but will still have bugs that I'll need help ironing out.
 
-Should work with multiple printers but untested until someone buys me a second printer :)
+Should also work with multiple printers but untested until someone buys me a second printer :)
 
 ## Gallery
 
 
 <img width="400" alt="" src="https://github.com/user-attachments/assets/80d15c03-fdbd-495c-be04-2d07fc68cc3a">
 <img width="400" alt="Screenshot 2024-07-25 at 3 55 16 PM" src="https://github.com/user-attachments/assets/f557f362-2e08-461e-8416-83257a65f02e">
+<img width="400" alt="Screenshot 2024-07-31 at 08 51 40" src="https://github.com/user-attachments/assets/8a033e2c-cd20-40b1-b48e-428a7952e552">
+<img width="400" alt="Screenshot 2024-07-31 at 08 52 01" src="https://github.com/user-attachments/assets/42e07a10-e2a2-481a-b454-4498c1fb6181">
+
+
 
 
 
 ## Features
 
+- Start print services / UI panel
 - Pause/Resume/Cancel print buttons
+- Edit ACE slot colours/settings via services
+- File manager via services / UI panel
+- Retraction/Extrude services
 - Remaining/Elapsed time
 - Current Layer
 - Current Status
@@ -43,4 +51,4 @@ Should work with multiple printers but untested until someone buys me a second p
 This integration couples with my [modded version of the threedy card for Home Assistant](https://github.com/WaresWichall/hass-threedy_anycubic_card)
 
 It also comes with a WORK IN PROGRESS frontend panel which will be added to your sidebar.
-The main use-case of this panel is as a file manager, but my plan is to add more functionality to it as well as rebuild the card in Lit instead of react. Any help there is welcome.
+The main use-case of this panel is as a file manager, but I'll continue to add more functionality to it.
