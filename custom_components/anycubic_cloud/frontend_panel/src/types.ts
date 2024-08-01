@@ -155,6 +155,11 @@ export enum TextStatType {
   BedCurrent = "Bed",
   HotendTarget = "Target Hotend",
   BedTarget = "Target Bed",
+  PrinterOnline = "Online",
+  Availability = "Availability",
+  ProjectName = "Project Name",
+  CurrentLayer = "Current Layer",
+  DryingActive = "Drying Active",
 }
 
 export const PrinterCardStatType = { ...CalculatedTimeType, ...TextStatType };

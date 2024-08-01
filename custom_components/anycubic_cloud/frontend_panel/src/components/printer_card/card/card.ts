@@ -23,6 +23,8 @@ import {
   getPrinterEntities,
   getPrinterEntityIdPart,
   getPrinterSensorStateObj,
+  isPrintStatePrinting,
+  printStateStatusColor,
   undefinedDefault,
 } from "../../../helpers";
 
@@ -158,16 +160,8 @@ export class AnycubicPrintercardCard extends LitElement {
         "unknown",
       ).state.toLowerCase();
       this.isHidden =
-        !["printing", "preheating"].includes(printStateString) &&
-        !this.hiddenOverride;
-      this.statusColor = ["printing", "preheating"].includes(printStateString)
-        ? "#4caf50"
-        : printStateString === "unknown"
-          ? "#f44336"
-          : printStateString === "operational" ||
-              printStateString === "finished"
-            ? "#00bcd4"
-            : "#ffc107";
+        !isPrintStatePrinting(printStateString) && !this.hiddenOverride;
+      this.statusColor = printStateStatusColor(printStateString);
       this.lightIsOn = getEntityStateBinary(
         this.hass,
         { entity_id: this.lightEntityId },
@@ -485,6 +479,7 @@ export class AnycubicPrintercardCard extends LitElement {
         justify-content: space-between;
         padding-left: 16px;
         padding-right: 16px;
+        max-height: 270px;
       }
 
       .ac-printer-card-info-animcontainer.ac-card-vertical {
@@ -492,6 +487,7 @@ export class AnycubicPrintercardCard extends LitElement {
         height: auto;
         padding-left: 64px;
         padding-right: 64px;
+        max-height: unset;
       }
 
       anycubic-printercard-printer_view {

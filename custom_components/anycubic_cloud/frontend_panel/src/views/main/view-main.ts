@@ -4,6 +4,7 @@ import { property, customElement, state } from "lit/decorators.js";
 import { localize } from "../../../localize/localize";
 
 import {
+  getAllMonitoredStats,
   getPrinterEntities,
   getPrinterEntityIdPart,
   getPrinterID,
@@ -18,9 +19,12 @@ import {
   HassEntityInfos,
   HassPanel,
   HassRoute,
+  PrinterCardStatType,
 } from "../../types";
 
 import "../../components/printer_card/card/card.ts";
+
+const monitoredStats: PrinterCardStatType[] = getAllMonitoredStats();
 
 @customElement("anycubic-view-main")
 export class AnycubicViewMain extends LitElement {
@@ -261,6 +265,7 @@ export class AnycubicViewMain extends LitElement {
           .vertical=${false}
           .round=${false}
           .use_24hr=${true}
+          .monitoredStats=${monitoredStats}
         ></anycubic-printercard-card>
         <div class="ac-extra-printer-info">
           ${this._renderInfoRow(

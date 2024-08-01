@@ -8,6 +8,7 @@ import { customElementIfUndef } from "../../../internal/register-custom-element"
 
 import {
   getPrinterSensorStateObj,
+  isPrintStatePrinting,
   updateElementStyleWithObject,
 } from "../../../helpers";
 
@@ -132,7 +133,7 @@ export class AnycubicPrintercardAnimatedPrinter extends LitElement {
         "print_state",
       ).state.toLowerCase();
 
-      this._isPrinting = ["printing", "preheating"].includes(printingState);
+      this._isPrinting = isPrintStatePrinting(printingState);
     }
   }
 

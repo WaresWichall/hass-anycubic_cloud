@@ -4,7 +4,11 @@ import { repeat } from "lit/directives/repeat.js";
 
 import { customElementIfUndef } from "../../../internal/register-custom-element";
 
-import { getPrinterSensorStateObj, toTitleCase } from "../../../helpers";
+import {
+  getPrinterBinarySensorState,
+  getPrinterSensorStateObj,
+  toTitleCase,
+} from "../../../helpers";
 import {
   HassEntityInfos,
   HomeAssistant,
@@ -47,10 +51,10 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
 
   render(): any {
     return html`
-      <div class="ac-stats-component">
+      <div class="ac-stats-box ac-stats-section">
         ${this.showPercent
           ? html`
-              <div class="ac-stats-part-percent">
+              <div class="ac-stats-box ac-stats-part-percent">
                 <p class="ac-stats-part-percent-text">
                   ${this.round
                     ? Math.round(this.progressPercent)
@@ -59,7 +63,7 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
               </div>
             `
           : null}
-        <div class="ac-stats-part-monitored">${this._renderStats()}</div>
+        <div class="ac-stats-box ac-stats-section">${this._renderStats()}</div>
       </div>
     `;
   }
@@ -191,6 +195,79 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
               ></anycubic-printercard-stat-temperature>
             `;
 
+          case PrinterCardStatType.PrinterOnline:
+            return html`
+              <anycubic-printercard-stat-line
+                .name=${condition}
+                .value=${getPrinterBinarySensorState(
+                  this.hass,
+                  this.printerEntities,
+                  this.printerEntityIdPart,
+                  "printer_online",
+                  "Online",
+                  "Offline",
+                )}
+              ></anycubic-printercard-stat-line>
+            `;
+
+          case PrinterCardStatType.Availability:
+            return html`
+              <anycubic-printercard-stat-line
+                .name=${condition}
+                .value=${toTitleCase(
+                  getPrinterSensorStateObj(
+                    this.hass,
+                    this.printerEntities,
+                    this.printerEntityIdPart,
+                    "current_status",
+                  ).state,
+                )}
+              ></anycubic-printercard-stat-line>
+            `;
+
+          case PrinterCardStatType.ProjectName:
+            return html`
+              <anycubic-printercard-stat-line
+                .name=${condition}
+                .value=${toTitleCase(
+                  getPrinterSensorStateObj(
+                    this.hass,
+                    this.printerEntities,
+                    this.printerEntityIdPart,
+                    "project_name",
+                  ).state,
+                )}
+              ></anycubic-printercard-stat-line>
+            `;
+
+          case PrinterCardStatType.CurrentLayer:
+            return html`
+              <anycubic-printercard-stat-line
+                .name=${condition}
+                .value=${getPrinterSensorStateObj(
+                  this.hass,
+                  this.printerEntities,
+                  this.printerEntityIdPart,
+                  "current_layer",
+                ).state}
+              ></anycubic-printercard-stat-line>
+            `;
+
+          case PrinterCardStatType.DryingActive:
+            return html`
+              <anycubic-printercard-stat-line
+                .name=${condition}
+                .value=${getPrinterBinarySensorState(
+                  this.hass,
+                  this.printerEntities,
+                  this.printerEntityIdPart,
+                  "drying_active",
+                  "Drying",
+                  "Not Drying",
+                )}
+              ></anycubic-printercard-stat-line>
+            `;
+
           default:
             return html`
               <anycubic-printercard-stat-line
@@ -210,23 +287,21 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
         width: 100%;
       }
 
-      .ac-stats-component {
+      .ac-stats-box {
         box-sizing: border-box;
         width: 100%;
         height: 100%;
         display: flex;
-        flex-direction: column;
-        justify-content: center;
         align-items: center;
       }
 
-      .ac-stats-part-percent {
-        box-sizing: border-box;
-        width: 100%;
-        height: 100%;
-        display: flex;
+      .ac-stats-section {
+        flex-direction: column;
         justify-content: center;
-        align-items: center;
+      }
+
+      .ac-stats-part-percent {
+        justify-content: center;
         margin-bottom: 20px;
       }
       .ac-stats-part-percent-text {
@@ -235,16 +310,6 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
         font-weight: bold;
         height: 44px;
         line-height: 44px;
-      }
-
-      .ac-stats-part-monitored {
-        box-sizing: border-box;
-        width: 100%;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
       }
     `;
   }

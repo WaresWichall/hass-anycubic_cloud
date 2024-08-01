@@ -302,6 +302,20 @@ export function getPage(route: HassRoute): string {
   return pathParts.length > 2 ? pathParts[2] : "main";
 }
 
+export function isPrintStatePrinting(printStateString: string): boolean {
+  return ["printing", "preheating"].includes(printStateString);
+}
+
+export function printStateStatusColor(printStateString: string): string {
+  return isPrintStatePrinting(printStateString)
+    ? "#4caf50"
+    : printStateString === "unknown"
+      ? "#f44336"
+      : printStateString === "operational" || printStateString === "finished"
+        ? "#00bcd4"
+        : "#ffc107";
+}
+
 export const navigateToPrinter = (
   node: any,
   printerID: string,
@@ -458,6 +472,24 @@ export function getDefaultMonitoredStats(): PrinterCardStatType[] {
     PrinterCardStatType.Remaining,
     PrinterCardStatType.HotendTarget,
     PrinterCardStatType.BedTarget,
+  ];
+}
+
+export function getAllMonitoredStats(): PrinterCardStatType[] {
+  return [
+    PrinterCardStatType.Status,
+    PrinterCardStatType.ETA,
+    PrinterCardStatType.Elapsed,
+    PrinterCardStatType.HotendCurrent,
+    PrinterCardStatType.BedCurrent,
+    PrinterCardStatType.Remaining,
+    PrinterCardStatType.HotendTarget,
+    PrinterCardStatType.BedTarget,
+    PrinterCardStatType.PrinterOnline,
+    PrinterCardStatType.Availability,
+    PrinterCardStatType.ProjectName,
+    PrinterCardStatType.CurrentLayer,
+    PrinterCardStatType.DryingActive,
   ];
 }
 

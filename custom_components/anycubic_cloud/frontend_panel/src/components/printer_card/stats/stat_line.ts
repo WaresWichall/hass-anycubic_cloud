@@ -41,10 +41,14 @@ export class AnycubicPrintercardStatLine extends LitElement {
         margin: 0;
         font-size: 16px;
         display: inline-block;
+        max-width: 100px;
+        overflow: scroll;
       }
 
       .ac-stat-heading {
         font-weight: bold;
+        max-width: unset;
+        overflow: unset;
       }
     `;
   }
