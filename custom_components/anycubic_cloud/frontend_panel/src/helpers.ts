@@ -45,6 +45,17 @@ export function toTitleCase(str: any): string {
     .join(" ");
 }
 
+export function prettyFilename(str: string): string {
+  const splitI = str.indexOf("-0.");
+  const splitName =
+    splitI > 0 ? [str.slice(0, splitI), str.slice(splitI + 1)] : [str];
+  const chunksFirst = splitName[0].match(/.{1,10}/g);
+  const joinFirst = chunksFirst.join("\n");
+  return splitName.length > 1
+    ? joinFirst + "-" + splitName.slice(1)
+    : joinFirst;
+}
+
 export function getEntityState(
   hass: HomeAssistant,
   entityInfo: HassEntityInfo,

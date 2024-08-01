@@ -7,6 +7,7 @@ import { customElementIfUndef } from "../../../internal/register-custom-element"
 import {
   getPrinterBinarySensorState,
   getPrinterSensorStateObj,
+  prettyFilename,
   toTitleCase,
 } from "../../../helpers";
 import {
@@ -229,7 +230,7 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
             return html`
               <anycubic-printercard-stat-line
                 .name=${condition}
-                .value=${toTitleCase(
+                .value=${prettyFilename(
                   getPrinterSensorStateObj(
                     this.hass,
                     this.printerEntities,

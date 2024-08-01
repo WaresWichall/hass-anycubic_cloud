@@ -5998,7 +5998,12 @@
             return Z`
               <anycubic-printercard-stat-line
                 .name=${t}
-                .value=${Ht(Yt(this.hass, this.printerEntities, this.printerEntityIdPart, "project_name").state)}
+                .value=${function (t) {
+              const e = t.indexOf("-0."),
+                i = e > 0 ? [t.slice(0, e), t.slice(e + 1)] : [t],
+                r = i[0].match(/.{1,10}/g).join("\n");
+              return i.length > 1 ? r + "-" + i.slice(1) : r;
+            }(Yt(this.hass, this.printerEntities, this.printerEntityIdPart, "project_name").state)}
               ></anycubic-printercard-stat-line>
             `;
           case Mt.CurrentLayer:
