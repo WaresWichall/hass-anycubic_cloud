@@ -48,7 +48,16 @@ Should also work with multiple printers but untested until someone buys me a sec
 
 ## UI
 
-This integration couples with my [modded version of the threedy card for Home Assistant](https://github.com/WaresWichall/hass-threedy_anycubic_card)
+This integration couples with my [Anycubic card for Home Assistant](https://github.com/WaresWichall/hass-anycubic_card)
 
 It also comes with a WORK IN PROGRESS frontend panel which will be added to your sidebar.
-The main use-case of this panel is as a file manager, but I'll continue to add more functionality to it.
+Current features:
+- Basic printer info (+ the printer card above)
+- File manager (requires MQTT connection to be active)
+- Start print services
+
+### Old UI Card
+
+Thanks to @dangreco for his original work on threedy which I first modded and then completely rewrote with Lit instead of React.
+
+The modded threedy card is still available [here](https://github.com/WaresWichall/hass-threedy_anycubic_card)

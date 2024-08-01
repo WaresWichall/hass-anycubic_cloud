@@ -100,17 +100,19 @@ export class AnycubicViewFilesCloud extends LitElement {
   }
 
   refreshList(entity): void {
-    if (entity)
+    if (entity) {
       this.hass.callService("button", "press", { entity_id: entity.entity_id });
+    }
   }
 
   deleteFile(fileId): void {
-    if (this.selectedPrinterDevice && fileId)
+    if (this.selectedPrinterDevice && fileId) {
       this.hass.callService(platform, "delete_file_cloud", {
         config_entry: this.selectedPrinterDevice.primary_config_entry,
         device_id: this.selectedPrinterDevice.id,
         file_id: fileId,
       });
+    }
   }
 
   static get styles(): any {

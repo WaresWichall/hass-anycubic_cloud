@@ -159,19 +159,19 @@ export function getDimensions(
 
 export const printerConfigAnycubic: AnimatedPrinterConfig = {
   top: {
-    width: 350,
+    width: 340,
     height: 20,
   },
   bottom: {
-    width: 350,
+    width: 340,
     height: 52.3,
   },
   left: {
-    width: 40,
+    width: 30,
     height: 380,
   },
   right: {
-    width: 40,
+    width: 30,
     height: 380,
   },
 
@@ -183,8 +183,8 @@ export const printerConfigAnycubic: AnimatedPrinterConfig = {
 
   xAxis: {
     stepper: true,
-    width: 420,
-    offsetLeft: -40,
+    width: 400,
+    offsetLeft: -30,
     height: 30,
     extruder: {
       width: 60,

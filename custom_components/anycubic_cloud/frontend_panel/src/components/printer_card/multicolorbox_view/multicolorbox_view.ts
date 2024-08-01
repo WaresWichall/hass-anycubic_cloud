@@ -1,7 +1,9 @@
 import { LitElement, html, css, PropertyValues } from "lit";
-import { property, customElement, state } from "lit/decorators.js";
+import { property, state } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
 import { styleMap } from "lit-html/directives/style-map.js";
+
+import { customElementIfUndef } from "../../../internal/register-custom-element";
 
 import { getPrinterSensorStateObj } from "../../../helpers";
 import {
@@ -10,7 +12,7 @@ import {
   HassEntityInfos,
 } from "../../../types";
 
-@customElement("anycubic-printercard-multicolorbox_view")
+@customElementIfUndef("anycubic-printercard-multicolorbox_view")
 export class AnycubicPrintercardMulticolorboxview extends LitElement {
   @property()
   public hass!: HomeAssistant;
@@ -45,11 +47,11 @@ export class AnycubicPrintercardMulticolorboxview extends LitElement {
 
   render(): any {
     return html`
-      <div class="ac-printercard-mcbview">${this.renderSpools()}</div>
+      <div class="ac-printercard-mcbview">${this._renderSpools()}</div>
     `;
   }
 
-  renderSpools(): HTMLElement {
+  private _renderSpools(): HTMLElement {
     return map(this.spoolList, (spool, index) => {
       const ringStyle = {
         "background-color": spool.spool_loaded

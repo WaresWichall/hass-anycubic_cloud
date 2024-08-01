@@ -1,7 +1,9 @@
 import { LitElement, html, css } from "lit";
-import { property, customElement } from "lit/decorators.js";
+import { property } from "lit/decorators.js";
 
-@customElement("anycubic-printercard-stat-line")
+import { customElementIfUndef } from "../../../internal/register-custom-element";
+
+@customElementIfUndef("anycubic-printercard-stat-line")
 export class AnycubicPrintercardStatLine extends LitElement {
   @property({ type: String })
   public name: string;

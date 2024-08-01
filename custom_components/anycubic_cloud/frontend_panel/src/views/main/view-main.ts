@@ -256,12 +256,9 @@ export class AnycubicViewMain extends LitElement {
       <printer-card elevation="2">
         <anycubic-printercard-card
           .hass=${this.hass}
-          .narrow=${this.narrow}
-          .route=${this.route}
-          .panel=${this.panel}
           .selectedPrinterID=${this.selectedPrinterID}
           .selectedPrinterDevice=${this.selectedPrinterDevice}
-          .showPercent=${true}
+          .vertical=${false}
           .round=${false}
           .use_24hr=${true}
         ></anycubic-printercard-card>
@@ -344,6 +341,10 @@ export class AnycubicViewMain extends LitElement {
         font-size: 18px;
         max-width: 600px;
         margin: 0 auto;
+      }
+
+      anycubic-printercard-card {
+        margin: 24px;
       }
 
       .ac-extra-printer-info {

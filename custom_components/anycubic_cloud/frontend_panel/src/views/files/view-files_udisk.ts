@@ -100,17 +100,19 @@ export class AnycubicViewFilesUdisk extends LitElement {
   }
 
   refreshList(entity): void {
-    if (entity)
+    if (entity) {
       this.hass.callService("button", "press", { entity_id: entity.entity_id });
+    }
   }
 
   deleteFile(filename): void {
-    if (this.selectedPrinterDevice && filename)
+    if (this.selectedPrinterDevice && filename) {
       this.hass.callService(platform, "delete_file_udisk", {
         config_entry: this.selectedPrinterDevice.primary_config_entry,
         device_id: this.selectedPrinterDevice.id,
         filename: filename,
       });
+    }
   }
 
   static get styles(): any {

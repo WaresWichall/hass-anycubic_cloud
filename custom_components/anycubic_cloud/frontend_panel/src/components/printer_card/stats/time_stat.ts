@@ -1,12 +1,14 @@
 import { LitElement, html, css, PropertyValues } from "lit";
-import { property, state, customElement } from "lit/decorators.js";
+import { property, state } from "lit/decorators.js";
+
+import { customElementIfUndef } from "../../../internal/register-custom-element";
 
 import { calculateTimeStat, getEntityTotalSeconds } from "../../../helpers";
 import { CalculatedTimeType, HassEntity } from "../../../types";
 
 import "./stat_line.ts";
 
-@customElement("anycubic-printercard-stat-time")
+@customElementIfUndef("anycubic-printercard-stat-time")
 export class AnycubicPrintercardStatTime extends LitElement {
   @property()
   public timeEntity: HassEntity;
@@ -39,11 +41,13 @@ export class AnycubicPrintercardStatTime extends LitElement {
       return;
     }
 
-    if (this.lastIntervalId !== -1) clearInterval(this.lastIntervalId);
+    if (this.lastIntervalId !== -1) {
+      clearInterval(this.lastIntervalId);
+    }
 
     this.currentTime = getEntityTotalSeconds(this.timeEntity);
 
-    this.lastIntervalId = setInterval(() => this.incTime(), 1000);
+    this.lastIntervalId = setInterval(() => this._incTime(), 1000);
   }
 
   public disconnectedCallback(): void {
@@ -63,7 +67,7 @@ export class AnycubicPrintercardStatTime extends LitElement {
     ></anycubic-printercard-stat-line>`;
   }
 
-  incTime(): void {
+  private _incTime(): void {
     this.currentTime = parseInt(this.currentTime) + parseInt(this.direction);
   }
 

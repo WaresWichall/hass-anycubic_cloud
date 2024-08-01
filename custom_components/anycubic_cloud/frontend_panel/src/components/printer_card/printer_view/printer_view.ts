@@ -1,5 +1,7 @@
 import { LitElement, html, css } from "lit";
-import { property, customElement } from "lit/decorators.js";
+import { property } from "lit/decorators.js";
+
+import { customElementIfUndef } from "../../../internal/register-custom-element";
 
 import { HassEntityInfos, HomeAssistant } from "../../../types";
 
@@ -7,7 +9,7 @@ import { printerConfigAnycubic } from "./utils";
 
 import "./animated_printer.ts";
 
-@customElement("anycubic-printercard-printer_view")
+@customElementIfUndef("anycubic-printercard-printer_view")
 export class AnycubicPrintercardPrinterview extends LitElement {
   @property()
   public hass!: HomeAssistant;
@@ -15,29 +17,20 @@ export class AnycubicPrintercardPrinterview extends LitElement {
   @property({ type: Function })
   public toggleVideo?: () => void;
 
-  @property({ type: Boolean })
-  public hasCamera: boolean = false;
-
   @property()
   public printerEntities: HassEntityInfos;
 
   @property()
   public printerEntityIdPart: string | undefined;
 
-  public connectedCallback(): void {
-    super.connectedCallback();
-    if (this.hasCamera && this.toggleVideo)
-      window.addEventListener("click", this.toggleVideo);
-  }
-  public disconnectedCallback(): void {
-    if (this.hasCamera && this.toggleVideo)
-      window.removeEventListener("click", this.toggleVideo);
-    super.disconnectedCallback();
-  }
-
   render(): any {
     return html`
-      <div class="ac-printercard-printerview">
+      <div
+        class="ac-printercard-printerview"
+        @click="${(_e): void => {
+          this._viewClick();
+        }}"
+      >
         <anycubic-printercard-animated_printer
           .hass=${this.hass}
           .printerEntities=${this.printerEntities}
@@ -46,6 +39,12 @@ export class AnycubicPrintercardPrinterview extends LitElement {
         ></anycubic-printercard-animated_printer>
       </div>
     `;
+  }
+
+  private _viewClick(): void {
+    if (this.toggleVideo) {
+      this.toggleVideo();
+    }
   }
 
   static get styles(): any {

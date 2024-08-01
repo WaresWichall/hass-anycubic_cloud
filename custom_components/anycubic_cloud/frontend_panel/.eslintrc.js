@@ -7,6 +7,7 @@ module.exports = {
     'plugin:prettier/recommended',  // Enables eslint-plugin-prettier and displays prettier errors as ESLint errors. Make sure this is always the last configuration in the extends array.
     'plugin:lit/recommended',
   ],
+  plugins: ["prettier", "lit"],
   parserOptions: {
     ecmaVersion: 2018,  // Allows for the parsing of modern ECMAScript features
     sourceType: 'module',  // Allows for the use of imports
@@ -44,8 +45,28 @@ module.exports = {
     '@typescript-eslint/prefer-as-const': 'error',
     '@typescript-eslint/prefer-literal-enum-member': 'error',
     '@typescript-eslint/triple-slash-reference': 'error',
-    '@typescript-eslint/unified-signatures': 'error'
+    '@typescript-eslint/unified-signatures': 'error',
+    'no-console': 'warn',
+    'no-var': 'error',
+    'prefer-const': 'error',
+    'curly': 'error',
+    'lit/no-duplicate-template-bindings': 'error',
+    'lit/no-template-map': 'error',
+    'lit/no-useless-template-literals': 'error',
+    'lit/attribute-value-entities': 'error',
+    'lit/binding-positions': 'error',
+    'lit/no-property-change-update': 'error',
+    'lit/no-invalid-html': 'error',
+    'eqeqeq': 'error',
+    'no-unused-vars': 'off'
   },
+  overrides: [
+    {
+      files: [
+        '*.ts'
+      ]
+    },
+  ],
   globals: {
     customElements: "writable",
     document: "writable",

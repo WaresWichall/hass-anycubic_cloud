@@ -4,6 +4,7 @@ import { property, customElement, state } from "lit/decorators.js";
 
 import { localize } from "../../../localize/localize";
 
+import { fireHaptic } from "../../fire_haptic";
 import { loadHaServiceControl } from "../../load-ha-elements";
 import { HomeAssistant, HassDevice, HassPanel, HassRoute } from "../../types";
 
@@ -107,6 +108,7 @@ export class AnycubicViewPrintSaveInCloud extends LitElement {
 
   private async _runScript(ev: Event): void {
     ev.stopPropagation();
+    fireHaptic();
     this.hass.callService(
       "anycubic_cloud",
       "print_and_upload_save_in_cloud",

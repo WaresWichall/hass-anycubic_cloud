@@ -99,6 +99,24 @@ export interface HassRoute {
   path: string;
 }
 
+export interface HaTextField {
+  name: string;
+  value: string;
+}
+
+export type HaFormData = string | number | boolean | string[];
+
+export interface HaFormBaseSchema {
+  name: string;
+  default?: HaFormData;
+  required?: boolean;
+  description?: {
+    suffix?: string;
+    suggested_value?: HaFormData;
+  };
+  context?: Record<string, string>;
+}
+
 export interface AnycubicFileLocal {
   name: string;
   size_mb: number;
@@ -205,4 +223,16 @@ export interface AnycubicSpoolInfo {
   color: number[];
   status: number;
   spool_loaded: boolean;
+}
+
+export interface AnycubicCardConfig {
+  printer_id?: string;
+  vertical?: boolean;
+  round?: boolean;
+  use_24hr?: boolean;
+  temperatureUnit?: TemperatureUnit;
+  lightEntityId?: string;
+  powerEntityId?: string;
+  cameraEntityId?: string;
+  monitoredStats?: PrinterCardStatType[];
 }

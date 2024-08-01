@@ -1,8 +1,10 @@
 import { LitElement, html, css, PropertyValues } from "lit";
-import { property, customElement, state } from "lit/decorators.js";
+import { property, state } from "lit/decorators.js";
 import { query } from "lit/decorators/query.js";
 import { ResizeController } from "@lit-labs/observers/resize-controller.js";
 import { animate } from "@lit-labs/motion";
+
+import { customElementIfUndef } from "../../../internal/register-custom-element";
 
 import {
   getPrinterSensorStateObj,
@@ -33,7 +35,7 @@ const animOptionsAxis = {
   properties: ["top"],
 };
 
-@customElement("anycubic-printercard-animated_printer")
+@customElementIfUndef("anycubic-printercard-animated_printer")
 export class AnycubicPrintercardAnimatedPrinter extends LitElement {
   @query(".ac-printercard-animatedprinter")
   private _rootElement;
@@ -98,7 +100,7 @@ export class AnycubicPrintercardAnimatedPrinter extends LitElement {
   public connectedCallback(): void {
     super.connectedCallback();
 
-    this._observer = new ResizeController(this, {
+    this.resizeObserver = new ResizeController(this, {
       callback: this._onResizeEvent,
     });
   }
@@ -151,7 +153,7 @@ export class AnycubicPrintercardAnimatedPrinter extends LitElement {
       updateElementStyleWithObject(this._elAcAPr_gantry, {
         ...this.dimensions.Gantry,
         left:
-          this.animKeyframeGantry != 0
+          this.animKeyframeGantry !== 0
             ? this.dimensions.Gantry.left + this.dimensions.BuildPlate.width
             : this.dimensions.Gantry.left,
         top: this.dimensions.Gantry.top + progY,
@@ -205,7 +207,7 @@ export class AnycubicPrintercardAnimatedPrinter extends LitElement {
                 ${this.dimensions && this._isPrinting
                   ? animate({
                       ...animOptionsGantry,
-                      onComplete: () => this.moveGantry(),
+                      onComplete: () => this._moveGantry(),
                     })
                   : null}
               >
@@ -221,11 +223,11 @@ export class AnycubicPrintercardAnimatedPrinter extends LitElement {
     if (this._rootElement) {
       const height = this._rootElement.clientHeight;
       const width = this._rootElement.clientWidth;
-      this.setDimensions(width, height);
+      this._setDimensions(width, height);
     }
   };
 
-  setDimensions(width: number, height: number): void {
+  private _setDimensions(width: number, height: number): void {
     this.dimensions = getDimensions(
       this.printerConfig,
       { width, height },
@@ -233,13 +235,14 @@ export class AnycubicPrintercardAnimatedPrinter extends LitElement {
     );
   }
 
-  moveGantry(): void {
+  private _moveGantry(): void {
     this.animKeyframeGantry = !this.animKeyframeGantry;
   }
 
   static get styles(): any {
     return css`
       :host {
+        display: block;
         width: 100%;
         height: 100%;
         box-sizing: border-box;

@@ -56,7 +56,9 @@ export class AnycubicCloudPanel extends LitElement {
 
   async firstUpdated(): void {
     window.addEventListener("location-changed", () => {
-      if (!window.location.pathname.includes("anycubic-cloud")) return;
+      if (!window.location.pathname.includes("anycubic-cloud")) {
+        return;
+      }
       this.requestUpdate();
     });
 

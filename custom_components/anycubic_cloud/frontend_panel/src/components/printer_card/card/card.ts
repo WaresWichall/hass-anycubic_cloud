@@ -1,14 +1,16 @@
 import { mdiPower, mdiLightbulbOn, mdiLightbulbOff } from "@mdi/js";
 import { LitElement, html, css, PropertyValues } from "lit";
-import { property, customElement, state } from "lit/decorators.js";
+import { property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { styleMap } from "lit-html/directives/style-map.js";
+import { animate } from "@lit-labs/motion";
+
+import { customElementIfUndef } from "../../../internal/register-custom-element";
 
 import {
   HassDevice,
+  HassEntity,
   HassEntityInfos,
-  HassPanel,
-  HassRoute,
   HomeAssistant,
   PrinterCardStatType,
   TemperatureUnit,
@@ -16,40 +18,43 @@ import {
 
 import {
   getDefaultMonitoredStats,
+  getEntityState,
   getEntityStateBinary,
   getPrinterEntities,
   getPrinterEntityIdPart,
   getPrinterSensorStateObj,
+  undefinedDefault,
 } from "../../../helpers";
 
+import "../camera_view/camera_view.ts";
 import "../multicolorbox_view/multicolorbox_view.ts";
 import "../printer_view/printer_view.ts";
 import "../stats/stats_component.ts";
 
-const monitoredStats: PrinterCardStatType[] = getDefaultMonitoredStats();
+const animOptionsCard = {
+  keyframeOptions: {
+    duration: 250,
+    direction: "normal",
+    easing: "ease-in-out",
+  },
+  properties: ["height", "opacity", "scale"],
+};
 
-@customElement("anycubic-printercard-card")
+const defaultMonitoredStats: PrinterCardStatType[] = getDefaultMonitoredStats();
+
+@customElementIfUndef("anycubic-printercard-card")
 export class AnycubicPrintercardCard extends LitElement {
   @property()
   public hass!: HomeAssistant;
 
-  @property({ type: Boolean, reflect: true })
-  public narrow!: boolean;
-
   @property()
-  public route!: HassRoute;
-
-  @property()
-  public panel!: HassPanel;
+  public monitoredStats?: PrinterCardStatType[] = defaultMonitoredStats;
 
   @property()
   public selectedPrinterID: string | undefined;
 
   @property()
   public selectedPrinterDevice: HassDevice | undefined;
-
-  @property({ type: Boolean })
-  public showPercent?: boolean;
 
   @property({ type: Boolean })
   public round?: boolean = true;
@@ -65,6 +70,21 @@ export class AnycubicPrintercardCard extends LitElement {
 
   @property({ type: String })
   public powerEntityId?: string;
+
+  @property({ type: String })
+  public cameraEntityId?: string;
+
+  @property({ type: Boolean })
+  public vertical?: boolean;
+
+  @state()
+  private _showVideo: boolean = false;
+
+  @state()
+  private cameraEntityState: HassEntity | undefined = undefined;
+
+  @state({ type: Boolean })
+  private isHidden: boolean = false;
 
   @state({ type: Boolean })
   private hiddenOverride: boolean = false;
@@ -84,8 +104,18 @@ export class AnycubicPrintercardCard extends LitElement {
   @state()
   private printerEntityIdPart: string | undefined;
 
+  @state()
+  private progressPercent: number = 0;
+
   protected willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
+
+    if (changedProperties.has("monitoredStats")) {
+      this.monitoredStats = undefinedDefault(
+        this.monitoredStats,
+        defaultMonitoredStats,
+      );
+    }
 
     if (changedProperties.has("selectedPrinterID")) {
       this.printerEntities = getPrinterEntities(
@@ -100,6 +130,7 @@ export class AnycubicPrintercardCard extends LitElement {
       changedProperties.has("hass") ||
       changedProperties.has("selectedPrinterID")
     ) {
+      this.progressPercent = this._percentComplete();
       this.hasColorbox =
         getPrinterSensorStateObj(
           this.hass,
@@ -108,6 +139,11 @@ export class AnycubicPrintercardCard extends LitElement {
           "multi_color_box_spools",
           "inactive",
         ).state === "active";
+      if (this.cameraEntityId) {
+        this.cameraEntityState = getEntityState(this.hass, {
+          entity_id: this.cameraEntityId,
+        });
+      }
       this.lightIsOn = getEntityStateBinary(
         this.hass,
         { entity_id: this.lightEntityId },
@@ -121,6 +157,9 @@ export class AnycubicPrintercardCard extends LitElement {
         "print_state",
         "unknown",
       ).state.toLowerCase();
+      this.isHidden =
+        !["printing", "preheating"].includes(printStateString) &&
+        !this.hiddenOverride;
       this.statusColor = ["printing", "preheating"].includes(printStateString)
         ? "#4caf50"
         : printStateString === "unknown"
@@ -139,16 +178,26 @@ export class AnycubicPrintercardCard extends LitElement {
   }
 
   render(): any {
+    const classesCam = {
+      "ac-hidden": this._showVideo === true ? false : true,
+    };
+
     return html`
       <div class="ac-printer-card">
         <div class="ac-printer-card-mainview">
-          ${this.renderHeader()} ${this.renderPrinterContainer()}
+          ${this._renderHeader()} ${this._renderPrinterContainer()}
         </div>
+        <anycubic-printercard-camera_view
+          class="${classMap(classesCam)}"
+          .showVideo=${this._showVideo}
+          .toggleVideo=${(): void => this._toggleVideo()}
+          .cameraEntity=${this.cameraEntityState}
+        ></anycubic-printercard-camera_view>
       </div>
     `;
   }
 
-  renderHeader(): HTMLElement {
+  private _renderHeader(): HTMLElement {
     const classesHeader = {
       "ac-h-justifycenter":
         this.powerEntityId && this.lightEntityId ? false : true,
@@ -165,7 +214,7 @@ export class AnycubicPrintercardCard extends LitElement {
               <button
                 class="ac-printer-card-button-small"
                 @click="${(_e): void => {
-                  this.togglePowerEntity();
+                  this._togglePowerEntity();
                 }}"
               >
                 <ha-svg-icon .path=${mdiPower}></ha-svg-icon>
@@ -176,7 +225,7 @@ export class AnycubicPrintercardCard extends LitElement {
         <button
           class="ac-printer-card-button-name"
           @click="${(_e): void => {
-            this.toggleHiddenOveride();
+            this._toggleHiddenOveride();
           }}"
         >
           <div
@@ -192,7 +241,7 @@ export class AnycubicPrintercardCard extends LitElement {
               <button
                 class="ac-printer-card-button-small"
                 @click="${(_e): void => {
-                  this.toggleLightEntity();
+                  this._toggleLightEntity();
                 }}"
               >
                 <ha-svg-icon
@@ -205,41 +254,81 @@ export class AnycubicPrintercardCard extends LitElement {
     `;
   }
 
-  renderPrinterContainer(): HTMLElement {
+  private _renderPrinterContainer(): HTMLElement {
+    const classesMain = {
+      "ac-card-vertical": this.vertical ? true : false,
+    };
+    const stylesMain = {
+      height: this.isHidden ? "1px" : "auto",
+      opacity: this.isHidden ? 0.0 : 1.0,
+      scale: this.isHidden ? 0.0 : 1.0,
+    };
+
     return html`
-      <div class="ac-printer-card-infocontainer">
-        <div class="ac-printer-card-info-animcontainer">
+      <div
+        class="ac-printer-card-infocontainer ${classMap(classesMain)}"
+        style=${styleMap(stylesMain)}
+        ${animate({ ...animOptionsCard })}
+      >
+        <div
+          class="ac-printer-card-info-animcontainer ${classMap(classesMain)}"
+        >
           <anycubic-printercard-printer_view
             .hass=${this.hass}
             .printerEntities=${this.printerEntities}
             .printerEntityIdPart=${this.printerEntityIdPart}
+            .toggleVideo=${(): void => this._toggleVideo()}
           ></anycubic-printercard-printer_view>
+          ${this.vertical
+            ? html`<p class="ac-printer-card-info-vertprog">
+                ${this.round
+                  ? Math.round(this.progressPercent)
+                  : this.progressPercent}%
+              </p>`
+            : null}
         </div>
-        <div class="ac-printer-card-info-statscontainer">
+        <div
+          class="ac-printer-card-info-statscontainer ${classMap(classesMain)}"
+        >
           <anycubic-printercard-stats-component
             .hass=${this.hass}
-            .narrow=${this.narrow}
-            .route=${this.route}
-            .panel=${this.panel}
-            .monitoredStats=${monitoredStats}
+            .monitoredStats=${this.monitoredStats}
             .printerEntities=${this.printerEntities}
             .printerEntityIdPart=${this.printerEntityIdPart}
-            .showPercent=${this.showPercent}
+            .progressPercent=${this.progressPercent}
+            .showPercent=${!this.vertical}
             .round=${this.round}
             .use_24hr=${this.use_24hr}
             .temperatureUnit=${this.temperatureUnit}
           ></anycubic-printercard-stats-component>
         </div>
       </div>
-      ${this.renderMultiColorBoxContainer()}
+      ${this._renderMultiColorBoxContainer()}
     `;
   }
 
-  renderMultiColorBoxContainer(): HTMLElement {
+  private _toggleVideo(): void {
+    this._showVideo = this.cameraEntityState && !this._showVideo ? true : false;
+  }
+
+  private _renderMultiColorBoxContainer(): HTMLElement {
+    const classesMain = {
+      "ac-card-vertical": this.vertical ? true : false,
+    };
+    const stylesMain = {
+      height: this.isHidden ? "1px" : "auto",
+      opacity: this.isHidden ? 0.0 : 1.0,
+      scale: this.isHidden ? 0.0 : 1.0,
+    };
+
     return this.hasColorbox
       ? html`
-          <div class="ac-printer-card-infocontainer">
-            <div class="ac-printer-card-mcbsection">
+          <div
+            class="ac-printer-card-infocontainer ${classMap(classesMain)}"
+            style=${styleMap(stylesMain)}
+            ${animate({ ...animOptionsCard })}
+          >
+            <div class="ac-printer-card-mcbsection ${classMap(classesMain)}">
               <anycubic-printercard-multicolorbox_view
                 .hass=${this.hass}
                 .printerEntities=${this.printerEntities}
@@ -251,22 +340,34 @@ export class AnycubicPrintercardCard extends LitElement {
       : null;
   }
 
-  toggleLightEntity(): void {
-    if (this.lightEntityId)
+  private _toggleLightEntity(): void {
+    if (this.lightEntityId) {
       this.hass.callService("homeassistant", "toggle", {
         entity_id: this.lightEntityId,
       });
+    }
   }
 
-  togglePowerEntity(): void {
-    if (this.powerEntityId)
+  private _togglePowerEntity(): void {
+    if (this.powerEntityId) {
       this.hass.callService("homeassistant", "toggle", {
         entity_id: this.powerEntityId,
       });
+    }
   }
 
-  toggleHiddenOveride(): void {
+  private _toggleHiddenOveride(): void {
     this.hiddenOverride = !this.hiddenOverride;
+  }
+
+  private _percentComplete(): number {
+    return getPrinterSensorStateObj(
+      this.hass,
+      this.printerEntities,
+      this.printerEntityIdPart,
+      "project_progress",
+      -1.0,
+    ).state;
   }
 
   static get styles(): any {
@@ -288,7 +389,7 @@ export class AnycubicPrintercardCard extends LitElement {
         position: relative;
         overflow: hidden;
         border-radius: 16px;
-        margin: 24px;
+        margin: 0px;
         box-shadow: var(
           --ha-card-box-shadow,
           0px 2px 1px -1px rgba(0, 0, 0, 0.2),
@@ -370,6 +471,10 @@ export class AnycubicPrintercardCard extends LitElement {
         box-sizing: border-box;
       }
 
+      .ac-printer-card-infocontainer.ac-card-vertical {
+        flex-direction: column;
+      }
+
       .ac-printer-card-info-animcontainer {
         box-sizing: border-box;
         padding: 0px 16px 32px 16px;
@@ -382,6 +487,29 @@ export class AnycubicPrintercardCard extends LitElement {
         padding-right: 16px;
       }
 
+      .ac-printer-card-info-animcontainer.ac-card-vertical {
+        width: 100%;
+        height: auto;
+        padding-left: 64px;
+        padding-right: 64px;
+      }
+
+      anycubic-printercard-printer_view {
+        width: 100%;
+        flex-glow: 1;
+      }
+
+      .ac-printer-card-info-vertprog {
+        width: 50%;
+        font-size: 36px;
+        text-align: center;
+        font-weight: bold;
+      }
+
+      anycubic-printercard-printer_view.ac-card-vertical {
+        width: auto;
+      }
+
       .ac-printer-card-info-statscontainer {
         box-sizing: border-box;
         padding: 0px 16px 32px 16px;
@@ -391,11 +519,26 @@ export class AnycubicPrintercardCard extends LitElement {
         height: 100%;
       }
 
+      .ac-printer-card-info-statscontainer.ac-card-vertical {
+        padding-left: 32px;
+        padding-right: 32px;
+        width: 100%;
+        height: auto;
+      }
+
       .ac-printer-card-mcbsection {
         box-sizing: border-box;
         padding: 5px 32px 5px 32px;
         width: 100%;
         height: 100%;
+      }
+
+      .ac-printer-card-mcbsection.ac-card-vertical {
+        height: auto;
+      }
+
+      .ac-hidden {
+        display: none;
       }
     `;
   }

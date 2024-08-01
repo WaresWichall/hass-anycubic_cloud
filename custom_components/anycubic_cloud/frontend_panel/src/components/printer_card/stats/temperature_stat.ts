@@ -1,12 +1,14 @@
 import { LitElement, html, css } from "lit";
-import { property, customElement } from "lit/decorators.js";
+import { property } from "lit/decorators.js";
+
+import { customElementIfUndef } from "../../../internal/register-custom-element";
 
 import { getEntityTemperature } from "../../../helpers";
 import { HassEntity, TemperatureUnit } from "../../../types";
 
 import "./stat_line.ts";
 
-@customElement("anycubic-printercard-stat-temperature")
+@customElementIfUndef("anycubic-printercard-stat-temperature")
 export class AnycubicPrintercardStatTemperature extends LitElement {
   @property({ type: String })
   public name: string;

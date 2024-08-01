@@ -1,12 +1,12 @@
-import { LitElement, html, css, PropertyValues } from "lit";
-import { property, customElement, state } from "lit/decorators.js";
+import { LitElement, html, css } from "lit";
+import { property } from "lit/decorators.js";
 import { repeat } from "lit/directives/repeat.js";
+
+import { customElementIfUndef } from "../../../internal/register-custom-element";
 
 import { getPrinterSensorStateObj, toTitleCase } from "../../../helpers";
 import {
   HassEntityInfos,
-  HassPanel,
-  HassRoute,
   HomeAssistant,
   PrinterCardStatType,
   TemperatureUnit,
@@ -16,19 +16,10 @@ import "./stat_line.ts";
 import "./temperature_stat.ts";
 import "./time_stat.ts";
 
-@customElement("anycubic-printercard-stats-component")
+@customElementIfUndef("anycubic-printercard-stats-component")
 export class AnycubicPrintercardStatsComponent extends LitElement {
   @property()
   public hass!: HomeAssistant;
-
-  @property({ type: Boolean, reflect: true })
-  public narrow!: boolean;
-
-  @property()
-  public route!: HassRoute;
-
-  @property()
-  public panel!: HassPanel;
 
   @property()
   public monitoredStats: PrinterCardStatType[];
@@ -51,20 +42,8 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
   @property()
   public printerEntityIdPart: string | undefined;
 
-  @state()
-  private _progressPercent: number = 0;
-
-  protected willUpdate(changedProperties: PropertyValues<this>): void {
-    super.willUpdate(changedProperties);
-
-    if (
-      changedProperties.has("hass") ||
-      changedProperties.has("printerEntities") ||
-      changedProperties.has("printerEntityIdPart")
-    ) {
-      this._progressPercent = this.percentComplete();
-    }
-  }
+  @property()
+  public progressPercent: number = 0;
 
   render(): any {
     return html`
@@ -74,28 +53,18 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
               <div class="ac-stats-part-percent">
                 <p class="ac-stats-part-percent-text">
                   ${this.round
-                    ? Math.round(this._progressPercent)
-                    : this._progressPercent}%
+                    ? Math.round(this.progressPercent)
+                    : this.progressPercent}%
                 </p>
               </div>
             `
           : null}
-        <div class="ac-stats-part-monitored">${this.renderStats()}</div>
+        <div class="ac-stats-part-monitored">${this._renderStats()}</div>
       </div>
     `;
   }
 
-  percentComplete(): number {
-    return getPrinterSensorStateObj(
-      this.hass,
-      this.printerEntities,
-      this.printerEntityIdPart,
-      "project_progress",
-      -1.0,
-    ).state;
-  }
-
-  renderStats(): HTMLElement {
+  private _renderStats(): HTMLElement {
     return repeat(
       this.monitoredStats,
       (condition) => condition,

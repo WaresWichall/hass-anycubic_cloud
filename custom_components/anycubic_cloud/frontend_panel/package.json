@@ -5,9 +5,13 @@
   "main": "src/index.ts",
   "scripts": {
     "build": "npm run lint && npm run rollup && npm run babel",
+    "build_card": "npm run lint && npm run rollup_card && npm run babel_card",
     "rollup": "rollup -c",
+    "rollup_card": "rollup -c rollup.config-card.mjs",
     "babel": "./node_modules/.bin/babel dist/anycubic-cloud-panel.js --out-file dist/anycubic-cloud-panel.js",
-    "lint": "eslint src/**/*.ts --fix",
+    "babel_card": "./node_modules/.bin/babel dist/anycubic-card.js --out-file dist/anycubic-card.js",
+    "lint": "eslint src --fix",
+    "prettier": "prettier src/components/**/*.ts --write",
     "start": "rollup -c --watch"
   },
   "author": "",

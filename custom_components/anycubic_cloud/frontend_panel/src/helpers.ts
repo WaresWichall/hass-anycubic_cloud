@@ -2,6 +2,7 @@ import moment from "moment";
 
 import { fireEvent } from "./fire_event";
 import {
+  AnycubicCardConfig,
   CalculatedTimeType,
   HomeAssistant,
   HassDevice,
@@ -75,7 +76,7 @@ export function getEntityStateBinary(
   offValue: string | boolean,
 ): string | boolean {
   const entityState = getEntityStateString(hass, entityInfo);
-  return entityState == "on" ? onValue : offValue;
+  return entityState === "on" ? onValue : offValue;
 }
 
 export function getPrinterDevices(hass: HomeAssistant): HassDeviceList {
@@ -428,7 +429,9 @@ export const convertTemperature = (
   from: TemperatureUnit,
   to: TemperatureUnit,
 ): number => {
-  if (!temperatureMap[from] || !temperatureMap[from][to]) return -1;
+  if (!temperatureMap[from] || !temperatureMap[from][to]) {
+    return -1;
+  }
 
   return temperatureMap[from][to](temperature);
 };
@@ -456,4 +459,18 @@ export function getDefaultMonitoredStats(): PrinterCardStatType[] {
     PrinterCardStatType.HotendTarget,
     PrinterCardStatType.BedTarget,
   ];
+}
+
+export function getDefaultCardConfig(): AnycubicCardConfig {
+  return {
+    vertical: false,
+    round: false,
+    use_24hr: true,
+    temperatureUnit: TemperatureUnit.C,
+    monitoredStats: getDefaultMonitoredStats(),
+  };
+}
+
+export function undefinedDefault(value: any, defaultValue: any): any {
+  return typeof value === "undefined" ? defaultValue : value;
 }
