@@ -241,7 +241,7 @@ export class AnycubicPrintercardAnimatedPrinter extends LitElement {
   }
 
   private _moveGantry(): void {
-    this.animKeyframeGantry = !this.animKeyframeGantry;
+    this.animKeyframeGantry = Number(!this.animKeyframeGantry);
   }
 
   static get styles(): any {

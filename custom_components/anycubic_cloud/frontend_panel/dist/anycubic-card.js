@@ -3800,7 +3800,7 @@
       }, this.scaleFactor || 1);
     }
     _moveGantry() {
-      this.animKeyframeGantry = !this.animKeyframeGantry;
+      this.animKeyframeGantry = Number(!this.animKeyframeGantry);
     }
     static get styles() {
       return o`
