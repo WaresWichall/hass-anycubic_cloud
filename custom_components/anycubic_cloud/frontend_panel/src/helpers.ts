@@ -486,7 +486,7 @@ export function getDefaultMonitoredStats(): PrinterCardStatType[] {
   ];
 }
 
-export function getAllMonitoredStats(): PrinterCardStatType[] {
+export function getPanelBasicMonitoredStats(): PrinterCardStatType[] {
   return [
     PrinterCardStatType.Status,
     PrinterCardStatType.ETA,
@@ -500,7 +500,25 @@ export function getAllMonitoredStats(): PrinterCardStatType[] {
     PrinterCardStatType.Availability,
     PrinterCardStatType.ProjectName,
     PrinterCardStatType.CurrentLayer,
-    PrinterCardStatType.DryingActive,
+  ];
+}
+
+export function getPanelACEMonitoredStats(): PrinterCardStatType[] {
+  return [
+    PrinterCardStatType.Status,
+    PrinterCardStatType.ETA,
+    PrinterCardStatType.Elapsed,
+    PrinterCardStatType.HotendCurrent,
+    PrinterCardStatType.BedCurrent,
+    PrinterCardStatType.Remaining,
+    PrinterCardStatType.HotendTarget,
+    PrinterCardStatType.BedTarget,
+    PrinterCardStatType.PrinterOnline,
+    PrinterCardStatType.Availability,
+    PrinterCardStatType.ProjectName,
+    PrinterCardStatType.CurrentLayer,
+    PrinterCardStatType.DryingStatus,
+    PrinterCardStatType.DryingTime,
   ];
 }
 
@@ -511,6 +529,7 @@ export function getDefaultCardConfig(): AnycubicCardConfig {
     use_24hr: true,
     temperatureUnit: TemperatureUnit.C,
     monitoredStats: getDefaultMonitoredStats(),
+    scaleFactor: 1,
   };
 }
 

@@ -153,13 +153,14 @@ export enum TextStatType {
   Status = "Status",
   HotendCurrent = "Hotend",
   BedCurrent = "Bed",
-  HotendTarget = "Target Hotend",
-  BedTarget = "Target Bed",
+  HotendTarget = "T Hotend",
+  BedTarget = "T Bed",
   PrinterOnline = "Online",
   Availability = "Availability",
-  ProjectName = "Project Name",
-  CurrentLayer = "Current Layer",
-  DryingActive = "Drying Active",
+  ProjectName = "Project",
+  CurrentLayer = "Layer",
+  DryingStatus = "Dry Status",
+  DryingTime = "Dry Time",
 }
 
 export const PrinterCardStatType = { ...CalculatedTimeType, ...TextStatType };
@@ -240,4 +241,5 @@ export interface AnycubicCardConfig {
   powerEntityId?: string;
   cameraEntityId?: string;
   monitoredStats?: PrinterCardStatType[];
+  scaleFactor?: number;
 }

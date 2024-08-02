@@ -105,6 +105,8 @@ export class AnycubicPrintercardConfigure extends LitElement {
         return "Power Entity";
       case "cameraEntityId":
         return "Camera Entity";
+      case "scaleFactor":
+        return "Scale Factor";
       default:
         return "Select Printer";
     }
@@ -171,6 +173,29 @@ export class AnycubicPrintercardConfigure extends LitElement {
           {
             name: "cameraEntityId",
             selector: { entity: { domain: CAMERA_ENTITY_DOMAINS } },
+          },
+          {
+            name: "scaleFactor",
+            selector: {
+              select: {
+                options: [
+                  {
+                    value: 1,
+                    label: "1",
+                  },
+                  {
+                    value: 0.75,
+                    label: "0.75",
+                  },
+                  {
+                    value: 0.5,
+                    label: "0.5",
+                  },
+                ],
+                mode: "list",
+                multiple: false,
+              },
+            },
           },
         ]
       : [];

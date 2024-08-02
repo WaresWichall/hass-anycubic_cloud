@@ -113,6 +113,10 @@ export class AnycubicPrintercardAnimatedPrinter extends LitElement {
   protected willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
 
+    if (changedProperties.has("scaleFactor")) {
+      this._onResizeEvent();
+    }
+
     if (
       changedProperties.has("hass") ||
       changedProperties.has("printerEntities") ||

@@ -17,6 +17,7 @@ import {
   TemperatureUnit,
 } from "../../../types";
 
+import "./progress_line.ts";
 import "./stat_line.ts";
 import "./temperature_stat.ts";
 import "./time_stat.ts";
@@ -254,7 +255,7 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
               ></anycubic-printercard-stat-line>
             `;
 
-          case PrinterCardStatType.DryingActive:
+          case PrinterCardStatType.DryingStatus:
             return html`
               <anycubic-printercard-stat-line
                 .name=${condition}
@@ -268,6 +269,36 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
                 )}
               ></anycubic-printercard-stat-line>
             `;
+
+          case PrinterCardStatType.DryingTime: {
+            const dryTotal = Number(
+              getPrinterSensorStateObj(
+                this.hass,
+                this.printerEntities,
+                this.printerEntityIdPart,
+                "drying_total_duration",
+                0,
+              ).state,
+            );
+            const dryRemain = Number(
+              getPrinterSensorStateObj(
+                this.hass,
+                this.printerEntities,
+                this.printerEntityIdPart,
+                "drying_remaining_time",
+                0,
+              ).state,
+            );
+            const dryRemainMinutes = `${dryRemain} Mins`;
+            const dryProgress = dryTotal > 0 ? (dryRemain / dryTotal) * 100 : 0;
+            return html`
+              <anycubic-printercard-progress-line
+                .name=${condition}
+                .value=${dryRemainMinutes}
+                .progress=${dryProgress}
+              ></anycubic-printercard-progress-line>
+            `;
+          }
 
           default:
             return html`

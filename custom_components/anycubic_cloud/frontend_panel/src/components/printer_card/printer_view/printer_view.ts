@@ -23,6 +23,9 @@ export class AnycubicPrintercardPrinterview extends LitElement {
   @property()
   public printerEntityIdPart: string | undefined;
 
+  @property()
+  public scaleFactor?: number;
+
   render(): any {
     return html`
       <div
@@ -33,6 +36,7 @@ export class AnycubicPrintercardPrinterview extends LitElement {
       >
         <anycubic-printercard-animated_printer
           .hass=${this.hass}
+          .scaleFactor=${this.scaleFactor}
           .printerEntities=${this.printerEntities}
           .printerEntityIdPart=${this.printerEntityIdPart}
           .printerConfig=${printerConfigAnycubic}

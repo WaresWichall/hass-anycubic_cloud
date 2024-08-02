@@ -117,6 +117,9 @@ export class AnycubicCard extends LitElement {
   @state({ type: String })
   private cameraEntityId?: string | undefined;
 
+  @state({ type: Number })
+  private scaleFactor?: number | undefined;
+
   @state()
   private monitoredStats: PrinterCardStatType[] | undefined;
 
@@ -145,6 +148,7 @@ export class AnycubicCard extends LitElement {
       this.lightEntityId = this.config.lightEntityId;
       this.powerEntityId = this.config.powerEntityId;
       this.cameraEntityId = this.config.cameraEntityId;
+      this.scaleFactor = this.config.scaleFactor;
       this.monitoredStats = this.config.monitoredStats;
       if (this.config.printer_id && this.printers) {
         this.selectedPrinterID = this.config.printer_id;
@@ -174,6 +178,7 @@ export class AnycubicCard extends LitElement {
         .lightEntityId=${this.lightEntityId}
         .powerEntityId=${this.powerEntityId}
         .cameraEntityId=${this.cameraEntityId}
+        .scaleFactor=${this.scaleFactor}
       ></anycubic-printercard-card>
     `;
   }

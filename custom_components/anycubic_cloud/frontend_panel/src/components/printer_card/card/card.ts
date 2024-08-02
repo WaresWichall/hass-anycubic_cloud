@@ -79,6 +79,9 @@ export class AnycubicPrintercardCard extends LitElement {
   @property({ type: Boolean })
   public vertical?: boolean;
 
+  @property()
+  public scaleFactor?: number;
+
   @state()
   private _showVideo: boolean = false;
 
@@ -271,6 +274,7 @@ export class AnycubicPrintercardCard extends LitElement {
             .hass=${this.hass}
             .printerEntities=${this.printerEntities}
             .printerEntityIdPart=${this.printerEntityIdPart}
+            .scaleFactor=${this.scaleFactor}
             .toggleVideo=${(): void => this._toggleVideo()}
           ></anycubic-printercard-printer_view>
           ${this.vertical

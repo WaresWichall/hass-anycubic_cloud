@@ -4,7 +4,8 @@ import { property, customElement, state } from "lit/decorators.js";
 import { localize } from "../../../localize/localize";
 
 import {
-  getAllMonitoredStats,
+  getPanelACEMonitoredStats,
+  getPanelBasicMonitoredStats,
   getPrinterEntities,
   getPrinterEntityIdPart,
   getPrinterID,
@@ -24,7 +25,9 @@ import {
 
 import "../../components/printer_card/card/card.ts";
 
-const monitoredStats: PrinterCardStatType[] = getAllMonitoredStats();
+const monitoredStatsACE: PrinterCardStatType[] = getPanelACEMonitoredStats();
+const monitoredStatsBasic: PrinterCardStatType[] =
+  getPanelBasicMonitoredStats();
 
 @customElement("anycubic-view-main")
 export class AnycubicViewMain extends LitElement {
@@ -102,6 +105,9 @@ export class AnycubicViewMain extends LitElement {
 
   @state()
   private aceDryingProgress: string | undefined;
+
+  @state()
+  private monitoredStats: PrinterCardStatType[] = monitoredStatsBasic;
 
   protected willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
@@ -234,6 +240,11 @@ export class AnycubicViewMain extends LitElement {
               ).toFixed(2),
             ) + "%"
           : undefined;
+      if (this.aceStateFwVersion) {
+        this.monitoredStats = monitoredStatsACE;
+      } else {
+        this.monitoredStats = monitoredStatsBasic;
+      }
     }
   }
 
@@ -265,7 +276,7 @@ export class AnycubicViewMain extends LitElement {
           .vertical=${false}
           .round=${false}
           .use_24hr=${true}
-          .monitoredStats=${monitoredStats}
+          .monitoredStats=${this.monitoredStats}
         ></anycubic-printercard-card>
         <div class="ac-extra-printer-info">
           ${this._renderInfoRow(
