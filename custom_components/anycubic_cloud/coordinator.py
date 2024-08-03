@@ -531,6 +531,11 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     async def refresh_cloud_files(self):
         self._cloud_file_list = await self.anycubic_api.get_user_cloud_files_data_object()
 
+    async def force_state_update(self):
+        self._last_state_update = None
+        await self.async_refresh()
+        self._last_state_update = int(time.time()) - DEFAULT_SCAN_INTERVAL + 10
+
     async def button_press_event(self, printer_id, event_key):
         printer = self.get_printer_for_id(printer_id)
 
@@ -590,9 +595,8 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             else:
                 return
 
-            self._last_state_update = None
-            await self.async_refresh()
-            self._last_state_update = int(time.time()) - DEFAULT_SCAN_INTERVAL + 10
+            await self.force_state_update()
+
         except AnycubicAPIError as ex:
             raise HomeAssistantError(ex) from ex
 
@@ -608,9 +612,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         else:
             return
 
-        self._last_state_update = None
-        await self.async_refresh()
-        self._last_state_update = int(time.time()) - DEFAULT_SCAN_INTERVAL + 10
+        await self.force_state_update()
 
     async def switch_off_event(self, printer_id, event_key):
         printer = self.get_printer_for_id(printer_id)
@@ -624,6 +626,4 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         else:
             return
 
-        self._last_state_update = None
-        await self.async_refresh()
-        self._last_state_update = int(time.time()) - DEFAULT_SCAN_INTERVAL + 10
+        await self.force_state_update()

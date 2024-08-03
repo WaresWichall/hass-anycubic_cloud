@@ -148,6 +148,7 @@ class BaseMultiColorBoxSetSlot(AnycubicCloudServiceCall):
     async def async_call_service(self, service: ServiceCall) -> None:
         """Execute service call."""
 
+        coordinator = self._get_coordinator(service)
         printer = self._get_printer(service)
         box_id = self._get_box_id(service)
         slot_index = service.data[CONF_SLOT_NUMBER] - 1
@@ -162,6 +163,7 @@ class BaseMultiColorBoxSetSlot(AnycubicCloudServiceCall):
             slot_color=slot_color,
             box_id=box_id,
         )
+        await coordinator.force_state_update()
 
 
 class MultiColorBoxSetSlotPla(BaseMultiColorBoxSetSlot):
