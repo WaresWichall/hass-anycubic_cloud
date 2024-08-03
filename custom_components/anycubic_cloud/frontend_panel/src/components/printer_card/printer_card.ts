@@ -61,6 +61,10 @@ export class AnycubicPrintercardEditor extends LitElement {
         this.config.monitoredStats,
         defaultConfig.monitoredStats,
       );
+      this.config.slotColors = undefinedDefault(
+        this.config.slotColors,
+        defaultConfig.slotColors,
+      );
     }
   }
 
@@ -121,6 +125,9 @@ export class AnycubicCard extends LitElement {
   private scaleFactor?: number | undefined;
 
   @state()
+  private slotColors?: string[];
+
+  @state()
   private monitoredStats: PrinterCardStatType[] | undefined;
 
   async firstUpdated(): void {
@@ -149,6 +156,7 @@ export class AnycubicCard extends LitElement {
       this.powerEntityId = this.config.powerEntityId;
       this.cameraEntityId = this.config.cameraEntityId;
       this.scaleFactor = this.config.scaleFactor;
+      this.slotColors = this.config.slotColors;
       this.monitoredStats = this.config.monitoredStats;
       if (this.config.printer_id && this.printers) {
         this.selectedPrinterID = this.config.printer_id;
@@ -179,6 +187,7 @@ export class AnycubicCard extends LitElement {
         .powerEntityId=${this.powerEntityId}
         .cameraEntityId=${this.cameraEntityId}
         .scaleFactor=${this.scaleFactor}
+        .slotColors=${this.slotColors}
       ></anycubic-printercard-card>
     `;
   }

@@ -7,6 +7,8 @@ import {
   SWITCH_ENTITY_DOMAINS,
 } from "../../../const";
 
+import { fireEvent } from "../../../fire_event";
+
 import {
   AnycubicCardConfig,
   HassDevice,
@@ -74,12 +76,7 @@ export class AnycubicPrintercardConfigure extends LitElement {
   }
 
   private _configChanged(newConfig: AnycubicCardConfig): void {
-    const event = new Event("config-changed", {
-      bubbles: true,
-      composed: true,
-    });
-    event.detail = { config: newConfig };
-    this.dispatchEvent(event);
+    fireEvent(this, "config-changed", { config: newConfig });
   }
 
   private _formValueChanged(ev: Event): void {
@@ -107,6 +104,8 @@ export class AnycubicPrintercardConfigure extends LitElement {
         return "Camera Entity";
       case "scaleFactor":
         return "Scale Factor";
+      case "slotColors":
+        return "Slot Colour Presets";
       default:
         return "Select Printer";
     }
@@ -194,6 +193,15 @@ export class AnycubicPrintercardConfigure extends LitElement {
                 ],
                 mode: "list",
                 multiple: false,
+              },
+            },
+          },
+          {
+            name: "slotColors",
+            description: "Slot Colour Presets",
+            selector: {
+              text: {
+                multiple: true,
               },
             },
           },

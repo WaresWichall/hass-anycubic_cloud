@@ -242,4 +242,17 @@ export interface AnycubicCardConfig {
   cameraEntityId?: string;
   monitoredStats?: PrinterCardStatType[];
   scaleFactor?: number;
+  slotColors?: string[];
+}
+
+export enum AnycubicMaterialType {
+  PLA = "PLA",
+  PETG = "PETG",
+  ABS = "ABS",
+  PACF = "PACF",
+  PC = "PC",
+  ASA = "ASA",
+  HIPS = "HIPS",
+  PA = "PA",
+  PLA_SE = "PLA_SE",
 }

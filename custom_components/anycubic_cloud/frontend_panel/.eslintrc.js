@@ -64,7 +64,8 @@ module.exports = {
     {
       files: [
         '*.ts'
-      ]
+      ],
+      excludedFiles: "src/lib/**/*.js"
     },
   ],
   globals: {

@@ -22,7 +22,7 @@ Should also work with multiple printers but untested until someone buys me a sec
 
 - Start print services / UI panel
 - Pause/Resume/Cancel print buttons
-- Edit ACE slot colours/settings via services
+- Edit ACE slot colours/settings via services / UI panel
 - File manager via services / UI panel
 - Retraction/Extrude services
 - Remaining/Elapsed time

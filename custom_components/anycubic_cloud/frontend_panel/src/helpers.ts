@@ -530,6 +530,7 @@ export function getDefaultCardConfig(): AnycubicCardConfig {
     temperatureUnit: TemperatureUnit.C,
     monitoredStats: getDefaultMonitoredStats(),
     scaleFactor: 1,
+    slotColors: [],
   };
 }
 

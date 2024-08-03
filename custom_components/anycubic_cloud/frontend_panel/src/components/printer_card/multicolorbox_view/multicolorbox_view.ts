@@ -5,6 +5,8 @@ import { styleMap } from "lit-html/directives/style-map.js";
 
 import { customElementIfUndef } from "../../../internal/register-custom-element";
 
+import { fireEvent } from "../../../fire_event";
+
 import { getPrinterSensorStateObj } from "../../../helpers";
 import {
   AnycubicSpoolInfo,
@@ -25,6 +27,15 @@ export class AnycubicPrintercardMulticolorboxview extends LitElement {
 
   @state()
   private spoolList: AnycubicSpoolInfo[] = [];
+
+  @state()
+  private selectedIndex: number = -1;
+
+  @state()
+  private selectedMaterialType: string = "";
+
+  @state()
+  private selectedColor: number[] = [0, 0, 0];
 
   protected willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
@@ -59,7 +70,12 @@ export class AnycubicPrintercardMulticolorboxview extends LitElement {
           : "#aaa",
       };
       return html`
-        <div class="ac-spool-info">
+        <div
+          class="ac-spool-info"
+          @click="${(_e): void => {
+            this._editSpool(index, spool.material_type, spool.color);
+          }}"
+        >
           <div class="ac-spool-color-ring" style=${styleMap(ringStyle)}>
             <div class="ac-spool-color-num">${index + 1}</div>
           </div>
@@ -68,6 +84,15 @@ export class AnycubicPrintercardMulticolorboxview extends LitElement {
           </div>
         </div>
       `;
+    });
+  }
+
+  private _editSpool(index, material_type, color): void {
+    fireEvent(this, "ac-mcb-modal", {
+      modalOpen: true,
+      spool_index: index,
+      material_type: material_type,
+      color: color,
     });
   }
 
@@ -89,6 +114,7 @@ export class AnycubicPrintercardMulticolorboxview extends LitElement {
       .ac-spool-info {
         box-sizing: border-box;
         height: auto;
+        cursor: pointer;
       }
 
       .ac-spool-color-ring {

@@ -32,6 +32,7 @@ import "../camera_view/camera_view.ts";
 import "../multicolorbox_view/multicolorbox_view.ts";
 import "../printer_view/printer_view.ts";
 import "../stats/stats_component.ts";
+import "../multicolorbox_view/multicolorbox_modal.ts";
 
 const animOptionsCard = {
   keyframeOptions: {
@@ -81,6 +82,9 @@ export class AnycubicPrintercardCard extends LitElement {
 
   @property()
   public scaleFactor?: number;
+
+  @property()
+  public slotColors?: string[];
 
   @state()
   private _showVideo: boolean = false;
@@ -190,6 +194,11 @@ export class AnycubicPrintercardCard extends LitElement {
           .toggleVideo=${(): void => this._toggleVideo()}
           .cameraEntity=${this.cameraEntityState}
         ></anycubic-printercard-camera_view>
+        <anycubic-printercard-multicolorbox_modal
+          .hass=${this.hass}
+          .selectedPrinterDevice=${this.selectedPrinterDevice}
+          .slotColors=${this.slotColors}
+        ></anycubic-printercard-multicolorbox_modal>
       </div>
     `;
   }
