@@ -9,10 +9,11 @@ Should also work with multiple printers but untested until someone buys me a sec
 ## Gallery
 
 
-<img width="400" alt="" src="https://github.com/user-attachments/assets/80d15c03-fdbd-495c-be04-2d07fc68cc3a">
-<img width="400" alt="Screenshot 2024-07-25 at 3 55 16 PM" src="https://github.com/user-attachments/assets/f557f362-2e08-461e-8416-83257a65f02e">
-<img width="400" alt="Screenshot 2024-07-31 at 08 51 40" src="https://github.com/user-attachments/assets/8a033e2c-cd20-40b1-b48e-428a7952e552">
-<img width="400" alt="Screenshot 2024-07-31 at 08 52 01" src="https://github.com/user-attachments/assets/42e07a10-e2a2-481a-b454-4498c1fb6181">
+<img width="400" alt="" src="https://raw.githubusercontent.com/WaresWichall/hass-anycubic_cloud/master/screenshots/kobra2-1.png">
+<img width="400" alt="" src="https://raw.githubusercontent.com/WaresWichall/hass-anycubic_cloud/master/screenshots/kobra2-2.png">
+<img width="400" alt="" src="https://raw.githubusercontent.com/WaresWichall/hass-anycubic_cloud/master/screenshots/kobra3-1.png">
+<img width="400" alt="" src="https://raw.githubusercontent.com/WaresWichall/hass-anycubic_cloud/master/screenshots/kobra3-print.png">
+<img width="400" alt="" src="https://raw.githubusercontent.com/WaresWichall/hass-anycubic_cloud/master/screenshots/anycubic-ace-ui.gif">
 
 
 
