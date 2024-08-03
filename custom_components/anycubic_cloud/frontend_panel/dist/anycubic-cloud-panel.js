@@ -9512,7 +9512,7 @@
           .narrow=${this.narrow}
         ></ha-menu-button>
         <div class="main-title">${Di("title", this.hass.language)}</div>
-        <div class="version">v${"0.0.5"}</div>
+        <div class="version">v${"0.0.6"}</div>
       </div>
     `;
     }
