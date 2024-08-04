@@ -1068,6 +1068,30 @@ class AnycubicPrinter:
         return AnycubicFunctionID.MULTI_COLOR_BOX in self._type_function_ids
 
     @property
+    def supports_function_ai_detection(self):
+        return AnycubicFunctionID.AI_DETECTION in self._type_function_ids
+
+    @property
+    def supports_function_auto_leveler(self):
+        return AnycubicFunctionID.AUTO_LEVELER in self._type_function_ids
+
+    @property
+    def supports_function_vibration_compensation(self):
+        return AnycubicFunctionID.VIBRATION_COMPENSATION in self._type_function_ids
+
+    @property
+    def supports_function_time_lapse(self):
+        return AnycubicFunctionID.TIME_LAPSE in self._type_function_ids
+
+    @property
+    def supports_function_video_light(self):
+        return AnycubicFunctionID.VIDEO_LIGHT in self._type_function_ids
+
+    @property
+    def supports_function_box_light(self):
+        return AnycubicFunctionID.BOX_LIGHT in self._type_function_ids
+
+    @property
     def material_type(self):
         return self._material_type
 

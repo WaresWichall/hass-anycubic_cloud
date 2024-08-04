@@ -993,8 +993,6 @@ class AnycubicAPI:
     async def _send_order_multi_color_box_get_info(
         self,
         printer,
-        enabled: bool,
-        box_id=0,
     ):
         """
         Response is sent over MQTT.
@@ -1007,6 +1005,74 @@ class AnycubicAPI:
                 order_id=AnycubicOrderID.MULTI_COLOR_BOX_GET_INFO,
                 printer_id=printer.id,
                 project_id=0,
+            ),
+        )
+
+    async def _send_order_query_peripherals(
+        self,
+        printer,
+    ):
+        """
+        Response is sent over MQTT.
+        """
+        if not printer:
+            return
+
+        return await self._send_anycubic_order(
+            order_request=AnycubicBaseProjectOrderRequest(
+                order_id=AnycubicOrderID.QUERY_PERIPHERALS,
+                printer_id=printer.id,
+                project_id=0,
+            ),
+        )
+
+    async def _send_order_get_light_status(
+        self,
+        printer,
+        project,
+    ):
+        """
+        Response is sent over MQTT.
+        """
+        if not printer:
+            return
+
+        if not project:
+            return
+
+        return await self._send_anycubic_order(
+            order_request=AnycubicBaseProjectOrderRequest(
+                order_id=AnycubicOrderID.GET_LIGHT_STATUS,
+                printer_id=printer.id,
+                project_id=project.id,
+            ),
+        )
+
+    async def _send_order_set_light_status(
+        self,
+        printer,
+        project,
+        light_on: bool,
+        light_type: int = 1,
+    ):
+        if not printer:
+            return
+
+        if not project:
+            return
+
+        order_data = {
+            'type': light_type,
+            'status': 1 if light_on else 0,
+            'brightness': 100 if light_on else 0,
+        }
+
+        return await self._send_anycubic_order(
+            order_request=AnycubicProjectOrderRequest(
+                order_id=AnycubicOrderID.SET_LIGHT_STATUS,
+                printer_id=printer.id,
+                project_id=project.id,
+                order_data=order_data,
             ),
         )
 
@@ -1123,6 +1189,8 @@ class AnycubicAPI:
         target_nozzle_temp=None,
         target_hotbed_temp=None,
         fan_speed_pct=None,
+        aux_fan_speed_pct=None,
+        box_fan_level=None,
         bottom_layers=None,
         bottom_time=None,
         off_time=None,
@@ -1147,6 +1215,12 @@ class AnycubicAPI:
 
         if fan_speed_pct is not None:
             print_settings['fan_speed_pct'] = int(fan_speed_pct)
+
+        if aux_fan_speed_pct is not None:
+            print_settings['aux_fan_speed_pct'] = int(aux_fan_speed_pct)
+
+        if box_fan_level is not None:
+            print_settings['box_fan_level'] = int(box_fan_level)
 
         if bottom_layers is not None:
             print_settings['bottom_layers'] = int(bottom_layers)
