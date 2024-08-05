@@ -94,6 +94,8 @@ export class AnycubicPrintercardConfigure extends LitElement {
         return "Round Stats?";
       case "use_24hr":
         return "Use 24hr Time?";
+      case "showSettingsButton":
+        return "Always show print settings button?";
       case "temperatureUnit":
         return "Temperature Unit";
       case "lightEntityId":
@@ -160,6 +162,10 @@ export class AnycubicPrintercardConfigure extends LitElement {
                 multiple: false,
               },
             },
+          },
+          {
+            name: "showSettingsButton",
+            selector: { boolean: {} },
           },
           {
             name: "lightEntityId",

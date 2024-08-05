@@ -1,6 +1,8 @@
 import { LitElement, html, PropertyValues } from "lit";
 import { property, customElement, state } from "lit/decorators.js";
 
+import { VERSION } from "../../const";
+
 import {
   AnycubicCardConfig,
   HassDevice,
@@ -19,6 +21,12 @@ import {
 
 import "./card/card.ts";
 import "./configure/configure.ts";
+
+window.console.info(
+  `%c ANYCUBIC-CARD %c v${VERSION} `,
+  "color: orange; font-weight: bold; background: black",
+  "color: white; font-weight: bold; background: dimgray",
+);
 
 const defaultConfig = getDefaultCardConfig();
 
@@ -52,6 +60,10 @@ export class AnycubicPrintercardEditor extends LitElement {
       this.config.use_24hr = undefinedDefault(
         this.config.use_24hr,
         defaultConfig.use_24hr,
+      );
+      this.config.showSettingsButton = undefinedDefault(
+        this.config.showSettingsButton,
+        defaultConfig.showSettingsButton,
       );
       this.config.temperatureUnit = undefinedDefault(
         this.config.temperatureUnit,
@@ -109,6 +121,9 @@ export class AnycubicCard extends LitElement {
   @state({ type: Boolean })
   private use_24hr?: boolean;
 
+  @state({ type: Boolean })
+  private showSettingsButton?: boolean;
+
   @state({ type: String })
   private temperatureUnit: TemperatureUnit | undefined;
 
@@ -148,6 +163,10 @@ export class AnycubicCard extends LitElement {
         this.config.use_24hr,
         defaultConfig.use_24hr,
       );
+      this.showSettingsButton = undefinedDefault(
+        this.config.showSettingsButton,
+        defaultConfig.showSettingsButton,
+      );
       this.temperatureUnit = undefinedDefault(
         this.config.temperatureUnit,
         defaultConfig.temperatureUnit,
@@ -182,6 +201,7 @@ export class AnycubicCard extends LitElement {
         .vertical=${this.vertical}
         .round=${this.round}
         .use_24hr=${this.use_24hr}
+        .showSettingsButton=${this.showSettingsButton}
         .temperatureUnit=${this.temperatureUnit}
         .lightEntityId=${this.lightEntityId}
         .powerEntityId=${this.powerEntityId}

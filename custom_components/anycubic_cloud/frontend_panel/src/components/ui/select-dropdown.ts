@@ -25,6 +25,9 @@ export class AnycubicUISelectDropdownItem extends LitElement {
       <button
         class="ac-ui-seld-select"
         style=${styleMap(stylesOption)}
+        @mouseenter="${(_e): void => {
+          this._setActive();
+        }}"
         @mousedown="${(_e): void => {
           this._setActive();
         }}"
@@ -85,7 +88,7 @@ export class AnycubicUISelectDropdown extends LitElement {
   public placeholder: string;
 
   @property()
-  public initialItem: string;
+  public initialItem: string | undefined;
 
   @state()
   private _selectedItem: string | undefined;
@@ -140,7 +143,7 @@ export class AnycubicUISelectDropdown extends LitElement {
     return map(Object.keys(this.availableOptions), (key, _index) => {
       return html`
         <anycubic-ui-select-dropdown-item
-          .item=${key}
+          .item=${this.availableOptions[key]}
           @click="${(_e): void => {
             this._selectItem(key);
           }}"
@@ -166,7 +169,7 @@ export class AnycubicUISelectDropdown extends LitElement {
   }
 
   private _selectItem(key): void {
-    this._selectedItem = key;
+    this._selectedItem = this.availableOptions[key];
     fireEvent(this, "ac-select-dropdown", {
       key: key,
       value: this.availableOptions[key],

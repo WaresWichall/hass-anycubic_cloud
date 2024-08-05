@@ -28,6 +28,12 @@ import {
   HassRoute,
 } from "./types";
 
+window.console.info(
+  `%c ANYCUBIC-PANEL %c v${VERSION} `,
+  "color: orange; font-weight: bold; background: black",
+  "color: white; font-weight: bold; background: dimgray",
+);
+
 @customElement("anycubic-cloud-panel")
 export class AnycubicCloudPanel extends LitElement {
   @property()
