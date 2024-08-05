@@ -21,6 +21,7 @@ from .const import (
 )
 from .coordinator import AnycubicCloudDataUpdateCoordinator
 from .entity import AnycubicCloudEntity
+from .helpers import printer_entity_unique_id, printer_state_for_key
 
 DRYING_PRESET_BUTTON_TYPES = list([
     ButtonEntityDescription(
@@ -90,7 +91,7 @@ async def async_setup_entry(
 
     for printer_id in entry.data[CONF_PRINTER_ID_LIST]:
 
-        if coordinator.data[printer_id]["supports_function_multi_color_box"]:
+        if printer_state_for_key(coordinator, printer_id, 'supports_function_multi_color_box'):
 
             for description in DRYING_PRESET_BUTTON_TYPES:
                 num = description.key[-1]
@@ -125,7 +126,7 @@ class AnycubicCloudButton(AnycubicCloudEntity, ButtonEntity):
         """Initialize."""
         super().__init__(coordinator, printer_id)
         self.entity_description = description
-        self._attr_unique_id = f"{coordinator.data[self._printer_id]['machine_mac']}-{self.entity_description.key}"
+        self._attr_unique_id = printer_entity_unique_id(coordinator, self._printer_id, description.key)
 
     async def async_press(self) -> None:
         """Press the button."""

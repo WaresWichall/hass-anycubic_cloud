@@ -477,6 +477,48 @@ class AnycubicProject:
         return self._target_hotbed_temp
 
     @property
+    def temp_min_hotbed(self):
+        return self._temp_min_hotbed
+
+    @property
+    def temp_max_hotbed(self):
+        return self._temp_max_hotbed
+
+    @property
+    def temp_min_nozzle(self):
+        return self._temp_min_nozzle
+
+    @property
+    def temp_max_nozzle(self):
+        return self._temp_max_nozzle
+
+    @property
+    def print_speed_mode(self):
+        return self._print_speed_mode
+
+    @property
+    def print_speed_pct(self):
+        return self._print_speed_pct
+
+    @property
+    def z_thick(self):
+        return self._z_thick
+
+    @property
+    def fan_speed_pct(self):
+        return self._fan_speed_pct
+
+    @property
+    def available_print_speed_modes(self):
+        return self._available_print_speed_modes
+
+    @property
+    def available_print_speed_modes_data_object(self):
+        return list([
+            x.data_object for x in self._available_print_speed_modes
+        ])
+
+    @property
     def slice_material_info_list(self):
         if not isinstance(self._slice_param, dict):
             return None

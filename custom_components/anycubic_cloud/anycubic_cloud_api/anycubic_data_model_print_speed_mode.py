@@ -25,6 +25,13 @@ class AnycubicPrintSpeedMode:
     def mode(self):
         return self._mode
 
+    @property
+    def data_object(self):
+        return {
+            "description": self._title,
+            "mode": self._mode,
+        }
+
     def __repr__(self):
         return (
             f"AnycubicPrintSpeedMode("

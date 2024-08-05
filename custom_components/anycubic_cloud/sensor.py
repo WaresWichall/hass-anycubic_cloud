@@ -26,6 +26,7 @@ from .const import (
 )
 from .coordinator import AnycubicCloudDataUpdateCoordinator
 from .entity import AnycubicCloudEntity
+from .helpers import printer_attributes_for_key, printer_entity_unique_id, printer_state_for_key
 
 
 MULTI_COLOR_BOX_SENSOR_TYPES = (
@@ -190,13 +191,23 @@ SENSOR_TYPES = (
         translation_key="target_hotbed_temp",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
     ),
+    SensorEntityDescription(
+        key="print_speed_mode",
+        translation_key="print_speed_mode",
+    ),
+    SensorEntityDescription(
+        key="print_speed_pct",
+        translation_key="print_speed_pct",
+    ),
+    SensorEntityDescription(
+        key="print_z_thick",
+        translation_key="print_z_thick",
+    ),
+    SensorEntityDescription(
+        key="fan_speed_pct",
+        translation_key="fan_speed_pct",
+    ),
 )
-
-FILE_LIST_KEYS = [
-    'file_list_local',
-    'file_list_udisk',
-    'file_list_cloud',
-]
 
 
 async def async_setup_entry(
@@ -210,7 +221,7 @@ async def async_setup_entry(
     sensors: list[AnycubicSensor] = []
 
     for printer_id in entry.data[CONF_PRINTER_ID_LIST]:
-        if coordinator.data[printer_id]["supports_function_multi_color_box"]:
+        if printer_state_for_key(coordinator, printer_id, 'supports_function_multi_color_box'):
             for description in MULTI_COLOR_BOX_SENSOR_TYPES:
                 sensors.append(AnycubicSensor(coordinator, printer_id, description))
 
@@ -235,7 +246,7 @@ class AnycubicSensor(AnycubicCloudEntity, SensorEntity):
         """Initiate Anycubic Sensor."""
         super().__init__(coordinator, printer_id)
         self.entity_description = entity_description
-        self._attr_unique_id = f"{coordinator.data[self._printer_id]['machine_mac']}-{entity_description.key}"
+        self._attr_unique_id = printer_entity_unique_id(coordinator, self._printer_id, entity_description.key)
 
         if self.entity_description.native_unit_of_measurement == UnitOfTemperature.CELSIUS:
             self._attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
@@ -243,7 +254,7 @@ class AnycubicSensor(AnycubicCloudEntity, SensorEntity):
     @property
     def state(self) -> float:
         """Return the ...."""
-        state = self.coordinator.data[self._printer_id][self.entity_description.key]
+        state = printer_state_for_key(self.coordinator, self._printer_id, self.entity_description.key)
 
         if self.entity_description.native_unit_of_measurement == UnitOfTemperature.CELSIUS:
             return float(state)
@@ -259,24 +270,13 @@ class AnycubicSensor(AnycubicCloudEntity, SensorEntity):
         elif self.entity_description.device_class == SensorDeviceClass.TIMESTAMP:
             return dt_util.utc_from_timestamp(state)
 
-        elif self.entity_description.key == 'multi_color_box_spools':
-            return "active" if state is not None else "inactive"
-
-        elif self.entity_description.key in FILE_LIST_KEYS:
-            return "loaded" if state is not None else "not loaded"
-
         return str(state)
 
     @property
     def state_attributes(self) -> dict[str, Any] | None:
         """Return state attributes."""
-        if self.entity_description.key == 'multi_color_box_spools':
-            return {
-                "spool_info": self.coordinator.data[self._printer_id][self.entity_description.key]
-            }
-        elif self.entity_description.key in FILE_LIST_KEYS:
-            return {
-                "file_info": self.coordinator.data[self._printer_id][self.entity_description.key]
-            }
+        attrib = printer_attributes_for_key(self.coordinator, self._printer_id, self.entity_description.key)
+        if attrib is not None:
+            return attrib
         else:
             return super().state_attributes
