@@ -195,7 +195,7 @@ change_print_bottom_time:
         number:
           min: 0
           max: 9999999999999999999
-          step: 0.00000001
+          step: 0.001
           mode: box
 change_print_off_time:
   fields:
