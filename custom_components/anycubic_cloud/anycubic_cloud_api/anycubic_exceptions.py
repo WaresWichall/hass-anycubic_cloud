@@ -10,7 +10,7 @@ class AnycubicAPIParsingError(AnycubicAPIError):
     pass
 
 
-class AnycubicSliceNotFoundError(AnycubicAPIError):
+class AnycubicFileNotFoundError(AnycubicAPIError):
     pass
 
 

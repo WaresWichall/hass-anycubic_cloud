@@ -53,7 +53,7 @@ from .anycubic_exceptions import (
     AnycubicAPIError,
     AnycubicAPIParsingError,
     AnycubicErrorMessage,
-    AnycubicSliceNotFoundError,
+    AnycubicFileNotFoundError,
     APIAuthTokensExpired,
 )
 
@@ -76,6 +76,7 @@ from .anycubic_const import (
     AC_KNOWN_VID_APP,
     AC_KNOWN_VID_WEB,
     AC_KNOWN_SEC,
+    AnycubicServerMessage,
 )
 
 from .anycubic_enums import (
@@ -386,6 +387,7 @@ class AnycubicAPI:
             if self._auth_sig_token is None:
                 raise Exception("No sig token.")
             auth_headers['XX-Token'] = self._auth_sig_token
+            auth_headers['XX-LANGUAGE'] = 'US'
         return auth_headers
 
     async def _get_oauth_token(self):
@@ -807,8 +809,8 @@ class AnycubicAPI:
         error_message = resp.get('msg') if resp is not None else None
 
         if resp is None or resp.get('data') is None:
-            if resp is not None and resp.get('data') is None and error_message == "没有找到切片":
-                raise AnycubicSliceNotFoundError('Slice not found.')
+            if resp is not None and resp.get('data') is None and error_message == AnycubicServerMessage.FILE_NOT_FOUND:
+                raise AnycubicFileNotFoundError('File not found in cloud.')
             else:
                 raise AnycubicAPIError(
                     f"Error sending order to Anycubic Cloud, is the printer online? Message: {error_message}"
@@ -2069,7 +2071,7 @@ class AnycubicAPI:
                     print_request=print_request,
                     ams_box_mapping=ams_box_mapping,
                 )
-            except AnycubicSliceNotFoundError:
+            except AnycubicFileNotFoundError:
                 await asyncio.sleep(3)
 
             try_count += 1
