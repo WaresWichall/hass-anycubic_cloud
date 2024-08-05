@@ -141,10 +141,10 @@
     },
     "sensor": {
       "device_status": {
-        "name": "Device Status"
+        "name": "Raw Device Status Code"
       },
       "is_printing": {
-        "name": "Is Printing"
+        "name": "Raw Is Printing Code"
       },
       "current_status": {
         "name": "Current Status"
@@ -204,7 +204,7 @@
         "name": "Print State"
       },
       "raw_print_status": {
-        "name": "Print Status Code"
+        "name": "Raw Print Status Code"
       },
       "print_approximate_completion_time": {
         "name": "Approximate Completion Time"
@@ -249,7 +249,7 @@
         "name": "Multi-Color Box Current Temperature"
       },
       "dry_status_raw_status_code": {
-        "name": "Drying Status Code"
+        "name": "Raw Drying Status Code"
       },
       "dry_status_target_temperature": {
         "name": "Drying Target Temperature"
