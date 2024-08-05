@@ -2,7 +2,7 @@ from aiofiles import open as aio_file_open
 from aiofiles.os import path as aio_path
 from os.path import basename as path_basename
 
-from .anycubic_api_base import (
+from .anycubic_exceptions import (
     AnycubicAPIError,
 )
 

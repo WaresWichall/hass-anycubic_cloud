@@ -32,6 +32,10 @@ from .anycubic_data_model_printer_properties import (
     AnycubicMaterialMapping,
 )
 
+from .anycubic_data_model_printing_settings import (
+    AnycubicPrintingSettings,
+)
+
 from .anycubic_data_model_project import (
     AnycubicProject,
 )
@@ -42,11 +46,14 @@ from .anycubic_model_base import (
 
 from .anycubic_api_base import (
     HTTP_METHODS,
+    API_ENDPOINT,
+)
+
+from .anycubic_exceptions import (
     AnycubicAPIError,
     AnycubicAPIParsingError,
     AnycubicErrorMessage,
     AnycubicSliceNotFoundError,
-    API_ENDPOINT,
     APIAuthTokensExpired,
 )
 
@@ -1184,64 +1191,30 @@ class AnycubicAPI:
     async def _send_order_change_print_settings(
         self,
         printer,
-        project,
-        print_speed_mode=None,
-        target_nozzle_temp=None,
-        target_hotbed_temp=None,
-        fan_speed_pct=None,
-        aux_fan_speed_pct=None,
-        box_fan_level=None,
-        bottom_layers=None,
-        bottom_time=None,
-        off_time=None,
-        on_time=None,
+        print_settings: AnycubicPrintingSettings,
+        project=None,
     ):
         if not printer:
             return
 
-        if not project:
+        if not project and not printer.latest_project:
             return
 
-        print_settings = dict()
+        if not project:
+            project = printer.latest_project
 
-        if print_speed_mode is not None:
-            print_settings['print_speed_mode'] = int(print_speed_mode)
+        project.validate_new_print_settings(print_settings)
 
-        if target_nozzle_temp is not None:
-            print_settings['target_nozzle_temp'] = int(target_nozzle_temp)
-
-        if target_hotbed_temp is not None:
-            print_settings['target_hotbed_temp'] = int(target_hotbed_temp)
-
-        if fan_speed_pct is not None:
-            print_settings['fan_speed_pct'] = int(fan_speed_pct)
-
-        if aux_fan_speed_pct is not None:
-            print_settings['aux_fan_speed_pct'] = int(aux_fan_speed_pct)
-
-        if box_fan_level is not None:
-            print_settings['box_fan_level'] = int(box_fan_level)
-
-        if bottom_layers is not None:
-            print_settings['bottom_layers'] = int(bottom_layers)
-
-        if bottom_time is not None:
-            print_settings['bottom_time'] = float(bottom_time)
-
-        if off_time is not None:
-            print_settings['off_time'] = float(off_time)
-
-        if on_time is not None:
-            print_settings['on_time'] = float(on_time)
+        order_data = {
+            'settings': print_settings.settings_data
+        }
 
         return await self._send_anycubic_order(
-            order_request=AnycubicProjectCtrlOrderRequest(
+            order_request=AnycubicProjectOrderRequest(
                 order_id=AnycubicOrderID.PRINT_SETTINGS,
                 printer_id=printer.id,
                 project_id=project.id,
-                order_data=None,
-                ams_box_mapping=None,
-                print_settings=print_settings,
+                order_data=order_data,
             ),
         )
 
