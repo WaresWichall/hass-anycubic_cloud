@@ -12,6 +12,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from .const import CONF_PRINTER_ID_LIST, COORDINATOR, DOMAIN
 from .coordinator import AnycubicCloudDataUpdateCoordinator
 from .entity import AnycubicCloudEntity
+from .helpers import printer_entity_unique_id, printer_state_for_key
 
 MULTI_COLOR_BOX_SENSOR_TYPES = (
     BinarySensorEntityDescription(
@@ -93,7 +94,7 @@ async def async_setup_entry(
     ]
     sensors: list[AnycubicBinarySensor] = []
     for printer_id in entry.data[CONF_PRINTER_ID_LIST]:
-        if coordinator.data[printer_id]["supports_function_multi_color_box"]:
+        if printer_state_for_key(coordinator, printer_id, 'supports_function_multi_color_box'):
             for description in MULTI_COLOR_BOX_SENSOR_TYPES:
                 sensors.append(AnycubicBinarySensor(coordinator, printer_id, description))
 
@@ -120,11 +121,11 @@ class AnycubicBinarySensor(AnycubicCloudEntity, BinarySensorEntity):
         """Initiate Anycubic Binary Sensor."""
         super().__init__(coordinator, printer_id)
         self.entity_description = entity_description
-        self._attr_unique_id = f"{coordinator.data[self._printer_id]['machine_mac']}-{entity_description.key}"
+        self._attr_unique_id = printer_entity_unique_id(coordinator, self._printer_id, entity_description.key)
 
     @property
     def is_on(self) -> bool:
         """Return true if the binary sensor is on."""
         return bool(
-            self.coordinator.data[self._printer_id][self.entity_description.key]
+            printer_state_for_key(self.coordinator, self._printer_id, self.entity_description.key)
         )

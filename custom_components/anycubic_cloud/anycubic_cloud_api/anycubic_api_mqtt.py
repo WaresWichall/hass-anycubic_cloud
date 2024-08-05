@@ -12,7 +12,7 @@ from .anycubic_api import (
     AnycubicAPI,
 )
 
-from .anycubic_api_base import (
+from .anycubic_exceptions import (
     AnycubicAPIError,
 )
 

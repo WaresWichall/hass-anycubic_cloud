@@ -231,6 +231,15 @@ export interface AnycubicSpoolInfo {
   spool_loaded: boolean;
 }
 
+export interface AnycubicSpeedMode {
+  description: string;
+  mode: number;
+}
+
+export interface SelectDropdownProps {
+  [key: any]: string;
+}
+
 export interface AnycubicCardConfig {
   printer_id?: string;
   vertical?: boolean;
@@ -243,6 +252,7 @@ export interface AnycubicCardConfig {
   monitoredStats?: PrinterCardStatType[];
   scaleFactor?: number;
   slotColors?: string[];
+  showSettingsButton?: boolean;
 }
 
 export enum AnycubicMaterialType {

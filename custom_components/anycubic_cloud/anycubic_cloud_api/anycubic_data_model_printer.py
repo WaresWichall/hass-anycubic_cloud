@@ -13,6 +13,10 @@ from .anycubic_data_model_printer_properties import (
     AnycubicMachineColorInfo,
 )
 
+from .anycubic_data_model_printing_settings import (
+    AnycubicPrintingSettings,
+)
+
 from .anycubic_data_model_project import (
     AnycubicProject,
 )
@@ -1068,6 +1072,30 @@ class AnycubicPrinter:
         return AnycubicFunctionID.MULTI_COLOR_BOX in self._type_function_ids
 
     @property
+    def supports_function_ai_detection(self):
+        return AnycubicFunctionID.AI_DETECTION in self._type_function_ids
+
+    @property
+    def supports_function_auto_leveler(self):
+        return AnycubicFunctionID.AUTO_LEVELER in self._type_function_ids
+
+    @property
+    def supports_function_vibration_compensation(self):
+        return AnycubicFunctionID.VIBRATION_COMPENSATION in self._type_function_ids
+
+    @property
+    def supports_function_time_lapse(self):
+        return AnycubicFunctionID.TIME_LAPSE in self._type_function_ids
+
+    @property
+    def supports_function_video_light(self):
+        return AnycubicFunctionID.VIDEO_LIGHT in self._type_function_ids
+
+    @property
+    def supports_function_box_light(self):
+        return AnycubicFunctionID.BOX_LIGHT in self._type_function_ids
+
+    @property
     def material_type(self):
         return self._material_type
 
@@ -1551,6 +1579,116 @@ class AnycubicPrinter:
             file_bytes=file_bytes,
             slot_index_list=slot_index_list,
             box_id=box_id,
+        )
+
+    async def change_print_setting_speed_mode(
+        self,
+        new_speed: int
+    ):
+        return await self._api_parent._send_order_change_print_settings(
+            printer=self,
+            print_settings=AnycubicPrintingSettings(
+                print_speed_mode=new_speed,
+            ),
+        )
+
+    async def change_print_setting_target_nozzle_temp(
+        self,
+        new_temperature: int
+    ):
+        return await self._api_parent._send_order_change_print_settings(
+            printer=self,
+            print_settings=AnycubicPrintingSettings(
+                target_nozzle_temp=new_temperature,
+            ),
+        )
+
+    async def change_print_setting_target_hotbed_temp(
+        self,
+        new_temperature: int
+    ):
+        return await self._api_parent._send_order_change_print_settings(
+            printer=self,
+            print_settings=AnycubicPrintingSettings(
+                target_hotbed_temp=new_temperature,
+            ),
+        )
+
+    async def change_print_setting_fan_speed_pct(
+        self,
+        new_pct: int
+    ):
+        return await self._api_parent._send_order_change_print_settings(
+            printer=self,
+            print_settings=AnycubicPrintingSettings(
+                fan_speed_pct=new_pct,
+            ),
+        )
+
+    async def change_print_setting_aux_fan_speed_pct(
+        self,
+        new_pct: int
+    ):
+        return await self._api_parent._send_order_change_print_settings(
+            printer=self,
+            print_settings=AnycubicPrintingSettings(
+                aux_fan_speed_pct=new_pct,
+            ),
+        )
+
+    async def change_print_setting_box_fan_level(
+        self,
+        new_level: int
+    ):
+        return await self._api_parent._send_order_change_print_settings(
+            printer=self,
+            print_settings=AnycubicPrintingSettings(
+                box_fan_level=new_level,
+            ),
+        )
+
+    async def change_print_setting_bottom_layers(
+        self,
+        new_layers: int
+    ):
+        return await self._api_parent._send_order_change_print_settings(
+            printer=self,
+            print_settings=AnycubicPrintingSettings(
+                bottom_layers=new_layers,
+            ),
+        )
+
+    async def change_print_setting_bottom_time(
+        self,
+        new_time: float
+    ):
+        return await self._api_parent._send_order_change_print_settings(
+            printer=self,
+            print_settings=AnycubicPrintingSettings(
+                bottom_time=new_time,
+            ),
+        )
+
+    async def change_print_setting_off_time(
+        self,
+        new_time: float
+    ):
+        return await self._api_parent._send_order_change_print_settings(
+            printer=self,
+            print_settings=AnycubicPrintingSettings(
+                off_time=new_time,
+            ),
+        )
+
+    async def change_print_setting_on_time(
+        self,
+        new_time: float
+    ):
+        return await self._api_parent._send_order_change_print_settings(
+            printer=self,
+            print_settings=AnycubicPrintingSettings(
+                on_time=new_time,
+            ),
         )
 
     def __repr__(self):

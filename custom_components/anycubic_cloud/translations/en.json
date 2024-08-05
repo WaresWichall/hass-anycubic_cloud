@@ -141,10 +141,10 @@
     },
     "sensor": {
       "device_status": {
-        "name": "Device Status"
+        "name": "Raw Device Status Code"
       },
       "is_printing": {
-        "name": "Is Printing"
+        "name": "Raw Is Printing Code"
       },
       "current_status": {
         "name": "Current Status"
@@ -204,7 +204,7 @@
         "name": "Print State"
       },
       "raw_print_status": {
-        "name": "Print Status Code"
+        "name": "Raw Print Status Code"
       },
       "print_approximate_completion_time": {
         "name": "Approximate Completion Time"
@@ -220,6 +220,18 @@
       },
       "target_hotbed_temp": {
         "name": "Target Hotbed Temperature"
+      },
+      "print_speed_mode": {
+        "name": "Raw Print Speed Mode Code"
+      },
+      "print_speed_pct": {
+        "name": "Print Speed %"
+      },
+      "print_z_thick": {
+        "name": "Z Thickness"
+      },
+      "fan_speed_pct": {
+        "name": "Fan Speed %"
       },
       "file_list_local": {
         "name": "File List (Local)"
@@ -237,7 +249,7 @@
         "name": "Multi-Color Box Current Temperature"
       },
       "dry_status_raw_status_code": {
-        "name": "Drying Status Code"
+        "name": "Raw Drying Status Code"
       },
       "dry_status_target_temperature": {
         "name": "Drying Target Temperature"
@@ -776,6 +788,226 @@
         "file_id": {
           "name": "File ID",
           "description": "Cloud file ID"
+        }
+      }
+    },
+    "change_print_speed_mode": {
+      "name": "Change Print Speed Mode",
+      "description": "Change Print Speed Mode",
+      "fields": {
+        "config_entry": {
+          "name": "Config Entry",
+          "description": "The config entry to use for this service."
+        },
+        "device_id": {
+          "name": "Printer Device",
+          "description": "Printer Device (if not using ID)."
+        },
+        "printer_id": {
+          "name": "Printer ID",
+          "description": "Printer ID (if not using device)."
+        },
+        "speed_mode": {
+          "name": "Speed Mode",
+          "description": "Speed Mode"
+        }
+      }
+    },
+    "change_print_target_nozzle_temperature": {
+      "name": "Change Print Nozzle Temperature",
+      "description": "Change Print Nozzle Temperature",
+      "fields": {
+        "config_entry": {
+          "name": "Config Entry",
+          "description": "The config entry to use for this service."
+        },
+        "device_id": {
+          "name": "Printer Device",
+          "description": "Printer Device (if not using ID)."
+        },
+        "printer_id": {
+          "name": "Printer ID",
+          "description": "Printer ID (if not using device)."
+        },
+        "temperature": {
+          "name": "Nozzle Temperature",
+          "description": "Nozzle Temperature"
+        }
+      }
+    },
+    "change_print_target_hotbed_temperature": {
+      "name": "Change Print Hotbed Temperature",
+      "description": "Change Print Hotbed Temperature",
+      "fields": {
+        "config_entry": {
+          "name": "Config Entry",
+          "description": "The config entry to use for this service."
+        },
+        "device_id": {
+          "name": "Printer Device",
+          "description": "Printer Device (if not using ID)."
+        },
+        "printer_id": {
+          "name": "Printer ID",
+          "description": "Printer ID (if not using device)."
+        },
+        "temperature": {
+          "name": "Hotbed Temperature",
+          "description": "Hotbed Temperature"
+        }
+      }
+    },
+    "change_print_fan_speed": {
+      "name": "Change Print Fan Speed",
+      "description": "Change Print Fan Speed",
+      "fields": {
+        "config_entry": {
+          "name": "Config Entry",
+          "description": "The config entry to use for this service."
+        },
+        "device_id": {
+          "name": "Printer Device",
+          "description": "Printer Device (if not using ID)."
+        },
+        "printer_id": {
+          "name": "Printer ID",
+          "description": "Printer ID (if not using device)."
+        },
+        "speed": {
+          "name": "Fan Speed",
+          "description": "Fan Speed"
+        }
+      }
+    },
+    "change_print_aux_fan_speed": {
+      "name": "Change Print Aux Fan Speed",
+      "description": "Change Print Aux Fan Speed",
+      "fields": {
+        "config_entry": {
+          "name": "Config Entry",
+          "description": "The config entry to use for this service."
+        },
+        "device_id": {
+          "name": "Printer Device",
+          "description": "Printer Device (if not using ID)."
+        },
+        "printer_id": {
+          "name": "Printer ID",
+          "description": "Printer ID (if not using device)."
+        },
+        "speed": {
+          "name": "Aux Fan Speed",
+          "description": "Aux Fan Speed"
+        }
+      }
+    },
+    "change_print_box_fan_speed": {
+      "name": "Change Print Box Fan Speed",
+      "description": "Change Print Box Fan Speed",
+      "fields": {
+        "config_entry": {
+          "name": "Config Entry",
+          "description": "The config entry to use for this service."
+        },
+        "device_id": {
+          "name": "Printer Device",
+          "description": "Printer Device (if not using ID)."
+        },
+        "printer_id": {
+          "name": "Printer ID",
+          "description": "Printer ID (if not using device)."
+        },
+        "speed": {
+          "name": "Box Fan Speed",
+          "description": "Box Fan Speed"
+        }
+      }
+    },
+    "change_print_bottom_layers": {
+      "name": "Change Print Bottom Layers",
+      "description": "Change Print Bottom Layers",
+      "fields": {
+        "config_entry": {
+          "name": "Config Entry",
+          "description": "The config entry to use for this service."
+        },
+        "device_id": {
+          "name": "Printer Device",
+          "description": "Printer Device (if not using ID)."
+        },
+        "printer_id": {
+          "name": "Printer ID",
+          "description": "Printer ID (if not using device)."
+        },
+        "layers": {
+          "name": "Bottom Layers",
+          "description": "Bottom Layers"
+        }
+      }
+    },
+    "change_print_bottom_time": {
+      "name": "Change Print Bottom Time",
+      "description": "Change Print Bottom Time",
+      "fields": {
+        "config_entry": {
+          "name": "Config Entry",
+          "description": "The config entry to use for this service."
+        },
+        "device_id": {
+          "name": "Printer Device",
+          "description": "Printer Device (if not using ID)."
+        },
+        "printer_id": {
+          "name": "Printer ID",
+          "description": "Printer ID (if not using device)."
+        },
+        "time": {
+          "name": "Bottom Time",
+          "description": "Bottom Time"
+        }
+      }
+    },
+    "change_print_off_time": {
+      "name": "Change Print Off Time",
+      "description": "Change Print Off Time",
+      "fields": {
+        "config_entry": {
+          "name": "Config Entry",
+          "description": "The config entry to use for this service."
+        },
+        "device_id": {
+          "name": "Printer Device",
+          "description": "Printer Device (if not using ID)."
+        },
+        "printer_id": {
+          "name": "Printer ID",
+          "description": "Printer ID (if not using device)."
+        },
+        "time": {
+          "name": "Off Time",
+          "description": "Off Time"
+        }
+      }
+    },
+    "change_print_on_time": {
+      "name": "Change Print On Time",
+      "description": "Change Print On Time",
+      "fields": {
+        "config_entry": {
+          "name": "Config Entry",
+          "description": "The config entry to use for this service."
+        },
+        "device_id": {
+          "name": "Printer Device",
+          "description": "Printer Device (if not using ID)."
+        },
+        "printer_id": {
+          "name": "Printer ID",
+          "description": "Printer ID (if not using device)."
+        },
+        "time": {
+          "name": "On Time",
+          "description": "On Time"
         }
       }
     }

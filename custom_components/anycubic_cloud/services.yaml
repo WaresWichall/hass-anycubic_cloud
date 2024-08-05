@@ -14,7 +14,7 @@ multi_color_box_set_slot_pla: &multi_color_box_set_slot
           integration: anycubic_cloud
     printer_id: &printer_id
       required: false
-      selector:
+      selector: &bignum_selector
         number:
           min: 0
           max: 9999999999999999999
@@ -125,9 +125,91 @@ delete_file_cloud:
     printer_id: *printer_id
     file_id:
       required: true
+      selector: *bignum_selector
+change_print_speed_mode:
+  fields:
+    config_entry: *anycubic_config_entry
+    device_id: *device_id
+    printer_id: *printer_id
+    speed_mode: &pct_selector
+      required: true
       selector:
         number:
           min: 0
-          max: 9999999999999999999
+          max: 100
           step: 1
           mode: box
+change_print_target_nozzle_temperature:
+  fields:
+    config_entry: *anycubic_config_entry
+    device_id: *device_id
+    printer_id: *printer_id
+    temperature: &temp_selector
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 400
+          step: 1
+          mode: box
+change_print_target_hotbed_temperature:
+  fields:
+    config_entry: *anycubic_config_entry
+    device_id: *device_id
+    printer_id: *printer_id
+    temperature: *temp_selector
+change_print_fan_speed:
+  fields:
+    config_entry: *anycubic_config_entry
+    device_id: *device_id
+    printer_id: *printer_id
+    speed: *pct_selector
+change_print_aux_fan_speed:
+  fields:
+    config_entry: *anycubic_config_entry
+    device_id: *device_id
+    printer_id: *printer_id
+    speed: *pct_selector
+change_print_box_fan_speed:
+  fields:
+    config_entry: *anycubic_config_entry
+    device_id: *device_id
+    printer_id: *printer_id
+    speed: *pct_selector
+change_print_bottom_layers:
+  fields:
+    config_entry: *anycubic_config_entry
+    device_id: *device_id
+    printer_id: *printer_id
+    layers:
+      required: true
+      selector: *bignum_selector
+change_print_bottom_time:
+  fields:
+    config_entry: *anycubic_config_entry
+    device_id: *device_id
+    printer_id: *printer_id
+    time:
+      required: true
+      selector: &bigfloat_selector
+        number:
+          min: 0
+          max: 9999999999999999999
+          step: 0.001
+          mode: box
+change_print_off_time:
+  fields:
+    config_entry: *anycubic_config_entry
+    device_id: *device_id
+    printer_id: *printer_id
+    time:
+      required: true
+      selector: *bigfloat_selector
+change_print_on_time:
+  fields:
+    config_entry: *anycubic_config_entry
+    device_id: *device_id
+    printer_id: *printer_id
+    time:
+      required: true
+      selector: *bigfloat_selector

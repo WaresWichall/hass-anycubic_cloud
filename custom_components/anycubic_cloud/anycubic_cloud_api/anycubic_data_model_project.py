@@ -5,6 +5,15 @@ from .anycubic_const import (
     REX_GCODE_EXT,
 )
 
+from .anycubic_data_model_print_speed_mode import (
+    AnycubicPrintSpeedMode,
+)
+
+from .anycubic_exceptions import (
+    AnycubicInvalidValue,
+    AnycubicPropertiesNotLoaded,
+)
+
 from .anycubic_enums import (
     AnycubicPrintStatus,
 )
@@ -65,6 +74,14 @@ class AnycubicProject:
         file_size=None,
         machine_class=None,
         material_unit=None,
+        reason_id=None,
+        z_thick=None,
+        print_speed_mode=None,
+        print_speed_pct=None,
+        fan_speed_pct=None,
+        task_mode=None,
+        type_function_ids=None,
+        available_print_speed_modes=None,
     ):
         self._api_parent = api_parent
         self._id = int(id)
@@ -118,8 +135,21 @@ class AnycubicProject:
         self._file_size = int(file_size) if file_size is not None else None
         self._machine_class = int(machine_class) if machine_class is not None else None
         self._material_unit = str(material_unit) if material_unit is not None else None
+        self._set_reason_id(reason_id)
+        self._set_z_thick(z_thick)
+        self._set_print_speed_mode(print_speed_mode)
+        self._set_print_speed_pct(print_speed_pct)
+        self._set_fan_speed_pct(fan_speed_pct)
+        self._set_task_mode(task_mode)
+        self._set_type_function_ids(type_function_ids)
+        self._set_available_print_speed_modes(available_print_speed_modes)
+
         self._target_nozzle_temp = None
         self._target_hotbed_temp = None
+        self._temp_min_hotbed = None
+        self._temp_max_hotbed = None
+        self._temp_min_nozzle = None
+        self._temp_max_nozzle = None
         self._download_progress = 0
         if self._slice_param and isinstance(self._slice_param, str):
             try:
@@ -219,12 +249,77 @@ class AnycubicProject:
     def set_filename(self, filename):
         self._gcode_name = REX_GCODE_EXT.sub('', str(filename))
 
+    def _set_reason_id(self, reason_id):
+        self._reason_id = int(reason_id) if reason_id is not None else None
+
+    def _set_z_thick(self, z_thick):
+        self._z_thick = float(z_thick) if z_thick is not None else None
+
+    def _set_print_speed_mode(self, print_speed_mode):
+        self._print_speed_mode = int(print_speed_mode) if print_speed_mode is not None else None
+
+    def _set_print_speed_pct(self, print_speed_pct):
+        self._print_speed_pct = int(print_speed_pct) if print_speed_pct is not None else None
+
+    def _set_fan_speed_pct(self, fan_speed_pct):
+        self._fan_speed_pct = int(fan_speed_pct) if fan_speed_pct is not None else None
+
+    def _set_task_mode(self, task_mode):
+        self._task_mode = int(task_mode) if task_mode is not None else None
+
+    def _set_type_function_ids(self, type_function_ids):
+        if isinstance(type_function_ids, list):
+            self._type_function_ids = type_function_ids
+        else:
+            self._type_function_ids = list()
+
+    def _set_available_print_speed_modes(self, print_speed_model_des):
+        if isinstance(print_speed_model_des, list):
+            self._available_print_speed_modes = list([
+                AnycubicPrintSpeedMode.from_json(x)
+                for x in print_speed_model_des
+            ])
+        else:
+            self._available_print_speed_modes = list()
+
+    def _set_temperature_data(self, temperature_data):
+        if temperature_data is None:
+            return
+
+        temp_limit_data = temperature_data.get('limit', {})
+
+        hotbed_temp_limit = temp_limit_data.get('hotbed_temp_limit', [])
+        nozzle_temp_limit = temp_limit_data.get('nozzle_temp_limit', [])
+
+        target_nozzle_temp = temperature_data.get('target_nozzle_temp')
+        target_hotbed_temp = temperature_data.get('target_hotbed_temp')
+
+        temp_min_hotbed = hotbed_temp_limit[0] if len(hotbed_temp_limit) == 2 else None
+        temp_max_hotbed = hotbed_temp_limit[1] if len(hotbed_temp_limit) == 2 else None
+        temp_min_nozzle = nozzle_temp_limit[0] if len(nozzle_temp_limit) == 2 else None
+        temp_max_nozzle = nozzle_temp_limit[1] if len(nozzle_temp_limit) == 2 else None
+
+        self._target_nozzle_temp = int(target_nozzle_temp) if target_nozzle_temp is not None else None
+        self._target_hotbed_temp = int(target_hotbed_temp) if target_hotbed_temp is not None else None
+
+        self._temp_min_hotbed = int(temp_min_hotbed) if temp_min_hotbed is not None else None
+        self._temp_max_hotbed = int(temp_max_hotbed) if temp_max_hotbed is not None else None
+        self._temp_min_nozzle = int(temp_min_nozzle) if temp_min_nozzle is not None else None
+        self._temp_max_nozzle = int(temp_max_nozzle) if temp_max_nozzle is not None else None
+
     def update_extra_data(self, data):
         if data is None:
             return
 
-        self._target_nozzle_temp = data.get('temp', {}).get('target_nozzle_temp')
-        self._target_hotbed_temp = data.get('temp', {}).get('target_hotbed_temp')
+        self._set_reason_id(data.get('reason_id'))
+        self._set_z_thick(data.get('z_thick'))
+        self._set_print_speed_mode(data.get('print_speed_mode'))
+        self._set_print_speed_pct(data.get('print_speed_pct'))
+        self._set_fan_speed_pct(data.get('fan_speed_pct'))
+        self._set_task_mode(data.get('task_mode'))
+        self._set_type_function_ids(data.get('type_function_ids'))
+        self._set_temperature_data(data.get('temp'))
+        self._set_available_print_speed_modes(data.get('print_speed_model_des'))
 
     def update_target_temps(
         self,
@@ -382,6 +477,48 @@ class AnycubicProject:
         return self._target_hotbed_temp
 
     @property
+    def temp_min_hotbed(self):
+        return self._temp_min_hotbed
+
+    @property
+    def temp_max_hotbed(self):
+        return self._temp_max_hotbed
+
+    @property
+    def temp_min_nozzle(self):
+        return self._temp_min_nozzle
+
+    @property
+    def temp_max_nozzle(self):
+        return self._temp_max_nozzle
+
+    @property
+    def print_speed_mode(self):
+        return self._print_speed_mode
+
+    @property
+    def print_speed_pct(self):
+        return self._print_speed_pct
+
+    @property
+    def z_thick(self):
+        return self._z_thick
+
+    @property
+    def fan_speed_pct(self):
+        return self._fan_speed_pct
+
+    @property
+    def available_print_speed_modes(self):
+        return self._available_print_speed_modes
+
+    @property
+    def available_print_speed_modes_data_object(self):
+        return list([
+            x.data_object for x in self._available_print_speed_modes
+        ])
+
+    @property
     def slice_material_info_list(self):
         if not isinstance(self._slice_param, dict):
             return None
@@ -406,6 +543,101 @@ class AnycubicProject:
             total_filament += material.get('filament_used', 0.0)
 
         return total_filament
+
+    def validate_target_nozzle_temperature(
+        self,
+        target_nozzle_temperature: int,
+    ):
+        try:
+            target_nozzle_temperature = int(target_nozzle_temperature)
+        except Exception:
+            raise AnycubicInvalidValue("Invalid target nozzle temperature.")
+
+        if self._temp_min_nozzle is None or self._temp_max_nozzle is None:
+            raise AnycubicPropertiesNotLoaded("Allowed nozzle temperature range is not loaded.")
+
+        if target_nozzle_temperature < self._temp_min_nozzle:
+            raise AnycubicInvalidValue("Target nozzle temperature is below allowed minimum.")
+
+        if target_nozzle_temperature > self._temp_max_nozzle:
+            raise AnycubicInvalidValue("Target nozzle temperature is above allowed maximum.")
+
+    def validate_target_hotbed_temperature(
+        self,
+        target_hotbed_temperature: int,
+    ):
+        try:
+            target_hotbed_temperature = int(target_hotbed_temperature)
+        except Exception:
+            raise AnycubicInvalidValue("Invalid target hotbed temperature.")
+
+        if self._temp_min_hotbed is None or self._temp_max_hotbed is None:
+            raise AnycubicPropertiesNotLoaded("Allowed hotbed temperature range is not loaded.")
+
+        if target_hotbed_temperature < self._temp_min_hotbed:
+            raise AnycubicInvalidValue("Target hotbed temperature is below allowed minimum.")
+
+        if target_hotbed_temperature > self._temp_max_hotbed:
+            raise AnycubicInvalidValue("Target hotbed temperature is above allowed maximum.")
+
+    def validate_print_speed_mode(
+        self,
+        print_speed_mode: int,
+    ):
+        try:
+            print_speed_mode = int(print_speed_mode)
+        except Exception:
+            raise AnycubicInvalidValue("Invalid print speed mode.")
+
+        if len(self._available_print_speed_modes) < 1:
+            raise AnycubicPropertiesNotLoaded("Available print speed modes not loaded.")
+
+        mode_valid = False
+
+        for mode in self._available_print_speed_modes:
+            if mode == print_speed_mode:
+                mode_valid = True
+                break
+
+        if not mode_valid:
+            raise AnycubicInvalidValue(f"Print speed mode {print_speed_mode} not found in available modes.")
+
+    def validate_fan_speed_pct(
+        self,
+        fan_speed_pct: int,
+    ):
+        try:
+            fan_speed_pct = int(fan_speed_pct)
+        except Exception:
+            raise AnycubicInvalidValue("Invalid fan speed %.")
+
+        if fan_speed_pct < 0:
+            raise AnycubicInvalidValue("Fan speed is below allowed minimum.")
+
+        if fan_speed_pct > 100:
+            raise AnycubicInvalidValue("Fan speed is above allowed maximum.")
+
+    def validate_new_print_settings(
+        self,
+        new_print_settings,
+    ):
+        if new_print_settings.print_speed_mode is not None:
+            self.validate_print_speed_mode(new_print_settings.print_speed_mode)
+
+        if new_print_settings.target_nozzle_temp is not None:
+            self.validate_target_nozzle_temperature(new_print_settings.target_nozzle_temp)
+
+        if new_print_settings.target_hotbed_temp is not None:
+            self.validate_target_hotbed_temperature(new_print_settings.target_hotbed_temp)
+
+        if new_print_settings.fan_speed_pct is not None:
+            self.validate_fan_speed_pct(new_print_settings.fan_speed_pct)
+
+        if new_print_settings.aux_fan_speed_pct is not None:
+            self.validate_fan_speed_pct(new_print_settings.aux_fan_speed_pct)
+
+        if new_print_settings.box_fan_level is not None:
+            self.validate_fan_speed_pct(new_print_settings.box_fan_level)
 
     def __repr__(self):
         return (

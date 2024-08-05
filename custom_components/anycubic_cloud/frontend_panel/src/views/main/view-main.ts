@@ -276,6 +276,7 @@ export class AnycubicViewMain extends LitElement {
           .vertical=${false}
           .round=${false}
           .use_24hr=${true}
+          .showSettingsButton=${true}
           .monitoredStats=${this.monitoredStats}
         ></anycubic-printercard-card>
         <div class="ac-extra-printer-info">

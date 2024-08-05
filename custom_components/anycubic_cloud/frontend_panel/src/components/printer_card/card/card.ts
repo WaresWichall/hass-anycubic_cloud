@@ -1,11 +1,13 @@
-import { mdiPower, mdiLightbulbOn, mdiLightbulbOff } from "@mdi/js";
-import { LitElement, html, css, PropertyValues } from "lit";
+import { mdiCog, mdiPower, mdiLightbulbOn, mdiLightbulbOff } from "@mdi/js";
+import { LitElement, html, css, nothing, PropertyValues } from "lit";
 import { property, state } from "lit/decorators.js";
 import { classMap } from "lit/directives/class-map.js";
 import { styleMap } from "lit-html/directives/style-map.js";
 import { animate } from "@lit-labs/motion";
 
 import { customElementIfUndef } from "../../../internal/register-custom-element";
+
+import { fireEvent } from "../../../fire_event";
 
 import {
   HassDevice,
@@ -33,6 +35,7 @@ import "../multicolorbox_view/multicolorbox_view.ts";
 import "../printer_view/printer_view.ts";
 import "../stats/stats_component.ts";
 import "../multicolorbox_view/multicolorbox_modal.ts";
+import "../printsettings/printsettings_modal.ts";
 
 const animOptionsCard = {
   keyframeOptions: {
@@ -65,6 +68,9 @@ export class AnycubicPrintercardCard extends LitElement {
   @property({ type: Boolean })
   public use_24hr?: boolean;
 
+  @property({ type: Boolean })
+  public showSettingsButton?: boolean;
+
   @property({ type: String })
   public temperatureUnit: TemperatureUnit = TemperatureUnit.C;
 
@@ -94,6 +100,9 @@ export class AnycubicPrintercardCard extends LitElement {
 
   @state({ type: Boolean })
   private isHidden: boolean = false;
+
+  @state({ type: Boolean })
+  private isPrinting: boolean = false;
 
   @state({ type: Boolean })
   private hiddenOverride: boolean = false;
@@ -137,6 +146,7 @@ export class AnycubicPrintercardCard extends LitElement {
 
     if (
       changedProperties.has("hass") ||
+      changedProperties.has("hiddenOverride") ||
       changedProperties.has("selectedPrinterID")
     ) {
       this.progressPercent = this._percentComplete();
@@ -166,8 +176,8 @@ export class AnycubicPrintercardCard extends LitElement {
         "print_state",
         "unknown",
       ).state.toLowerCase();
-      this.isHidden =
-        !isPrintStatePrinting(printStateString) && !this.hiddenOverride;
+      this.isPrinting = isPrintStatePrinting(printStateString);
+      this.isHidden = !this.isPrinting && !this.hiddenOverride;
       this.statusColor = printStateStatusColor(printStateString);
       this.lightIsOn = getEntityStateBinary(
         this.hass,
@@ -199,6 +209,12 @@ export class AnycubicPrintercardCard extends LitElement {
           .selectedPrinterDevice=${this.selectedPrinterDevice}
           .slotColors=${this.slotColors}
         ></anycubic-printercard-multicolorbox_modal>
+        <anycubic-printercard-printsettings_modal
+          .hass=${this.hass}
+          .selectedPrinterDevice=${this.selectedPrinterDevice}
+          .printerEntities=${this.printerEntities}
+          .printerEntityIdPart=${this.printerEntityIdPart}
+        ></anycubic-printercard-printsettings_modal>
       </div>
     `;
   }
@@ -226,7 +242,7 @@ export class AnycubicPrintercardCard extends LitElement {
                 <ha-svg-icon .path=${mdiPower}></ha-svg-icon>
               </button>
             `
-          : null}
+          : nothing}
 
         <button
           class="ac-printer-card-button-name"
@@ -255,7 +271,7 @@ export class AnycubicPrintercardCard extends LitElement {
                 ></ha-svg-icon>
               </button>
             `
-          : null}
+          : nothing}
       </div>
     `;
   }
@@ -292,7 +308,7 @@ export class AnycubicPrintercardCard extends LitElement {
                   ? Math.round(this.progressPercent)
                   : this.progressPercent}%
               </p>`
-            : null}
+            : nothing}
         </div>
         <div
           class="ac-printer-card-info-statscontainer ${classMap(classesMain)}"
@@ -310,12 +326,48 @@ export class AnycubicPrintercardCard extends LitElement {
           ></anycubic-printercard-stats-component>
         </div>
       </div>
+      ${this._renderPrintSettingsContainer()}
       ${this._renderMultiColorBoxContainer()}
     `;
   }
 
   private _toggleVideo(): void {
     this._showVideo = this.cameraEntityState && !this._showVideo ? true : false;
+  }
+
+  private _renderPrintSettingsContainer(): HTMLElement {
+    const classesMain = {
+      "ac-card-vertical": this.vertical ? true : false,
+    };
+    const stylesMain = {
+      height: this.isHidden ? "1px" : "auto",
+      opacity: this.isHidden ? 0.0 : 1.0,
+      scale: this.isHidden ? 0.0 : 1.0,
+    };
+
+    return this.showSettingsButton || this.isPrinting
+      ? html`
+          <div
+            class="ac-printer-card-infocontainer ${classMap(classesMain)}"
+            style=${styleMap(stylesMain)}
+            ${animate({ ...animOptionsCard })}
+          >
+            <div
+              class="ac-printer-card-settingssection ${classMap(classesMain)}"
+            >
+              <button
+                class="ac-printer-card-button-settings"
+                @click="${(_e): void => {
+                  this._openPrintSettingsModal();
+                }}"
+              >
+                <ha-svg-icon .path=${mdiCog}></ha-svg-icon>
+                Print Settings
+              </button>
+            </div>
+          </div>
+        `
+      : nothing;
   }
 
   private _renderMultiColorBoxContainer(): HTMLElement {
@@ -344,7 +396,13 @@ export class AnycubicPrintercardCard extends LitElement {
             </div>
           </div>
         `
-      : null;
+      : nothing;
+  }
+
+  private _openPrintSettingsModal(): void {
+    fireEvent(this, "ac-printset-modal", {
+      modalOpen: true,
+    });
   }
 
   private _toggleLightEntity(): void {
@@ -441,6 +499,28 @@ export class AnycubicPrintercardCard extends LitElement {
         margin-left: 24px;
         cursor: pointer;
         color: var(--primary-text-color);
+      }
+
+      .ac-printer-card-button-settings {
+        border: none;
+        border-radius: 6px;
+        outline: none;
+        background-color: transparent;
+        font-size: 18px;
+        box-sizing: border-box;
+        padding: 4px 12px;
+        margin-right: 24px;
+        margin-left: 24px;
+        cursor: pointer;
+        color: var(--primary-text-color);
+      }
+
+      .ac-printer-card-button-settings:hover {
+        background-color: #7f7f7f36;
+      }
+
+      .ac-printer-card-button-settings:active {
+        background-color: #7f7f7f5e;
       }
 
       .ac-printer-card-button-name {

@@ -25,14 +25,19 @@ from .anycubic_cloud_api.anycubic_data_model_printer import (
 
 from .const import (
     ATTR_CONFIG_ENTRY,
-    CONF_FILE_ID,
-    CONF_PRINTER_ID,
-    CONF_SLOT_NUMBER,
-    CONF_SLOT_COLOR_RED,
-    CONF_SLOT_COLOR_GREEN,
-    CONF_SLOT_COLOR_BLUE,
     CONF_BOX_ID,
+    CONF_FILE_ID,
     CONF_FINISHED,
+    CONF_LAYERS,
+    CONF_PRINTER_ID,
+    CONF_SLOT_COLOR_BLUE,
+    CONF_SLOT_COLOR_GREEN,
+    CONF_SLOT_COLOR_RED,
+    CONF_SLOT_NUMBER,
+    CONF_SPEED,
+    CONF_SPEED_MODE,
+    CONF_TEMPERATURE,
+    CONF_TIME,
     CONF_UPLOADED_GCODE_FILE,
     COORDINATOR,
     DOMAIN,
@@ -571,6 +576,333 @@ class DeleteFileCloud(AnycubicCloudServiceCall):
             await coordinator.refresh_cloud_files()
 
 
+class BaseChangePrintSetting(AnycubicCloudServiceCall):
+    """ Base for change print setting service calls """
+
+    def _get_printer_if_printing(
+        self,
+        service: ServiceCall,
+    ):
+        printer = self._get_printer(service)
+
+        if not printer.is_busy:
+            raise ServiceValidationError(
+                "Printer is currently idle."
+            )
+
+        if not printer.latest_project:
+            raise ServiceValidationError(
+                "No print project found."
+            )
+
+        if not printer.latest_project.print_in_progress:
+            raise ServiceValidationError(
+                "Printer is not currently printing."
+            )
+
+        return printer
+
+
+class ChangePrintSpeedMode(BaseChangePrintSetting):
+    """Change print speed mode"""
+
+    schema = vol.Schema(
+        vol.All(
+            AnycubicCloudServiceCall.schema.extend(
+                {
+                    vol.Required(CONF_SPEED_MODE): cv.positive_int,
+                }
+            ),
+            cv.has_at_least_one_key(
+                ATTR_DEVICE_ID,
+                CONF_PRINTER_ID,
+            ),
+        ),
+    )
+
+    async def async_call_service(self, service: ServiceCall) -> None:
+        """Execute service call."""
+
+        printer = self._get_printer_if_printing(service)
+
+        try:
+            await printer.change_print_setting_speed_mode(
+                service.data[CONF_SPEED_MODE],
+            )
+        except Exception as error:
+            raise HomeAssistantError(error) from error
+
+
+class ChangePrintTargetNozzleTemperature(BaseChangePrintSetting):
+    """Change print target nozzle temperature"""
+
+    schema = vol.Schema(
+        vol.All(
+            AnycubicCloudServiceCall.schema.extend(
+                {
+                    vol.Required(CONF_TEMPERATURE): cv.positive_int,
+                }
+            ),
+            cv.has_at_least_one_key(
+                ATTR_DEVICE_ID,
+                CONF_PRINTER_ID,
+            ),
+        ),
+    )
+
+    async def async_call_service(self, service: ServiceCall) -> None:
+        """Execute service call."""
+
+        printer = self._get_printer_if_printing(service)
+
+        try:
+            await printer.change_print_setting_target_nozzle_temp(
+                service.data[CONF_TEMPERATURE],
+            )
+        except Exception as error:
+            raise HomeAssistantError(error) from error
+
+
+class ChangePrintTargetHotbedTemperature(BaseChangePrintSetting):
+    """Change print target hotbed temperature"""
+
+    schema = vol.Schema(
+        vol.All(
+            AnycubicCloudServiceCall.schema.extend(
+                {
+                    vol.Required(CONF_TEMPERATURE): cv.positive_int,
+                }
+            ),
+            cv.has_at_least_one_key(
+                ATTR_DEVICE_ID,
+                CONF_PRINTER_ID,
+            ),
+        ),
+    )
+
+    async def async_call_service(self, service: ServiceCall) -> None:
+        """Execute service call."""
+
+        printer = self._get_printer_if_printing(service)
+
+        try:
+            await printer.change_print_setting_target_hotbed_temp(
+                service.data[CONF_TEMPERATURE],
+            )
+        except Exception as error:
+            raise HomeAssistantError(error) from error
+
+
+class ChangePrintFanSpeed(BaseChangePrintSetting):
+    """Change print fan speed"""
+
+    schema = vol.Schema(
+        vol.All(
+            AnycubicCloudServiceCall.schema.extend(
+                {
+                    vol.Required(CONF_SPEED): cv.positive_int,
+                }
+            ),
+            cv.has_at_least_one_key(
+                ATTR_DEVICE_ID,
+                CONF_PRINTER_ID,
+            ),
+        ),
+    )
+
+    async def async_call_service(self, service: ServiceCall) -> None:
+        """Execute service call."""
+
+        printer = self._get_printer_if_printing(service)
+
+        try:
+            await printer.change_print_setting_fan_speed_pct(
+                service.data[CONF_SPEED],
+            )
+        except Exception as error:
+            raise HomeAssistantError(error) from error
+
+
+class ChangePrintAuxFanSpeed(BaseChangePrintSetting):
+    """Change print aux fan speed"""
+
+    schema = vol.Schema(
+        vol.All(
+            AnycubicCloudServiceCall.schema.extend(
+                {
+                    vol.Required(CONF_SPEED): cv.positive_int,
+                }
+            ),
+            cv.has_at_least_one_key(
+                ATTR_DEVICE_ID,
+                CONF_PRINTER_ID,
+            ),
+        ),
+    )
+
+    async def async_call_service(self, service: ServiceCall) -> None:
+        """Execute service call."""
+
+        printer = self._get_printer_if_printing(service)
+
+        try:
+            await printer.change_print_setting_aux_fan_speed_pct(
+                service.data[CONF_SPEED],
+            )
+        except Exception as error:
+            raise HomeAssistantError(error) from error
+
+
+class ChangePrintBoxFanSpeed(BaseChangePrintSetting):
+    """Change print box fan speed"""
+
+    schema = vol.Schema(
+        vol.All(
+            AnycubicCloudServiceCall.schema.extend(
+                {
+                    vol.Required(CONF_SPEED): cv.positive_int,
+                }
+            ),
+            cv.has_at_least_one_key(
+                ATTR_DEVICE_ID,
+                CONF_PRINTER_ID,
+            ),
+        ),
+    )
+
+    async def async_call_service(self, service: ServiceCall) -> None:
+        """Execute service call."""
+
+        printer = self._get_printer_if_printing(service)
+
+        try:
+            await printer.change_print_setting_box_fan_level(
+                service.data[CONF_SPEED],
+            )
+        except Exception as error:
+            raise HomeAssistantError(error) from error
+
+
+class ChangePrintBottomLayers(BaseChangePrintSetting):
+    """Change print bottom layers"""
+
+    schema = vol.Schema(
+        vol.All(
+            AnycubicCloudServiceCall.schema.extend(
+                {
+                    vol.Required(CONF_LAYERS): cv.positive_int,
+                }
+            ),
+            cv.has_at_least_one_key(
+                ATTR_DEVICE_ID,
+                CONF_PRINTER_ID,
+            ),
+        ),
+    )
+
+    async def async_call_service(self, service: ServiceCall) -> None:
+        """Execute service call."""
+
+        printer = self._get_printer_if_printing(service)
+
+        try:
+            await printer.change_print_setting_bottom_layers(
+                service.data[CONF_LAYERS],
+            )
+        except Exception as error:
+            raise HomeAssistantError(error) from error
+
+
+class ChangePrintBottomTime(BaseChangePrintSetting):
+    """Change print bottom time"""
+
+    schema = vol.Schema(
+        vol.All(
+            AnycubicCloudServiceCall.schema.extend(
+                {
+                    vol.Required(CONF_TIME): cv.positive_float,
+                }
+            ),
+            cv.has_at_least_one_key(
+                ATTR_DEVICE_ID,
+                CONF_PRINTER_ID,
+            ),
+        ),
+    )
+
+    async def async_call_service(self, service: ServiceCall) -> None:
+        """Execute service call."""
+
+        printer = self._get_printer_if_printing(service)
+
+        try:
+            await printer.change_print_setting_bottom_time(
+                service.data[CONF_TIME],
+            )
+        except Exception as error:
+            raise HomeAssistantError(error) from error
+
+
+class ChangePrintOffTime(BaseChangePrintSetting):
+    """Change print off time"""
+
+    schema = vol.Schema(
+        vol.All(
+            AnycubicCloudServiceCall.schema.extend(
+                {
+                    vol.Required(CONF_TIME): cv.positive_float,
+                }
+            ),
+            cv.has_at_least_one_key(
+                ATTR_DEVICE_ID,
+                CONF_PRINTER_ID,
+            ),
+        ),
+    )
+
+    async def async_call_service(self, service: ServiceCall) -> None:
+        """Execute service call."""
+
+        printer = self._get_printer_if_printing(service)
+
+        try:
+            await printer.change_print_setting_off_time(
+                service.data[CONF_TIME],
+            )
+        except Exception as error:
+            raise HomeAssistantError(error) from error
+
+
+class ChangePrintOnTime(BaseChangePrintSetting):
+    """Change print on time"""
+
+    schema = vol.Schema(
+        vol.All(
+            AnycubicCloudServiceCall.schema.extend(
+                {
+                    vol.Required(CONF_TIME): cv.positive_float,
+                }
+            ),
+            cv.has_at_least_one_key(
+                ATTR_DEVICE_ID,
+                CONF_PRINTER_ID,
+            ),
+        ),
+    )
+
+    async def async_call_service(self, service: ServiceCall) -> None:
+        """Execute service call."""
+
+        printer = self._get_printer_if_printing(service)
+
+        try:
+            await printer.change_print_setting_on_time(
+                service.data[CONF_TIME],
+            )
+        except Exception as error:
+            raise HomeAssistantError(error) from error
+
+
 SERVICES = (
     ("multi_color_box_set_slot_pla", MultiColorBoxSetSlotPla),
     ("multi_color_box_set_slot_petg", MultiColorBoxSetSlotPetg),
@@ -588,4 +920,14 @@ SERVICES = (
     ("delete_file_local", DeleteFileLocal),
     ("delete_file_udisk", DeleteFileUdisk),
     ("delete_file_cloud", DeleteFileCloud),
+    ("change_print_speed_mode", ChangePrintSpeedMode),
+    ("change_print_target_nozzle_temperature", ChangePrintTargetNozzleTemperature),
+    ("change_print_target_hotbed_temperature", ChangePrintTargetHotbedTemperature),
+    ("change_print_fan_speed", ChangePrintFanSpeed),
+    ("change_print_aux_fan_speed", ChangePrintAuxFanSpeed),
+    ("change_print_box_fan_speed", ChangePrintBoxFanSpeed),
+    ("change_print_bottom_layers", ChangePrintBottomLayers),
+    ("change_print_bottom_time", ChangePrintBottomTime),
+    ("change_print_off_time", ChangePrintOffTime),
+    ("change_print_on_time", ChangePrintOnTime),
 )

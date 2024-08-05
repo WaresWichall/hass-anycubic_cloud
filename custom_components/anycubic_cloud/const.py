@@ -38,6 +38,11 @@ CONF_MQTT_CONNECT_MODE = "mqtt_connect_mode"
 CONF_DEBUG = "debug"
 CONF_UPLOADED_GCODE_FILE = "uploaded_gcode_file"
 CONF_FILE_ID = "file_id"
+CONF_SPEED_MODE = "speed_mode"
+CONF_SPEED = "speed"
+CONF_TEMPERATURE = "temperature"
+CONF_LAYERS = "layers"
+CONF_TIME = "time"
 
 UNIT_LAYERS = "Layers"
 

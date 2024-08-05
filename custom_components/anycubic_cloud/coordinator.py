@@ -20,7 +20,7 @@ from homeassistant.helpers.device_registry import (
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .anycubic_cloud_api.anycubic_api_base import AnycubicAPIError, AnycubicAPIParsingError
+from .anycubic_cloud_api.anycubic_exceptions import AnycubicAPIError, AnycubicAPIParsingError
 from .anycubic_cloud_api.anycubic_api_mqtt import AnycubicMQTTAPI as AnycubicAPI
 
 from .const import (
@@ -42,6 +42,8 @@ from .const import (
 from .helpers import (
     AnycubicMQTTConnectMode,
     build_printer_device_info,
+    state_string_active,
+    state_string_loaded,
 )
 
 
@@ -167,7 +169,17 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         latest_project = printer.latest_project
 
-        return {
+        multi_color_box_spool_info = (
+            printer.primary_multi_color_box.spool_info_object
+            if printer.primary_multi_color_box
+            else None
+        )
+
+        file_list_local = printer.local_file_list_object
+        file_list_udisk = printer.udisk_file_list_object
+        file_list_cloud = self._cloud_file_list
+
+        states = {
             "id": printer.id,
             "name": printer.name,
             "device_status": printer.device_status,
@@ -187,9 +199,9 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "fw_available_version": printer.fw_version.available_version,
             "fw_is_updating": printer.fw_version.is_updating,
             "fw_is_downloading": printer.fw_version.is_downloading,
-            "file_list_local": printer.local_file_list_object,
-            "file_list_udisk": printer.udisk_file_list_object,
-            "file_list_cloud": self._cloud_file_list,
+            "file_list_local": state_string_loaded(file_list_local),
+            "file_list_udisk": state_string_loaded(file_list_udisk),
+            "file_list_cloud": state_string_loaded(file_list_cloud),
             "supports_function_multi_color_box": printer.supports_function_multi_color_box,
             "multi_color_box_fw_version": (
                 printer.multi_color_box_fw_version[0].firmware_version
@@ -240,11 +252,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 ) > 0
                 else None
             ),
-            "multi_color_box_spools": (
-                printer.primary_multi_color_box.spool_info_object
-                if printer.primary_multi_color_box
-                else None
-            ),
+            "multi_color_box_spools": state_string_active(multi_color_box_spool_info),
             "multi_color_box_runout_refill": (
                 printer.primary_multi_color_box.auto_feed
                 if printer.primary_multi_color_box
@@ -298,9 +306,44 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "print_total_layers": latest_project.print_total_layers if latest_project else None,
             "target_nozzle_temp": latest_project.target_nozzle_temp if latest_project else None,
             "target_hotbed_temp": latest_project.target_hotbed_temp if latest_project else None,
+            "print_speed_mode": latest_project.print_speed_mode if latest_project else None,
+            "print_speed_pct": latest_project.print_speed_pct if latest_project else None,
+            "print_z_thick": latest_project.z_thick if latest_project else None,
+            "fan_speed_pct": latest_project.fan_speed_pct if latest_project else None,
             "raw_print_status": latest_project.raw_print_status if latest_project else None,
             "manual_mqtt_connection_enabled": self._mqtt_manually_connected,
             "mqtt_connection_active": self._anycubic_api.mqtt_is_started,
+        }
+
+        attributes = {
+            "multi_color_box_spools": {
+                "spool_info": multi_color_box_spool_info
+            },
+            "file_list_local": {
+                "file_info": file_list_local,
+            },
+            "file_list_udisk": {
+                "file_info": file_list_udisk,
+            },
+            "file_list_cloud": {
+                "file_info": file_list_cloud,
+            },
+            "target_nozzle_temp": {
+                "limit_min": latest_project.temp_min_nozzle if latest_project else None,
+                "limit_max": latest_project.temp_max_nozzle if latest_project else None,
+            },
+            "target_hotbed_temp": {
+                "limit_min": latest_project.temp_min_hotbed if latest_project else None,
+                "limit_max": latest_project.temp_max_hotbed if latest_project else None,
+            },
+            "print_speed_mode": {
+                "available_modes": latest_project.available_print_speed_modes_data_object if latest_project else None,
+            },
+        }
+
+        return {
+            'states': states,
+            'attributes': attributes,
         }
 
     async def _async_update_data(self) -> dict[str, Any]:
@@ -310,9 +353,10 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             await self.get_anycubic_updates()
 
         data_dict = dict()
+        data_dict['printers'] = dict()
 
         for printer_id, printer in self._anycubic_printers.items():
-            data_dict[printer_id] = self._build_printer_dict(printer)
+            data_dict['printers'][printer_id] = self._build_printer_dict(printer)
 
         if self._printer_device_map is None:
             await self._register_printer_devices(data_dict)

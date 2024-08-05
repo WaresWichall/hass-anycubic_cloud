@@ -29,3 +29,7 @@ AC_KNOWN_AID = 'f9b3528877c94d5c9c5af32245db46ef'
 AC_KNOWN_VID_WEB = '1.0.0'
 AC_KNOWN_VID_APP = '1.4.5'
 AC_KNOWN_SEC = '0cf75926606049a3937f56b0373b99fb'
+
+
+class AnycubicServerMessage:
+    FILE_NOT_FOUND = "No file found"

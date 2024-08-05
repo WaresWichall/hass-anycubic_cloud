@@ -32,6 +32,10 @@ from .anycubic_data_model_printer_properties import (
     AnycubicMaterialMapping,
 )
 
+from .anycubic_data_model_printing_settings import (
+    AnycubicPrintingSettings,
+)
+
 from .anycubic_data_model_project import (
     AnycubicProject,
 )
@@ -42,11 +46,14 @@ from .anycubic_model_base import (
 
 from .anycubic_api_base import (
     HTTP_METHODS,
+    API_ENDPOINT,
+)
+
+from .anycubic_exceptions import (
     AnycubicAPIError,
     AnycubicAPIParsingError,
     AnycubicErrorMessage,
-    AnycubicSliceNotFoundError,
-    API_ENDPOINT,
+    AnycubicFileNotFoundError,
     APIAuthTokensExpired,
 )
 
@@ -69,6 +76,7 @@ from .anycubic_const import (
     AC_KNOWN_VID_APP,
     AC_KNOWN_VID_WEB,
     AC_KNOWN_SEC,
+    AnycubicServerMessage,
 )
 
 from .anycubic_enums import (
@@ -379,6 +387,7 @@ class AnycubicAPI:
             if self._auth_sig_token is None:
                 raise Exception("No sig token.")
             auth_headers['XX-Token'] = self._auth_sig_token
+            auth_headers['XX-LANGUAGE'] = 'US'
         return auth_headers
 
     async def _get_oauth_token(self):
@@ -800,8 +809,8 @@ class AnycubicAPI:
         error_message = resp.get('msg') if resp is not None else None
 
         if resp is None or resp.get('data') is None:
-            if resp is not None and resp.get('data') is None and error_message == "没有找到切片":
-                raise AnycubicSliceNotFoundError('Slice not found.')
+            if resp is not None and resp.get('data') is None and error_message == AnycubicServerMessage.FILE_NOT_FOUND:
+                raise AnycubicFileNotFoundError('File not found in cloud.')
             else:
                 raise AnycubicAPIError(
                     f"Error sending order to Anycubic Cloud, is the printer online? Message: {error_message}"
@@ -993,8 +1002,6 @@ class AnycubicAPI:
     async def _send_order_multi_color_box_get_info(
         self,
         printer,
-        enabled: bool,
-        box_id=0,
     ):
         """
         Response is sent over MQTT.
@@ -1007,6 +1014,74 @@ class AnycubicAPI:
                 order_id=AnycubicOrderID.MULTI_COLOR_BOX_GET_INFO,
                 printer_id=printer.id,
                 project_id=0,
+            ),
+        )
+
+    async def _send_order_query_peripherals(
+        self,
+        printer,
+    ):
+        """
+        Response is sent over MQTT.
+        """
+        if not printer:
+            return
+
+        return await self._send_anycubic_order(
+            order_request=AnycubicBaseProjectOrderRequest(
+                order_id=AnycubicOrderID.QUERY_PERIPHERALS,
+                printer_id=printer.id,
+                project_id=0,
+            ),
+        )
+
+    async def _send_order_get_light_status(
+        self,
+        printer,
+        project,
+    ):
+        """
+        Response is sent over MQTT.
+        """
+        if not printer:
+            return
+
+        if not project:
+            return
+
+        return await self._send_anycubic_order(
+            order_request=AnycubicBaseProjectOrderRequest(
+                order_id=AnycubicOrderID.GET_LIGHT_STATUS,
+                printer_id=printer.id,
+                project_id=project.id,
+            ),
+        )
+
+    async def _send_order_set_light_status(
+        self,
+        printer,
+        project,
+        light_on: bool,
+        light_type: int = 1,
+    ):
+        if not printer:
+            return
+
+        if not project:
+            return
+
+        order_data = {
+            'type': light_type,
+            'status': 1 if light_on else 0,
+            'brightness': 100 if light_on else 0,
+        }
+
+        return await self._send_anycubic_order(
+            order_request=AnycubicProjectOrderRequest(
+                order_id=AnycubicOrderID.SET_LIGHT_STATUS,
+                printer_id=printer.id,
+                project_id=project.id,
+                order_data=order_data,
             ),
         )
 
@@ -1118,56 +1193,30 @@ class AnycubicAPI:
     async def _send_order_change_print_settings(
         self,
         printer,
-        project,
-        print_speed_mode=None,
-        target_nozzle_temp=None,
-        target_hotbed_temp=None,
-        fan_speed_pct=None,
-        bottom_layers=None,
-        bottom_time=None,
-        off_time=None,
-        on_time=None,
+        print_settings: AnycubicPrintingSettings,
+        project=None,
     ):
         if not printer:
             return
 
-        if not project:
+        if not project and not printer.latest_project:
             return
 
-        print_settings = dict()
+        if not project:
+            project = printer.latest_project
 
-        if print_speed_mode is not None:
-            print_settings['print_speed_mode'] = int(print_speed_mode)
+        project.validate_new_print_settings(print_settings)
 
-        if target_nozzle_temp is not None:
-            print_settings['target_nozzle_temp'] = int(target_nozzle_temp)
-
-        if target_hotbed_temp is not None:
-            print_settings['target_hotbed_temp'] = int(target_hotbed_temp)
-
-        if fan_speed_pct is not None:
-            print_settings['fan_speed_pct'] = int(fan_speed_pct)
-
-        if bottom_layers is not None:
-            print_settings['bottom_layers'] = int(bottom_layers)
-
-        if bottom_time is not None:
-            print_settings['bottom_time'] = float(bottom_time)
-
-        if off_time is not None:
-            print_settings['off_time'] = float(off_time)
-
-        if on_time is not None:
-            print_settings['on_time'] = float(on_time)
+        order_data = {
+            'settings': print_settings.settings_data
+        }
 
         return await self._send_anycubic_order(
-            order_request=AnycubicProjectCtrlOrderRequest(
+            order_request=AnycubicProjectOrderRequest(
                 order_id=AnycubicOrderID.PRINT_SETTINGS,
                 printer_id=printer.id,
                 project_id=project.id,
-                order_data=None,
-                ams_box_mapping=None,
-                print_settings=print_settings,
+                order_data=order_data,
             ),
         )
 
@@ -2022,7 +2071,7 @@ class AnycubicAPI:
                     print_request=print_request,
                     ams_box_mapping=ams_box_mapping,
                 )
-            except AnycubicSliceNotFoundError:
+            except AnycubicFileNotFoundError:
                 await asyncio.sleep(3)
 
             try_count += 1

@@ -61,6 +61,9 @@ class AnycubicOrderID(IntEnum):
     GET_M7_AUTO_OPERATION = 1228  # Not handled
     EXTFILBOX = 1229  # Not handled
     GET_EXTFILBOX_INFO = 1230  # Not handled
+    QUERY_PERIPHERALS = 1231
+    GET_LIGHT_STATUS = 1232
+    SET_LIGHT_STATUS = 1233
 
 
 class AnycubicFunctionID(IntEnum):
@@ -80,4 +83,10 @@ class AnycubicFunctionID(IntEnum):
     LCD_INTELLIGENT_MATERIALS_BOX = 33
     LCD_AUTO_OUT_IN_MATERIALS = 34
     M7PRO_AUTOMATIC_OPERATION = 35
+    AI_DETECTION = 36
+    AUTO_LEVELER = 37
+    VIBRATION_COMPENSATION = 38
+    TIME_LAPSE = 39
+    VIDEO_LIGHT = 40
+    BOX_LIGHT = 41
     MULTI_COLOR_BOX = 2006

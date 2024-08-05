@@ -531,6 +531,7 @@ export function getDefaultCardConfig(): AnycubicCardConfig {
     monitoredStats: getDefaultMonitoredStats(),
     scaleFactor: 1,
     slotColors: [],
+    showSettingsButton: false,
   };
 }
 
