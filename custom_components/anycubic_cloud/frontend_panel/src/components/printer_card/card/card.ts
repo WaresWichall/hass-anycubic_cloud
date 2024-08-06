@@ -285,6 +285,20 @@ export class AnycubicPrintercardCard extends LitElement {
       opacity: this.isHidden ? 0.0 : 1.0,
       scale: this.isHidden ? 0.0 : 1.0,
     };
+    const stylesScaledColLeft = {
+      width: this.vertical
+        ? "100%"
+        : this.scaleFactor
+          ? 50 * this.scaleFactor + "%"
+          : "50%",
+    };
+    const stylesScaledColRight = {
+      width: this.vertical
+        ? "100%"
+        : this.scaleFactor
+          ? 50 / this.scaleFactor + "%"
+          : "50%",
+    };
 
     return html`
       <div
@@ -294,6 +308,7 @@ export class AnycubicPrintercardCard extends LitElement {
       >
         <div
           class="ac-printer-card-info-animcontainer ${classMap(classesMain)}"
+          style=${styleMap(stylesScaledColLeft)}
         >
           <anycubic-printercard-printer_view
             .hass=${this.hass}
@@ -312,6 +327,7 @@ export class AnycubicPrintercardCard extends LitElement {
         </div>
         <div
           class="ac-printer-card-info-statscontainer ${classMap(classesMain)}"
+          style=${styleMap(stylesScaledColRight)}
         >
           <anycubic-printercard-stats-component
             .hass=${this.hass}
@@ -564,15 +580,12 @@ export class AnycubicPrintercardCard extends LitElement {
 
       .ac-printer-card-info-animcontainer {
         box-sizing: border-box;
-        padding: 0px 16px 32px 16px;
+        padding: 0px 8px 32px 8px;
         width: 50%;
         height: 100%;
         display: flex;
         flex-direction: row;
         justify-content: space-between;
-        padding-left: 16px;
-        padding-right: 16px;
-        max-height: 270px;
       }
 
       .ac-printer-card-info-animcontainer.ac-card-vertical {
@@ -580,12 +593,11 @@ export class AnycubicPrintercardCard extends LitElement {
         height: auto;
         padding-left: 64px;
         padding-right: 64px;
-        max-height: unset;
       }
 
       anycubic-printercard-printer_view {
         width: 100%;
-        flex-glow: 1;
+        flex-grow: 1;
       }
 
       .ac-printer-card-info-vertprog {
@@ -601,9 +613,7 @@ export class AnycubicPrintercardCard extends LitElement {
 
       .ac-printer-card-info-statscontainer {
         box-sizing: border-box;
-        padding: 0px 16px 32px 16px;
-        padding-left: 16px;
-        padding-right: 32px;
+        padding: 0px 16px 32px 8px;
         width: 50%;
         height: 100%;
       }

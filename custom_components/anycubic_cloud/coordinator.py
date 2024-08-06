@@ -10,7 +10,7 @@ from aiohttp import CookieJar
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
-from homeassistant.core import CoreState, HomeAssistant
+from homeassistant.core import callback, CoreState, HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
 from homeassistant.helpers.device_registry import (
@@ -32,6 +32,7 @@ from .const import (
     DEFAULT_SCAN_INTERVAL,
     FAILED_UPDATE_DELAY,
     MAX_FAILED_UPDATES,
+    MQTT_ACTION_RESPONSE_ALIVE_SECONDS,
     MQTT_IDLE_DISCONNECT_SECONDS,
     MQTT_SCAN_INTERVAL,
     DOMAIN,
@@ -65,6 +66,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._mqtt_task = None
         self._mqtt_manually_connected = False
         self._mqtt_idle_since = None
+        self._mqtt_last_action = None
         self._printer_device_map = None
         mqtt_connect_mode = self.entry.options.get(CONF_MQTT_CONNECT_MODE)
         self._mqtt_connection_mode = (
@@ -111,8 +113,20 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             for printer_id, printer in self._anycubic_printers.items()
         ])
 
-    def _check_mqtt_connection_modes_active(self):
+    def _check_mqtt_connection_last_action_waiting(self):
         if (
+            self._mqtt_last_action is not None and
+            int(time.time()) < self._mqtt_last_action + MQTT_ACTION_RESPONSE_ALIVE_SECONDS
+        ):
+            return True
+
+        return False
+
+    def _check_mqtt_connection_modes_active(self):
+        if self._check_mqtt_connection_last_action_waiting():
+            return True
+
+        elif (
             self._mqtt_connection_mode == AnycubicMQTTConnectMode.Printing_Only and
             self._any_printers_are_printing()
         ):
@@ -139,7 +153,10 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             return False
 
     def _check_mqtt_connection_modes_inactive(self):
-        if (
+        if self._check_mqtt_connection_last_action_waiting():
+            return False
+
+        elif (
             self._mqtt_connection_mode == AnycubicMQTTConnectMode.Printing_Only and
             self._no_printers_are_printing()
         ):
@@ -193,60 +210,12 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "machine_mac": printer.machine_mac,
             "machine_name": printer.machine_name,
             "fw_version": printer.fw_version.firmware_version,
-            "fw_update_available": printer.fw_version.update_available,
-            "fw_update_progress": printer.fw_version.update_progress,
-            "fw_download_progress": printer.fw_version.download_progress,
-            "fw_available_version": printer.fw_version.available_version,
-            "fw_is_updating": printer.fw_version.is_updating,
-            "fw_is_downloading": printer.fw_version.is_downloading,
             "file_list_local": state_string_loaded(file_list_local),
             "file_list_udisk": state_string_loaded(file_list_udisk),
             "file_list_cloud": state_string_loaded(file_list_cloud),
             "supports_function_multi_color_box": printer.supports_function_multi_color_box,
             "multi_color_box_fw_version": (
                 printer.multi_color_box_fw_version[0].firmware_version
-                if printer.multi_color_box_fw_version and len(
-                    printer.multi_color_box_fw_version
-                ) > 0
-                else None
-            ),
-            "multi_color_box_fw_update_available": (
-                printer.multi_color_box_fw_version[0].update_available
-                if printer.multi_color_box_fw_version and len(
-                    printer.multi_color_box_fw_version
-                ) > 0
-                else None
-            ),
-            "multi_color_box_fw_update_progress": (
-                printer.multi_color_box_fw_version[0].update_progress
-                if printer.multi_color_box_fw_version and len(
-                    printer.multi_color_box_fw_version
-                ) > 0
-                else None
-            ),
-            "multi_color_box_fw_download_progress": (
-                printer.multi_color_box_fw_version[0].download_progress
-                if printer.multi_color_box_fw_version and len(
-                    printer.multi_color_box_fw_version
-                ) > 0
-                else None
-            ),
-            "multi_color_box_fw_available_version": (
-                printer.multi_color_box_fw_version[0].available_version
-                if printer.multi_color_box_fw_version and len(
-                    printer.multi_color_box_fw_version
-                ) > 0
-                else None
-            ),
-            "multi_color_box_fw_is_updating": (
-                printer.multi_color_box_fw_version[0].is_updating
-                if printer.multi_color_box_fw_version and len(
-                    printer.multi_color_box_fw_version
-                ) > 0
-                else None
-            ),
-            "multi_color_box_fw_is_downloading": (
-                printer.multi_color_box_fw_version[0].is_downloading
                 if printer.multi_color_box_fw_version and len(
                     printer.multi_color_box_fw_version
                 ) > 0
@@ -339,6 +308,31 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "print_speed_mode": {
                 "available_modes": latest_project.available_print_speed_modes_data_object if latest_project else None,
             },
+            "current_status": {
+                "model": printer.model,
+                "machine_type": printer.machine_type,
+                "supported_functions": printer.supported_function_strings,
+            },
+            "fw_version": {
+                "latest_version": printer.fw_version.available_version,
+                "in_progress": printer.fw_version.total_progress,
+            },
+            "multi_color_box_fw_version": {
+                "latest_version": (
+                    printer.multi_color_box_fw_version[0].available_version
+                    if printer.multi_color_box_fw_version and len(
+                        printer.multi_color_box_fw_version
+                    ) > 0
+                    else None
+                ),
+                "in_progress": (
+                    printer.multi_color_box_fw_version[0].total_progress
+                    if printer.multi_color_box_fw_version and len(
+                        printer.multi_color_box_fw_version
+                    ) > 0
+                    else None
+                ),
+            },
         }
 
         return {
@@ -346,22 +340,37 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             'attributes': attributes,
         }
 
-    async def _async_update_data(self) -> dict[str, Any]:
-        """Fetch data from AnycubicCloud."""
-
-        if not self._last_state_update or int(time.time()) > self._last_state_update + DEFAULT_SCAN_INTERVAL:
-            await self.get_anycubic_updates()
-
+    def _build_coordinator_data(self):
         data_dict = dict()
         data_dict['printers'] = dict()
 
         for printer_id, printer in self._anycubic_printers.items():
             data_dict['printers'][printer_id] = self._build_printer_dict(printer)
 
+        return data_dict
+
+    async def _async_update_data(self) -> dict[str, Any]:
+        """Fetch data from AnycubicCloud."""
+
+        if not self._last_state_update or int(time.time()) > self._last_state_update + DEFAULT_SCAN_INTERVAL:
+            await self.get_anycubic_updates()
+
+        data_dict = self._build_coordinator_data()
+
         if self._printer_device_map is None:
             await self._register_printer_devices(data_dict)
 
         return data_dict
+
+    async def _async_force_data_refresh(self):
+        self.async_set_updated_data(self._build_coordinator_data())
+
+    @callback
+    def _mqtt_callback_data_updated(self):
+        self.hass.create_task(
+            self._async_force_data_refresh(),
+            f"Anycubic coordinator {self.entry.entry_id} data refresh",
+        )
 
     def _anycubic_mqtt_connection_should_start(self):
 
@@ -456,6 +465,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 session=websession,
                 cookie_jar=cookie_jar,
                 debug_logger=LOGGER,
+                mqtt_callback_printer_update=self._mqtt_callback_data_updated
             )
 
             self._anycubic_api.set_mqtt_log_all_messages(self.entry.options.get(CONF_DEBUG))
@@ -506,6 +516,14 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         if self._anycubic_api.tokens_changed:
             store = Store[dict[str, Any]](self.hass, STORAGE_VERSION, STORAGE_KEY)
             await store.async_save(self._anycubic_api.build_token_dict())
+
+    async def _connect_mqtt_for_action_response(self):
+        self._mqtt_last_action = int(time.time())
+        await self._check_anycubic_mqtt_connection()
+        if not await self._anycubic_api.mqtt_wait_for_connect():
+            raise HomeAssistantError(
+                "Anycubic MQTT Timed out waiting for connection, try manually enabling MQTT."
+            )
 
     async def get_anycubic_updates(self, start_up: bool = False) -> dict[str, Any]:
         """Fetch data from AnycubicCloud."""
@@ -592,49 +610,66 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 if preset_duration is None or preset_temperature is None:
                     return
 
+                await self._connect_mqtt_for_action_response()
                 await printer.multi_color_box_drying_start(
                     duration=preset_duration,
                     target_temp=preset_temperature,
                 )
 
             elif printer and event_key == 'request_file_list_cloud':
+                await self._connect_mqtt_for_action_response()
                 await self.refresh_cloud_files()
 
             elif printer and event_key == 'request_file_list_local':
+                await self._connect_mqtt_for_action_response()
                 await printer.request_local_file_list()
 
             elif printer and event_key == 'request_file_list_udisk':
+                await self._connect_mqtt_for_action_response()
                 await printer.request_udisk_file_list()
 
             elif printer and event_key == 'drying_stop':
+                await self._connect_mqtt_for_action_response()
                 await printer.multi_color_box_drying_stop()
 
             elif printer and event_key == 'pause_print':
+                await self._connect_mqtt_for_action_response()
                 await printer.pause_print()
 
             elif printer and event_key == 'resume_print':
+                await self._connect_mqtt_for_action_response()
                 await printer.resume_print()
 
             elif printer and event_key == 'cancel_print':
+                await self._connect_mqtt_for_action_response()
                 await printer.cancel_print()
-
-            elif printer and event_key == 'update_printer_firmware':
-                if not self._mqtt_manually_connected:
-                    raise HomeAssistantError('Anycubic MQTT must be connected for printer firmware updates.')
-
-                await printer.update_printer_firmware()
-
-            elif printer and event_key == 'update_multi_color_box_firmware':
-                if not self._mqtt_manually_connected:
-                    raise HomeAssistantError('Anycubic MQTT must be connected for ACE firmware updates.')
-
-                await printer.update_printer_all_multi_color_box_firmware()
 
             # elif printer and event_key == 'toggle_auto_feed':
             #     await printer.multi_color_box_toggle_auto_feed()
 
             # elif event_key == 'toggle_mqtt_connection':
             #     self._mqtt_manually_connected = not self._mqtt_manually_connected
+
+            else:
+                return
+
+            await self.force_state_update()
+
+        except AnycubicAPIError as ex:
+            raise HomeAssistantError(ex) from ex
+
+    async def fw_update_event(self, printer_id, event_key):
+        printer = self.get_printer_for_id(printer_id)
+
+        try:
+
+            if printer and event_key == 'fw_version':
+                await self._connect_mqtt_for_action_response()
+                await printer.update_printer_firmware()
+
+            elif printer and event_key == 'multi_color_box_fw_version':
+                await self._connect_mqtt_for_action_response()
+                await printer.update_printer_all_multi_color_box_firmware()
 
             else:
                 return
@@ -651,6 +686,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             self._mqtt_manually_connected = True
 
         elif printer and event_key == 'multi_color_box_runout_refill':
+            await self._connect_mqtt_for_action_response()
             await printer.multi_color_box_switch_on_auto_feed()
 
         else:
@@ -665,6 +701,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             self._mqtt_manually_connected = False
 
         elif printer and event_key == 'multi_color_box_runout_refill':
+            await self._connect_mqtt_for_action_response()
             await printer.multi_color_box_switch_off_auto_feed()
 
         else:

@@ -13,6 +13,7 @@ import {
   getPrinterSensorStateFloat,
   getPrinterSensorStateString,
   getPrinterBinarySensorState,
+  getPrinterUpdateEntityState,
 } from "../../helpers";
 import {
   HomeAssistant,
@@ -62,7 +63,7 @@ export class AnycubicViewMain extends LitElement {
   private printerMAC: string | null;
 
   @state()
-  private printerStateFwUpdateAvailable: string | boolean | undefined;
+  private printerStateFwUpdateAvailable: string | undefined;
 
   @state()
   private printerStateAvailable: string | boolean | undefined;
@@ -93,9 +94,6 @@ export class AnycubicViewMain extends LitElement {
 
   @state()
   private aceStateDryingActive: string | boolean | undefined;
-
-  @state()
-  private aceStateFwVersion: string | undefined;
 
   @state()
   private aceStateDryingRemaining: number | undefined;
@@ -129,13 +127,11 @@ export class AnycubicViewMain extends LitElement {
       changedProperties.has("hass") ||
       changedProperties.has("selectedPrinterID")
     ) {
-      this.printerStateFwUpdateAvailable = getPrinterBinarySensorState(
+      this.printerStateFwUpdateAvailable = getPrinterUpdateEntityState(
         this.hass,
         this.printerEntities,
         this.printerEntityIdPart,
-        "firmware_update_available",
-        "Update Available",
-        "Up To Date",
+        "printer_firmware",
       );
       this.printerStateAvailable = getPrinterBinarySensorState(
         this.hass,
@@ -192,13 +188,11 @@ export class AnycubicViewMain extends LitElement {
         "print_state",
         true,
       );
-      this.aceStateFwUpdateAvailable = getPrinterBinarySensorState(
+      this.aceStateFwUpdateAvailable = getPrinterUpdateEntityState(
         this.hass,
         this.printerEntities,
         this.printerEntityIdPart,
-        "ace_firmware_update_available",
-        "Update Available",
-        "Up To Date",
+        "ace_firmware",
       );
       this.aceStateDryingActive = getPrinterBinarySensorState(
         this.hass,
@@ -207,12 +201,6 @@ export class AnycubicViewMain extends LitElement {
         "drying_active",
         "Drying",
         "Not Drying",
-      );
-      this.aceStateFwVersion = getPrinterSensorStateString(
-        this.hass,
-        this.printerEntities,
-        this.printerEntityIdPart,
-        "ace_fw_version",
       );
       this.aceStateDryingRemaining = getPrinterSensorStateFloat(
         this.hass,
@@ -240,7 +228,7 @@ export class AnycubicViewMain extends LitElement {
               ).toFixed(2),
             ) + "%"
           : undefined;
-      if (this.aceStateFwVersion) {
+      if (this.aceStateFwUpdateAvailable) {
         this.monitoredStats = monitoredStatsACE;
       } else {
         this.monitoredStats = monitoredStatsBasic;
@@ -325,10 +313,6 @@ export class AnycubicViewMain extends LitElement {
           )}
           ${this._renderInfoRow("print_state", this.projectStatePrintState)}
           ${this._renderInfoRow("project_progress", this.projectStateProgress)}
-          ${this._renderOptionalInfoRow(
-            "ace_fw_version",
-            this.aceStateFwVersion,
-          )}
           ${this._renderOptionalInfoRow(
             "ace_fw_update_available",
             this.aceStateFwUpdateAvailable,

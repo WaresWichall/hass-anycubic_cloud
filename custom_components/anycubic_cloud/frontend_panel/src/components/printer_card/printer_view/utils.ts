@@ -29,11 +29,16 @@ export function getDimensions(
   bounds: AnimatedPrinterBasicDimension,
   haScaleFactor: number,
 ): AnimatedPrinterDimensions {
-  /* We estimate the initial scale factor based on the height of the frame, then compound with set factor */
+  /* We estimate the initial scale factor based on the height + width of the frame, then compound with set factor */
+  const scaledBoundsHeight =
+    bounds.height /
+    (config.top.height + config.bottom.height + config.left.height);
+
+  const scaledBoundsWidth =
+    bounds.width / (config.top.width + config.left.width + config.right.width);
+
   const scale = new Scale(
-    (bounds.height /
-      (config.top.height + config.bottom.height + config.left.height)) *
-      haScaleFactor,
+    Math.min(scaledBoundsHeight, scaledBoundsWidth) * haScaleFactor,
   );
 
   /* Frame */
@@ -168,7 +173,7 @@ export const printerConfigAnycubic: AnimatedPrinterConfig = {
   },
   left: {
     width: 30,
-    height: 380,
+    height: 400,
   },
   right: {
     width: 30,

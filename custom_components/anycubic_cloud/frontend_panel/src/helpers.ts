@@ -3,6 +3,8 @@ import moment from "moment";
 import { fireEvent } from "./fire_event";
 import {
   AnycubicCardConfig,
+  AnycubicSpeedMode,
+  AnycubicSpeedModes,
   CalculatedTimeType,
   HomeAssistant,
   HassDevice,
@@ -244,6 +246,30 @@ export function getPrinterBinarySensorState(
   return entInfo
     ? getEntityStateBinary(hass, entInfo, onValue, offValue)
     : undefined;
+}
+
+export function getPrinterUpdateEntityState(
+  hass: HomeAssistant,
+  entities: HassEntityInfos,
+  printerEntityIdPart: string | undefined,
+  suffix: string,
+): string | undefined {
+  const entInfo = getStrictMatchingEntity(
+    entities,
+    printerEntityIdPart,
+    "update",
+    suffix,
+  );
+  if (entInfo) {
+    return getEntityStateBinary(
+      hass,
+      entInfo,
+      "Update Available",
+      "Up To Date",
+    );
+  } else {
+    return undefined;
+  }
 }
 
 export function getFileListLocalFilesEntity(
@@ -488,14 +514,7 @@ export function getDefaultMonitoredStats(): PrinterCardStatType[] {
 
 export function getPanelBasicMonitoredStats(): PrinterCardStatType[] {
   return [
-    PrinterCardStatType.Status,
-    PrinterCardStatType.ETA,
-    PrinterCardStatType.Elapsed,
-    PrinterCardStatType.HotendCurrent,
-    PrinterCardStatType.BedCurrent,
-    PrinterCardStatType.Remaining,
-    PrinterCardStatType.HotendTarget,
-    PrinterCardStatType.BedTarget,
+    ...getDefaultMonitoredStats(),
     PrinterCardStatType.PrinterOnline,
     PrinterCardStatType.Availability,
     PrinterCardStatType.ProjectName,
@@ -505,18 +524,7 @@ export function getPanelBasicMonitoredStats(): PrinterCardStatType[] {
 
 export function getPanelACEMonitoredStats(): PrinterCardStatType[] {
   return [
-    PrinterCardStatType.Status,
-    PrinterCardStatType.ETA,
-    PrinterCardStatType.Elapsed,
-    PrinterCardStatType.HotendCurrent,
-    PrinterCardStatType.BedCurrent,
-    PrinterCardStatType.Remaining,
-    PrinterCardStatType.HotendTarget,
-    PrinterCardStatType.BedTarget,
-    PrinterCardStatType.PrinterOnline,
-    PrinterCardStatType.Availability,
-    PrinterCardStatType.ProjectName,
-    PrinterCardStatType.CurrentLayer,
+    ...getPanelBasicMonitoredStats(),
     PrinterCardStatType.DryingStatus,
     PrinterCardStatType.DryingTime,
   ];
@@ -537,4 +545,15 @@ export function getDefaultCardConfig(): AnycubicCardConfig {
 
 export function undefinedDefault(value: any, defaultValue: any): any {
   return typeof value === "undefined" ? defaultValue : value;
+}
+
+export function speedModesFromStateObj(
+  speedModeState: HassEntity,
+): AnycubicSpeedModes {
+  const speedModeAttr: AnycubicSpeedMode[] =
+    speedModeState.attributes.available_modes;
+  return speedModeAttr.reduce(
+    (modes, mode) => ({ ...modes, [mode.mode]: mode.description }),
+    {},
+  );
 }

@@ -31,22 +31,6 @@ from .helpers import printer_attributes_for_key, printer_entity_unique_id, print
 
 MULTI_COLOR_BOX_SENSOR_TYPES = (
     SensorEntityDescription(
-        key="multi_color_box_fw_version",
-        translation_key="multi_color_box_fw_version",
-    ),
-    SensorEntityDescription(
-        key="multi_color_box_fw_update_progress",
-        translation_key="multi_color_box_fw_update_progress",
-    ),
-    SensorEntityDescription(
-        key="multi_color_box_fw_download_progress",
-        translation_key="multi_color_box_fw_download_progress",
-    ),
-    SensorEntityDescription(
-        key="multi_color_box_fw_available_version",
-        translation_key="multi_color_box_fw_available_version",
-    ),
-    SensorEntityDescription(
         key="multi_color_box_current_temperature",
         translation_key="multi_color_box_current_temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
@@ -108,22 +92,6 @@ SENSOR_TYPES = (
     SensorEntityDescription(
         key="file_list_cloud",
         translation_key="file_list_cloud",
-    ),
-    SensorEntityDescription(
-        key="fw_version",
-        translation_key="fw_version",
-    ),
-    SensorEntityDescription(
-        key="fw_update_progress",
-        translation_key="fw_update_progress",
-    ),
-    SensorEntityDescription(
-        key="fw_download_progress",
-        translation_key="fw_download_progress",
-    ),
-    SensorEntityDescription(
-        key="fw_available_version",
-        translation_key="fw_available_version",
     ),
     SensorEntityDescription(
         key="current_project_name",

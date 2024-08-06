@@ -291,6 +291,7 @@ export class AnycubicPrintercardMulticolorboxModal extends LitElement {
       ha-control-button {
         min-width: 150px;
         margin: 30px auto 0px;
+        font-size: 14px;
       }
 
       color-picker {

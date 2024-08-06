@@ -161,6 +161,8 @@ export enum TextStatType {
   CurrentLayer = "Layer",
   DryingStatus = "Dry Status",
   DryingTime = "Dry Time",
+  SpeedMode = "Speed Mode",
+  FanSpeed = "Fan Speed",
 }
 
 export const PrinterCardStatType = { ...CalculatedTimeType, ...TextStatType };
@@ -238,6 +240,10 @@ export interface AnycubicSpeedMode {
 
 export interface SelectDropdownProps {
   [key: any]: string;
+}
+
+export interface AnycubicSpeedModes {
+  [key: number]: string;
 }
 
 export interface AnycubicCardConfig {
