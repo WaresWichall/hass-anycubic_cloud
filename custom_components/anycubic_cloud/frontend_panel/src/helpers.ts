@@ -248,6 +248,30 @@ export function getPrinterBinarySensorState(
     : undefined;
 }
 
+export function getPrinterUpdateEntityState(
+  hass: HomeAssistant,
+  entities: HassEntityInfos,
+  printerEntityIdPart: string | undefined,
+  suffix: string,
+): string | undefined {
+  const entInfo = getStrictMatchingEntity(
+    entities,
+    printerEntityIdPart,
+    "update",
+    suffix,
+  );
+  if (entInfo) {
+    return getEntityStateBinary(
+      hass,
+      entInfo,
+      "Update Available",
+      "Up To Date",
+    );
+  } else {
+    return undefined;
+  }
+}
+
 export function getFileListLocalFilesEntity(
   entities: HassEntityInfos,
 ): HassEntityInfo | undefined {

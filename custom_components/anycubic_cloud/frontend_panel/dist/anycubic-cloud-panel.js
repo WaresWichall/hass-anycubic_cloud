@@ -2954,14 +2954,7 @@
       attributes: n
     };
   }
-  function jt(t, e, i, r, s = !1) {
-    const n = Rt(e, i, "sensor", r);
-    if (n) {
-      const e = It(t, n);
-      return s ? Nt(e) : e;
-    }
-  }
-  function Gt(t, e, i, r) {
+  function jt(t, e, i, r) {
     const s = Rt(e, i, "sensor", r);
     return s ? function (t, e) {
       const i = Ft(t, e),
@@ -2969,9 +2962,13 @@
       return isNaN(r) ? 0 : r;
     }(t, s) : void 0;
   }
-  function Vt(t, e, i, r, s, n) {
+  function Gt(t, e, i, r, s, n) {
     const o = Rt(e, i, "binary_sensor", r);
     return o ? Bt(t, o, s, n) : void 0;
+  }
+  function Vt(t, e, i, r) {
+    const s = Rt(e, i, "update", r);
+    return s ? Bt(t, s, "Update Available", "Up To Date") : void 0;
   }
   function Wt(t) {
     const e = t.path.split("/");
@@ -6116,7 +6113,7 @@
             return K`
               <anycubic-printercard-stat-line
                 .name=${t}
-                .value=${Vt(this.hass, this.printerEntities, this.printerEntityIdPart, "printer_online", "Online", "Offline")}
+                .value=${Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "printer_online", "Online", "Offline")}
               ></anycubic-printercard-stat-line>
             `;
           case Ct.Availability:
@@ -6172,7 +6169,7 @@
             return K`
               <anycubic-printercard-stat-line
                 .name=${t}
-                .value=${Vt(this.hass, this.printerEntities, this.printerEntityIdPart, "drying_active", "Drying", "Not Drying")}
+                .value=${Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "drying_active", "Drying", "Not Drying")}
               ></anycubic-printercard-stat-line>
             `;
           case Ct.DryingTime:
@@ -9419,9 +9416,15 @@
       if (super.willUpdate(t), t.has("selectedPrinterDevice") && (this.printerID = (e = this.selectedPrinterDevice) ? e.hw_version.split("Printer ID: ")[1] : void 0, this.printerMAC = function (t) {
         return t && t.connections.length > 0 && t.connections[0].length > 1 ? t.connections[0][1] : null;
       }(this.selectedPrinterDevice)), t.has("selectedPrinterID") && (this.printerEntities = Lt(this.hass, this.selectedPrinterID), this.printerEntityIdPart = Yt(this.printerEntities)), t.has("hass") || t.has("selectedPrinterID")) {
-        this.printerStateFwUpdateAvailable = Vt(this.hass, this.printerEntities, this.printerEntityIdPart, "firmware_update_available", "Update Available", "Up To Date"), this.printerStateAvailable = Vt(this.hass, this.printerEntities, this.printerEntityIdPart, "is_available", "Available", "Busy"), this.printerStateOnline = Vt(this.hass, this.printerEntities, this.printerEntityIdPart, "printer_online", "Online", "Offline"), this.printerStateCurrNozzleTemp = Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "nozzle_temperature"), this.printerStateCurrHotbedTemp = Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "hotbed_temperature"), this.printerStateTargetNozzleTemp = Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "target_nozzle_temperature"), this.printerStateTargetHotbedTemp = Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "target_hotbed_temperature");
-        const t = Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "project_progress");
-        this.projectStateProgress = void 0 !== t ? `${t}%` : "0%", this.projectStatePrintState = jt(this.hass, this.printerEntities, this.printerEntityIdPart, "print_state", !0), this.aceStateFwUpdateAvailable = Vt(this.hass, this.printerEntities, this.printerEntityIdPart, "ace_firmware_update_available", "Update Available", "Up To Date"), this.aceStateDryingActive = Vt(this.hass, this.printerEntities, this.printerEntityIdPart, "drying_active", "Drying", "Not Drying"), this.aceStateFwVersion = jt(this.hass, this.printerEntities, this.printerEntityIdPart, "ace_fw_version"), this.aceStateDryingRemaining = Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "drying_remaining_time"), this.aceStateDryingTotal = Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "drying_total_duration"), this.aceDryingProgress = void 0 !== this.aceStateDryingRemaining && void 0 !== this.aceStateDryingTotal ? String((this.aceStateDryingTotal > 0 ? Math.round(1e4 * (1 - this.aceStateDryingRemaining / this.aceStateDryingTotal)) / 100 : 0).toFixed(2)) + "%" : void 0, this.aceStateFwVersion ? this.monitoredStats = fs : this.monitoredStats = ms;
+        this.printerStateFwUpdateAvailable = Vt(this.hass, this.printerEntities, this.printerEntityIdPart, "printer_firmware"), this.printerStateAvailable = Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "is_available", "Available", "Busy"), this.printerStateOnline = Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "printer_online", "Online", "Offline"), this.printerStateCurrNozzleTemp = jt(this.hass, this.printerEntities, this.printerEntityIdPart, "nozzle_temperature"), this.printerStateCurrHotbedTemp = jt(this.hass, this.printerEntities, this.printerEntityIdPart, "hotbed_temperature"), this.printerStateTargetNozzleTemp = jt(this.hass, this.printerEntities, this.printerEntityIdPart, "target_nozzle_temperature"), this.printerStateTargetHotbedTemp = jt(this.hass, this.printerEntities, this.printerEntityIdPart, "target_hotbed_temperature");
+        const t = jt(this.hass, this.printerEntities, this.printerEntityIdPart, "project_progress");
+        this.projectStateProgress = void 0 !== t ? `${t}%` : "0%", this.projectStatePrintState = function (t, e, i, r, s = !1) {
+          const n = Rt(e, i, "sensor", r);
+          if (n) {
+            const e = It(t, n);
+            return s ? Nt(e) : e;
+          }
+        }(this.hass, this.printerEntities, this.printerEntityIdPart, "print_state", !0), this.aceStateFwUpdateAvailable = Vt(this.hass, this.printerEntities, this.printerEntityIdPart, "ace_firmware"), this.aceStateDryingActive = Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "drying_active", "Drying", "Not Drying"), this.aceStateDryingRemaining = jt(this.hass, this.printerEntities, this.printerEntityIdPart, "drying_remaining_time"), this.aceStateDryingTotal = jt(this.hass, this.printerEntities, this.printerEntityIdPart, "drying_total_duration"), this.aceDryingProgress = void 0 !== this.aceStateDryingRemaining && void 0 !== this.aceStateDryingTotal ? String((this.aceStateDryingTotal > 0 ? Math.round(1e4 * (1 - this.aceStateDryingRemaining / this.aceStateDryingTotal)) / 100 : 0).toFixed(2)) + "%" : void 0, this.aceStateFwUpdateAvailable ? this.monitoredStats = fs : this.monitoredStats = ms;
       }
     }
     _renderInfoRow(t, e) {
@@ -9465,7 +9468,6 @@
           ${this._renderInfoRow("target_hotbed_temp", this.printerStateTargetHotbedTemp)}
           ${this._renderInfoRow("print_state", this.projectStatePrintState)}
           ${this._renderInfoRow("project_progress", this.projectStateProgress)}
-          ${this._renderOptionalInfoRow("ace_fw_version", this.aceStateFwVersion)}
           ${this._renderOptionalInfoRow("ace_fw_update_available", this.aceStateFwUpdateAvailable)}
           ${this._renderOptionalInfoRow("drying_active", this.aceStateDryingActive)}
           ${this._renderOptionalInfoRow("drying_progress", this.aceDryingProgress)}
@@ -9519,7 +9521,7 @@
   s([vt()], gs.prototype, "hass", void 0), s([vt({
     type: Boolean,
     reflect: !0
-  })], gs.prototype, "narrow", void 0), s([vt()], gs.prototype, "route", void 0), s([vt()], gs.prototype, "panel", void 0), s([vt()], gs.prototype, "selectedPrinterID", void 0), s([vt()], gs.prototype, "selectedPrinterDevice", void 0), s([bt()], gs.prototype, "printerEntities", void 0), s([bt()], gs.prototype, "printerEntityIdPart", void 0), s([bt()], gs.prototype, "printerID", void 0), s([bt()], gs.prototype, "printerMAC", void 0), s([bt()], gs.prototype, "printerStateFwUpdateAvailable", void 0), s([bt()], gs.prototype, "printerStateAvailable", void 0), s([bt()], gs.prototype, "printerStateOnline", void 0), s([bt()], gs.prototype, "printerStateCurrNozzleTemp", void 0), s([bt()], gs.prototype, "printerStateCurrHotbedTemp", void 0), s([bt()], gs.prototype, "printerStateTargetNozzleTemp", void 0), s([bt()], gs.prototype, "printerStateTargetHotbedTemp", void 0), s([bt()], gs.prototype, "projectStateProgress", void 0), s([bt()], gs.prototype, "projectStatePrintState", void 0), s([bt()], gs.prototype, "aceStateFwUpdateAvailable", void 0), s([bt()], gs.prototype, "aceStateDryingActive", void 0), s([bt()], gs.prototype, "aceStateFwVersion", void 0), s([bt()], gs.prototype, "aceStateDryingRemaining", void 0), s([bt()], gs.prototype, "aceStateDryingTotal", void 0), s([bt()], gs.prototype, "aceDryingProgress", void 0), s([bt()], gs.prototype, "monitoredStats", void 0), gs = s([mt("anycubic-view-main")], gs);
+  })], gs.prototype, "narrow", void 0), s([vt()], gs.prototype, "route", void 0), s([vt()], gs.prototype, "panel", void 0), s([vt()], gs.prototype, "selectedPrinterID", void 0), s([vt()], gs.prototype, "selectedPrinterDevice", void 0), s([bt()], gs.prototype, "printerEntities", void 0), s([bt()], gs.prototype, "printerEntityIdPart", void 0), s([bt()], gs.prototype, "printerID", void 0), s([bt()], gs.prototype, "printerMAC", void 0), s([bt()], gs.prototype, "printerStateFwUpdateAvailable", void 0), s([bt()], gs.prototype, "printerStateAvailable", void 0), s([bt()], gs.prototype, "printerStateOnline", void 0), s([bt()], gs.prototype, "printerStateCurrNozzleTemp", void 0), s([bt()], gs.prototype, "printerStateCurrHotbedTemp", void 0), s([bt()], gs.prototype, "printerStateTargetNozzleTemp", void 0), s([bt()], gs.prototype, "printerStateTargetHotbedTemp", void 0), s([bt()], gs.prototype, "projectStateProgress", void 0), s([bt()], gs.prototype, "projectStatePrintState", void 0), s([bt()], gs.prototype, "aceStateFwUpdateAvailable", void 0), s([bt()], gs.prototype, "aceStateDryingActive", void 0), s([bt()], gs.prototype, "aceStateDryingRemaining", void 0), s([bt()], gs.prototype, "aceStateDryingTotal", void 0), s([bt()], gs.prototype, "aceDryingProgress", void 0), s([bt()], gs.prototype, "monitoredStats", void 0), gs = s([mt("anycubic-view-main")], gs);
   const ys = u`
   .files-card {
     padding: 16px;

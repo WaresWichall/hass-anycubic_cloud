@@ -64,4 +64,5 @@ PLATFORMS = [
     Platform.BUTTON,
     Platform.SENSOR,
     Platform.SWITCH,
+    Platform.UPDATE,
 ]

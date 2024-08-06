@@ -657,7 +657,7 @@ class AnycubicMachineFirmwareInfo:
     ):
         self._need_update = int(need_update)
         self._firmware_version = str(firmware_version)
-        self._update_progress = int(update_progress) if update_progress is not None else None
+        self._update_progress = int(update_progress) if update_progress is not None else 0
         self._update_date = int(update_date) if update_date is not None else None
         self._update_status = str(update_status) if update_status is not None else None
         self._update_desc = str(update_desc) if update_desc is not None else None
@@ -684,6 +684,16 @@ class AnycubicMachineFirmwareInfo:
     @property
     def download_progress(self):
         return self._download_progress
+
+    @property
+    def total_progress(self):
+        if self._is_updating or self._is_downloading:
+            if self._update_progress == 0 and self._download_progress > 0:
+                return min(self._download_progress / 2, 100)
+            elif self._update_progress > 0:
+                return min(self._update_progress / 2 + 50, 100)
+            return 1
+        return False
 
     @property
     def available_version(self):
