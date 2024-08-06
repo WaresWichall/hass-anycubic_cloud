@@ -50,6 +50,7 @@ class AnycubicMQTTAPI(AnycubicAPI):
         self._mqtt_client = None
         self._mqtt_subscribed_printers = dict()
         self._mqtt_log_all_messages = False
+        self._mqtt_connected: asyncio.Event | None = None
         self._mqtt_disconnected: asyncio.Event | None = None
         self._mqtt_callback_printer_update = mqtt_callback_printer_update
         super().__init__(*args, **kwargs)
@@ -60,6 +61,19 @@ class AnycubicMQTTAPI(AnycubicAPI):
 
     def set_mqtt_log_all_messages(self, val):
         self._mqtt_log_all_messages = bool(val)
+
+    async def mqtt_wait_for_connect(self):
+        if self._mqtt_connected is None:
+            return True
+
+        try:
+            async with asyncio.timeout(10):
+                await self._mqtt_connected.wait()
+            self._mqtt_connected = None
+            await asyncio.sleep(2)
+            return True
+        except (asyncio.TimeoutError, asyncio.CancelledError):
+            return False
 
     async def mqtt_wait_for_disconnect(self):
         if self._mqtt_disconnected is None:
@@ -180,7 +194,8 @@ class AnycubicMQTTAPI(AnycubicAPI):
         return ssl_context
 
     def _mqtt_on_subscribe(self, client, userdata, mid, granted_qos):
-        pass
+        if self._mqtt_connected is not None:
+            self._mqtt_connected.set()
 
     def _mqtt_on_message(
         self,
@@ -217,6 +232,9 @@ class AnycubicMQTTAPI(AnycubicAPI):
         rc,
     ):
         if rc == 0:
+            if self._mqtt_connected is None:
+                self._mqtt_connected = asyncio.Event()
+
             self._log_to_debug("Anycubic MQTT Connected.")
 
             for sub in self._build_mqtt_user_subscription():
@@ -231,6 +249,7 @@ class AnycubicMQTTAPI(AnycubicAPI):
             self._log_to_warn(f"Anycubic MQTT Failed to connect, return code {rc}")
 
     def connect_mqtt(self):
+        self._mqtt_connected = asyncio.Event()
         self._mqtt_disconnected = asyncio.Event()
 
         mqtt_username, mqtt_password = self._build_mqtt_login_info()
@@ -268,6 +287,7 @@ class AnycubicMQTTAPI(AnycubicAPI):
         self._mqtt_client = None
         if self._mqtt_disconnected is not None:
             self._mqtt_disconnected.set()
+        self._mqtt_connected = None
         self._mqtt_disconnected = None
         self._log_to_debug("Anycubic MQTT Client removed.")
 
