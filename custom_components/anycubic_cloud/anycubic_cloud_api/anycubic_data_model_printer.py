@@ -265,6 +265,36 @@ class AnycubicPrinter:
             if not self._ignore_init_errors:
                 raise e
 
+    def _update_fw_version_from_json(
+        self,
+        fw_version,
+    ):
+        if fw_version is None:
+            return
+
+        if self._fw_version:
+            self._fw_version.update_from_json(fw_version)
+        else:
+            self._set_fw_version(fw_version)
+
+    def _update_multi_color_box_fw_version_from_json(
+        self,
+        multi_color_box_fw_version,
+    ):
+        if (
+            multi_color_box_fw_version is None or
+            not isinstance(multi_color_box_fw_version, list) or
+            len(multi_color_box_fw_version) < 1
+        ):
+            return
+
+        if self._multi_color_box_fw_version and len(self._multi_color_box_fw_version) > 0:
+            for x, fwver in enumerate(self._multi_color_box_fw_version):
+                if fwver and len(multi_color_box_fw_version) >= x + 1:
+                    fwver.update_from_json(multi_color_box_fw_version[x])
+        else:
+            self._set_multi_color_box_fw_version(multi_color_box_fw_version)
+
     @classmethod
     def from_basic_json(cls, api_parent, data):
         return cls(
@@ -385,9 +415,9 @@ class AnycubicPrinter:
         self._set_type_function_ids(data['type_function_ids'])
         self._material_type = extra_data.get('material_type')
         self._set_parameter(data.get('parameter'))
-        self._set_fw_version(data['version'])
+        self._update_fw_version_from_json(data['version'])
         self._set_tools(data.get('tools'))
-        self._set_multi_color_box_fw_version(data.get('multi_color_box_version'))
+        self._update_multi_color_box_fw_version_from_json(data.get('multi_color_box_version'))
         self._set_external_shelves(data.get('external_shelves'))
         self._set_multi_color_box(data.get('multi_color_box'))
 

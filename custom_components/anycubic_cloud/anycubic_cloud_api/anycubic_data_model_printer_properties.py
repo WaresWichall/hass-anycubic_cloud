@@ -655,16 +655,17 @@ class AnycubicMachineFirmwareInfo:
         time_cost=None,
         box_id=None,
     ):
-        self._need_update = int(need_update)
-        self._firmware_version = str(firmware_version)
-        self._update_progress = int(update_progress) if update_progress is not None else 0
-        self._update_date = int(update_date) if update_date is not None else None
-        self._update_status = str(update_status) if update_status is not None else None
-        self._update_desc = str(update_desc) if update_desc is not None else None
-        self._force_update = str(force_update) if force_update is not None else None
-        self._target_version = str(target_version) if target_version is not None else None
-        self._time_cost = int(time_cost) if time_cost is not None else None
-        self._box_id = int(box_id) if box_id is not None else None
+        self.set_need_update(need_update)
+        self.set_firmware_version(firmware_version)
+        self.set_update_progress(update_progress)
+        self.set_update_date(update_date)
+        self.set_update_status(update_status)
+        self.set_update_desc(update_desc)
+        self.set_force_update(force_update)
+        self.set_target_version(target_version)
+        self.set_time_cost(time_cost)
+        self.set_box_id(box_id)
+
         self._download_progress = 0
         self._is_downloading = False
         self._is_updating = False
@@ -725,19 +726,64 @@ class AnycubicMachineFirmwareInfo:
             box_id=data.get('box_id'),
         )
 
+    def update_from_json(self, data):
+        if data is None:
+            return
+
+        self.set_need_update(data['need_update'])
+        self.set_firmware_version(data['firmware_version'])
+
+        if data.get('update_progress') is not None:
+            self.set_update_progress(data['update_progress'])
+
+        self.set_update_date(data.get('update_date'))
+        self.set_update_status(data.get('update_status'))
+        self.set_update_desc(data.get('update_desc'))
+        self.set_force_update(data.get('force_update'))
+        self.set_target_version(data.get('target_version'))
+        self.set_time_cost(data.get('time_cost'))
+        self.set_box_id(data.get('box_id'))
+
     def update_version(self, new_version):
         if self._firmware_version != str(new_version):
-            self._firmware_version = str(new_version)
+            self.set_firmware_version(new_version)
 
             if self._is_updating:
-                self._is_updating = False
+                self.set_is_updating(False)
 
             if self._is_downloading:
-                self._is_downloading = False
+                self.set_is_downloading(False)
 
-            self._download_progress = 0
-            self._update_progress = 0
-            self._need_update = 0
+            self.set_download_progress(0)
+            self.set_update_progress(0)
+            self.set_need_update(0)
+
+    def set_need_update(self, need_update):
+        self._need_update = int(need_update)
+
+    def set_firmware_version(self, firmware_version):
+        self._firmware_version = str(firmware_version)
+
+    def set_update_date(self, update_date):
+        self._update_date = int(update_date) if update_date is not None else None
+
+    def set_update_status(self, update_status):
+        self._update_status = str(update_status) if update_status is not None else None
+
+    def set_update_desc(self, update_desc):
+        self._update_desc = str(update_desc) if update_desc is not None else None
+
+    def set_force_update(self, force_update):
+        self._force_update = str(force_update) if force_update is not None else None
+
+    def set_target_version(self, target_version):
+        self._target_version = str(target_version) if target_version is not None else None
+
+    def set_time_cost(self, time_cost):
+        self._time_cost = int(time_cost) if time_cost is not None else None
+
+    def set_box_id(self, box_id):
+        self._box_id = int(box_id) if box_id is not None else None
 
     def set_is_updating(self, is_updating):
         self._is_updating = bool(is_updating)
@@ -746,7 +792,7 @@ class AnycubicMachineFirmwareInfo:
         self._is_downloading = bool(is_downloading)
 
     def set_update_progress(self, update_progress):
-        self._update_progress = int(update_progress)
+        self._update_progress = int(update_progress) if update_progress is not None else 0
 
     def set_download_progress(self, download_progress):
         self._download_progress = int(download_progress)
