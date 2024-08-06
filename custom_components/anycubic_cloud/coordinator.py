@@ -339,6 +339,11 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "print_speed_mode": {
                 "available_modes": latest_project.available_print_speed_modes_data_object if latest_project else None,
             },
+            "current_status": {
+                "model": printer.model,
+                "machine_type": printer.machine_type,
+                "supported_functions": printer.supported_function_strings,
+            },
         }
 
         return {

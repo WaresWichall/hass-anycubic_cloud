@@ -1096,6 +1096,19 @@ class AnycubicPrinter:
         return AnycubicFunctionID.BOX_LIGHT in self._type_function_ids
 
     @property
+    def supported_function_strings(self):
+        func_ids = list()
+        for func_int in self._type_function_ids:
+            try:
+                func_ids.append(AnycubicFunctionID(int(func_int)))
+            except ValueError:
+                pass
+
+        return list([
+            func_id.name for func_id in func_ids
+        ])
+
+    @property
     def material_type(self):
         return self._material_type
 
