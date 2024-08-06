@@ -55,8 +55,8 @@ export class AnycubicPrintercardProgressLine extends LitElement {
       .ac-stat-value {
         margin: 0;
         display: inline-block;
-        max-width: 100px;
-        width: 100px;
+        max-width: calc(100% - 120px);
+        width: 100%;
         position: relative;
       }
 
@@ -64,7 +64,6 @@ export class AnycubicPrintercardProgressLine extends LitElement {
         margin: 0;
         font-size: 16px;
         display: block;
-        max-width: 100px;
         overflow: scroll;
         position: relative;
         top: 3px;

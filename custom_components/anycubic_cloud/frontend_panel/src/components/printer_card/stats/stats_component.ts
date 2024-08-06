@@ -8,6 +8,7 @@ import {
   getPrinterBinarySensorState,
   getPrinterSensorStateObj,
   prettyFilename,
+  speedModesFromStateObj,
   toTitleCase,
 } from "../../../helpers";
 import {
@@ -255,6 +256,45 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
               ></anycubic-printercard-stat-line>
             `;
 
+          case PrinterCardStatType.SpeedMode: {
+            const speedModeState = getPrinterSensorStateObj(
+              this.hass,
+              this.printerEntities,
+              this.printerEntityIdPart,
+              "raw_print_speed_mode_code",
+              -1,
+              { available_modes: [] },
+            );
+            const availableSpeedModes = speedModesFromStateObj(speedModeState);
+            const currentSpeedModeKey = speedModeState.state;
+            const currentSpeedModeDescr =
+              currentSpeedModeKey >= 0 &&
+              currentSpeedModeKey in availableSpeedModes
+                ? availableSpeedModes[currentSpeedModeKey]
+                : "Unknown";
+            return html`
+              <anycubic-printercard-stat-line
+                .name=${condition}
+                .value=${currentSpeedModeDescr}
+              ></anycubic-printercard-stat-line>
+            `;
+          }
+
+          case PrinterCardStatType.FanSpeed:
+            return html`
+              <anycubic-printercard-stat-line
+                .name=${condition}
+                .value=${getPrinterSensorStateObj(
+                  this.hass,
+                  this.printerEntities,
+                  this.printerEntityIdPart,
+                  "fan_speed",
+                  0,
+                ).state}
+                .unit=${"%"}
+              ></anycubic-printercard-stat-line>
+            `;
+
           case PrinterCardStatType.DryingStatus:
             return html`
               <anycubic-printercard-stat-line
@@ -289,8 +329,13 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
                 0,
               ).state,
             );
-            const dryRemainMinutes = `${dryRemain} Mins`;
-            const dryProgress = dryTotal > 0 ? (dryRemain / dryTotal) * 100 : 0;
+            const dryRemainMinutes = !isNaN(dryRemain)
+              ? `${dryRemain} Mins`
+              : "";
+            const dryProgress =
+              !isNaN(dryTotal) && dryTotal > 0
+                ? (dryRemain / dryTotal) * 100
+                : 0;
             return html`
               <anycubic-printercard-progress-line
                 .name=${condition}

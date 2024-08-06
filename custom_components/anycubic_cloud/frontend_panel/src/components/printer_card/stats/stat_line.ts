@@ -11,11 +11,14 @@ export class AnycubicPrintercardStatLine extends LitElement {
   @property({ type: String })
   public value: string;
 
+  @property({ type: String })
+  public unit?: string = "";
+
   render(): any {
     return html`
       <div class="ac-stat-line">
         <p class="ac-stat-text ac-stat-heading">${this.name}</p>
-        <p class="ac-stat-text">${this.value}</p>
+        <p class="ac-stat-text">${this.value}${this.unit}</p>
       </div>
     `;
   }
@@ -41,8 +44,9 @@ export class AnycubicPrintercardStatLine extends LitElement {
         margin: 0;
         font-size: 16px;
         display: inline-block;
-        max-width: 100px;
+        max-width: calc(100% - 120px);
         overflow: scroll;
+        text-align: right;
       }
 
       .ac-stat-heading {

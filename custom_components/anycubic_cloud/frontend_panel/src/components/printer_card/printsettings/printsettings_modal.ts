@@ -7,10 +7,12 @@ import { customElementIfUndef } from "../../../internal/register-custom-element"
 
 import { platform } from "../../../const";
 
-import { getPrinterSensorStateObj } from "../../../helpers";
+import {
+  getPrinterSensorStateObj,
+  speedModesFromStateObj,
+} from "../../../helpers";
 
 import {
-  AnycubicSpeedMode,
   HomeAssistant,
   HassEntityInfos,
   HassDevice,
@@ -170,12 +172,7 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
           -1,
           { available_modes: [] },
         );
-        const speedModeAttr: AnycubicSpeedMode[] =
-          speedModeState.attributes.available_modes;
-        this.availableSpeedModes = speedModeAttr.reduce(
-          (modes, mode) => ({ ...modes, [mode.mode]: mode.description }),
-          {},
-        );
+        this.availableSpeedModes = speedModesFromStateObj(speedModeState);
         this.currentSpeedModeKey = speedModeState.state;
         this.currentSpeedModeDescr =
           this.currentSpeedModeKey >= 0 &&
@@ -594,6 +591,7 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
       ha-control-button {
         min-width: 150px;
         margin: 8px 0px 0px 8px;
+        font-size: 14px;
       }
     `;
   }
