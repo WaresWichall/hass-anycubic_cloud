@@ -148,7 +148,10 @@ class AnycubicAPI:
         if self._debug_logger:
             self._debug_logger.error(msg)
 
+    #
+    #
     # API Functions
+    # ------------------------------------------
 
     def _web_headers(self, with_origin=AUTH_DOMAIN):
         header_dict = {
@@ -242,7 +245,10 @@ class AnycubicAPI:
             with_origin=with_origin,
         )
 
+    #
+    #
     # Login Functions
+    # ------------------------------------------
 
     async def _fetch_js_body(self):
         body = await self._fetch_pub_get_resp("ai", is_json=False)
@@ -548,7 +554,10 @@ class AnycubicAPI:
 
         return True
 
+    #
+    #
     # General API Calls
+    # ------------------------------------------
 
     async def _lock_storage_space(
         self,
@@ -603,17 +612,6 @@ class AnycubicAPI:
         data = resp['data']
 
         return data['id']
-
-    async def _get_print_history(self):
-        resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.print_history)
-        self._log_to_debug(f"print_history output:\n{json.dumps(resp)}")
-
-    async def _get_project_monitor(self, project_id):
-        query = {
-            'id': str(project_id)
-        }
-        resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.project_monitor, query=query)
-        self._log_to_debug(f"project_monitor output:\n{json.dumps(resp)}")
 
     async def _set_printer_name(
         self,
@@ -793,7 +791,26 @@ class AnycubicAPI:
 
         return True if data == '' else False
 
+    #
+    #
+    # WIP Unused API Calls
+    # ------------------------------------------
+
+    async def _get_print_history(self):
+        resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.print_history)
+        self._log_to_debug(f"print_history output:\n{json.dumps(resp)}")
+
+    async def _get_project_monitor(self, project_id):
+        query = {
+            'id': str(project_id)
+        }
+        resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.project_monitor, query=query)
+        self._log_to_debug(f"project_monitor output:\n{json.dumps(resp)}")
+
+    #
+    #
     # ORDER Functions
+    # ------------------------------------------
 
     async def _send_anycubic_order(
         self,
@@ -822,36 +839,6 @@ class AnycubicAPI:
             self._log_to_error(f"Empty reply when sending order to Anycubic Cloud, message: {error_message}")
 
         return data
-
-    async def _send_anycubic_camera_open_order(
-        self,
-        printer,
-        raw_data=False,
-    ):
-        if not printer:
-            return
-
-        order_request = AnycubicBaseOrderRequest(
-            order_id=int(AnycubicOrderID.CAMERA_OPEN),
-            printer_id=printer.id,
-        )
-        resp = await self._fetch_api_resp(
-            endpoint=API_ENDPOINT.send_order,
-            params=order_request.order_request_data
-        )
-        if raw_data:
-            return resp
-
-        data = resp['data']
-
-        token = AnycubicCameraToken(
-            secret_id=data['token']['tmpSecretId'],
-            secret_key=data['token']['tmpSecretKey'],
-            session_token=data['token']['sessionToken'],
-            region=data['token']['region'],
-            msg_id=data['msgid'],
-        )
-        return token
 
     async def _send_order_multi_color_box_set_slot(
         self,
@@ -999,92 +986,6 @@ class AnycubicAPI:
             ),
         )
 
-    async def _send_order_multi_color_box_get_info(
-        self,
-        printer,
-    ):
-        """
-        Response is sent over MQTT.
-        """
-        if not printer:
-            return
-
-        return await self._send_anycubic_order(
-            order_request=AnycubicBaseProjectOrderRequest(
-                order_id=AnycubicOrderID.MULTI_COLOR_BOX_GET_INFO,
-                printer_id=printer.id,
-                project_id=0,
-            ),
-        )
-
-    async def _send_order_query_peripherals(
-        self,
-        printer,
-    ):
-        """
-        Response is sent over MQTT.
-        """
-        if not printer:
-            return
-
-        return await self._send_anycubic_order(
-            order_request=AnycubicBaseProjectOrderRequest(
-                order_id=AnycubicOrderID.QUERY_PERIPHERALS,
-                printer_id=printer.id,
-                project_id=0,
-            ),
-        )
-
-    async def _send_order_get_light_status(
-        self,
-        printer,
-        project,
-    ):
-        """
-        Response is sent over MQTT.
-        """
-        if not printer:
-            return
-
-        if not project:
-            return
-
-        return await self._send_anycubic_order(
-            order_request=AnycubicBaseProjectOrderRequest(
-                order_id=AnycubicOrderID.GET_LIGHT_STATUS,
-                printer_id=printer.id,
-                project_id=project.id,
-            ),
-        )
-
-    async def _send_order_set_light_status(
-        self,
-        printer,
-        project,
-        light_on: bool,
-        light_type: int = 1,
-    ):
-        if not printer:
-            return
-
-        if not project:
-            return
-
-        order_data = {
-            'type': light_type,
-            'status': 1 if light_on else 0,
-            'brightness': 100 if light_on else 0,
-        }
-
-        return await self._send_anycubic_order(
-            order_request=AnycubicProjectOrderRequest(
-                order_id=AnycubicOrderID.SET_LIGHT_STATUS,
-                printer_id=printer.id,
-                project_id=project.id,
-                order_data=order_data,
-            ),
-        )
-
     async def _send_order_start_print(
         self,
         printer,
@@ -1103,25 +1004,6 @@ class AnycubicAPI:
                 ams_box_mapping=ams_box_mapping,
                 print_settings=None,
             ),
-        )
-
-    async def _send_order_print_local_file(
-        self,
-        printer,
-        file_name: str,
-        file_path: str = "",
-    ):
-        if not printer:
-            return
-
-        print_request = AnycubicStartPrintRequestLocal(
-            filename=file_name,
-            filepath=file_path,
-        )
-
-        return await self._send_order_start_print(
-            printer=printer,
-            print_request=print_request
         )
 
     async def _send_order_pause_print(
@@ -1300,7 +1182,150 @@ class AnycubicAPI:
             ),
         )
 
+    #
+    #
+    # WIP Unused ORDER Functions
+    # ------------------------------------------
+
+    async def _send_anycubic_camera_open_order(
+        self,
+        printer,
+        raw_data=False,
+    ):
+        if not printer:
+            return
+
+        order_request = AnycubicBaseOrderRequest(
+            order_id=int(AnycubicOrderID.CAMERA_OPEN),
+            printer_id=printer.id,
+        )
+        resp = await self._fetch_api_resp(
+            endpoint=API_ENDPOINT.send_order,
+            params=order_request.order_request_data
+        )
+        if raw_data:
+            return resp
+
+        data = resp['data']
+
+        token = AnycubicCameraToken(
+            secret_id=data['token']['tmpSecretId'],
+            secret_key=data['token']['tmpSecretKey'],
+            session_token=data['token']['sessionToken'],
+            region=data['token']['region'],
+            msg_id=data['msgid'],
+        )
+        return token
+
+    async def _send_order_multi_color_box_get_info(
+        self,
+        printer,
+    ):
+        """
+        Response is sent over MQTT.
+        """
+        if not printer:
+            return
+
+        return await self._send_anycubic_order(
+            order_request=AnycubicBaseProjectOrderRequest(
+                order_id=AnycubicOrderID.MULTI_COLOR_BOX_GET_INFO,
+                printer_id=printer.id,
+                project_id=0,
+            ),
+        )
+
+    async def _send_order_query_peripherals(
+        self,
+        printer,
+    ):
+        """
+        Response is sent over MQTT.
+        """
+        if not printer:
+            return
+
+        return await self._send_anycubic_order(
+            order_request=AnycubicBaseProjectOrderRequest(
+                order_id=AnycubicOrderID.QUERY_PERIPHERALS,
+                printer_id=printer.id,
+                project_id=0,
+            ),
+        )
+
+    async def _send_order_get_light_status(
+        self,
+        printer,
+        project,
+    ):
+        """
+        Response is sent over MQTT.
+        """
+        if not printer:
+            return
+
+        if not project:
+            return
+
+        return await self._send_anycubic_order(
+            order_request=AnycubicBaseProjectOrderRequest(
+                order_id=AnycubicOrderID.GET_LIGHT_STATUS,
+                printer_id=printer.id,
+                project_id=project.id,
+            ),
+        )
+
+    async def _send_order_set_light_status(
+        self,
+        printer,
+        project,
+        light_on: bool,
+        light_type: int = 1,
+    ):
+        if not printer:
+            return
+
+        if not project:
+            return
+
+        order_data = {
+            'type': light_type,
+            'status': 1 if light_on else 0,
+            'brightness': 100 if light_on else 0,
+        }
+
+        return await self._send_anycubic_order(
+            order_request=AnycubicProjectOrderRequest(
+                order_id=AnycubicOrderID.SET_LIGHT_STATUS,
+                printer_id=printer.id,
+                project_id=project.id,
+                order_data=order_data,
+            ),
+        )
+
+    async def _send_order_print_local_file(
+        self,
+        printer,
+        file_name: str,
+        file_path: str = "",
+    ):
+        if not printer:
+            return
+
+        print_request = AnycubicStartPrintRequestLocal(
+            filename=file_name,
+            filepath=file_path,
+        )
+
+        return await self._send_order_start_print(
+            printer=printer,
+            print_request=print_request
+        )
+
+    #
+    #
     # Main API Functions
+    # ------------------------------------------
 
     async def set_printer_name(
         self,
