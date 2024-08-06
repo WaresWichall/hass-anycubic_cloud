@@ -312,9 +312,9 @@ class AnycubicDryingStatus:
 
         return cls(
             status=data['status'],
-            target_temp=data['target_temp'],
-            duration=data['duration'],
-            remain_time=data['remain_time'],
+            target_temp=data.get('target_temp', 0),
+            duration=data.get('duration', 0),
+            remain_time=data.get('remain_time', 0),
         )
 
     @property
@@ -327,15 +327,15 @@ class AnycubicDryingStatus:
 
     @property
     def target_temperature(self):
-        return self._target_temp
+        return self._target_temp if self.is_drying else 0
 
     @property
     def total_duration(self):
-        return self._duration
+        return self._duration if self.is_drying else 0
 
     @property
     def remaining_time(self):
-        return self._remain_time
+        return self._remain_time if self.is_drying else 0
 
     def __repr__(self):
         return (
