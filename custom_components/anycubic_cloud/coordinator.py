@@ -10,7 +10,7 @@ from aiohttp import CookieJar
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
-from homeassistant.core import CoreState, HomeAssistant
+from homeassistant.core import callback, CoreState, HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
 from homeassistant.helpers.device_registry import (
@@ -351,22 +351,37 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             'attributes': attributes,
         }
 
-    async def _async_update_data(self) -> dict[str, Any]:
-        """Fetch data from AnycubicCloud."""
-
-        if not self._last_state_update or int(time.time()) > self._last_state_update + DEFAULT_SCAN_INTERVAL:
-            await self.get_anycubic_updates()
-
+    def _build_coordinator_data(self):
         data_dict = dict()
         data_dict['printers'] = dict()
 
         for printer_id, printer in self._anycubic_printers.items():
             data_dict['printers'][printer_id] = self._build_printer_dict(printer)
 
+        return data_dict
+
+    async def _async_update_data(self) -> dict[str, Any]:
+        """Fetch data from AnycubicCloud."""
+
+        if not self._last_state_update or int(time.time()) > self._last_state_update + DEFAULT_SCAN_INTERVAL:
+            await self.get_anycubic_updates()
+
+        data_dict = self._build_coordinator_data()
+
         if self._printer_device_map is None:
             await self._register_printer_devices(data_dict)
 
         return data_dict
+
+    async def _async_force_data_refresh(self):
+        self.async_set_updated_data(self._build_coordinator_data())
+
+    @callback
+    def _mqtt_callback_data_updated(self):
+        self.hass.create_task(
+            self._async_force_data_refresh(),
+            f"Anycubic coordinator {self.entry.entry_id} data refresh",
+        )
 
     def _anycubic_mqtt_connection_should_start(self):
 
@@ -461,6 +476,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 session=websession,
                 cookie_jar=cookie_jar,
                 debug_logger=LOGGER,
+                mqtt_callback_printer_update=self._mqtt_callback_data_updated
             )
 
             self._anycubic_api.set_mqtt_log_all_messages(self.entry.options.get(CONF_DEBUG))
