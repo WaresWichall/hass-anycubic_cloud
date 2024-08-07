@@ -8164,7 +8164,7 @@
     }
   }
   window.customElements.get("color-picker") || window.customElements.define("color-picker", es);
-  const is = "0.0.8",
+  const is = "0.0.9",
     rs = "anycubic_cloud",
     ss = u`
   :host {

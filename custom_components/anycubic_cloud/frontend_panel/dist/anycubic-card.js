@@ -8020,7 +8020,7 @@
     `;
     }
   };
-  e([mt()], Di.prototype, "hass", void 0), e([mt()], Di.prototype, "cardConfig", void 0), e([mt()], Di.prototype, "printers", void 0), e([ft()], Di.prototype, "selectedPrinterDevice", void 0), e([ft()], Di.prototype, "formSchema", void 0), Di = e([ht("anycubic-printercard-configure")], Di), window.console.info("%c ANYCUBIC-CARD %c v0.0.8 ", "color: orange; font-weight: bold; background: black", "color: white; font-weight: bold; background: dimgray");
+  e([mt()], Di.prototype, "hass", void 0), e([mt()], Di.prototype, "cardConfig", void 0), e([mt()], Di.prototype, "printers", void 0), e([ft()], Di.prototype, "selectedPrinterDevice", void 0), e([ft()], Di.prototype, "formSchema", void 0), Di = e([ht("anycubic-printercard-configure")], Di), window.console.info("%c ANYCUBIC-CARD %c v0.0.9 ", "color: orange; font-weight: bold; background: black", "color: white; font-weight: bold; background: dimgray");
   const Fi = {
     vertical: !1,
     round: !1,
