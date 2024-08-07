@@ -58,7 +58,11 @@ export class AnycubicPrintercardMulticolorboxview extends LitElement {
 
   render(): any {
     return html`
-      <div class="ac-printercard-mcbview">${this._renderSpools()}</div>
+      <div class="ac-printercard-mcbview">
+        <div class="ac-printercard-mcbmenu"></div>
+        <div class="ac-printercard-spoolcont">${this._renderSpools()}</div>
+        <div class="ac-printercard-mcbmenu"></div>
+      </div>
     `;
   }
 
@@ -104,6 +108,19 @@ export class AnycubicPrintercardMulticolorboxview extends LitElement {
       }
 
       .ac-printercard-mcbview {
+        height: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-sizing: border-box;
+      }
+
+      .ac-printercard-mcbmenu {
+        height: 100%;
+        min-width: 10px;
+      }
+
+      .ac-printercard-spoolcont {
         height: 100%;
         display: flex;
         justify-content: center;

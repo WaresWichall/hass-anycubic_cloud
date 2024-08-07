@@ -30,8 +30,8 @@ const animOptionsCard = {
   properties: ["height", "opacity", "scale"],
 };
 
-@customElementIfUndef("anycubic-printercard-multicolorbox_modal")
-export class AnycubicPrintercardMulticolorboxModal extends LitElement {
+@customElementIfUndef("anycubic-printercard-multicolorbox_modal_spool")
+export class AnycubicPrintercardMulticolorboxModalSpool extends LitElement {
   @query("color-picker")
   private _elColorPicker;
 
@@ -60,21 +60,22 @@ export class AnycubicPrintercardMulticolorboxModal extends LitElement {
   private _isOpen: boolean = false;
 
   async firstUpdated(): void {
-    window.addEventListener("ac-mcb-modal", (e) => {
-      this._handleModalEvent(e);
-    });
-    window.addEventListener("ac-select-dropdown", (e) => {
-      this._handleDropdownEvent(e);
-    });
-    window.addEventListener("colorchanged", (e) => {
-      this._handleColourEvent(e);
-    });
-    window.addEventListener("colorpicked", (e) => {
-      this._handleColourPickEvent(e);
-    });
     this.addEventListener("click", (e) => {
       this._closeModal(e);
     });
+    this.addEventListener("ac-select-dropdown", this._handleDropdownEvent);
+    this.addEventListener("colorchanged", this._handleColourEvent);
+    this.addEventListener("colorpicked", this._handleColourPickEvent);
+  }
+
+  public connectedCallback(): void {
+    super.connectedCallback();
+    window.addEventListener("ac-mcb-modal", this._handleModalEvent);
+  }
+
+  public disconnectedCallback(): void {
+    window.removeEventListener("ac-mcb-modal", this._handleModalEvent);
+    super.disconnectedCallback();
   }
 
   protected willUpdate(changedProperties: PropertyValues<this>): void {
@@ -193,7 +194,7 @@ export class AnycubicPrintercardMulticolorboxModal extends LitElement {
     }
   }
 
-  private _handleModalEvent(e: Event): void {
+  private _handleModalEvent = (e: Event): void => {
     e.stopPropagation();
     if (e.detail.modalOpen) {
       this._isOpen = true;
@@ -203,26 +204,26 @@ export class AnycubicPrintercardMulticolorboxModal extends LitElement {
         : undefined;
       this.color = e.detail.color;
     }
-  }
+  };
 
-  private _handleDropdownEvent(e: Event): void {
+  private _handleDropdownEvent = (e: Event): void => {
     e.stopPropagation();
     if (e.detail.value) {
       this.material_type = AnycubicMaterialType[e.detail.value];
     }
-  }
+  };
 
-  private _handleColourEvent(e: Event): void {
+  private _handleColourEvent = (e: Event): void => {
     e.stopPropagation();
     if (e.detail.color) {
       this.color = e.detail.color.rgb;
     }
-  }
+  };
 
-  private _handleColourPickEvent(e: Event): void {
+  private _handleColourPickEvent = (e: Event): void => {
     this._handleColourEvent(e);
     this._submitSlotChanges();
-  }
+  };
 
   private _handleSaveButton(): void {
     this._submitSlotChanges();

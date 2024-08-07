@@ -61,16 +61,26 @@ export class AnycubicCloudPanel extends LitElement {
   private selectedPrinterDevice: HassDevice | undefined;
 
   async firstUpdated(): void {
-    window.addEventListener("location-changed", () => {
-      if (!window.location.pathname.includes("anycubic-cloud")) {
-        return;
-      }
-      this.requestUpdate();
-    });
-
     this.printers = await getPrinterDevices(this.hass);
     this.requestUpdate();
   }
+
+  public connectedCallback(): void {
+    super.connectedCallback();
+    window.addEventListener("location-changed", this._handleLocationChange);
+  }
+
+  public disconnectedCallback(): void {
+    window.removeEventListener("location-changed", this._handleLocationChange);
+    super.disconnectedCallback();
+  }
+
+  private _handleLocationChange = (): void => {
+    if (!window.location.pathname.includes("anycubic-cloud")) {
+      return;
+    }
+    this.requestUpdate();
+  };
 
   protected willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
