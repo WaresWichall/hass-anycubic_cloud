@@ -104,15 +104,20 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
   private _isOpen: boolean = false;
 
   async firstUpdated(): void {
-    window.addEventListener("ac-printset-modal", (e) => {
-      this._handleModalEvent(e);
-    });
-    window.addEventListener("ac-select-dropdown", (e) => {
-      this._handleDropdownEvent(e);
-    });
+    this.addEventListener("ac-select-dropdown", this._handleDropdownEvent);
     this.addEventListener("click", (e) => {
       this._closeModal(e);
     });
+  }
+
+  public connectedCallback(): void {
+    super.connectedCallback();
+    window.addEventListener("ac-printset-modal", this._handleModalEvent);
+  }
+
+  public disconnectedCallback(): void {
+    window.removeEventListener("ac-printset-modal", this._handleModalEvent);
+    super.disconnectedCallback();
   }
 
   protected willUpdate(changedProperties: PropertyValues<this>): void {
@@ -418,15 +423,15 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
     }
   }
 
-  private _handleModalEvent(e: Event): void {
+  private _handleModalEvent = (e: Event): void => {
     e.stopPropagation();
     if (e.detail.modalOpen) {
       this._isOpen = true;
       this._resetUserEdits();
     }
-  }
+  };
 
-  private _handleDropdownEvent(e: Event): void {
+  private _handleDropdownEvent = (e: Event): void => {
     e.stopPropagation();
     this._userEditSpeedMode = true;
     if (typeof e.detail.key !== "undefined") {
@@ -437,7 +442,7 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
           ? this.availableSpeedModes[this.currentSpeedModeKey]
           : undefined;
     }
-  }
+  };
 
   private _handleSaveFanSpeedButton(): void {
     this._submitChangedFanSpeed();
