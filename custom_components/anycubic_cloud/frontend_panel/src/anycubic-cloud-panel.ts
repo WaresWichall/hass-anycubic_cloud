@@ -11,7 +11,8 @@ import "./views/print/view-print-save_in_cloud.ts";
 
 import { localize } from "../localize/localize";
 
-import { DEBUG, VERSION } from "./const";
+import * as pkgjson from "../package.json";
+import { DEBUG } from "./const";
 import {
   getPage,
   getPrinterDevID,
@@ -29,7 +30,7 @@ import {
 } from "./types";
 
 window.console.info(
-  `%c ANYCUBIC-PANEL %c v${VERSION} `,
+  `%c ANYCUBIC-PANEL %c v${pkgjson.version} `,
   "color: orange; font-weight: bold; background: black",
   "color: white; font-weight: bold; background: dimgray",
 );
@@ -150,7 +151,7 @@ export class AnycubicCloudPanel extends LitElement {
           .narrow=${this.narrow}
         ></ha-menu-button>
         <div class="main-title">${localize("title", this.hass.language)}</div>
-        <div class="version">v${VERSION}</div>
+        <div class="version">v${pkgjson.version}</div>
       </div>
     `;
   }

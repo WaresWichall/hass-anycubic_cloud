@@ -8164,9 +8164,8 @@
     }
   }
   window.customElements.get("color-picker") || window.customElements.define("color-picker", es);
-  const is = "0.0.9",
-    rs = "anycubic_cloud",
-    ss = u`
+  const is = "anycubic_cloud",
+    rs = u`
   :host {
     display: none;
     position: fixed;
@@ -8213,7 +8212,7 @@
   .ac-modal-label {
   }
 `;
-  let ns = class extends pt {
+  let ss = class extends pt {
     constructor() {
       super(...arguments), this._isActive = !1;
     }
@@ -8275,8 +8274,8 @@
     `;
     }
   };
-  s([yt()], ns.prototype, "item", void 0), s([bt()], ns.prototype, "_isActive", void 0), ns = s([pr("anycubic-ui-select-dropdown-item")], ns);
-  let os = class extends pt {
+  s([yt()], ss.prototype, "item", void 0), s([bt()], ss.prototype, "_isActive", void 0), ss = s([pr("anycubic-ui-select-dropdown-item")], ss);
+  let ns = class extends pt {
     constructor() {
       super(...arguments), this._active = !1, this._hidden = !1;
     }
@@ -8394,8 +8393,8 @@
     `;
     }
   };
-  s([yt()], os.prototype, "availableOptions", void 0), s([yt()], os.prototype, "placeholder", void 0), s([yt()], os.prototype, "initialItem", void 0), s([bt()], os.prototype, "_selectedItem", void 0), s([bt()], os.prototype, "_active", void 0), s([bt()], os.prototype, "_hidden", void 0), os = s([pr("anycubic-ui-select-dropdown")], os);
-  const as = {
+  s([yt()], ns.prototype, "availableOptions", void 0), s([yt()], ns.prototype, "placeholder", void 0), s([yt()], ns.prototype, "initialItem", void 0), s([bt()], ns.prototype, "_selectedItem", void 0), s([bt()], ns.prototype, "_active", void 0), s([bt()], ns.prototype, "_hidden", void 0), ns = s([pr("anycubic-ui-select-dropdown")], ns);
+  const os = {
     keyframeOptions: {
       duration: 250,
       direction: "alternate",
@@ -8403,7 +8402,7 @@
     },
     properties: ["height", "opacity", "scale"]
   };
-  let ls = class extends pt {
+  let as = class extends pt {
     constructor() {
       super(...arguments), this.spoolList = [], this.spool_index = -1, this._isOpen = !1, this._handleModalEvent = t => {
         t.stopPropagation(), t.detail.modalOpen && (this._isOpen = !0, this.spool_index = Number(t.detail.spool_index), this.material_type = t.detail.material_type ? Mt[t.detail.material_type.toUpperCase()] : void 0, this.color = t.detail.color);
@@ -8442,7 +8441,7 @@
       <div
         class="ac-modal-container"
         style=${Ri(t)}
-        ${ur(Object.assign({}, as))}
+        ${ur(Object.assign({}, os))}
       >
         <span
           class="ac-modal-close"
@@ -8526,7 +8525,7 @@
     _submitSlotChanges() {
       if (this.selectedPrinterDevice && this.material_type && this.spool_index >= 0 && this.color && this.color.length >= 3) {
         const t = `multi_color_box_set_slot_${this.material_type.toLowerCase()}`;
-        this.hass.callService(rs, t, {
+        this.hass.callService(is, t, {
           config_entry: this.selectedPrinterDevice.primary_config_entry,
           device_id: this.selectedPrinterDevice.id,
           slot_number: this.spool_index + 1,
@@ -8544,7 +8543,7 @@
     }
     static get styles() {
       return u`
-      ${ss}
+      ${rs}
 
       .ac-slot-title {
         font-size: 24px;
@@ -8591,8 +8590,8 @@
     `;
     }
   };
-  s([wt("color-picker")], ls.prototype, "_elColorPicker", void 0), s([yt()], ls.prototype, "hass", void 0), s([yt()], ls.prototype, "selectedPrinterDevice", void 0), s([yt()], ls.prototype, "slotColors", void 0), s([bt()], ls.prototype, "spoolList", void 0), s([bt()], ls.prototype, "spool_index", void 0), s([bt()], ls.prototype, "material_type", void 0), s([bt()], ls.prototype, "color", void 0), s([bt()], ls.prototype, "_isOpen", void 0), ls = s([pr("anycubic-printercard-multicolorbox_modal_spool")], ls);
-  const hs = {
+  s([wt("color-picker")], as.prototype, "_elColorPicker", void 0), s([yt()], as.prototype, "hass", void 0), s([yt()], as.prototype, "selectedPrinterDevice", void 0), s([yt()], as.prototype, "slotColors", void 0), s([bt()], as.prototype, "spoolList", void 0), s([bt()], as.prototype, "spool_index", void 0), s([bt()], as.prototype, "material_type", void 0), s([bt()], as.prototype, "color", void 0), s([bt()], as.prototype, "_isOpen", void 0), as = s([pr("anycubic-printercard-multicolorbox_modal_spool")], as);
+  const ls = {
     keyframeOptions: {
       duration: 250,
       direction: "alternate",
@@ -8600,7 +8599,7 @@
     },
     properties: ["height", "opacity", "scale"]
   };
-  let cs = class extends pt {
+  let hs = class extends pt {
     constructor() {
       super(...arguments), this.availableSpeedModes = [], this.currentSpeedModeKey = 0, this.currentSpeedModeDescr = void 0, this._userEditSpeedMode = !1, this.currentFanSpeed = 0, this._userEditFanSpeed = !1, this.currentAuxFanSpeed = 0, this._userEditAuxFanSpeed = !1, this.currentBoxFanSpeed = 0, this._userEditBoxFanSpeed = !1, this.currentTargetTempNozzle = 0, this.minTargetTempNozzle = 0, this.maxTargetTempNozzle = 0, this._userEditTargetTempNozzle = !1, this.currentTargetTempHotbed = 0, this.minTargetTempHotbed = 0, this.maxTargetTempHotbed = 0, this._userEditTargetTempHotbed = !1, this._isOpen = !1, this._handleModalEvent = t => {
         t.stopPropagation(), t.detail.modalOpen && (this._isOpen = !0, this._resetUserEdits());
@@ -8656,7 +8655,7 @@
       <div
         class="ac-modal-container"
         style=${Ri(t)}
-        ${ur(Object.assign({}, hs))}
+        ${ur(Object.assign({}, ls))}
       >
         <span
           class="ac-modal-close"
@@ -8859,7 +8858,7 @@
     _submitChangedSpeedMode() {
       if (this._userEditSpeedMode && this.selectedPrinterDevice) {
         const t = "change_print_speed_mode";
-        this.hass.callService(rs, t, {
+        this.hass.callService(is, t, {
           config_entry: this.selectedPrinterDevice.primary_config_entry,
           device_id: this.selectedPrinterDevice.id,
           speed_mode: this.currentSpeedModeKey
@@ -8869,7 +8868,7 @@
     _submitChangedFanSpeed() {
       if (this._userEditFanSpeed && this.selectedPrinterDevice) {
         const t = "change_print_fan_speed";
-        this.hass.callService(rs, t, {
+        this.hass.callService(is, t, {
           config_entry: this.selectedPrinterDevice.primary_config_entry,
           device_id: this.selectedPrinterDevice.id,
           speed: this.currentFanSpeed
@@ -8879,7 +8878,7 @@
     _submitChangedAuxFanSpeed() {
       if (this._userEditAuxFanSpeed && this.selectedPrinterDevice) {
         const t = "change_print_aux_fan_speed";
-        this.hass.callService(rs, t, {
+        this.hass.callService(is, t, {
           config_entry: this.selectedPrinterDevice.primary_config_entry,
           device_id: this.selectedPrinterDevice.id,
           speed: this.currentAuxFanSpeed
@@ -8889,7 +8888,7 @@
     _submitChangedBoxFanSpeed() {
       if (this._userEditBoxFanSpeed && this.selectedPrinterDevice) {
         const t = "change_print_box_fan_speed";
-        this.hass.callService(rs, t, {
+        this.hass.callService(is, t, {
           config_entry: this.selectedPrinterDevice.primary_config_entry,
           device_id: this.selectedPrinterDevice.id,
           speed: this.currentBoxFanSpeed
@@ -8899,7 +8898,7 @@
     _submitChangedTargetTempNozzle() {
       if (this._userEditTargetTempNozzle && this.selectedPrinterDevice) {
         const t = "change_print_target_nozzle_temperature";
-        this.hass.callService(rs, t, {
+        this.hass.callService(is, t, {
           config_entry: this.selectedPrinterDevice.primary_config_entry,
           device_id: this.selectedPrinterDevice.id,
           temperature: this.currentTargetTempNozzle
@@ -8909,7 +8908,7 @@
     _submitChangedTargetTempHotbed() {
       if (this._userEditTargetTempHotbed && this.selectedPrinterDevice) {
         const t = "change_print_target_hotbed_temperature";
-        this.hass.callService(rs, t, {
+        this.hass.callService(is, t, {
           config_entry: this.selectedPrinterDevice.primary_config_entry,
           device_id: this.selectedPrinterDevice.id,
           temperature: this.currentTargetTempHotbed
@@ -8918,7 +8917,7 @@
     }
     static get styles() {
       return u`
-      ${ss}
+      ${rs}
 
       .ac-settings-header {
         font-size: 24px;
@@ -8950,8 +8949,8 @@
     `;
     }
   };
-  s([yt()], cs.prototype, "hass", void 0), s([yt()], cs.prototype, "selectedPrinterDevice", void 0), s([yt()], cs.prototype, "printerEntities", void 0), s([yt()], cs.prototype, "printerEntityIdPart", void 0), s([bt()], cs.prototype, "availableSpeedModes", void 0), s([bt()], cs.prototype, "currentSpeedModeKey", void 0), s([bt()], cs.prototype, "currentSpeedModeDescr", void 0), s([bt()], cs.prototype, "_userEditSpeedMode", void 0), s([bt()], cs.prototype, "currentFanSpeed", void 0), s([bt()], cs.prototype, "_userEditFanSpeed", void 0), s([bt()], cs.prototype, "currentAuxFanSpeed", void 0), s([bt()], cs.prototype, "_userEditAuxFanSpeed", void 0), s([bt()], cs.prototype, "currentBoxFanSpeed", void 0), s([bt()], cs.prototype, "_userEditBoxFanSpeed", void 0), s([bt()], cs.prototype, "currentTargetTempNozzle", void 0), s([bt()], cs.prototype, "minTargetTempNozzle", void 0), s([bt()], cs.prototype, "maxTargetTempNozzle", void 0), s([bt()], cs.prototype, "_userEditTargetTempNozzle", void 0), s([bt()], cs.prototype, "currentTargetTempHotbed", void 0), s([bt()], cs.prototype, "minTargetTempHotbed", void 0), s([bt()], cs.prototype, "maxTargetTempHotbed", void 0), s([bt()], cs.prototype, "_userEditTargetTempHotbed", void 0), s([bt()], cs.prototype, "_isOpen", void 0), cs = s([pr("anycubic-printercard-printsettings_modal")], cs);
-  const ds = {
+  s([yt()], hs.prototype, "hass", void 0), s([yt()], hs.prototype, "selectedPrinterDevice", void 0), s([yt()], hs.prototype, "printerEntities", void 0), s([yt()], hs.prototype, "printerEntityIdPart", void 0), s([bt()], hs.prototype, "availableSpeedModes", void 0), s([bt()], hs.prototype, "currentSpeedModeKey", void 0), s([bt()], hs.prototype, "currentSpeedModeDescr", void 0), s([bt()], hs.prototype, "_userEditSpeedMode", void 0), s([bt()], hs.prototype, "currentFanSpeed", void 0), s([bt()], hs.prototype, "_userEditFanSpeed", void 0), s([bt()], hs.prototype, "currentAuxFanSpeed", void 0), s([bt()], hs.prototype, "_userEditAuxFanSpeed", void 0), s([bt()], hs.prototype, "currentBoxFanSpeed", void 0), s([bt()], hs.prototype, "_userEditBoxFanSpeed", void 0), s([bt()], hs.prototype, "currentTargetTempNozzle", void 0), s([bt()], hs.prototype, "minTargetTempNozzle", void 0), s([bt()], hs.prototype, "maxTargetTempNozzle", void 0), s([bt()], hs.prototype, "_userEditTargetTempNozzle", void 0), s([bt()], hs.prototype, "currentTargetTempHotbed", void 0), s([bt()], hs.prototype, "minTargetTempHotbed", void 0), s([bt()], hs.prototype, "maxTargetTempHotbed", void 0), s([bt()], hs.prototype, "_userEditTargetTempHotbed", void 0), s([bt()], hs.prototype, "_isOpen", void 0), hs = s([pr("anycubic-printercard-printsettings_modal")], hs);
+  const cs = {
       keyframeOptions: {
         duration: 250,
         direction: "normal",
@@ -8959,14 +8958,14 @@
       },
       properties: ["height", "opacity", "scale"]
     },
-    us = Qt();
-  let ps = class extends pt {
+    ds = Qt();
+  let us = class extends pt {
     constructor() {
-      super(...arguments), this.monitoredStats = us, this.round = !0, this.temperatureUnit = Tt.C, this._showVideo = !1, this.cameraEntityState = void 0, this.isHidden = !1, this.isPrinting = !1, this.hiddenOverride = !1, this.hasColorbox = !1, this.lightIsOn = !1, this.statusColor = "#ffc107", this.progressPercent = 0;
+      super(...arguments), this.monitoredStats = ds, this.round = !0, this.temperatureUnit = Tt.C, this._showVideo = !1, this.cameraEntityState = void 0, this.isHidden = !1, this.isPrinting = !1, this.hiddenOverride = !1, this.hasColorbox = !1, this.lightIsOn = !1, this.statusColor = "#ffc107", this.progressPercent = 0;
     }
     willUpdate(t) {
       var e, i;
-      if (super.willUpdate(t), t.has("monitoredStats") && (this.monitoredStats = (e = this.monitoredStats, i = us, void 0 === e ? i : e)), t.has("selectedPrinterID") && (this.printerEntities = Lt(this.hass, this.selectedPrinterID), this.printerEntityIdPart = Yt(this.printerEntities)), t.has("hass") || t.has("hiddenOverride") || t.has("selectedPrinterID")) {
+      if (super.willUpdate(t), t.has("monitoredStats") && (this.monitoredStats = (e = this.monitoredStats, i = ds, void 0 === e ? i : e)), t.has("selectedPrinterID") && (this.printerEntities = Lt(this.hass, this.selectedPrinterID), this.printerEntityIdPart = Yt(this.printerEntities)), t.has("hass") || t.has("hiddenOverride") || t.has("selectedPrinterID")) {
         this.progressPercent = this._percentComplete(), this.hasColorbox = "active" === zt(this.hass, this.printerEntities, this.printerEntityIdPart, "multi_color_box_spools", "inactive").state, this.cameraEntityId && (this.cameraEntityState = Ft(this.hass, {
           entity_id: this.cameraEntityId
         })), this.lightIsOn = Bt(this.hass, {
@@ -9078,7 +9077,7 @@
       <div
         class="ac-printer-card-infocontainer ${Bi(t)}"
         style=${Ri(e)}
-        ${ur(Object.assign({}, ds))}
+        ${ur(Object.assign({}, cs))}
       >
         <div
           class="ac-printer-card-info-animcontainer ${Bi(t)}"
@@ -9132,7 +9131,7 @@
           <div
             class="ac-printer-card-infocontainer ${Bi(t)}"
             style=${Ri(e)}
-            ${ur(Object.assign({}, ds))}
+            ${ur(Object.assign({}, cs))}
           >
             <div
               class="ac-printer-card-settingssection ${Bi(t)}"
@@ -9163,7 +9162,7 @@
           <div
             class="ac-printer-card-infocontainer ${Bi(t)}"
             style=${Ri(e)}
-            ${ur(Object.assign({}, ds))}
+            ${ur(Object.assign({}, cs))}
           >
             <div class="ac-printer-card-mcbsection ${Bi(t)}">
               <anycubic-printercard-multicolorbox_view
@@ -9387,40 +9386,40 @@
     `;
     }
   };
-  s([yt()], ps.prototype, "hass", void 0), s([yt()], ps.prototype, "monitoredStats", void 0), s([yt()], ps.prototype, "selectedPrinterID", void 0), s([yt()], ps.prototype, "selectedPrinterDevice", void 0), s([yt({
+  s([yt()], us.prototype, "hass", void 0), s([yt()], us.prototype, "monitoredStats", void 0), s([yt()], us.prototype, "selectedPrinterID", void 0), s([yt()], us.prototype, "selectedPrinterDevice", void 0), s([yt({
     type: Boolean
-  })], ps.prototype, "round", void 0), s([yt({
+  })], us.prototype, "round", void 0), s([yt({
     type: Boolean
-  })], ps.prototype, "use_24hr", void 0), s([yt({
+  })], us.prototype, "use_24hr", void 0), s([yt({
     type: Boolean
-  })], ps.prototype, "showSettingsButton", void 0), s([yt({
+  })], us.prototype, "showSettingsButton", void 0), s([yt({
     type: String
-  })], ps.prototype, "temperatureUnit", void 0), s([yt({
+  })], us.prototype, "temperatureUnit", void 0), s([yt({
     type: String
-  })], ps.prototype, "lightEntityId", void 0), s([yt({
+  })], us.prototype, "lightEntityId", void 0), s([yt({
     type: String
-  })], ps.prototype, "powerEntityId", void 0), s([yt({
+  })], us.prototype, "powerEntityId", void 0), s([yt({
     type: String
-  })], ps.prototype, "cameraEntityId", void 0), s([yt({
+  })], us.prototype, "cameraEntityId", void 0), s([yt({
     type: Boolean
-  })], ps.prototype, "vertical", void 0), s([yt()], ps.prototype, "scaleFactor", void 0), s([yt()], ps.prototype, "slotColors", void 0), s([bt()], ps.prototype, "_showVideo", void 0), s([bt()], ps.prototype, "cameraEntityState", void 0), s([bt({
+  })], us.prototype, "vertical", void 0), s([yt()], us.prototype, "scaleFactor", void 0), s([yt()], us.prototype, "slotColors", void 0), s([bt()], us.prototype, "_showVideo", void 0), s([bt()], us.prototype, "cameraEntityState", void 0), s([bt({
     type: Boolean
-  })], ps.prototype, "isHidden", void 0), s([bt({
+  })], us.prototype, "isHidden", void 0), s([bt({
     type: Boolean
-  })], ps.prototype, "isPrinting", void 0), s([bt({
+  })], us.prototype, "isPrinting", void 0), s([bt({
     type: Boolean
-  })], ps.prototype, "hiddenOverride", void 0), s([bt({
+  })], us.prototype, "hiddenOverride", void 0), s([bt({
     type: Boolean
-  })], ps.prototype, "hasColorbox", void 0), s([bt({
+  })], us.prototype, "hasColorbox", void 0), s([bt({
     type: Boolean
-  })], ps.prototype, "lightIsOn", void 0), s([bt({
+  })], us.prototype, "lightIsOn", void 0), s([bt({
     type: String
-  })], ps.prototype, "statusColor", void 0), s([bt()], ps.prototype, "printerEntities", void 0), s([bt()], ps.prototype, "printerEntityIdPart", void 0), s([bt()], ps.prototype, "progressPercent", void 0), ps = s([pr("anycubic-printercard-card")], ps);
-  const fs = [...te(), Ct.DryingStatus, Ct.DryingTime],
-    ms = te();
-  let gs = class extends pt {
+  })], us.prototype, "statusColor", void 0), s([bt()], us.prototype, "printerEntities", void 0), s([bt()], us.prototype, "printerEntityIdPart", void 0), s([bt()], us.prototype, "progressPercent", void 0), us = s([pr("anycubic-printercard-card")], us);
+  const ps = [...te(), Ct.DryingStatus, Ct.DryingTime],
+    fs = te();
+  let ms = class extends pt {
     constructor() {
-      super(...arguments), this.monitoredStats = ms;
+      super(...arguments), this.monitoredStats = fs;
     }
     willUpdate(t) {
       var e;
@@ -9435,7 +9434,7 @@
             const e = It(t, n);
             return s ? Nt(e) : e;
           }
-        }(this.hass, this.printerEntities, this.printerEntityIdPart, "print_state", !0), this.aceStateFwUpdateAvailable = Vt(this.hass, this.printerEntities, this.printerEntityIdPart, "ace_firmware"), this.aceStateDryingActive = Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "drying_active", "Drying", "Not Drying"), this.aceStateDryingRemaining = jt(this.hass, this.printerEntities, this.printerEntityIdPart, "drying_remaining_time"), this.aceStateDryingTotal = jt(this.hass, this.printerEntities, this.printerEntityIdPart, "drying_total_duration"), this.aceDryingProgress = void 0 !== this.aceStateDryingRemaining && void 0 !== this.aceStateDryingTotal ? String((this.aceStateDryingTotal > 0 ? Math.round(1e4 * (1 - this.aceStateDryingRemaining / this.aceStateDryingTotal)) / 100 : 0).toFixed(2)) + "%" : void 0, this.aceStateFwUpdateAvailable ? this.monitoredStats = fs : this.monitoredStats = ms;
+        }(this.hass, this.printerEntities, this.printerEntityIdPart, "print_state", !0), this.aceStateFwUpdateAvailable = Vt(this.hass, this.printerEntities, this.printerEntityIdPart, "ace_firmware"), this.aceStateDryingActive = Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "drying_active", "Drying", "Not Drying"), this.aceStateDryingRemaining = jt(this.hass, this.printerEntities, this.printerEntityIdPart, "drying_remaining_time"), this.aceStateDryingTotal = jt(this.hass, this.printerEntities, this.printerEntityIdPart, "drying_total_duration"), this.aceDryingProgress = void 0 !== this.aceStateDryingRemaining && void 0 !== this.aceStateDryingTotal ? String((this.aceStateDryingTotal > 0 ? Math.round(1e4 * (1 - this.aceStateDryingRemaining / this.aceStateDryingTotal)) / 100 : 0).toFixed(2)) + "%" : void 0, this.aceStateFwUpdateAvailable ? this.monitoredStats = ps : this.monitoredStats = fs;
       }
     }
     _renderInfoRow(t, e) {
@@ -9529,11 +9528,11 @@
     `;
     }
   };
-  s([yt()], gs.prototype, "hass", void 0), s([yt({
+  s([yt()], ms.prototype, "hass", void 0), s([yt({
     type: Boolean,
     reflect: !0
-  })], gs.prototype, "narrow", void 0), s([yt()], gs.prototype, "route", void 0), s([yt()], gs.prototype, "panel", void 0), s([yt()], gs.prototype, "selectedPrinterID", void 0), s([yt()], gs.prototype, "selectedPrinterDevice", void 0), s([bt()], gs.prototype, "printerEntities", void 0), s([bt()], gs.prototype, "printerEntityIdPart", void 0), s([bt()], gs.prototype, "printerID", void 0), s([bt()], gs.prototype, "printerMAC", void 0), s([bt()], gs.prototype, "printerStateFwUpdateAvailable", void 0), s([bt()], gs.prototype, "printerStateAvailable", void 0), s([bt()], gs.prototype, "printerStateOnline", void 0), s([bt()], gs.prototype, "printerStateCurrNozzleTemp", void 0), s([bt()], gs.prototype, "printerStateCurrHotbedTemp", void 0), s([bt()], gs.prototype, "printerStateTargetNozzleTemp", void 0), s([bt()], gs.prototype, "printerStateTargetHotbedTemp", void 0), s([bt()], gs.prototype, "projectStateProgress", void 0), s([bt()], gs.prototype, "projectStatePrintState", void 0), s([bt()], gs.prototype, "aceStateFwUpdateAvailable", void 0), s([bt()], gs.prototype, "aceStateDryingActive", void 0), s([bt()], gs.prototype, "aceStateDryingRemaining", void 0), s([bt()], gs.prototype, "aceStateDryingTotal", void 0), s([bt()], gs.prototype, "aceDryingProgress", void 0), s([bt()], gs.prototype, "monitoredStats", void 0), gs = s([mt("anycubic-view-main")], gs);
-  const vs = u`
+  })], ms.prototype, "narrow", void 0), s([yt()], ms.prototype, "route", void 0), s([yt()], ms.prototype, "panel", void 0), s([yt()], ms.prototype, "selectedPrinterID", void 0), s([yt()], ms.prototype, "selectedPrinterDevice", void 0), s([bt()], ms.prototype, "printerEntities", void 0), s([bt()], ms.prototype, "printerEntityIdPart", void 0), s([bt()], ms.prototype, "printerID", void 0), s([bt()], ms.prototype, "printerMAC", void 0), s([bt()], ms.prototype, "printerStateFwUpdateAvailable", void 0), s([bt()], ms.prototype, "printerStateAvailable", void 0), s([bt()], ms.prototype, "printerStateOnline", void 0), s([bt()], ms.prototype, "printerStateCurrNozzleTemp", void 0), s([bt()], ms.prototype, "printerStateCurrHotbedTemp", void 0), s([bt()], ms.prototype, "printerStateTargetNozzleTemp", void 0), s([bt()], ms.prototype, "printerStateTargetHotbedTemp", void 0), s([bt()], ms.prototype, "projectStateProgress", void 0), s([bt()], ms.prototype, "projectStatePrintState", void 0), s([bt()], ms.prototype, "aceStateFwUpdateAvailable", void 0), s([bt()], ms.prototype, "aceStateDryingActive", void 0), s([bt()], ms.prototype, "aceStateDryingRemaining", void 0), s([bt()], ms.prototype, "aceStateDryingTotal", void 0), s([bt()], ms.prototype, "aceDryingProgress", void 0), s([bt()], ms.prototype, "monitoredStats", void 0), ms = s([mt("anycubic-view-main")], ms);
+  const gs = u`
   .files-card {
     padding: 16px;
     display: block;
@@ -9597,7 +9596,7 @@
   .file-delete-icon {
   }
 `;
-  let ys = class extends pt {
+  let vs = class extends pt {
     willUpdate(t) {
       super.willUpdate(t), t.has("selectedPrinterID") && (this.printerEntities = Lt(this.hass, this.selectedPrinterID));
     }
@@ -9640,7 +9639,7 @@
       });
     }
     deleteFile(t) {
-      this.selectedPrinterDevice && t && this.hass.callService(rs, "delete_file_cloud", {
+      this.selectedPrinterDevice && t && this.hass.callService(is, "delete_file_cloud", {
         config_entry: this.selectedPrinterDevice.primary_config_entry,
         device_id: this.selectedPrinterDevice.id,
         file_id: t
@@ -9648,18 +9647,18 @@
     }
     static get styles() {
       return u`
-      ${vs} :host {
+      ${gs} :host {
         padding: 16px;
         display: block;
       }
     `;
     }
   };
-  s([yt()], ys.prototype, "hass", void 0), s([yt({
+  s([yt()], vs.prototype, "hass", void 0), s([yt({
     type: Boolean,
     reflect: !0
-  })], ys.prototype, "narrow", void 0), s([yt()], ys.prototype, "route", void 0), s([yt()], ys.prototype, "panel", void 0), s([yt()], ys.prototype, "selectedPrinterID", void 0), s([yt()], ys.prototype, "selectedPrinterDevice", void 0), s([bt()], ys.prototype, "printerEntities", void 0), ys = s([mt("anycubic-view-files_cloud")], ys);
-  let bs = class extends pt {
+  })], vs.prototype, "narrow", void 0), s([yt()], vs.prototype, "route", void 0), s([yt()], vs.prototype, "panel", void 0), s([yt()], vs.prototype, "selectedPrinterID", void 0), s([yt()], vs.prototype, "selectedPrinterDevice", void 0), s([bt()], vs.prototype, "printerEntities", void 0), vs = s([mt("anycubic-view-files_cloud")], vs);
+  let ys = class extends pt {
     willUpdate(t) {
       super.willUpdate(t), t.has("selectedPrinterID") && (this.printerEntities = Lt(this.hass, this.selectedPrinterID));
     }
@@ -9702,7 +9701,7 @@
       });
     }
     deleteFile(t) {
-      this.selectedPrinterDevice && t && this.hass.callService(rs, "delete_file_local", {
+      this.selectedPrinterDevice && t && this.hass.callService(is, "delete_file_local", {
         config_entry: this.selectedPrinterDevice.primary_config_entry,
         device_id: this.selectedPrinterDevice.id,
         filename: t
@@ -9710,18 +9709,18 @@
     }
     static get styles() {
       return u`
-      ${vs} :host {
+      ${gs} :host {
         padding: 16px;
         display: block;
       }
     `;
     }
   };
-  s([yt()], bs.prototype, "hass", void 0), s([yt({
+  s([yt()], ys.prototype, "hass", void 0), s([yt({
     type: Boolean,
     reflect: !0
-  })], bs.prototype, "narrow", void 0), s([yt()], bs.prototype, "route", void 0), s([yt()], bs.prototype, "panel", void 0), s([yt()], bs.prototype, "selectedPrinterID", void 0), s([yt()], bs.prototype, "selectedPrinterDevice", void 0), s([bt()], bs.prototype, "printerEntities", void 0), bs = s([mt("anycubic-view-files_local")], bs);
-  let _s = class extends pt {
+  })], ys.prototype, "narrow", void 0), s([yt()], ys.prototype, "route", void 0), s([yt()], ys.prototype, "panel", void 0), s([yt()], ys.prototype, "selectedPrinterID", void 0), s([yt()], ys.prototype, "selectedPrinterDevice", void 0), s([bt()], ys.prototype, "printerEntities", void 0), ys = s([mt("anycubic-view-files_local")], ys);
+  let bs = class extends pt {
     willUpdate(t) {
       super.willUpdate(t), t.has("selectedPrinterID") && (this.printerEntities = Lt(this.hass, this.selectedPrinterID));
     }
@@ -9764,7 +9763,7 @@
       });
     }
     deleteFile(t) {
-      this.selectedPrinterDevice && t && this.hass.callService(rs, "delete_file_udisk", {
+      this.selectedPrinterDevice && t && this.hass.callService(is, "delete_file_udisk", {
         config_entry: this.selectedPrinterDevice.primary_config_entry,
         device_id: this.selectedPrinterDevice.id,
         filename: t
@@ -9772,25 +9771,25 @@
     }
     static get styles() {
       return u`
-      ${vs} :host {
+      ${gs} :host {
         padding: 16px;
         display: block;
       }
     `;
     }
   };
-  var ws;
-  s([yt()], _s.prototype, "hass", void 0), s([yt({
+  var _s;
+  s([yt()], bs.prototype, "hass", void 0), s([yt({
     type: Boolean,
     reflect: !0
-  })], _s.prototype, "narrow", void 0), s([yt()], _s.prototype, "route", void 0), s([yt()], _s.prototype, "panel", void 0), s([yt()], _s.prototype, "selectedPrinterID", void 0), s([yt()], _s.prototype, "selectedPrinterDevice", void 0), s([bt()], _s.prototype, "printerEntities", void 0), _s = s([mt("anycubic-view-files_udisk")], _s), function (t) {
+  })], bs.prototype, "narrow", void 0), s([yt()], bs.prototype, "route", void 0), s([yt()], bs.prototype, "panel", void 0), s([yt()], bs.prototype, "selectedPrinterID", void 0), s([yt()], bs.prototype, "selectedPrinterDevice", void 0), s([bt()], bs.prototype, "printerEntities", void 0), bs = s([mt("anycubic-view-files_udisk")], bs), function (t) {
     t.Light = "light", t.Medium = "medium", t.Heavy = "heavy";
-  }(ws || (ws = {}));
-  const xs = (t = ws.Medium) => {
+  }(_s || (_s = {}));
+  const ws = (t = _s.Medium) => {
       const e = new Event("haptic");
       e.detail = t, window && window.dispatchEvent(e);
     },
-    Ss = async () => {
+    xs = async () => {
       var t, e, i, r, s, n, o;
       if (customElements.get("ha-service-control")) return;
       const a = document.createElement("partial-panel-resolver").getRoutes([{
@@ -9801,7 +9800,7 @@
       const l = document.createElement("developer-tools-router");
       await (null === (o = null === (n = null === (s = null === (r = null == l ? void 0 : l.routerOptions) || void 0 === r ? void 0 : r.routes) || void 0 === s ? void 0 : s.service) || void 0 === n ? void 0 : n.load) || void 0 === o ? void 0 : o.call(n));
     };
-  let Es = class extends pt {
+  let Ss = class extends pt {
     constructor() {
       super(...arguments), this._scriptData = {
         service: "anycubic_cloud.print_and_upload_no_cloud_save",
@@ -9809,7 +9808,7 @@
       }, this.narrow = !1;
     }
     async firstUpdated() {
-      await Ss();
+      await xs();
     }
     willUpdate(t) {
       super.willUpdate(t), t.has("selectedPrinterDevice") && this.selectedPrinterDevice && (this._scriptData = Object.assign(Object.assign({}, this._scriptData), {
@@ -9866,13 +9865,13 @@
       this._scriptData = Object.assign(Object.assign({}, this._scriptData), t.detail.value);
     }
     async _runScript(t) {
-      t.stopPropagation(), xs(), this.hass.callService("anycubic_cloud", "print_and_upload_no_cloud_save", this._scriptData.data);
+      t.stopPropagation(), ws(), this.hass.callService("anycubic_cloud", "print_and_upload_no_cloud_save", this._scriptData.data);
     }
   };
   s([yt({
     attribute: !1
-  })], Es.prototype, "hass", void 0), s([yt()], Es.prototype, "route", void 0), s([yt()], Es.prototype, "panel", void 0), s([yt()], Es.prototype, "selectedPrinterID", void 0), s([yt()], Es.prototype, "selectedPrinterDevice", void 0), s([bt()], Es.prototype, "_scriptData", void 0), s([bt()], Es.prototype, "narrow", void 0), Es = s([mt("anycubic-view-print-no_cloud_save")], Es);
-  let $s = class extends pt {
+  })], Ss.prototype, "hass", void 0), s([yt()], Ss.prototype, "route", void 0), s([yt()], Ss.prototype, "panel", void 0), s([yt()], Ss.prototype, "selectedPrinterID", void 0), s([yt()], Ss.prototype, "selectedPrinterDevice", void 0), s([bt()], Ss.prototype, "_scriptData", void 0), s([bt()], Ss.prototype, "narrow", void 0), Ss = s([mt("anycubic-view-print-no_cloud_save")], Ss);
+  let Es = class extends pt {
     constructor() {
       super(...arguments), this._scriptData = {
         service: "anycubic_cloud.print_and_upload_save_in_cloud",
@@ -9880,7 +9879,7 @@
       }, this.narrow = !1;
     }
     async firstUpdated() {
-      await Ss();
+      await xs();
     }
     willUpdate(t) {
       super.willUpdate(t), t.has("selectedPrinterDevice") && this.selectedPrinterDevice && (this._scriptData = Object.assign(Object.assign({}, this._scriptData), {
@@ -9937,12 +9936,14 @@
       this._scriptData = Object.assign(Object.assign({}, this._scriptData), t.detail.value);
     }
     async _runScript(t) {
-      t.stopPropagation(), xs(), this.hass.callService("anycubic_cloud", "print_and_upload_save_in_cloud", this._scriptData.data);
+      t.stopPropagation(), ws(), this.hass.callService("anycubic_cloud", "print_and_upload_save_in_cloud", this._scriptData.data);
     }
   };
   s([yt({
     attribute: !1
-  })], $s.prototype, "hass", void 0), s([yt()], $s.prototype, "route", void 0), s([yt()], $s.prototype, "panel", void 0), s([yt()], $s.prototype, "selectedPrinterID", void 0), s([yt()], $s.prototype, "selectedPrinterDevice", void 0), s([bt()], $s.prototype, "_scriptData", void 0), s([bt()], $s.prototype, "narrow", void 0), $s = s([mt("anycubic-view-print-save_in_cloud")], $s), window.console.info(`%c ANYCUBIC-PANEL %c v${is} `, "color: orange; font-weight: bold; background: black", "color: white; font-weight: bold; background: dimgray"), t.AnycubicCloudPanel = class extends pt {
+  })], Es.prototype, "hass", void 0), s([yt()], Es.prototype, "route", void 0), s([yt()], Es.prototype, "panel", void 0), s([yt()], Es.prototype, "selectedPrinterID", void 0), s([yt()], Es.prototype, "selectedPrinterDevice", void 0), s([bt()], Es.prototype, "_scriptData", void 0), s([bt()], Es.prototype, "narrow", void 0), Es = s([mt("anycubic-view-print-save_in_cloud")], Es);
+  var $s = "0.0.9";
+  window.console.info(`%c ANYCUBIC-PANEL %c v${$s} `, "color: orange; font-weight: bold; background: black", "color: white; font-weight: bold; background: dimgray"), t.AnycubicCloudPanel = class extends pt {
     constructor() {
       super(...arguments), this.selectedPage = "main", this._handleLocationChange = () => {
         window.location.pathname.includes("anycubic-cloud") && this.requestUpdate();
@@ -10013,7 +10014,7 @@
           .narrow=${this.narrow}
         ></ha-menu-button>
         <div class="main-title">${Mi("title", this.hass.language)}</div>
-        <div class="version">v${is}</div>
+        <div class="version">v${$s}</div>
       </div>
     `;
     }

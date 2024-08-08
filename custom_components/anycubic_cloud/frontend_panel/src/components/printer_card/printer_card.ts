@@ -1,7 +1,7 @@
 import { LitElement, html, PropertyValues } from "lit";
 import { property, customElement, state } from "lit/decorators.js";
 
-import { VERSION } from "../../const";
+import * as pkgjson from "../../../package.json";
 
 import {
   AnycubicCardConfig,
@@ -23,7 +23,7 @@ import "./card/card.ts";
 import "./configure/configure.ts";
 
 window.console.info(
-  `%c ANYCUBIC-CARD %c v${VERSION} `,
+  `%c ANYCUBIC-CARD %c v${pkgjson.version} `,
   "color: orange; font-weight: bold; background: black",
   "color: white; font-weight: bold; background: dimgray",
 );
