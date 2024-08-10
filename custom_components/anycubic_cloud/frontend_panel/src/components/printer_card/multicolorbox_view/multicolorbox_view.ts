@@ -1,3 +1,4 @@
+import { mdiRadiator } from "@mdi/js";
 import { LitElement, html, css, PropertyValues } from "lit";
 import { property, state } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
@@ -7,12 +8,19 @@ import { customElementIfUndef } from "../../../internal/register-custom-element"
 
 import { fireEvent } from "../../../fire_event";
 
-import { getPrinterSensorStateObj } from "../../../helpers";
+import {
+  getPrinterEntityId,
+  getPrinterSensorStateObj,
+  getPrinterSwitchStateObj,
+} from "../../../helpers";
 import {
   AnycubicSpoolInfo,
   HomeAssistant,
+  HassEntity,
   HassEntityInfos,
 } from "../../../types";
+
+const ENTITY_ID_RUNOUT_REFILL = "ace_run_out_refill";
 
 @customElementIfUndef("anycubic-printercard-multicolorbox_view")
 export class AnycubicPrintercardMulticolorboxview extends LitElement {
@@ -37,6 +45,9 @@ export class AnycubicPrintercardMulticolorboxview extends LitElement {
   @state()
   private selectedColor: number[] = [0, 0, 0];
 
+  @state()
+  private _runoutRefillState: HassEntity | undefined;
+
   protected willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
 
@@ -53,15 +64,38 @@ export class AnycubicPrintercardMulticolorboxview extends LitElement {
         "not loaded",
         { spool_info: [] },
       ).attributes.spool_info;
+      this._runoutRefillState = getPrinterSwitchStateObj(
+        this.hass,
+        this.printerEntities,
+        this.printerEntityIdPart,
+        ENTITY_ID_RUNOUT_REFILL,
+      );
     }
   }
 
   render(): any {
     return html`
       <div class="ac-printercard-mcbview">
-        <div class="ac-printercard-mcbmenu"></div>
+        <div class="ac-printercard-mcbmenu ac-printercard-menuleft">
+          <div class="ac-switch" @click="${this._handleRunoutRefillChanged}">
+            <div class="ac-switch-label">Runout<br />Refill</div>
+            <ha-entity-toggle
+              .hass=${this.hass}
+              .stateObj=${this._runoutRefillState}
+            ></ha-entity-toggle>
+          </div>
+        </div>
         <div class="ac-printercard-spoolcont">${this._renderSpools()}</div>
-        <div class="ac-printercard-mcbmenu"></div>
+        <div class="ac-printercard-mcbmenu ac-printercard-menuright">
+          <ha-control-button
+            @click="${(_e): void => {
+              this._openDryingModal();
+            }}"
+          >
+            <ha-svg-icon .path=${mdiRadiator}></ha-svg-icon>
+            Dry
+          </ha-control-button>
+        </div>
       </div>
     `;
   }
@@ -91,6 +125,23 @@ export class AnycubicPrintercardMulticolorboxview extends LitElement {
     });
   }
 
+  private _openDryingModal(): void {
+    fireEvent(this, "ac-mcbdry-modal", {
+      modalOpen: true,
+    });
+  }
+
+  private _handleRunoutRefillChanged = (_ev: Event): void => {
+    // const refillActive = ev.target.checked;
+    this.hass.callService("switch", "toggle", {
+      entity_id: getPrinterEntityId(
+        this.printerEntityIdPart,
+        "switch",
+        ENTITY_ID_RUNOUT_REFILL,
+      ),
+    });
+  };
+
   private _editSpool(index, material_type, color): void {
     fireEvent(this, "ac-mcb-modal", {
       modalOpen: true,
@@ -117,7 +168,8 @@ export class AnycubicPrintercardMulticolorboxview extends LitElement {
 
       .ac-printercard-mcbmenu {
         height: 100%;
-        min-width: 10px;
+        min-width: 50px;
+        position: relative;
       }
 
       .ac-printercard-spoolcont {
@@ -161,6 +213,44 @@ export class AnycubicPrintercardMulticolorboxview extends LitElement {
         height: auto;
         text-align: center;
         font-weight: 900;
+      }
+
+      .ac-printercard-mcbmenu ha-control-button {
+        font-size: 12px;
+        margin: 0px;
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        min-width: 48px;
+        min-height: 48px;
+      }
+
+      .ac-printercard-menuright ha-control-button {
+        right: 0px;
+      }
+
+      .ac-printercard-mcbmenu .ac-switch-label {
+        font-size: 12px;
+      }
+
+      .ac-printercard-mcbmenu .ac-switch {
+        display: flex;
+        flex-wrap: wrap;
+        text-align: center;
+        margin: 0px;
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        box-sizing: border-box;
+        padding: 4px 4px;
+        justify-content: center;
+        background-color: #8686862e;
+        border-radius: 8px;
+      }
+
+      .ac-printercard-mcbmenu .ac-switch:hover {
+        background-color: #86868669;
       }
     `;
   }

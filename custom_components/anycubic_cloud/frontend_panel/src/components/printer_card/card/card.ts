@@ -34,6 +34,7 @@ import "../camera_view/camera_view.ts";
 import "../multicolorbox_view/multicolorbox_view.ts";
 import "../printer_view/printer_view.ts";
 import "../stats/stats_component.ts";
+import "../multicolorbox_view/multicolorbox_modal_drying.ts";
 import "../multicolorbox_view/multicolorbox_modal_spool.ts";
 import "../printsettings/printsettings_modal.ts";
 
@@ -215,6 +216,12 @@ export class AnycubicPrintercardCard extends LitElement {
           .printerEntities=${this.printerEntities}
           .printerEntityIdPart=${this.printerEntityIdPart}
         ></anycubic-printercard-printsettings_modal>
+        <anycubic-printercard-multicolorbox_modal_drying
+          .hass=${this.hass}
+          .selectedPrinterDevice=${this.selectedPrinterDevice}
+          .printerEntities=${this.printerEntities}
+          .printerEntityIdPart=${this.printerEntityIdPart}
+        ></anycubic-printercard-multicolorbox_modal_drying>
       </div>
     `;
   }

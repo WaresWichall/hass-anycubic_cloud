@@ -272,3 +272,9 @@ export enum AnycubicMaterialType {
   PA = "PA",
   PLA_SE = "PLA_SE",
 }
+
+export enum AnycubicPrintOptionConfirmationType {
+  PAUSE = "Pause",
+  RESUME = "Resume",
+  CANCEL = "Cancel",
+}

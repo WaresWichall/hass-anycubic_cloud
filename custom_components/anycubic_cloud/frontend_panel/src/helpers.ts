@@ -137,6 +137,14 @@ export function getMatchingEntity(
   return undefined;
 }
 
+export function getPrinterEntityId(
+  printerEntityIdPart: string | undefined,
+  domain: string,
+  suffix: string,
+): string {
+  return domain + "." + printerEntityIdPart + suffix;
+}
+
 export function getStrictMatchingEntity(
   entities: HassEntityInfos,
   printerEntityIdPart: string | undefined,
@@ -169,6 +177,81 @@ export function getPrinterEntityIdPart(
     }
   }
   return undefined;
+}
+
+export function getPrinterSwitchStateObj(
+  hass: HomeAssistant,
+  entities: HassEntityInfos,
+  printerEntityIdPart: string | undefined,
+  suffix: string,
+  defaultState: any = "unavailable",
+  defaultAttributes: any = {},
+): HassEntity {
+  const entInfo = getStrictMatchingEntity(
+    entities,
+    printerEntityIdPart,
+    "switch",
+    suffix,
+  );
+  const stateObj = getEntityState(hass, entInfo);
+  return stateObj || { state: defaultState, attributes: defaultAttributes };
+}
+
+export function getPrinterSwitchState(
+  hass: HomeAssistant,
+  entities: HassEntityInfos,
+  printerEntityIdPart: string | undefined,
+  suffix: string,
+  onValue: string | boolean = true,
+  offValue: string | boolean = false,
+): string | boolean | undefined {
+  const entInfo = getStrictMatchingEntity(
+    entities,
+    printerEntityIdPart,
+    "switch",
+    suffix,
+  );
+  return entInfo
+    ? getEntityStateBinary(hass, entInfo, onValue, offValue)
+    : undefined;
+}
+
+export function getPrinterButtonStateObj(
+  hass: HomeAssistant,
+  entities: HassEntityInfos,
+  printerEntityIdPart: string | undefined,
+  suffix: string,
+  defaultState: any = "unavailable",
+  defaultAttributes: any = {},
+): HassEntity {
+  const entInfo = getStrictMatchingEntity(
+    entities,
+    printerEntityIdPart,
+    "button",
+    suffix,
+  );
+  const stateObj = getEntityState(hass, entInfo);
+  return stateObj || { state: defaultState, attributes: defaultAttributes };
+}
+
+export function getPrinterDryingButtonStateObj(
+  hass: HomeAssistant,
+  entities: HassEntityInfos,
+  printerEntityIdPart: string | undefined,
+  suffix: string,
+): HassEntity {
+  return getPrinterButtonStateObj(
+    hass,
+    entities,
+    printerEntityIdPart,
+    suffix,
+    "unavailable",
+    { duration: 0, temperature: 0 },
+  );
+}
+
+export function isPrinterButtonStateAvailable(stateObj: HassEntity): boolean {
+  return !["unavailable"].includes(stateObj.state) ? true : false;
 }
 
 export function getPrinterSensorStateObj(

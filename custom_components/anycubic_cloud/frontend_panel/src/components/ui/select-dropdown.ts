@@ -187,6 +187,7 @@ export class AnycubicUISelectDropdown extends LitElement {
           --ha-card-background,
           var(--card-background-color, white)
         );
+        border-radius: 8px;
       }
 
       .ac-ui-select-button {
