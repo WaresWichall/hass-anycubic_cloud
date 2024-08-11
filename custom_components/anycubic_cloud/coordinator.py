@@ -30,7 +30,9 @@ from .const import (
     CONF_MQTT_CONNECT_MODE,
     CONF_PRINTER_ID_LIST,
     DEFAULT_SCAN_INTERVAL,
+    ENTITY_ID_DRYING_START_PRESET_,
     FAILED_UPDATE_DELAY,
+    MAX_DRYING_PRESETS,
     MAX_FAILED_UPDATES,
     MQTT_ACTION_RESPONSE_ALIVE_SECONDS,
     MQTT_IDLE_DISCONNECT_SECONDS,
@@ -335,6 +337,15 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             },
         }
 
+        for x in range(MAX_DRYING_PRESETS):
+            num = x + 1
+            preset_duration = self.entry.options.get(f"{CONF_DRYING_PRESET_DURATION_}{num}")
+            preset_temperature = self.entry.options.get(f"{CONF_DRYING_PRESET_TEMPERATURE_}{num}")
+            attributes[f"{ENTITY_ID_DRYING_START_PRESET_}{x + 1}"] = {
+                "duration": preset_duration,
+                "temperature": preset_temperature,
+            }
+
         return {
             'states': states,
             'attributes': attributes,
@@ -603,7 +614,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         try:
 
-            if printer and event_key.startswith('drying_start_preset_'):
+            if printer and event_key.startswith(ENTITY_ID_DRYING_START_PRESET_):
                 num = event_key[-1]
                 preset_duration = self.entry.options.get(f"{CONF_DRYING_PRESET_DURATION_}{num}")
                 preset_temperature = self.entry.options.get(f"{CONF_DRYING_PRESET_TEMPERATURE_}{num}")
