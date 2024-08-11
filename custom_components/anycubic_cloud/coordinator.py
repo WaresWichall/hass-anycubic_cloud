@@ -190,8 +190,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         multi_color_box_spool_info = (
             printer.primary_multi_color_box.spool_info_object
-            if printer.primary_multi_color_box
-            else None
+            if printer.primary_multi_color_box else None
         )
 
         file_list_local = printer.local_file_list_object
@@ -220,68 +219,125 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 printer.multi_color_box_fw_version[0].firmware_version
                 if printer.multi_color_box_fw_version and len(
                     printer.multi_color_box_fw_version
-                ) > 0
-                else None
+                ) > 0 else None
             ),
             "multi_color_box_spools": state_string_active(multi_color_box_spool_info),
             "multi_color_box_runout_refill": (
                 printer.primary_multi_color_box.auto_feed
-                if printer.primary_multi_color_box
-                else None
+                if printer.primary_multi_color_box else None
             ),
             "multi_color_box_current_temperature": (
                 printer.primary_multi_color_box.current_temperature
-                if printer.primary_multi_color_box
-                else 0
+                if printer.primary_multi_color_box else 0
             ),
             "dry_status_is_drying": (
                 printer.primary_drying_status.is_drying
-                if printer.primary_drying_status
-                else None
+                if printer.primary_drying_status else None
             ),
             "dry_status_raw_status_code": (
                 printer.primary_drying_status.raw_status_code
-                if printer.primary_drying_status
-                else None
+                if printer.primary_drying_status else None
             ),
             "dry_status_target_temperature": (
                 printer.primary_drying_status.target_temperature
-                if printer.primary_drying_status
-                else 0
+                if printer.primary_drying_status else 0
             ),
             "dry_status_total_duration": (
                 printer.primary_drying_status.total_duration
-                if printer.primary_drying_status
-                else None
+                if printer.primary_drying_status else None
             ),
             "dry_status_remaining_time": (
                 printer.primary_drying_status.remaining_time
-                if printer.primary_drying_status
-                else None
+                if printer.primary_drying_status else None
             ),
-            "current_project_name": latest_project.name if latest_project else None,
-            "current_project_progress": latest_project.progress_percentage if latest_project else None,
-            "current_project_created_timestamp": latest_project.created_timestamp if latest_project else None,
-            "current_project_finished_timestamp": latest_project.finished_timestamp if latest_project else None,
-            "current_project_time_elapsed": latest_project.print_time_elapsed_minutes if latest_project else None,
-            "current_project_time_remaining": latest_project.print_time_remaining_minutes if latest_project else None,
-            "current_project_print_total_time": latest_project.print_total_time if latest_project else None,
-            "current_project_in_progress": latest_project.print_in_progress if latest_project else None,
-            "current_project_complete": latest_project.print_complete if latest_project else None,
-            "current_project_failed": latest_project.print_failed if latest_project else None,
-            "current_project_is_paused": latest_project.print_is_paused if latest_project else None,
-            "print_state": latest_project.print_status if latest_project else None,
+            "current_project_name": (
+                latest_project.name
+                if latest_project else None
+            ),
+            "current_project_progress": (
+                latest_project.progress_percentage
+                if latest_project else None
+            ),
+            "current_project_created_timestamp": (
+                latest_project.created_timestamp
+                if latest_project else None
+            ),
+            "current_project_finished_timestamp": (
+                latest_project.finished_timestamp
+                if latest_project else None
+            ),
+            "current_project_time_elapsed": (
+                latest_project.print_time_elapsed_minutes
+                if latest_project else None
+            ),
+            "current_project_time_remaining": (
+                latest_project.print_time_remaining_minutes
+                if latest_project else None
+            ),
+            "current_project_print_total_time": (
+                latest_project.print_total_time
+                if latest_project else None
+            ),
+            "current_project_in_progress": (
+                latest_project.print_in_progress
+                if latest_project else None
+            ),
+            "current_project_complete": (
+                latest_project.print_complete
+                if latest_project else None
+            ),
+            "current_project_failed": (
+                latest_project.print_failed
+                if latest_project else None
+            ),
+            "current_project_is_paused": (
+                latest_project.print_is_paused
+                if latest_project else None
+            ),
+            "print_state": (
+                latest_project.print_status
+                if latest_project else None
+            ),
             "print_approximate_completion_time": (
-                latest_project.print_approximate_completion_time if latest_project else None),
-            "print_current_layer": latest_project.print_current_layer if latest_project else None,
-            "print_total_layers": latest_project.print_total_layers if latest_project else None,
-            "target_nozzle_temp": latest_project.target_nozzle_temp if latest_project else None,
-            "target_hotbed_temp": latest_project.target_hotbed_temp if latest_project else None,
-            "print_speed_mode": latest_project.print_speed_mode if latest_project else None,
-            "print_speed_pct": latest_project.print_speed_pct if latest_project else None,
-            "print_z_thick": latest_project.z_thick if latest_project else None,
-            "fan_speed_pct": latest_project.fan_speed_pct if latest_project else None,
-            "raw_print_status": latest_project.raw_print_status if latest_project else None,
+                latest_project.print_approximate_completion_time
+                if latest_project else None
+            ),
+            "print_current_layer": (
+                latest_project.print_current_layer
+                if latest_project else None
+            ),
+            "print_total_layers": (
+                latest_project.print_total_layers
+                if latest_project else None
+            ),
+            "target_nozzle_temp": (
+                latest_project.target_nozzle_temp
+                if latest_project else None
+            ),
+            "target_hotbed_temp": (
+                latest_project.target_hotbed_temp
+                if latest_project else None
+            ),
+            "print_speed_mode": (
+                latest_project.print_speed_mode
+                if latest_project else None
+            ),
+            "print_speed_pct": (
+                latest_project.print_speed_pct
+                if latest_project else None
+            ),
+            "print_z_thick": (
+                latest_project.z_thick
+                if latest_project else None
+            ),
+            "fan_speed_pct": (
+                latest_project.fan_speed_pct
+                if latest_project else None
+            ),
+            "raw_print_status": (
+                latest_project.raw_print_status
+                if latest_project else None
+            ),
             "manual_mqtt_connection_enabled": self._mqtt_manually_connected,
             "mqtt_connection_active": self._anycubic_api.mqtt_is_started,
         }
@@ -300,15 +356,30 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 "file_info": file_list_cloud,
             },
             "target_nozzle_temp": {
-                "limit_min": latest_project.temp_min_nozzle if latest_project else None,
-                "limit_max": latest_project.temp_max_nozzle if latest_project else None,
+                "limit_min": (
+                    latest_project.temp_min_nozzle
+                    if latest_project else None
+                ),
+                "limit_max": (
+                    latest_project.temp_max_nozzle
+                    if latest_project else None
+                ),
             },
             "target_hotbed_temp": {
-                "limit_min": latest_project.temp_min_hotbed if latest_project else None,
-                "limit_max": latest_project.temp_max_hotbed if latest_project else None,
+                "limit_min": (
+                    latest_project.temp_min_hotbed
+                    if latest_project else None
+                ),
+                "limit_max": (
+                    latest_project.temp_max_hotbed
+                    if latest_project else None
+                ),
             },
             "print_speed_mode": {
-                "available_modes": latest_project.available_print_speed_modes_data_object if latest_project else None,
+                "available_modes": (
+                    latest_project.available_print_speed_modes_data_object
+                    if latest_project else None
+                ),
             },
             "current_status": {
                 "model": printer.model,
@@ -324,15 +395,13 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     printer.multi_color_box_fw_version[0].available_version
                     if printer.multi_color_box_fw_version and len(
                         printer.multi_color_box_fw_version
-                    ) > 0
-                    else None
+                    ) > 0 else None
                 ),
                 "in_progress": (
                     printer.multi_color_box_fw_version[0].total_progress
                     if printer.multi_color_box_fw_version and len(
                         printer.multi_color_box_fw_version
-                    ) > 0
-                    else None
+                    ) > 0 else None
                 ),
             },
         }
