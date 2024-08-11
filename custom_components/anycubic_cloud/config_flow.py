@@ -69,6 +69,7 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
         self._username: str | None = None
         self._is_reconfigure: bool = False
         self._anycubic_api: AnycubicAPI | None = None
+        self.entry: ConfigEntry | None = None
 
     @staticmethod
     @callback
@@ -188,7 +189,7 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
         errors = {}
 
         try:
-            if self._username is None or self._password is None:
+            if self._is_reconfigure:
                 self.entry = self.hass.config_entries.async_get_entry(self.context["entry_id"])
                 self._username = self.entry.data[CONF_USERNAME]
                 self._password = self.entry.data[CONF_PASSWORD]

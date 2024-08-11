@@ -1,7 +1,7 @@
 """Support for Anycubic Cloud button."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 
 from homeassistant.components.button import (
     ButtonEntity,
@@ -17,16 +17,17 @@ from .const import (
     CONF_PRINTER_ID_LIST,
     COORDINATOR,
     DOMAIN,
+    ENTITY_ID_DRYING_START_PRESET_,
     MAX_DRYING_PRESETS,
 )
 from .coordinator import AnycubicCloudDataUpdateCoordinator
 from .entity import AnycubicCloudEntity
-from .helpers import printer_entity_unique_id, printer_state_for_key
+from .helpers import printer_attributes_for_key, printer_entity_unique_id, printer_state_for_key
 
 DRYING_PRESET_BUTTON_TYPES = list([
     ButtonEntityDescription(
-        key=f"drying_start_preset_{x + 1}",
-        translation_key=f"drying_start_preset_{x + 1}",
+        key=f"{ENTITY_ID_DRYING_START_PRESET_}{x + 1}",
+        translation_key=f"{ENTITY_ID_DRYING_START_PRESET_}{x + 1}",
     ) for x in range(MAX_DRYING_PRESETS)
 ])
 
@@ -126,3 +127,12 @@ class AnycubicCloudButton(AnycubicCloudEntity, ButtonEntity):
             assert self.coordinator.anycubic_api, "Connection to API is missing"
 
         await self.coordinator.button_press_event(self._printer_id, self.entity_description.key)
+
+    @property
+    def state_attributes(self) -> dict[str, Any] | None:
+        """Return state attributes."""
+        attrib = printer_attributes_for_key(self.coordinator, self._printer_id, self.entity_description.key)
+        if attrib is not None:
+            return attrib
+        else:
+            return super().state_attributes

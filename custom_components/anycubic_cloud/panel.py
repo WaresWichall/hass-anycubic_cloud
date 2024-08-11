@@ -30,9 +30,13 @@ async def async_register_panel(hass: HomeAssistant):
         panel_dir = os.path.join(root_dir, PANEL_FOLDER)
         view_url = os.path.join(panel_dir, PANEL_FILENAME)
 
-        await hass.http.async_register_static_paths(
-            [StaticPathConfig(PANEL_URL, view_url, cache_headers=False)]
-        )
+        try:
+            await hass.http.async_register_static_paths(
+                [StaticPathConfig(PANEL_URL, view_url, cache_headers=False)]
+            )
+        except RuntimeError as e:
+            if "already registered" not in str(e):
+                raise e
 
         await panel_custom.async_register_panel(
             hass,

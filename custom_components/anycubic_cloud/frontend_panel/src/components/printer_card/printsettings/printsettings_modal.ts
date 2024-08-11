@@ -8,11 +8,13 @@ import { customElementIfUndef } from "../../../internal/register-custom-element"
 import { platform } from "../../../const";
 
 import {
+  getPrinterEntityId,
   getPrinterSensorStateObj,
   speedModesFromStateObj,
 } from "../../../helpers";
 
 import {
+  AnycubicPrintOptionConfirmationType,
   HomeAssistant,
   HassEntityInfos,
   HassDevice,
@@ -99,6 +101,9 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
 
   @state()
   private _userEditTargetTempHotbed: boolean = false;
+
+  @state()
+  private _confirmationType: AnycubicPrintOptionConfirmationType | undefined;
 
   @state()
   private _isOpen: boolean = false;
@@ -230,10 +235,78 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
   }
 
   _renderCard(): any {
+    return this._confirmationType
+      ? this._renderConfirm()
+      : this._renderSettings();
+  }
+
+  _renderConfirm(): any {
+    return html`
+      <div>
+        <div class="ac-settings-header">Confirm Action</div>
+        <div>
+          <div class="ac-confirm-description">
+            Are you sure you want to ${this._confirmationType} the print?
+          </div>
+          <div class="ac-confirm-buttons">
+            <ha-control-button
+              @click="${(_e): void => {
+                this._handleConfirmApprove();
+              }}"
+            >
+              Yes
+            </ha-control-button>
+            <ha-control-button
+              @click="${(_e): void => {
+                this._handleConfirmCancel();
+              }}"
+            >
+              No
+            </ha-control-button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  _renderSettings(): any {
     return html`
       <div>
         <div class="ac-settings-header">Print Settings</div>
         <div>
+          <div class="ac-settings-row ac-settings-buttonrow">
+            <ha-control-button
+              @click="${(_e): void => {
+                this._setConfirmationMode(
+                  AnycubicPrintOptionConfirmationType.PAUSE,
+                );
+              }}"
+            >
+              Pause Print
+            </ha-control-button>
+          </div>
+          <div class="ac-settings-row ac-settings-buttonrow">
+            <ha-control-button
+              @click="${(_e): void => {
+                this._setConfirmationMode(
+                  AnycubicPrintOptionConfirmationType.RESUME,
+                );
+              }}"
+            >
+              Resume Print
+            </ha-control-button>
+          </div>
+          <div class="ac-settings-row ac-settings-buttonrow">
+            <ha-control-button
+              @click="${(_e): void => {
+                this._setConfirmationMode(
+                  AnycubicPrintOptionConfirmationType.CANCEL,
+                );
+              }}"
+            >
+              Cancel Print
+            </ha-control-button>
+          </div>
           <div class="ac-settings-row">
             <anycubic-ui-select-dropdown
               .availableOptions=${this.availableSpeedModes}
@@ -346,6 +419,38 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
         </div>
       </div>
     `;
+  }
+
+  private _setConfirmationMode(confirmationType): void {
+    this._confirmationType = confirmationType;
+  }
+
+  private _pressHassButton(suffix: string): void {
+    this.hass.callService("button", "press", {
+      entity_id: getPrinterEntityId(this.printerEntityIdPart, "button", suffix),
+    });
+  }
+
+  private _handleConfirmApprove(): void {
+    switch (this._confirmationType) {
+      case AnycubicPrintOptionConfirmationType.PAUSE:
+        this._pressHassButton("pause_print");
+        break;
+      case AnycubicPrintOptionConfirmationType.RESUME:
+        this._pressHassButton("resume_print");
+        break;
+      case AnycubicPrintOptionConfirmationType.CANCEL:
+        this._pressHassButton("cancel_print");
+        break;
+      default:
+        break;
+    }
+    this._confirmationType = undefined;
+    this._closeModal();
+  }
+
+  private _handleConfirmCancel(): void {
+    this._confirmationType = undefined;
   }
 
   private _handleFanSpeedChange(ev: Event): void {
@@ -597,6 +702,26 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
         min-width: 150px;
         margin: 8px 0px 0px 8px;
         font-size: 14px;
+      }
+
+      .ac-settings-buttonrow ha-control-button {
+        min-width: 100%;
+        margin: 8px 0px 0px 8px;
+        font-size: 14px;
+      }
+
+      .ac-confirm-description {
+        font-size: 16px;
+        text-align: center;
+      }
+
+      .ac-confirm-buttons {
+        display: flex;
+        justify-content: center;
+      }
+
+      .ac-confirm-buttons ha-control-button {
+        margin: 20px 30px 0px 30px;
       }
     `;
   }
