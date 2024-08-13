@@ -5,4 +5,4 @@ Version: 0.0.7  20240805 - Various updates, add print settings services/UI contr
 Version: 0.0.8  20240806 - Various fixes/updates again - frontend and integration. Using update entities for firmware now.
 Version: 0.0.9  20240807 - Minor bug fixes
 Version: 0.0.10 20240811 - Bug fix for config flow, add more frontend buttons / option modals
-Version: 0.0.11 20240813 - Frontend improvements to panel print pages
+Version: 0.0.11 20240813 - Frontend improvements to panel print pages, data refactor, work on Resin printer bugs
