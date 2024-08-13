@@ -9950,6 +9950,11 @@
     reflect: !0
   })], As.prototype, "narrow", void 0), s([vt()], As.prototype, "route", void 0), s([vt()], As.prototype, "panel", void 0), s([vt()], As.prototype, "selectedPrinterID", void 0), s([vt()], As.prototype, "selectedPrinterDevice", void 0), s([bt()], As.prototype, "printerEntities", void 0), s([bt()], As.prototype, "printerEntityIdPart", void 0), s([bt()], As.prototype, "printerID", void 0), s([bt()], As.prototype, "printerMAC", void 0), s([bt()], As.prototype, "printerStateFwUpdateAvailable", void 0), s([bt()], As.prototype, "printerStateAvailable", void 0), s([bt()], As.prototype, "printerStateOnline", void 0), s([bt()], As.prototype, "printerStateCurrNozzleTemp", void 0), s([bt()], As.prototype, "printerStateCurrHotbedTemp", void 0), s([bt()], As.prototype, "printerStateTargetNozzleTemp", void 0), s([bt()], As.prototype, "printerStateTargetHotbedTemp", void 0), s([bt()], As.prototype, "projectStateProgress", void 0), s([bt()], As.prototype, "projectStatePrintState", void 0), s([bt()], As.prototype, "aceStateFwUpdateAvailable", void 0), s([bt()], As.prototype, "aceStateDryingActive", void 0), s([bt()], As.prototype, "aceStateDryingRemaining", void 0), s([bt()], As.prototype, "aceStateDryingTotal", void 0), s([bt()], As.prototype, "aceDryingProgress", void 0), s([bt()], As.prototype, "monitoredStats", void 0), As = s([mt("anycubic-view-main")], As);
   const ks = u`
+  :host {
+    padding: 16px;
+    display: block;
+  }
+
   .files-card {
     padding: 16px;
     display: block;
@@ -10013,31 +10018,24 @@
   .file-delete-icon {
   }
 `;
-  let Ts = class extends pt {
+  class Ts extends pt {
     willUpdate(t) {
-      super.willUpdate(t), t.has("selectedPrinterID") && (this.printerEntities = Ut(this.hass, this.selectedPrinterID));
+      super.willUpdate(t), (t.has("hass") || t.has("selectedPrinterID")) && (this.printerEntities = Ut(this.hass, this.selectedPrinterID));
     }
     render() {
-      var t;
-      const e = Rt(this.printerEntities, "sensor", "file_list_cloud");
-      const i = function (t) {
-          return Rt(t, "button", "request_file_list_cloud");
-        }(this.printerEntities),
-        r = e ? this.hass.states[e.entity_id] : void 0,
-        s = r ? null === (t = r.attributes) || void 0 === t ? void 0 : t.file_info : void 0;
       return K`
       <div class="files-card" elevation="2">
         <button class="file-refresh-button" @click="${t => {
-        this.refreshList(i);
+        this.refreshList(this._listRefreshEntity);
       }}"><ha-icon class="file-refresh-icon" icon="mdi:refresh"></ha-icon></button>
         <ul class="files-container">
-        ${s ? s.map(t => K`
+        ${this._fileArray ? this._fileArray.map(t => K`
                   <li class="file-info">
                     <div class="file-name">${t.name}</div>
                     <button
                       class="file-delete-button"
                       @click="${e => {
-        this.deleteFile(t.id);
+        this.deleteFile(t);
       }}"
                     >
                       <ha-icon
@@ -10055,154 +10053,78 @@
         entity_id: t.entity_id
       });
     }
-    deleteFile(t) {
-      this.selectedPrinterDevice && t && this.hass.callService(ys, "delete_file_cloud", {
-        config_entry: this.selectedPrinterDevice.primary_config_entry,
-        device_id: this.selectedPrinterDevice.id,
-        file_id: t
-      });
-    }
+    deleteFile(t) {}
     static get styles() {
       return u`
-      ${ks} :host {
-        padding: 16px;
-        display: block;
-      }
+      ${ks}
     `;
     }
-  };
+  }
   s([vt()], Ts.prototype, "hass", void 0), s([vt({
     type: Boolean,
     reflect: !0
-  })], Ts.prototype, "narrow", void 0), s([vt()], Ts.prototype, "route", void 0), s([vt()], Ts.prototype, "panel", void 0), s([vt()], Ts.prototype, "selectedPrinterID", void 0), s([vt()], Ts.prototype, "selectedPrinterDevice", void 0), s([bt()], Ts.prototype, "printerEntities", void 0), Ts = s([mt("anycubic-view-files_cloud")], Ts);
-  let Ds = class extends pt {
+  })], Ts.prototype, "narrow", void 0), s([vt()], Ts.prototype, "route", void 0), s([vt()], Ts.prototype, "panel", void 0), s([vt()], Ts.prototype, "selectedPrinterID", void 0), s([vt()], Ts.prototype, "selectedPrinterDevice", void 0), s([bt()], Ts.prototype, "printerEntities", void 0), s([bt()], Ts.prototype, "_fileArray", void 0), s([bt()], Ts.prototype, "_listRefreshEntity", void 0);
+  let Ds = class extends Ts {
     willUpdate(t) {
-      super.willUpdate(t), t.has("selectedPrinterID") && (this.printerEntities = Ut(this.hass, this.selectedPrinterID));
+      var e;
+      if (super.willUpdate(t), t.has("hass") || t.has("selectedPrinterID")) {
+        const t = It(this.hass, Rt(this.printerEntities, "sensor", "file_list_cloud"));
+        this._fileArray = t ? null === (e = t.attributes) || void 0 === e ? void 0 : e.file_info : void 0, this._listRefreshEntity = function (t) {
+          return Rt(t, "button", "request_file_list_cloud");
+        }(this.printerEntities);
+      }
     }
-    render() {
-      var t;
-      const e = Rt(this.printerEntities, "sensor", "file_list_local");
-      const i = function (t) {
+    deleteFile(t) {
+      this.selectedPrinterDevice && t.id && this.hass.callService(ys, "delete_file_cloud", {
+        config_entry: this.selectedPrinterDevice.primary_config_entry,
+        device_id: this.selectedPrinterDevice.id,
+        file_id: t.id
+      });
+    }
+  };
+  s([bt()], Ds.prototype, "_fileArray", void 0), Ds = s([mt("anycubic-view-files_cloud")], Ds);
+  let Cs = class extends Ts {
+    willUpdate(t) {
+      var e;
+      if (super.willUpdate(t), t.has("hass") || t.has("selectedPrinterID")) {
+        const t = It(this.hass, Rt(this.printerEntities, "sensor", "file_list_local"));
+        this._fileArray = t ? null === (e = t.attributes) || void 0 === e ? void 0 : e.file_info : void 0, this._listRefreshEntity = function (t) {
           return Rt(t, "button", "request_file_list_local");
-        }(this.printerEntities),
-        r = e ? this.hass.states[e.entity_id] : void 0,
-        s = r ? null === (t = r.attributes) || void 0 === t ? void 0 : t.file_info : void 0;
-      return K`
-      <div class="files-card" elevation="2">
-        <button class="file-refresh-button" @click="${t => {
-        this.refreshList(i);
-      }}"><ha-icon class="file-refresh-icon" icon="mdi:refresh"></ha-icon></button>
-        <ul class="files-container">
-        ${s ? s.map(t => K`
-                  <li class="file-info">
-                    <div class="file-name">${t.name}</div>
-                    <button
-                      class="file-delete-button"
-                      @click="${e => {
-        this.deleteFile(t.name);
-      }}"
-                    >
-                      <ha-icon
-                        class="file-delete-icon"
-                        icon="mdi:delete"
-                      ></ha-icon>
-                    </button>
-                  </li>
-                `) : null}
-      </div>
-    `;
-    }
-    refreshList(t) {
-      t && this.hass.callService("button", "press", {
-        entity_id: t.entity_id
-      });
+        }(this.printerEntities);
+      }
     }
     deleteFile(t) {
-      this.selectedPrinterDevice && t && this.hass.callService(ys, "delete_file_local", {
+      this.selectedPrinterDevice && t.name && this.hass.callService(ys, "delete_file_local", {
         config_entry: this.selectedPrinterDevice.primary_config_entry,
         device_id: this.selectedPrinterDevice.id,
-        filename: t
+        filename: t.name
       });
     }
-    static get styles() {
-      return u`
-      ${ks} :host {
-        padding: 16px;
-        display: block;
-      }
-    `;
-    }
   };
-  s([vt()], Ds.prototype, "hass", void 0), s([vt({
-    type: Boolean,
-    reflect: !0
-  })], Ds.prototype, "narrow", void 0), s([vt()], Ds.prototype, "route", void 0), s([vt()], Ds.prototype, "panel", void 0), s([vt()], Ds.prototype, "selectedPrinterID", void 0), s([vt()], Ds.prototype, "selectedPrinterDevice", void 0), s([bt()], Ds.prototype, "printerEntities", void 0), Ds = s([mt("anycubic-view-files_local")], Ds);
-  let Cs = class extends pt {
+  Cs = s([mt("anycubic-view-files_local")], Cs);
+  let Ms = class extends Ts {
     willUpdate(t) {
-      super.willUpdate(t), t.has("selectedPrinterID") && (this.printerEntities = Ut(this.hass, this.selectedPrinterID));
-    }
-    render() {
-      var t;
-      const e = Rt(this.printerEntities, "sensor", "file_list_udisk");
-      const i = function (t) {
+      var e;
+      if (super.willUpdate(t), t.has("hass") || t.has("selectedPrinterID")) {
+        const t = It(this.hass, Rt(this.printerEntities, "sensor", "file_list_udisk"));
+        this._fileArray = t ? null === (e = t.attributes) || void 0 === e ? void 0 : e.file_info : void 0, this._listRefreshEntity = function (t) {
           return Rt(t, "button", "request_file_list_udisk");
-        }(this.printerEntities),
-        r = e ? this.hass.states[e.entity_id] : void 0,
-        s = r ? null === (t = r.attributes) || void 0 === t ? void 0 : t.file_info : void 0;
-      return K`
-      <div class="files-card" elevation="2">
-        <button class="file-refresh-button" @click="${t => {
-        this.refreshList(i);
-      }}"><ha-icon class="file-refresh-icon" icon="mdi:refresh"></ha-icon></button>
-        <ul class="files-container">
-        ${s ? s.map(t => K`
-                  <li class="file-info">
-                    <div class="file-name">${t.name}</div>
-                    <button
-                      class="file-delete-button"
-                      @click="${e => {
-        this.deleteFile(t.name);
-      }}"
-                    >
-                      <ha-icon
-                        class="file-delete-icon"
-                        icon="mdi:delete"
-                      ></ha-icon>
-                    </button>
-                  </li>
-                `) : null}
-      </div>
-    `;
-    }
-    refreshList(t) {
-      t && this.hass.callService("button", "press", {
-        entity_id: t.entity_id
-      });
+        }(this.printerEntities);
+      }
     }
     deleteFile(t) {
-      this.selectedPrinterDevice && t && this.hass.callService(ys, "delete_file_udisk", {
+      this.selectedPrinterDevice && t.name && this.hass.callService(ys, "delete_file_udisk", {
         config_entry: this.selectedPrinterDevice.primary_config_entry,
         device_id: this.selectedPrinterDevice.id,
-        filename: t
+        filename: t.name
       });
     }
-    static get styles() {
-      return u`
-      ${ks} :host {
-        padding: 16px;
-        display: block;
-      }
-    `;
-    }
   };
-  var Ms;
-  s([vt()], Cs.prototype, "hass", void 0), s([vt({
-    type: Boolean,
-    reflect: !0
-  })], Cs.prototype, "narrow", void 0), s([vt()], Cs.prototype, "route", void 0), s([vt()], Cs.prototype, "panel", void 0), s([vt()], Cs.prototype, "selectedPrinterID", void 0), s([vt()], Cs.prototype, "selectedPrinterDevice", void 0), s([bt()], Cs.prototype, "printerEntities", void 0), Cs = s([mt("anycubic-view-files_udisk")], Cs), function (t) {
+  var Hs;
+  Ms = s([mt("anycubic-view-files_udisk")], Ms), function (t) {
     t.Light = "light", t.Medium = "medium", t.Heavy = "heavy";
-  }(Ms || (Ms = {}));
-  const Hs = u`
+  }(Hs || (Hs = {}));
+  const Os = u`
   :host {
     padding: 16px;
     display: block;
@@ -10228,7 +10150,7 @@
     margin-top: 20px;
   }
 `;
-  class Os extends pt {
+  class Ns extends pt {
     constructor() {
       super(...arguments), this._scriptData = {}, this.narrow = !1, this._serviceName = "";
     }
@@ -10282,7 +10204,7 @@
     }
     async _runScript(t) {
       const e = t.currentTarget;
-      this._error = void 0, t.stopPropagation(), ((t = Ms.Medium) => {
+      this._error = void 0, t.stopPropagation(), ((t = Hs.Medium) => {
         const e = new Event("haptic");
         e.detail = t, window && window.dispatchEvent(e);
       })(), this.hass.callService(ys, this._serviceName, this._scriptData.data).then(() => {
@@ -10293,27 +10215,27 @@
     }
     static get styles() {
       return u`
-      ${Hs}
+      ${Os}
     `;
     }
   }
   s([vt({
     attribute: !1
-  })], Os.prototype, "hass", void 0), s([vt()], Os.prototype, "route", void 0), s([vt()], Os.prototype, "panel", void 0), s([vt()], Os.prototype, "selectedPrinterID", void 0), s([vt()], Os.prototype, "selectedPrinterDevice", void 0), s([bt()], Os.prototype, "_scriptData", void 0), s([bt()], Os.prototype, "narrow", void 0), s([bt()], Os.prototype, "_error", void 0), s([bt()], Os.prototype, "_serviceName", void 0);
-  let Ns = class extends Os {
+  })], Ns.prototype, "hass", void 0), s([vt()], Ns.prototype, "route", void 0), s([vt()], Ns.prototype, "panel", void 0), s([vt()], Ns.prototype, "selectedPrinterID", void 0), s([vt()], Ns.prototype, "selectedPrinterDevice", void 0), s([bt()], Ns.prototype, "_scriptData", void 0), s([bt()], Ns.prototype, "narrow", void 0), s([bt()], Ns.prototype, "_error", void 0), s([bt()], Ns.prototype, "_serviceName", void 0);
+  let Fs = class extends Ns {
     constructor() {
       super(...arguments), this._serviceName = "print_and_upload_no_cloud_save";
     }
   };
-  s([bt()], Ns.prototype, "_serviceName", void 0), Ns = s([mt("anycubic-view-print-no_cloud_save")], Ns);
-  let Fs = class extends Os {
+  s([bt()], Fs.prototype, "_serviceName", void 0), Fs = s([mt("anycubic-view-print-no_cloud_save")], Fs);
+  let Is = class extends Ns {
     constructor() {
       super(...arguments), this._serviceName = "print_and_upload_save_in_cloud";
     }
   };
-  s([bt()], Fs.prototype, "_serviceName", void 0), Fs = s([mt("anycubic-view-print-save_in_cloud")], Fs);
-  var Is = "0.0.11";
-  window.console.info(`%c ANYCUBIC-PANEL %c v${Is} `, "color: orange; font-weight: bold; background: black", "color: white; font-weight: bold; background: dimgray"), t.AnycubicCloudPanel = class extends pt {
+  s([bt()], Is.prototype, "_serviceName", void 0), Is = s([mt("anycubic-view-print-save_in_cloud")], Is);
+  var Bs = "0.0.11";
+  window.console.info(`%c ANYCUBIC-PANEL %c v${Bs} `, "color: orange; font-weight: bold; background: black", "color: white; font-weight: bold; background: dimgray"), t.AnycubicCloudPanel = class extends pt {
     constructor() {
       super(...arguments), this.selectedPage = "main", this._handleLocationChange = () => {
         window.location.pathname.includes("anycubic-cloud") && this.requestUpdate();
@@ -10384,7 +10306,7 @@
           .narrow=${this.narrow}
         ></ha-menu-button>
         <div class="main-title">${Ii("title", this.hass.language)}</div>
-        <div class="version">v${Is}</div>
+        <div class="version">v${Bs}</div>
       </div>
     `;
     }

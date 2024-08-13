@@ -1,6 +1,11 @@
 import { css } from "lit";
 
 export const commonFilesStyle: any = css`
+  :host {
+    padding: 16px;
+    display: block;
+  }
+
   .files-card {
     padding: 16px;
     display: block;
