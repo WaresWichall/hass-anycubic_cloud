@@ -3,6 +3,9 @@ import asyncio
 import hashlib
 import json
 import time
+from aiofiles import (
+    open as aio_file_open,
+)
 from aiofiles.os import (
     path as aio_path,
 )
@@ -467,16 +470,17 @@ class AnycubicAPI:
         if self._cache_key_path is None:
             return False
 
-        with open(self._cache_key_path, "w") as wo:
-            wo.write(json.dumps(self.build_token_dict()))
+        async with aio_file_open(self._cache_key_path, mode='w') as wo:
+            await wo.write(json.dumps(self.build_token_dict()))
 
     async def _load_main_tokens(self):
         tokens_loaded = False
         if self._cache_tokens_path is not None and (await aio_path.exists(self._cache_tokens_path)):
 
             try:
-                with open(self._cache_tokens_path, "r") as wo:
-                    data = json.load(wo)
+                async with aio_file_open(self._cache_tokens_path, mode='r') as wo:
+                    json_data = await wo.read()
+                    data = json.loads(json_data)
                 self.load_tokens_from_dict(data['data'])
                 tokens_loaded = True
 
@@ -489,8 +493,9 @@ class AnycubicAPI:
         if self._cache_key_path is not None and (await aio_path.exists(self._cache_key_path)):
 
             try:
-                with open(self._cache_key_path, "r") as wo:
-                    data = json.load(wo)
+                async with aio_file_open(self._cache_key_path, mode='r') as wo:
+                    json_data = await wo.read()
+                    data = json.loads(json_data)
                 self.load_tokens_from_dict(data)
                 tokens_loaded = True
 
