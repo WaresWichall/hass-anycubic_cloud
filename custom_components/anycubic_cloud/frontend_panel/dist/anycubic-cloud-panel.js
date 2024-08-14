@@ -5940,7 +5940,6 @@
         margin: 0;
         font-size: 16px;
         display: block;
-        overflow: scroll;
         position: relative;
         top: 3px;
         left: 0px;
@@ -6017,7 +6016,6 @@
         font-size: 16px;
         display: inline-block;
         max-width: calc(100% - 120px);
-        overflow: scroll;
         text-align: right;
       }
 
@@ -10273,7 +10271,7 @@
     }
   };
   s([bt()], Ws.prototype, "_serviceName", void 0), Ws = s([mt("anycubic-view-print-save_in_cloud")], Ws);
-  var Xs = "0.0.11";
+  var Xs = "0.0.12";
   window.console.info(`%c ANYCUBIC-PANEL %c v${Xs} `, "color: orange; font-weight: bold; background: black", "color: white; font-weight: bold; background: dimgray"), t.AnycubicCloudPanel = class extends pt {
     constructor() {
       super(...arguments), this.selectedPage = "main", this._handleLocationChange = () => {

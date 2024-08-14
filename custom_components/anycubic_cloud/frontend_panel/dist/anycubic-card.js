@@ -4195,7 +4195,6 @@
         margin: 0;
         font-size: 16px;
         display: block;
-        overflow: scroll;
         position: relative;
         top: 3px;
         left: 0px;
@@ -4272,7 +4271,6 @@
         font-size: 16px;
         display: inline-block;
         max-width: calc(100% - 120px);
-        overflow: scroll;
         text-align: right;
       }
 
@@ -8476,7 +8474,7 @@
     `;
     }
   };
-  e([mt()], Ji.prototype, "hass", void 0), e([mt()], Ji.prototype, "cardConfig", void 0), e([mt()], Ji.prototype, "printers", void 0), e([gt()], Ji.prototype, "selectedPrinterDevice", void 0), e([gt()], Ji.prototype, "formSchema", void 0), Ji = e([ht("anycubic-printercard-configure")], Ji), window.console.info("%c ANYCUBIC-CARD %c v0.0.11 ", "color: orange; font-weight: bold; background: black", "color: white; font-weight: bold; background: dimgray");
+  e([mt()], Ji.prototype, "hass", void 0), e([mt()], Ji.prototype, "cardConfig", void 0), e([mt()], Ji.prototype, "printers", void 0), e([gt()], Ji.prototype, "selectedPrinterDevice", void 0), e([gt()], Ji.prototype, "formSchema", void 0), Ji = e([ht("anycubic-printercard-configure")], Ji), window.console.info("%c ANYCUBIC-CARD %c v0.0.12 ", "color: orange; font-weight: bold; background: black", "color: white; font-weight: bold; background: dimgray");
   const Qi = {
     vertical: !1,
     round: !1,

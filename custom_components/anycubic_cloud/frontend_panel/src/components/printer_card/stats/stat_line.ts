@@ -45,7 +45,6 @@ export class AnycubicPrintercardStatLine extends LitElement {
         font-size: 16px;
         display: inline-block;
         max-width: calc(100% - 120px);
-        overflow: scroll;
         text-align: right;
       }
 
