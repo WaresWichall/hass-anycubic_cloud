@@ -1911,7 +1911,7 @@ class AnycubicAPI:
             order_params = [
                 {
                     'status': 0
-                } for x in range(int(printer.primary_multi_color_box.total_slots / 4))
+                } for x in range(printer.connected_ace_units)
             ]
 
         resp = await self._send_order_multi_color_box_dry(
@@ -2113,7 +2113,6 @@ class AnycubicAPI:
         printer,
         gcode_id,
         slot_index_list=None,
-        box_id=0,
     ):
         if printer is None:
             raise AnycubicErrorMessage.no_printer_to_print
@@ -2138,7 +2137,7 @@ class AnycubicAPI:
                     f"{len(slot_index_list)} slots supplied but {len(material_list)} materials found in gcode file."
                 )
 
-            ams_box_mapping = printer.multi_color_box[box_id].build_mapping_for_material_list(
+            ams_box_mapping = printer.build_mapping_for_material_list(
                 slot_index_list=slot_index_list,
                 material_list=material_list,
             )
@@ -2159,7 +2158,6 @@ class AnycubicAPI:
         file_name=None,
         file_bytes=None,
         slot_index_list=None,
-        box_id=0,
     ):
         if printer is None:
             raise AnycubicErrorMessage.no_printer_to_print
@@ -2184,7 +2182,6 @@ class AnycubicAPI:
             printer=printer,
             gcode_id=latest_cloud_file.gcode_id,
             slot_index_list=slot_index_list,
-            box_id=box_id,
         )
 
     async def print_and_upload_no_cloud_save(
@@ -2194,7 +2191,6 @@ class AnycubicAPI:
         file_name=None,
         file_bytes=None,
         slot_index_list=None,
-        box_id=0,
     ):
         if printer is None:
             raise AnycubicErrorMessage.no_printer_to_print
@@ -2220,7 +2216,7 @@ class AnycubicAPI:
                     f"{len(slot_index_list)} slots supplied but {len(material_list)} materials read from gcode file."
                 )
 
-            ams_box_mapping = printer.multi_color_box[box_id].build_mapping_for_material_list(
+            ams_box_mapping = printer.build_mapping_for_material_list(
                 slot_index_list=slot_index_list,
                 material_list=material_list,
             )

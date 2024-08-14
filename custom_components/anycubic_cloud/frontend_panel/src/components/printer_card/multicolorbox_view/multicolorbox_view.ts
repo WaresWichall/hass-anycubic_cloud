@@ -20,7 +20,13 @@ import {
   HassEntityInfos,
 } from "../../../types";
 
-const ENTITY_ID_RUNOUT_REFILL = "ace_run_out_refill";
+const SECONDARY_PREFIX = "secondary_";
+
+const PRIMARY_ENTITY_ID_RUNOUT_REFILL = "ace_run_out_refill";
+const SECONDARY_ENTITY_ID_RUNOUT_REFILL =
+  SECONDARY_PREFIX + PRIMARY_ENTITY_ID_RUNOUT_REFILL;
+const PRIMARY_ENTITY_ID_SPOOLS = "multi_color_box_spools";
+const SECONDARY_ENTITY_ID_SPOOLS = SECONDARY_PREFIX + PRIMARY_ENTITY_ID_SPOOLS;
 
 @customElementIfUndef("anycubic-printercard-multicolorbox_view")
 export class AnycubicPrintercardMulticolorboxview extends LitElement {
@@ -32,6 +38,15 @@ export class AnycubicPrintercardMulticolorboxview extends LitElement {
 
   @property()
   public printerEntityIdPart: string | undefined;
+
+  @property()
+  public box_id: number = 0;
+
+  @state()
+  private _runoutRefillId: string = PRIMARY_ENTITY_ID_RUNOUT_REFILL;
+
+  @state()
+  private _spoolsEntityId: string = PRIMARY_ENTITY_ID_SPOOLS;
 
   @state()
   private spoolList: AnycubicSpoolInfo[] = [];
@@ -51,6 +66,16 @@ export class AnycubicPrintercardMulticolorboxview extends LitElement {
   protected willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
 
+    if (changedProperties.has("box_id")) {
+      if (this.box_id === 1) {
+        this._runoutRefillId = SECONDARY_ENTITY_ID_RUNOUT_REFILL;
+        this._spoolsEntityId = SECONDARY_ENTITY_ID_SPOOLS;
+      } else {
+        this._runoutRefillId = PRIMARY_ENTITY_ID_RUNOUT_REFILL;
+        this._spoolsEntityId = PRIMARY_ENTITY_ID_SPOOLS;
+      }
+    }
+
     if (
       changedProperties.has("hass") ||
       changedProperties.has("printerEntities") ||
@@ -60,7 +85,7 @@ export class AnycubicPrintercardMulticolorboxview extends LitElement {
         this.hass,
         this.printerEntities,
         this.printerEntityIdPart,
-        "multi_color_box_spools",
+        this._spoolsEntityId,
         "not loaded",
         { spool_info: [] },
       ).attributes.spool_info;
@@ -68,7 +93,7 @@ export class AnycubicPrintercardMulticolorboxview extends LitElement {
         this.hass,
         this.printerEntities,
         this.printerEntityIdPart,
-        ENTITY_ID_RUNOUT_REFILL,
+        this._runoutRefillId,
       );
     }
   }
@@ -128,6 +153,7 @@ export class AnycubicPrintercardMulticolorboxview extends LitElement {
   private _openDryingModal(): void {
     fireEvent(this, "ac-mcbdry-modal", {
       modalOpen: true,
+      box_id: this.box_id,
     });
   }
 
@@ -137,7 +163,7 @@ export class AnycubicPrintercardMulticolorboxview extends LitElement {
       entity_id: getPrinterEntityId(
         this.printerEntityIdPart,
         "switch",
-        ENTITY_ID_RUNOUT_REFILL,
+        this._runoutRefillId,
       ),
     });
   };
@@ -145,6 +171,7 @@ export class AnycubicPrintercardMulticolorboxview extends LitElement {
   private _editSpool(index, material_type, color): void {
     fireEvent(this, "ac-mcb-modal", {
       modalOpen: true,
+      box_id: this.box_id,
       spool_index: index,
       material_type: material_type,
       color: color,

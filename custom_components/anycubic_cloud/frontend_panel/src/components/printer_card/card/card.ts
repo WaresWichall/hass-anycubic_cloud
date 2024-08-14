@@ -112,6 +112,9 @@ export class AnycubicPrintercardCard extends LitElement {
   private hasColorbox: boolean = false;
 
   @state({ type: Boolean })
+  private hasSecondaryColorbox: boolean = false;
+
+  @state({ type: Boolean })
   private lightIsOn: boolean = false;
 
   @state({ type: String })
@@ -157,6 +160,14 @@ export class AnycubicPrintercardCard extends LitElement {
           this.printerEntities,
           this.printerEntityIdPart,
           "multi_color_box_spools",
+          "inactive",
+        ).state === "active";
+      this.hasSecondaryColorbox =
+        getPrinterSensorStateObj(
+          this.hass,
+          this.printerEntities,
+          this.printerEntityIdPart,
+          "secondary_multi_color_box_spools",
           "inactive",
         ).state === "active";
       if (this.cameraEntityId) {
@@ -351,6 +362,7 @@ export class AnycubicPrintercardCard extends LitElement {
       </div>
       ${this._renderPrintSettingsContainer()}
       ${this._renderMultiColorBoxContainer()}
+      ${this._renderSecondaryMultiColorBoxContainer()}
     `;
   }
 
@@ -415,6 +427,37 @@ export class AnycubicPrintercardCard extends LitElement {
                 .hass=${this.hass}
                 .printerEntities=${this.printerEntities}
                 .printerEntityIdPart=${this.printerEntityIdPart}
+                .box_id=${0}
+              ></anycubic-printercard-multicolorbox_view>
+            </div>
+          </div>
+        `
+      : nothing;
+  }
+
+  private _renderSecondaryMultiColorBoxContainer(): HTMLElement {
+    const classesMain = {
+      "ac-card-vertical": this.vertical ? true : false,
+    };
+    const stylesMain = {
+      height: this.isHidden ? "1px" : "auto",
+      opacity: this.isHidden ? 0.0 : 1.0,
+      scale: this.isHidden ? 0.0 : 1.0,
+    };
+
+    return this.hasSecondaryColorbox
+      ? html`
+          <div
+            class="ac-printer-card-infocontainer ${classMap(classesMain)}"
+            style=${styleMap(stylesMain)}
+            ${animate({ ...animOptionsCard })}
+          >
+            <div class="ac-printer-card-mcbsection ${classMap(classesMain)}">
+              <anycubic-printercard-multicolorbox_view
+                .hass=${this.hass}
+                .printerEntities=${this.printerEntities}
+                .printerEntityIdPart=${this.printerEntityIdPart}
+                .box_id=${1}
               ></anycubic-printercard-multicolorbox_view>
             </div>
           </div>

@@ -403,7 +403,6 @@ class BasePrintWithFile(AnycubicCloudServiceCall):
                     vol.Required(CONF_UPLOADED_GCODE_FILE): selector.FileSelector(
                         selector.FileSelectorConfig(accept=".gcode")
                     ),
-                    vol.Optional(CONF_BOX_ID): cv.positive_int,
                     vol.Optional(CONF_SLOT_NUMBER): vol.All(cv.ensure_list, [cv.positive_int]),
                 }
             ),
@@ -445,14 +444,12 @@ class PrintAndUploadSaveInCloud(BasePrintWithFile):
 
         file_name, gcode_bytes = await self._get_gcode_data(service)
         printer = self._get_printer(service)
-        box_id = self._get_box_id(service)
         slot_idx_list = self._get_slot_num_list(service)
 
         await printer.print_and_upload_save_in_cloud(
             file_name=file_name,
             file_bytes=gcode_bytes,
             slot_index_list=slot_idx_list,
-            box_id=box_id,
         )
 
 
@@ -464,14 +461,12 @@ class PrintAndUploadNoCloudSave(BasePrintWithFile):
 
         file_name, gcode_bytes = await self._get_gcode_data(service)
         printer = self._get_printer(service)
-        box_id = self._get_box_id(service)
         slot_idx_list = self._get_slot_num_list(service)
 
         await printer.print_and_upload_no_cloud_save(
             file_name=file_name,
             file_bytes=gcode_bytes,
             slot_index_list=slot_idx_list,
-            box_id=box_id,
         )
 
 

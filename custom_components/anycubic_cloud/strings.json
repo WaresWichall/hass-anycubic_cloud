@@ -78,6 +78,9 @@
       },
       "dry_status_is_drying": {
         "name": "Drying Active"
+      },
+      "secondary_dry_status_is_drying": {
+        "name": "Secondary Drying Active"
       }
     },
     "button": {
@@ -95,6 +98,21 @@
       },
       "drying_stop": {
         "name": "Drying Stop"
+      },
+      "secondary_drying_start_preset_1": {
+        "name": "Secondary Drying Preset 1"
+      },
+      "secondary_drying_start_preset_2": {
+        "name": "Secondary Drying Preset 2"
+      },
+      "secondary_drying_start_preset_3": {
+        "name": "Secondary Drying Preset 3"
+      },
+      "secondary_drying_start_preset_4": {
+        "name": "Secondary Drying Preset 4"
+      },
+      "secondary_drying_stop": {
+        "name": "Secondary Drying Stop"
       },
       "pause_print": {
         "name": "Pause Print"
@@ -211,11 +229,32 @@
       },
       "dry_status_remaining_time": {
         "name": "Drying Remaining Time"
+      },
+      "secondary_multi_color_box_spools": {
+        "name": "Secondary Multi-Color Box Spools"
+      },
+      "secondary_multi_color_box_current_temperature": {
+        "name": "Secondary Multi-Color Box Current Temperature"
+      },
+      "secondary_dry_status_raw_status_code": {
+        "name": "Secondary Raw Drying Status Code"
+      },
+      "secondary_dry_status_target_temperature": {
+        "name": "Secondary Drying Target Temperature"
+      },
+      "secondary_dry_status_total_duration": {
+        "name": "Secondary Drying Total Duration"
+      },
+      "secondary_dry_status_remaining_time": {
+        "name": "Secondary Drying Remaining Time"
       }
     },
     "switch": {
       "multi_color_box_runout_refill": {
         "name": "ACE Run-out Refill"
+      },
+      "secondary_multi_color_box_runout_refill": {
+        "name": "Secondary ACE Run-out Refill"
       },
       "manual_mqtt_connection_enabled": {
         "name": "Manual MQTT Connection Enabled"
@@ -227,6 +266,9 @@
       },
       "multi_color_box_fw_version": {
         "name": "ACE Firmware"
+      },
+      "secondary_multi_color_box_fw_version": {
+        "name": "Secondary ACE Firmware"
       }
     }
   },
@@ -641,10 +683,6 @@
           "name": "Printer ID",
           "description": "Printer ID (if not using device)."
         },
-        "box_id": {
-          "name": "Box ID",
-          "description": "Box ID (0-1)."
-        },
         "slot_number": {
           "name": "Slot Number List",
           "description": "Slot Number List (1-4) to map to print colours."
@@ -670,10 +708,6 @@
         "printer_id": {
           "name": "Printer ID",
           "description": "Printer ID (if not using device)."
-        },
-        "box_id": {
-          "name": "Box ID",
-          "description": "Box ID (0-1)."
         },
         "slot_number": {
           "name": "Slot Number List",

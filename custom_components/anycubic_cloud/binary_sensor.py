@@ -14,10 +14,17 @@ from .coordinator import AnycubicCloudDataUpdateCoordinator
 from .entity import AnycubicCloudEntity
 from .helpers import printer_entity_unique_id, printer_state_for_key
 
-MULTI_COLOR_BOX_SENSOR_TYPES = (
+PRIMARY_MULTI_COLOR_BOX_SENSOR_TYPES = (
     BinarySensorEntityDescription(
         key="dry_status_is_drying",
         translation_key="dry_status_is_drying",
+    ),
+)
+
+SECONDARY_MULTI_COLOR_BOX_SENSOR_TYPES = (
+    BinarySensorEntityDescription(
+        key="secondary_dry_status_is_drying",
+        translation_key="secondary_dry_status_is_drying",
     ),
 )
 
@@ -71,7 +78,10 @@ async def async_setup_entry(
     sensors: list[AnycubicBinarySensor] = []
     for printer_id in entry.data[CONF_PRINTER_ID_LIST]:
         if printer_state_for_key(coordinator, printer_id, 'supports_function_multi_color_box'):
-            for description in MULTI_COLOR_BOX_SENSOR_TYPES:
+            for description in PRIMARY_MULTI_COLOR_BOX_SENSOR_TYPES:
+                sensors.append(AnycubicBinarySensor(coordinator, printer_id, description))
+        if printer_state_for_key(coordinator, printer_id, 'connected_ace_units') > 1:
+            for description in SECONDARY_MULTI_COLOR_BOX_SENSOR_TYPES:
                 sensors.append(AnycubicBinarySensor(coordinator, printer_id, description))
 
         for description in SENSOR_TYPES:

@@ -45,6 +45,9 @@ export class AnycubicPrintercardMulticolorboxModalSpool extends LitElement {
   public slotColors?: string[];
 
   @state()
+  private box_id: number = 0;
+
+  @state()
   private spoolList: AnycubicSpoolInfo[] = [];
 
   @state()
@@ -198,6 +201,7 @@ export class AnycubicPrintercardMulticolorboxModalSpool extends LitElement {
     e.stopPropagation();
     if (e.detail.modalOpen) {
       this._isOpen = true;
+      this.box_id = Number(e.detail.box_id);
       this.spool_index = Number(e.detail.spool_index);
       this.material_type = e.detail.material_type
         ? AnycubicMaterialType[e.detail.material_type.toUpperCase()]
@@ -241,6 +245,7 @@ export class AnycubicPrintercardMulticolorboxModalSpool extends LitElement {
       this.hass.callService(platform, serv, {
         config_entry: this.selectedPrinterDevice.primary_config_entry,
         device_id: this.selectedPrinterDevice.id,
+        box_id: this.box_id,
         slot_number: this.spool_index + 1,
         slot_color_red: this.color[0],
         slot_color_green: this.color[1],
@@ -258,6 +263,7 @@ export class AnycubicPrintercardMulticolorboxModalSpool extends LitElement {
     this.spool_index = -1;
     this.material_type = undefined;
     this.color = undefined;
+    this.box_id = 0;
   }
 
   private _cardClick(e: Event): void {

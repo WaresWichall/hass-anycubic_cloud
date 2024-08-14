@@ -24,17 +24,31 @@ from .coordinator import AnycubicCloudDataUpdateCoordinator
 from .entity import AnycubicCloudEntity
 from .helpers import printer_attributes_for_key, printer_entity_unique_id, printer_state_for_key
 
-DRYING_PRESET_BUTTON_TYPES = list([
+PRIMARY_DRYING_PRESET_BUTTON_TYPES = list([
     ButtonEntityDescription(
         key=f"{ENTITY_ID_DRYING_START_PRESET_}{x + 1}",
         translation_key=f"{ENTITY_ID_DRYING_START_PRESET_}{x + 1}",
     ) for x in range(MAX_DRYING_PRESETS)
 ])
 
-MULTI_COLOR_BOX_BUTTON_TYPES = (
+SECONDARY_DRYING_PRESET_BUTTON_TYPES = list([
+    ButtonEntityDescription(
+        key=f"secondary_{ENTITY_ID_DRYING_START_PRESET_}{x + 1}",
+        translation_key=f"secondary_{ENTITY_ID_DRYING_START_PRESET_}{x + 1}",
+    ) for x in range(MAX_DRYING_PRESETS)
+])
+
+PRIMARY_MULTI_COLOR_BOX_BUTTON_TYPES = (
     ButtonEntityDescription(
         key="drying_stop",
         translation_key="drying_stop",
+    ),
+)
+
+SECONDARY_MULTI_COLOR_BOX_BUTTON_TYPES = (
+    ButtonEntityDescription(
+        key="secondary_drying_stop",
+        translation_key="secondary_drying_stop",
     ),
 )
 
@@ -82,19 +96,32 @@ async def async_setup_entry(
 
     entity_list = list()
 
+    def add_ace_entities(main_button_types, drying_preset_types):
+        for description in drying_preset_types:
+            num = description.key[-1]
+            preset_duration = entry.options.get(f"{CONF_DRYING_PRESET_DURATION_}{num}")
+            preset_temperature = entry.options.get(f"{CONF_DRYING_PRESET_TEMPERATURE_}{num}")
+            if preset_duration and preset_temperature and int(preset_temperature) > 0:
+                entity_list.append(AnycubicCloudButton(coordinator, printer_id, description))
+
+        for description in main_button_types:
+            entity_list.append(AnycubicCloudButton(coordinator, printer_id, description))
+
     for printer_id in entry.data[CONF_PRINTER_ID_LIST]:
 
         if printer_state_for_key(coordinator, printer_id, 'supports_function_multi_color_box'):
 
-            for description in DRYING_PRESET_BUTTON_TYPES:
-                num = description.key[-1]
-                preset_duration = entry.options.get(f"{CONF_DRYING_PRESET_DURATION_}{num}")
-                preset_temperature = entry.options.get(f"{CONF_DRYING_PRESET_TEMPERATURE_}{num}")
-                if preset_duration and preset_temperature and int(preset_temperature) > 0:
-                    entity_list.append(AnycubicCloudButton(coordinator, printer_id, description))
+            add_ace_entities(
+                PRIMARY_MULTI_COLOR_BOX_BUTTON_TYPES,
+                PRIMARY_DRYING_PRESET_BUTTON_TYPES
+            )
 
-            for description in MULTI_COLOR_BOX_BUTTON_TYPES:
-                entity_list.append(AnycubicCloudButton(coordinator, printer_id, description))
+        if printer_state_for_key(coordinator, printer_id, 'connected_ace_units') > 1:
+
+            add_ace_entities(
+                SECONDARY_MULTI_COLOR_BOX_BUTTON_TYPES,
+                SECONDARY_DRYING_PRESET_BUTTON_TYPES
+            )
 
         for description in BUTTON_TYPES:
             entity_list.append(AnycubicCloudButton(coordinator, printer_id, description))

@@ -741,7 +741,7 @@ class AnycubicPrinter:
             data = payload['data']['multi_color_box']
             for box in data:
                 box_id = int(box['id'])
-                if self._multi_color_box is None or len(self._multi_color_box) < box_id + 1:
+                if self.connected_ace_units < box_id + 1:
                     continue
 
                 self._multi_color_box[box_id].update_slots_with_mqtt_data(box['slots'])
@@ -751,7 +751,7 @@ class AnycubicPrinter:
             data = payload['data']
             box_id = int(data['id'])
             loaded_slot = int(data['loaded_slot'])
-            if self._multi_color_box is None or len(self._multi_color_box) < box_id + 1:
+            if self.connected_ace_units < box_id + 1:
                 return
 
             self._multi_color_box[box_id].set_slot_loaded(loaded_slot)
@@ -760,7 +760,7 @@ class AnycubicPrinter:
             data = payload['data']['multi_color_box']
             for box in data:
                 box_id = int(box['id'])
-                if self._multi_color_box is None or len(self._multi_color_box) < box_id + 1:
+                if self.connected_ace_units < box_id + 1:
                     continue
 
                 self._multi_color_box[box_id].set_current_temperature(box['temp'])
@@ -770,7 +770,7 @@ class AnycubicPrinter:
             data = payload['data']['multi_color_box']
             for box in data:
                 box_id = int(box['id'])
-                if self._multi_color_box is None or len(self._multi_color_box) < box_id + 1:
+                if self.connected_ace_units < box_id + 1:
                     continue
 
                 loaded_slot = int(box['loaded_slot'])
@@ -782,7 +782,7 @@ class AnycubicPrinter:
             data = payload['data']['multi_color_box']
             for box in data:
                 box_id = int(box['id'])
-                if self._multi_color_box is None or len(self._multi_color_box) < box_id + 1:
+                if self.connected_ace_units < box_id + 1:
                     continue
 
                 self._multi_color_box[box_id].set_auto_feed(box['auto_feed'])
@@ -1179,10 +1179,25 @@ class AnycubicPrinter:
         return self._multi_color_box
 
     @property
+    def connected_ace_units(self):
+        if self._multi_color_box is None:
+            return 0
+
+        return len(self._multi_color_box)
+
+    @property
     def primary_multi_color_box(self):
         return (
             self._multi_color_box[0]
-            if self._multi_color_box is not None and len(self._multi_color_box) > 0
+            if self.connected_ace_units > 0
+            else None
+        )
+
+    @property
+    def secondary_multi_color_box(self):
+        return (
+            self._multi_color_box[1]
+            if self.connected_ace_units > 1
             else None
         )
 
@@ -1192,6 +1207,13 @@ class AnycubicPrinter:
             return None
 
         return self.primary_multi_color_box.drying_status
+
+    @property
+    def secondary_drying_status(self):
+        if self.secondary_multi_color_box is None:
+            return None
+
+        return self.secondary_multi_color_box.drying_status
 
     @property
     def latest_project(self):
@@ -1300,6 +1322,92 @@ class AnycubicPrinter:
     def primary_drying_status_remaining_time(self):
         if self.primary_drying_status:
             return self.primary_drying_status.remaining_time
+
+        return None
+
+    @property
+    def secondary_multi_color_box_fw_firmware_version(self):
+        if (
+            self.multi_color_box_fw_version and
+            len(self.multi_color_box_fw_version) > 1
+        ):
+            return self.multi_color_box_fw_version[1].firmware_version
+
+        return None
+
+    @property
+    def secondary_multi_color_box_fw_available_version(self):
+        if (
+            self.multi_color_box_fw_version and
+            len(self.multi_color_box_fw_version) > 1
+        ):
+            return self.multi_color_box_fw_version[1].available_version
+
+        return None
+
+    @property
+    def secondary_multi_color_box_fw_total_progress(self):
+        if (
+            self.multi_color_box_fw_version and
+            len(self.multi_color_box_fw_version) > 1
+        ):
+            return self.multi_color_box_fw_version[1].total_progress
+
+        return None
+
+    @property
+    def secondary_multi_color_box_auto_feed(self):
+        if self.secondary_multi_color_box:
+            return self.secondary_multi_color_box.auto_feed
+
+        return None
+
+    @property
+    def secondary_multi_color_box_spool_info_object(self):
+        if self.secondary_multi_color_box:
+            return self.secondary_multi_color_box.spool_info_object
+
+        return None
+
+    @property
+    def secondary_multi_color_box_current_temperature(self):
+        if self.secondary_multi_color_box:
+            return self.secondary_multi_color_box.current_temperature
+
+        return 0
+
+    @property
+    def secondary_drying_status_is_drying(self):
+        if self.secondary_drying_status:
+            return self.secondary_drying_status.is_drying
+
+        return None
+
+    @property
+    def secondary_drying_status_raw_status_code(self):
+        if self.secondary_drying_status:
+            return self.secondary_drying_status.raw_status_code
+
+        return None
+
+    @property
+    def secondary_drying_status_target_temperature(self):
+        if self.secondary_drying_status:
+            return self.secondary_drying_status.target_temperature
+
+        return 0
+
+    @property
+    def secondary_drying_status_total_duration(self):
+        if self.secondary_drying_status:
+            return self.secondary_drying_status.total_duration
+
+        return None
+
+    @property
+    def secondary_drying_status_remaining_time(self):
+        if self.secondary_drying_status:
+            return self.secondary_drying_status.remaining_time
 
         return None
 
@@ -1505,6 +1613,34 @@ class AnycubicPrinter:
             return self.parameter.curr_hotbed_temp
 
         return None
+
+    def build_mapping_for_material_list(
+        self,
+        slot_index_list,
+        material_list,
+    ):
+        if not self._multi_color_box:
+            return list()
+
+        highest_box = max(slot_index_list) // 4
+
+        if self.connected_ace_units < highest_box + 1:
+            raise TypeError(
+                f"Not enough ACE units connected for slot indexes (expected {highest_box + 1})."
+            )
+
+        ams_box_mapping = list()
+
+        for mcb in self._multi_color_box:
+
+            ams_box_mapping.extend(
+                mcb.build_mapping_for_material_list(
+                    slot_index_list=slot_index_list,
+                    material_list=material_list,
+                )
+            )
+
+        return sorted(ams_box_mapping, key=lambda x: x.paint_index)
 
     async def update_info_from_api(self, with_project=True):
         await self._api_parent.printer_info_for_id(self._id, self)
@@ -1870,13 +2006,11 @@ class AnycubicPrinter:
         self,
         gcode_id,
         slot_index_list=None,
-        box_id=0,
     ):
         return await self._api_parent.print_with_cloud_gcode_id(
             printer=self,
             gcode_id=gcode_id,
             slot_index_list=slot_index_list,
-            box_id=box_id,
         )
 
     async def print_and_upload_save_in_cloud(
@@ -1885,7 +2019,6 @@ class AnycubicPrinter:
         file_name=None,
         file_bytes=None,
         slot_index_list=None,
-        box_id=0,
     ):
         return await self._api_parent.print_and_upload_save_in_cloud(
             printer=self,
@@ -1893,7 +2026,6 @@ class AnycubicPrinter:
             file_name=file_name,
             file_bytes=file_bytes,
             slot_index_list=slot_index_list,
-            box_id=box_id,
         )
 
     async def print_and_upload_no_cloud_save(
@@ -1902,7 +2034,6 @@ class AnycubicPrinter:
         file_name=None,
         file_bytes=None,
         slot_index_list=None,
-        box_id=0,
     ):
         return await self._api_parent.print_and_upload_no_cloud_save(
             printer=self,
@@ -1910,7 +2041,6 @@ class AnycubicPrinter:
             file_name=file_name,
             file_bytes=file_bytes,
             slot_index_list=slot_index_list,
-            box_id=box_id,
         )
 
     async def change_print_setting_speed_mode(
@@ -2042,4 +2172,5 @@ class AnycubicPrinter:
                 f"external_shelves=\n{self.external_shelves},\n "
                 f"multi_color_box=\n{self.multi_color_box},\n "
                 f"primary_drying_status=\n{self.primary_drying_status},\n "
+                f"secondary_drying_status=\n{self.secondary_drying_status},\n "
                 f")")
