@@ -1217,6 +1217,295 @@ class AnycubicPrinter:
         ])
         return file_list
 
+    @property
+    def primary_multi_color_box_fw_firmware_version(self):
+        if (
+            self.multi_color_box_fw_version and
+            len(self.multi_color_box_fw_version) > 0
+        ):
+            return self.multi_color_box_fw_version[0].firmware_version
+
+        return None
+
+    @property
+    def primary_multi_color_box_fw_available_version(self):
+        if (
+            self.multi_color_box_fw_version and
+            len(self.multi_color_box_fw_version) > 0
+        ):
+            return self.multi_color_box_fw_version[0].available_version
+
+        return None
+
+    @property
+    def primary_multi_color_box_fw_total_progress(self):
+        if (
+            self.multi_color_box_fw_version and
+            len(self.multi_color_box_fw_version) > 0
+        ):
+            return self.multi_color_box_fw_version[0].total_progress
+
+        return None
+
+    @property
+    def primary_multi_color_box_auto_feed(self):
+        if self.primary_multi_color_box:
+            return self.primary_multi_color_box.auto_feed
+
+        return None
+
+    @property
+    def primary_multi_color_box_spool_info_object(self):
+        if self.primary_multi_color_box:
+            return self.primary_multi_color_box.spool_info_object
+
+        return None
+
+    @property
+    def primary_multi_color_box_current_temperature(self):
+        if self.primary_multi_color_box:
+            return self.primary_multi_color_box.current_temperature
+
+        return 0
+
+    @property
+    def primary_drying_status_is_drying(self):
+        if self.primary_drying_status:
+            return self.primary_drying_status.is_drying
+
+        return None
+
+    @property
+    def primary_drying_status_raw_status_code(self):
+        if self.primary_drying_status:
+            return self.primary_drying_status.raw_status_code
+
+        return None
+
+    @property
+    def primary_drying_status_target_temperature(self):
+        if self.primary_drying_status:
+            return self.primary_drying_status.target_temperature
+
+        return 0
+
+    @property
+    def primary_drying_status_total_duration(self):
+        if self.primary_drying_status:
+            return self.primary_drying_status.total_duration
+
+        return None
+
+    @property
+    def primary_drying_status_remaining_time(self):
+        if self.primary_drying_status:
+            return self.primary_drying_status.remaining_time
+
+        return None
+
+    @property
+    def latest_project_name(self):
+        if self.latest_project:
+            return self.latest_project.name
+
+        return None
+
+    @property
+    def latest_project_progress_percentage(self):
+        if self.latest_project:
+            return self.latest_project.progress_percentage
+
+        return None
+
+    @property
+    def latest_project_created_timestamp(self):
+        if self.latest_project:
+            return self.latest_project.created_timestamp
+
+        return None
+
+    @property
+    def latest_project_finished_timestamp(self):
+        if self.latest_project:
+            return self.latest_project.finished_timestamp
+
+        return None
+
+    @property
+    def latest_project_print_time_elapsed_minutes(self):
+        if self.latest_project:
+            return self.latest_project.print_time_elapsed_minutes
+
+        return None
+
+    @property
+    def latest_project_print_time_remaining_minutes(self):
+        if self.latest_project:
+            return self.latest_project.print_time_remaining_minutes
+
+        return None
+
+    @property
+    def latest_project_print_total_time(self):
+        if self.latest_project:
+            return self.latest_project.print_total_time
+
+        return None
+
+    @property
+    def latest_project_print_in_progress(self):
+        if self.latest_project:
+            return self.latest_project.print_in_progress
+
+        return None
+
+    @property
+    def latest_project_print_complete(self):
+        if self.latest_project:
+            return self.latest_project.print_complete
+
+        return None
+
+    @property
+    def latest_project_print_failed(self):
+        if self.latest_project:
+            return self.latest_project.print_failed
+
+        return None
+
+    @property
+    def latest_project_print_is_paused(self):
+        if self.latest_project:
+            return self.latest_project.print_is_paused
+
+        return None
+
+    @property
+    def latest_project_print_status(self):
+        if self.latest_project:
+            return self.latest_project.print_status
+
+        return None
+
+    @property
+    def latest_project_print_approximate_completion_time(self):
+        if self.latest_project:
+            return self.latest_project.print_approximate_completion_time
+
+        return None
+
+    @property
+    def latest_project_print_current_layer(self):
+        if self.latest_project:
+            return self.latest_project.print_current_layer
+
+        return None
+
+    @property
+    def latest_project_print_total_layers(self):
+        if self.latest_project:
+            return self.latest_project.print_total_layers
+
+        return None
+
+    @property
+    def latest_project_target_nozzle_temp(self):
+        if self.latest_project:
+            return self.latest_project.target_nozzle_temp
+
+        return None
+
+    @property
+    def latest_project_temp_min_nozzle(self):
+        if self.latest_project:
+            return self.latest_project.temp_min_nozzle
+
+        return None
+
+    @property
+    def latest_project_temp_max_nozzle(self):
+        if self.latest_project:
+            return self.latest_project.temp_max_nozzle
+
+        return None
+
+    @property
+    def latest_project_target_hotbed_temp(self):
+        if self.latest_project:
+            return self.latest_project.target_hotbed_temp
+
+        return None
+
+    @property
+    def latest_project_temp_min_hotbed(self):
+        if self.latest_project:
+            return self.latest_project.temp_min_hotbed
+
+        return None
+
+    @property
+    def latest_project_temp_max_hotbed(self):
+        if self.latest_project:
+            return self.latest_project.temp_max_hotbed
+
+        return None
+
+    @property
+    def latest_project_print_speed_mode(self):
+        if self.latest_project:
+            return self.latest_project.print_speed_mode
+
+        return None
+
+    @property
+    def latest_project_print_speed_pct(self):
+        if self.latest_project:
+            return self.latest_project.print_speed_pct
+
+        return None
+
+    @property
+    def latest_project_z_thick(self):
+        if self.latest_project:
+            return self.latest_project.z_thick
+
+        return None
+
+    @property
+    def latest_project_fan_speed_pct(self):
+        if self.latest_project:
+            return self.latest_project.fan_speed_pct
+
+        return None
+
+    @property
+    def latest_project_raw_print_status(self):
+        if self.latest_project:
+            return self.latest_project.raw_print_status
+
+        return None
+
+    @property
+    def latest_project_available_print_speed_modes_data_object(self):
+        if self.latest_project:
+            return self.latest_project.available_print_speed_modes_data_object
+
+        return None
+
+    @property
+    def curr_nozzle_temp(self):
+        if self.parameter:
+            return self.parameter.curr_nozzle_temp
+
+        return None
+
+    @property
+    def curr_hotbed_temp(self):
+        if self.parameter:
+            return self.parameter.curr_hotbed_temp
+
+        return None
+
     async def update_info_from_api(self, with_project=True):
         await self._api_parent.printer_info_for_id(self._id, self)
 

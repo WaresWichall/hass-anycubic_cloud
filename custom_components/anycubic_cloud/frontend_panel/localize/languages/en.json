@@ -1,5 +1,10 @@
 {
   "title": "Anycubic Cloud",
+  "common": {
+    "actions": {
+      "print": "Print"
+    }
+  },
   "panels": {
     "initial": {
       "fields": {
@@ -86,17 +91,11 @@
     },
     "print_save_in_cloud": {
       "title": "Print (Save in user cloud)",
-      "cards": {},
-      "actions": {
-        "print": "Print"
-      }
+      "cards": {}
     },
     "print_no_cloud_save": {
       "title": "Print (No Cloud Save)",
-      "cards": {},
-      "actions": {
-        "print": "Print"
-      }
+      "cards": {}
     },
     "debug": {
       "title": "Debug",

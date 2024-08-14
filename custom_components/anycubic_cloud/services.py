@@ -595,7 +595,7 @@ class BaseChangePrintSetting(AnycubicCloudServiceCall):
                 "No print project found."
             )
 
-        if not printer.latest_project.print_in_progress:
+        if not printer.latest_project_print_in_progress:
             raise ServiceValidationError(
                 "Printer is not currently printing."
             )
