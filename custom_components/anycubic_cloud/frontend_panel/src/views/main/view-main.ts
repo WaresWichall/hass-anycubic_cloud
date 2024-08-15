@@ -107,8 +107,15 @@ export class AnycubicViewMain extends LitElement {
   @state()
   private monitoredStats: PrinterCardStatType[] = monitoredStatsBasic;
 
+  @state()
+  private language: string;
+
   protected willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
+
+    if (changedProperties.has("hass") && this.hass.language !== this.language) {
+      this.language = this.hass.language;
+    }
 
     if (changedProperties.has("selectedPrinterDevice")) {
       this.printerID = getPrinterID(this.selectedPrinterDevice);
@@ -241,7 +248,7 @@ export class AnycubicViewMain extends LitElement {
     return html`
       <div class="info-row">
         <span class="info-heading">
-          ${localize(languageKey, this.hass.language)}:</span
+          ${localize(languageKey, this.language)}:</span
         >
         <span class="info-detail">${rowData}</span>
       </div>

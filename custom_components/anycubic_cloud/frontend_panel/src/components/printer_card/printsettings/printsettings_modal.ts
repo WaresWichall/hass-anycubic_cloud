@@ -3,6 +3,8 @@ import { property, state } from "lit/decorators.js";
 import { styleMap } from "lit-html/directives/style-map.js";
 import { animate } from "@lit-labs/motion";
 
+import { localize } from "../../../../localize/localize";
+
 import { customElementIfUndef } from "../../../internal/register-custom-element";
 
 import { platform } from "../../../const";
@@ -108,6 +110,9 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
   @state()
   private _isOpen: boolean = false;
 
+  @state()
+  private language: string;
+
   async firstUpdated(): void {
     this.addEventListener("ac-select-dropdown", this._handleDropdownEvent);
     this.addEventListener("click", (e) => {
@@ -127,6 +132,10 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
 
   protected willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
+
+    if (changedProperties.has("hass") && this.hass.language !== this.language) {
+      this.language = this.hass.language;
+    }
 
     if (
       changedProperties.has("hass") ||
@@ -246,7 +255,9 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
         <div class="ac-settings-header">Confirm Action</div>
         <div>
           <div class="ac-confirm-description">
-            Are you sure you want to ${this._confirmationType} the print?
+            ${localize("card.print_settings.confirm_message", this.language, {
+              action: this._confirmationType,
+            })}
           </div>
           <div class="ac-confirm-buttons">
             <ha-control-button
@@ -254,14 +265,14 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
                 this._handleConfirmApprove();
               }}"
             >
-              Yes
+              ${localize("common.actions.yes", this.language)}
             </ha-control-button>
             <ha-control-button
               @click="${(_e): void => {
                 this._handleConfirmCancel();
               }}"
             >
-              No
+              ${localize("common.actions.no", this.language)}
             </ha-control-button>
           </div>
         </div>
@@ -282,7 +293,7 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
                 );
               }}"
             >
-              Pause Print
+              ${localize("card.print_settings.print_pause", this.language)}
             </ha-control-button>
           </div>
           <div class="ac-settings-row ac-settings-buttonrow">
@@ -293,7 +304,7 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
                 );
               }}"
             >
-              Resume Print
+              ${localize("card.print_settings.print_resume", this.language)}
             </ha-control-button>
           </div>
           <div class="ac-settings-row ac-settings-buttonrow">
@@ -304,7 +315,7 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
                 );
               }}"
             >
-              Cancel Print
+              ${localize("card.print_settings.print_cancel", this.language)}
             </ha-control-button>
           </div>
           <div class="ac-settings-row">
@@ -318,7 +329,7 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
                 this._handleSaveSpeedModeButton();
               }}"
             >
-              Save Speed Mode
+              ${localize("card.print_settings.save_speed_mode", this.language)}
             </ha-control-button>
           </div>
           <div class="ac-settings-row">
@@ -337,7 +348,10 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
                 this._handleSaveTargetTempNozzleButton();
               }}"
             >
-              Save Target Nozzle
+              ${localize(
+                "card.print_settings.save_target_nozzle",
+                this.language,
+              )}
             </ha-control-button>
           </div>
           <div class="ac-settings-row">
@@ -356,7 +370,10 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
                 this._handleSaveTargetTempHotbedButton();
               }}"
             >
-              Save Target Hotbed
+              ${localize(
+                "card.print_settings.save_target_hotbed",
+                this.language,
+              )}
             </ha-control-button>
           </div>
           <div class="ac-settings-row">
@@ -375,7 +392,7 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
                 this._handleSaveFanSpeedButton();
               }}"
             >
-              Save Fan Speed
+              ${localize("card.print_settings.save_fan_speed", this.language)}
             </ha-control-button>
           </div>
           <div class="ac-settings-row ac-disabled-feature">
@@ -394,7 +411,10 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
                 this._handleSaveAuxFanSpeedButton();
               }}"
             >
-              Save AUX Fan Speed
+              ${localize(
+                "card.print_settings.save_aux_fan_speed",
+                this.language,
+              )}
             </ha-control-button>
           </div>
           <div class="ac-settings-row ac-disabled-feature">
@@ -413,7 +433,10 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
                 this._handleSaveBoxFanSpeedButton();
               }}"
             >
-              Save Box Fan Speed
+              ${localize(
+                "card.print_settings.save_box_fan_speed",
+                this.language,
+              )}
             </ha-control-button>
           </div>
         </div>

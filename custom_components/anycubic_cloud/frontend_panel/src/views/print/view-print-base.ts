@@ -36,12 +36,19 @@ export class AnycubicViewPrintBase extends LitElement {
   @state()
   private _serviceName: string = "";
 
+  @state()
+  private language: string;
+
   async firstUpdated(): void {
     await loadHaServiceControl();
   }
 
   protected override willUpdate(changedProperties: PropertyValues): void {
     super.willUpdate(changedProperties);
+
+    if (changedProperties.has("hass") && this.hass.language !== this.language) {
+      this.language = this.hass.language;
+    }
 
     if (!changedProperties.has("selectedPrinterDevice")) {
       return;
@@ -80,7 +87,7 @@ export class AnycubicViewPrintBase extends LitElement {
           @click=${this._runScript}
         >
           <ha-svg-icon .path=${mdiPlay}></ha-svg-icon>
-          ${localize("common.actions.print", this.hass.language)}
+          ${localize("common.actions.print", this.language)}
         </ha-progress-button>
       </ac-print-view>
     `;

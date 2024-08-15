@@ -61,6 +61,9 @@ export class AnycubicCloudPanel extends LitElement {
   @state()
   private selectedPrinterDevice: HassDevice | undefined;
 
+  @state()
+  private language: string;
+
   async firstUpdated(): void {
     this.printers = await getPrinterDevices(this.hass);
     this.requestUpdate();
@@ -85,6 +88,10 @@ export class AnycubicCloudPanel extends LitElement {
 
   protected willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
+
+    if (changedProperties.has("hass") && this.hass.language !== this.language) {
+      this.language = this.hass.language;
+    }
 
     if (!changedProperties.has("route") && !changedProperties.has("printers")) {
       return;
@@ -113,27 +120,27 @@ export class AnycubicCloudPanel extends LitElement {
           @iron-activate=${this.handlePageSelected}
         >
           <paper-tab page-name="main">
-            ${localize("panels.main.title", this.hass.language)}
+            ${localize("panels.main.title", this.language)}
           </paper-tab>
           <paper-tab page-name="local-files">
-            ${localize("panels.files_local.title", this.hass.language)}
+            ${localize("panels.files_local.title", this.language)}
           </paper-tab>
           <paper-tab page-name="udisk-files">
-            ${localize("panels.files_udisk.title", this.hass.language)}
+            ${localize("panels.files_udisk.title", this.language)}
           </paper-tab>
           <paper-tab page-name="cloud-files">
-            ${localize("panels.files_cloud.title", this.hass.language)}
+            ${localize("panels.files_cloud.title", this.language)}
           </paper-tab>
           <paper-tab page-name="print-no_cloud_save">
-            ${localize("panels.print_no_cloud_save.title", this.hass.language)}
+            ${localize("panels.print_no_cloud_save.title", this.language)}
           </paper-tab>
           <paper-tab page-name="print-save_in_cloud">
-            ${localize("panels.print_save_in_cloud.title", this.hass.language)}
+            ${localize("panels.print_save_in_cloud.title", this.language)}
           </paper-tab>
           ${DEBUG
             ? html`
                 <paper-tab page-name="debug">
-                  ${localize("panels.debug.title", this.hass.language)}
+                  ${localize("panels.debug.title", this.language)}
                 </paper-tab>
               `
             : null}
@@ -150,7 +157,7 @@ export class AnycubicCloudPanel extends LitElement {
           .hass=${this.hass}
           .narrow=${this.narrow}
         ></ha-menu-button>
-        <div class="main-title">${localize("title", this.hass.language)}</div>
+        <div class="main-title">${localize("title", this.language)}</div>
         <div class="version">v${pkgjson.version}</div>
       </div>
     `;
@@ -166,7 +173,7 @@ export class AnycubicCloudPanel extends LitElement {
           <p>
             ${localize(
               "panels.initial.fields.printer_select.heading",
-              this.hass.language,
+              this.language,
             )}
           </p>
           <ul class="printers-container">

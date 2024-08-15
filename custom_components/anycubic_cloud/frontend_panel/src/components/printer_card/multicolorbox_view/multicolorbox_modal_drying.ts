@@ -3,6 +3,8 @@ import { property, state } from "lit/decorators.js";
 import { styleMap } from "lit-html/directives/style-map.js";
 import { animate } from "@lit-labs/motion";
 
+import { localize } from "../../../../localize/localize";
+
 import { customElementIfUndef } from "../../../internal/register-custom-element";
 
 import {
@@ -114,6 +116,9 @@ export class AnycubicPrintercardMulticolorboxModalDrying extends LitElement {
   @state()
   private _isOpen: boolean = false;
 
+  @state()
+  private language: string;
+
   async firstUpdated(): void {
     this.addEventListener("click", (e) => {
       this._closeModal(e);
@@ -132,6 +137,10 @@ export class AnycubicPrintercardMulticolorboxModalDrying extends LitElement {
 
   protected willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
+
+    if (changedProperties.has("hass") && this.hass.language !== this.language) {
+      this.language = this.hass.language;
+    }
 
     if (changedProperties.has("box_id")) {
       if (this.box_id === 1) {
@@ -247,7 +256,9 @@ export class AnycubicPrintercardMulticolorboxModalDrying extends LitElement {
   _renderCard(): any {
     return html`
       <div>
-        <div class="ac-drying-header">Drying Options</div>
+        <div class="ac-drying-header">
+          ${localize("card.headings.drying_options", this.language)}
+        </div>
         <div class="ac-drying-buttonscont">
           ${this._hasDryingPreset1
             ? html`
@@ -257,7 +268,7 @@ export class AnycubicPrintercardMulticolorboxModalDrying extends LitElement {
                       this._handleDryingPreset1();
                     }}"
                   >
-                    Preset 1<br />
+                    ${localize("card.buttons.preset", this.language)} 1<br />
                     ${this._dryingPresetDur1} Mins @
                     ${this._dryingPresetTemp1}°C
                   </ha-control-button>
@@ -272,7 +283,7 @@ export class AnycubicPrintercardMulticolorboxModalDrying extends LitElement {
                       this._handleDryingPreset2();
                     }}"
                   >
-                    Preset 2<br />
+                    ${localize("card.buttons.preset", this.language)} 2<br />
                     ${this._dryingPresetDur2} Mins @
                     ${this._dryingPresetTemp2}°C
                   </ha-control-button>
@@ -287,7 +298,7 @@ export class AnycubicPrintercardMulticolorboxModalDrying extends LitElement {
                       this._handleDryingPreset3();
                     }}"
                   >
-                    Preset 3<br />
+                    ${localize("card.buttons.preset", this.language)} 3<br />
                     ${this._dryingPresetDur3} Mins @
                     ${this._dryingPresetTemp3}°C
                   </ha-control-button>
@@ -302,7 +313,7 @@ export class AnycubicPrintercardMulticolorboxModalDrying extends LitElement {
                       this._handleDryingPreset4();
                     }}"
                   >
-                    Preset 4<br />
+                    ${localize("card.buttons.preset", this.language)} 4<br />
                     ${this._dryingPresetDur4} Mins @
                     ${this._dryingPresetTemp4}°C
                   </ha-control-button>
@@ -318,7 +329,7 @@ export class AnycubicPrintercardMulticolorboxModalDrying extends LitElement {
                       this._handleDryingStop();
                     }}"
                   >
-                    Stop Drying
+                    ${localize("card.buttons.stop_drying", this.language)}
                   </ha-control-button>
                 </div>
               `

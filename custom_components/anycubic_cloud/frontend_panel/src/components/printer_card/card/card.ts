@@ -5,6 +5,8 @@ import { classMap } from "lit/directives/class-map.js";
 import { styleMap } from "lit-html/directives/style-map.js";
 import { animate } from "@lit-labs/motion";
 
+import { localize } from "../../../../localize/localize";
+
 import { customElementIfUndef } from "../../../internal/register-custom-element";
 
 import { fireEvent } from "../../../fire_event";
@@ -129,8 +131,15 @@ export class AnycubicPrintercardCard extends LitElement {
   @state()
   private progressPercent: number = 0;
 
+  @state()
+  private language: string;
+
   protected willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
+
+    if (changedProperties.has("hass") && this.hass.language !== this.language) {
+      this.language = this.hass.language;
+    }
 
     if (changedProperties.has("monitoredStats")) {
       this.monitoredStats = undefinedDefault(
@@ -397,7 +406,7 @@ export class AnycubicPrintercardCard extends LitElement {
                 }}"
               >
                 <ha-svg-icon .path=${mdiCog}></ha-svg-icon>
-                Print Settings
+                ${localize("card.buttons.print_settings", this.language)}
               </button>
             </div>
           </div>
