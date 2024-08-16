@@ -90,7 +90,6 @@ print_and_upload_save_in_cloud:
     config_entry: *anycubic_config_entry
     device_id: *device_id
     printer_id: *printer_id
-    box_id: *box_id
     slot_number: &slot_number_list
       required: false
       example: [1, 2]
@@ -105,7 +104,6 @@ print_and_upload_no_cloud_save:
     config_entry: *anycubic_config_entry
     device_id: *device_id
     printer_id: *printer_id
-    box_id: *box_id
     slot_number: *slot_number_list
     uploaded_gcode_file: *uploaded_gcode_file
 delete_file_local: &delete_file_printer

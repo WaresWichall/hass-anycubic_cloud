@@ -476,9 +476,15 @@ class AnycubicMultiColorBox:
 
         for x, mat_conf in enumerate(material_list):
             slot_index = slot_index_list[x]
+            spool_index = slot_index
+            slot_index = slot_index - (4 * self.box_id)
+
+            if slot_index < 0 or slot_index > 3:
+                continue
+
             ams_slot = box_slots[slot_index]
             material = AnycubicMaterialMapping(
-                spool_index=slot_index,
+                spool_index=spool_index,
                 filament_used=mat_conf['filament_used'],
                 material_type=mat_conf['material_type'],
                 color_red=ams_slot.color_red,
@@ -512,6 +518,10 @@ class AnycubicMultiColorBox:
     @property
     def current_temperature(self):
         return self._temp
+
+    @property
+    def box_id(self):
+        return self._id
 
     @property
     def auto_feed(self):

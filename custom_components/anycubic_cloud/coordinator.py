@@ -96,8 +96,8 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     def _any_printers_are_drying(self):
         return any([
             (
-                printer.primary_drying_status is not None and
-                printer.primary_drying_status.is_drying
+                printer.primary_drying_status_is_drying or
+                printer.secondary_drying_status_is_drying
             ) for printer_id, printer in self._anycubic_printers.items()
         ])
 
@@ -186,7 +186,8 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     def _build_printer_dict(self, printer) -> dict[str, Any]:
 
-        multi_color_box_spool_info = printer.primary_multi_color_box_spool_info_object
+        primary_ace_spool_info = printer.primary_multi_color_box_spool_info_object
+        secondary_ace_spool_info = printer.secondary_multi_color_box_spool_info_object
 
         file_list_local = printer.local_file_list_object
         file_list_udisk = printer.udisk_file_list_object
@@ -210,15 +211,25 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "file_list_udisk": state_string_loaded(file_list_udisk),
             "file_list_cloud": state_string_loaded(file_list_cloud),
             "supports_function_multi_color_box": printer.supports_function_multi_color_box,
+            "connected_ace_units": printer.connected_ace_units,
             "multi_color_box_fw_version": printer.primary_multi_color_box_fw_firmware_version,
-            "multi_color_box_spools": state_string_active(multi_color_box_spool_info),
+            "multi_color_box_spools": state_string_active(primary_ace_spool_info),
             "multi_color_box_runout_refill": printer.primary_multi_color_box_auto_feed,
             "multi_color_box_current_temperature": printer.primary_multi_color_box_current_temperature,
+            "secondary_multi_color_box_fw_version": printer.secondary_multi_color_box_fw_firmware_version,
+            "secondary_multi_color_box_spools": state_string_active(secondary_ace_spool_info),
+            "secondary_multi_color_box_runout_refill": printer.secondary_multi_color_box_auto_feed,
+            "secondary_multi_color_box_current_temperature": printer.secondary_multi_color_box_current_temperature,
             "dry_status_is_drying": printer.primary_drying_status_is_drying,
             "dry_status_raw_status_code": printer.primary_drying_status_raw_status_code,
             "dry_status_target_temperature": printer.primary_drying_status_target_temperature,
             "dry_status_total_duration": printer.primary_drying_status_total_duration,
             "dry_status_remaining_time": printer.primary_drying_status_remaining_time,
+            "secondary_dry_status_is_drying": printer.secondary_drying_status_is_drying,
+            "secondary_dry_status_raw_status_code": printer.secondary_drying_status_raw_status_code,
+            "secondary_dry_status_target_temperature": printer.secondary_drying_status_target_temperature,
+            "secondary_dry_status_total_duration": printer.secondary_drying_status_total_duration,
+            "secondary_dry_status_remaining_time": printer.secondary_drying_status_remaining_time,
             "current_project_name": printer.latest_project_name,
             "current_project_progress": printer.latest_project_progress_percentage,
             "current_project_created_timestamp": printer.latest_project_created_timestamp,
@@ -247,7 +258,10 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         attributes = {
             "multi_color_box_spools": {
-                "spool_info": multi_color_box_spool_info
+                "spool_info": primary_ace_spool_info
+            },
+            "secondary_multi_color_box_spools": {
+                "spool_info": secondary_ace_spool_info
             },
             "file_list_local": {
                 "file_info": file_list_local,
@@ -282,6 +296,10 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 "latest_version": printer.primary_multi_color_box_fw_available_version,
                 "in_progress": printer.primary_multi_color_box_fw_total_progress,
             },
+            "secondary_multi_color_box_fw_version": {
+                "latest_version": printer.secondary_multi_color_box_fw_available_version,
+                "in_progress": printer.secondary_multi_color_box_fw_total_progress,
+            },
         }
 
         for x in range(MAX_DRYING_PRESETS):
@@ -289,6 +307,10 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             preset_duration = self.entry.options.get(f"{CONF_DRYING_PRESET_DURATION_}{num}")
             preset_temperature = self.entry.options.get(f"{CONF_DRYING_PRESET_TEMPERATURE_}{num}")
             attributes[f"{ENTITY_ID_DRYING_START_PRESET_}{x + 1}"] = {
+                "duration": preset_duration,
+                "temperature": preset_temperature,
+            }
+            attributes[f"secondary_{ENTITY_ID_DRYING_START_PRESET_}{x + 1}"] = {
                 "duration": preset_duration,
                 "temperature": preset_temperature,
             }
@@ -561,17 +583,26 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         try:
 
-            if printer and event_key.startswith(ENTITY_ID_DRYING_START_PRESET_):
+            if printer and (
+                event_key.startswith(ENTITY_ID_DRYING_START_PRESET_) or
+                event_key.startswith(f"secondary_{ENTITY_ID_DRYING_START_PRESET_}")
+            ):
                 num = event_key[-1]
                 preset_duration = self.entry.options.get(f"{CONF_DRYING_PRESET_DURATION_}{num}")
                 preset_temperature = self.entry.options.get(f"{CONF_DRYING_PRESET_TEMPERATURE_}{num}")
                 if preset_duration is None or preset_temperature is None:
                     return
 
+                if event_key.startswith(f"secondary_{ENTITY_ID_DRYING_START_PRESET_}"):
+                    box_id = 1
+                else:
+                    box_id = 0
+
                 await self._connect_mqtt_for_action_response()
                 await printer.multi_color_box_drying_start(
                     duration=preset_duration,
                     target_temp=preset_temperature,
+                    box_id=box_id,
                 )
 
             elif printer and event_key == 'request_file_list_cloud':
@@ -589,6 +620,10 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             elif printer and event_key == 'drying_stop':
                 await self._connect_mqtt_for_action_response()
                 await printer.multi_color_box_drying_stop()
+
+            elif printer and event_key == 'secondary_drying_stop':
+                await self._connect_mqtt_for_action_response()
+                await printer.multi_color_box_drying_stop(box_id=1)
 
             elif printer and event_key == 'pause_print':
                 await self._connect_mqtt_for_action_response()
@@ -627,7 +662,11 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
             elif printer and event_key == 'multi_color_box_fw_version':
                 await self._connect_mqtt_for_action_response()
-                await printer.update_printer_all_multi_color_box_firmware()
+                await printer.update_printer_multi_color_box_firmware()
+
+            elif printer and event_key == 'secondary_multi_color_box_fw_version':
+                await self._connect_mqtt_for_action_response()
+                await printer.update_printer_multi_color_box_firmware(box_id=1)
 
             else:
                 return
@@ -647,6 +686,10 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             await self._connect_mqtt_for_action_response()
             await printer.multi_color_box_switch_on_auto_feed()
 
+        elif printer and event_key == 'secondary_multi_color_box_runout_refill':
+            await self._connect_mqtt_for_action_response()
+            await printer.multi_color_box_switch_on_auto_feed(box_id=1)
+
         else:
             return
 
@@ -661,6 +704,10 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         elif printer and event_key == 'multi_color_box_runout_refill':
             await self._connect_mqtt_for_action_response()
             await printer.multi_color_box_switch_off_auto_feed()
+
+        elif printer and event_key == 'secondary_multi_color_box_runout_refill':
+            await self._connect_mqtt_for_action_response()
+            await printer.multi_color_box_switch_off_auto_feed(box_id=1)
 
         else:
             return

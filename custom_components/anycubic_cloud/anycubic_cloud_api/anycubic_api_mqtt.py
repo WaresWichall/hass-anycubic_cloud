@@ -222,6 +222,7 @@ class AnycubicMQTTAPI(AnycubicAPI):
             if self._mqtt_disconnected is not None:
                 self._mqtt_disconnected.set()
         else:
+            self._set_mqtt_username_password()
             self._log_to_debug("Anycubic MQTT unintentionally disconnected, will reconnect.")
 
     def _mqtt_on_connect(
@@ -248,11 +249,20 @@ class AnycubicMQTTAPI(AnycubicAPI):
         else:
             self._log_to_warn(f"Anycubic MQTT Failed to connect, return code {rc}")
 
+    def _set_mqtt_username_password(self):
+        mqtt_username, mqtt_password = self._build_mqtt_login_info()
+
+        if self._mqtt_client is None:
+            return
+
+        self._mqtt_client.username_pw_set(
+            username=mqtt_username,
+            password=mqtt_password,
+        )
+
     def connect_mqtt(self):
         self._mqtt_connected = asyncio.Event()
         self._mqtt_disconnected = asyncio.Event()
-
-        mqtt_username, mqtt_password = self._build_mqtt_login_info()
 
         self._log_to_debug("Anycubic MQTT Connecting.")
 
@@ -262,6 +272,7 @@ class AnycubicMQTTAPI(AnycubicAPI):
         )
 
         self._mqtt_client.on_connect = self._mqtt_on_connect
+        self._mqtt_client.on_disconnect = self._mqtt_on_disconnect
         self._mqtt_client.on_message = self._mqtt_on_message
         self._mqtt_client.on_subscribe = self._mqtt_on_subscribe
 
@@ -269,13 +280,12 @@ class AnycubicMQTTAPI(AnycubicAPI):
         # self._mqtt_client.enable_logger(logger)
         # DEBUG
 
-        self._mqtt_client.username_pw_set(
-            username=mqtt_username,
-            password=mqtt_password,
-        )
+        self._set_mqtt_username_password()
 
         self._mqtt_client.tls_set_context(self._mqtt_build_ssl_context())
         self._mqtt_client.tls_insecure_set(True)
+
+        self._mqtt_client.reconnect_delay_set(5)
 
         self._mqtt_client.connect(
             host=MQTT_HOST,

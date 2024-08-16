@@ -25,10 +25,19 @@ from .entity import AnycubicCloudEntity
 from .helpers import printer_attributes_for_key, printer_entity_unique_id, printer_state_for_key
 
 
-MULTI_COLOR_BOX_UPDATE_TYPES = (
+PRIMARY_MULTI_COLOR_BOX_UPDATE_TYPES = (
     UpdateEntityDescription(
         key="multi_color_box_fw_version",
         translation_key="multi_color_box_fw_version",
+        device_class=UpdateDeviceClass.FIRMWARE,
+        entity_category=EntityCategory.CONFIG,
+    ),
+)
+
+SECONDARY_MULTI_COLOR_BOX_UPDATE_TYPES = (
+    UpdateEntityDescription(
+        key="secondary_multi_color_box_fw_version",
+        translation_key="secondary_multi_color_box_fw_version",
         device_class=UpdateDeviceClass.FIRMWARE,
         entity_category=EntityCategory.CONFIG,
     ),
@@ -56,7 +65,10 @@ async def async_setup_entry(
 
     for printer_id in entry.data[CONF_PRINTER_ID_LIST]:
         if printer_state_for_key(coordinator, printer_id, 'supports_function_multi_color_box'):
-            for description in MULTI_COLOR_BOX_UPDATE_TYPES:
+            for description in PRIMARY_MULTI_COLOR_BOX_UPDATE_TYPES:
+                update_entities.append(AnycubicUpdateEntity(coordinator, printer_id, description))
+        if printer_state_for_key(coordinator, printer_id, 'connected_ace_units') > 1:
+            for description in SECONDARY_MULTI_COLOR_BOX_UPDATE_TYPES:
                 update_entities.append(AnycubicUpdateEntity(coordinator, printer_id, description))
 
         for description in UPDATE_TYPES:

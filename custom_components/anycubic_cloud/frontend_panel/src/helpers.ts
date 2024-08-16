@@ -184,9 +184,7 @@ export function getPrinterSwitchStateObj(
   entities: HassEntityInfos,
   printerEntityIdPart: string | undefined,
   suffix: string,
-  defaultState: any = "unavailable",
-  defaultAttributes: any = {},
-): HassEntity {
+): HassEntity | undefined {
   const entInfo = getStrictMatchingEntity(
     entities,
     printerEntityIdPart,
@@ -194,7 +192,7 @@ export function getPrinterSwitchStateObj(
     suffix,
   );
   const stateObj = getEntityState(hass, entInfo);
-  return stateObj || { state: defaultState, attributes: defaultAttributes };
+  return stateObj;
 }
 
 export function getPrinterSwitchState(

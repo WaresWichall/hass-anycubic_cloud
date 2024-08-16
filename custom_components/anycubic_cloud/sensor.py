@@ -29,7 +29,7 @@ from .entity import AnycubicCloudEntity
 from .helpers import printer_attributes_for_key, printer_entity_unique_id, printer_state_for_key
 
 
-MULTI_COLOR_BOX_SENSOR_TYPES = (
+PRIMARY_MULTI_COLOR_BOX_SENSOR_TYPES = (
     SensorEntityDescription(
         key="multi_color_box_current_temperature",
         translation_key="multi_color_box_current_temperature",
@@ -55,6 +55,36 @@ MULTI_COLOR_BOX_SENSOR_TYPES = (
     SensorEntityDescription(
         key="dry_status_remaining_time",
         translation_key="dry_status_remaining_time",
+    ),
+)
+
+
+SECONDARY_MULTI_COLOR_BOX_SENSOR_TYPES = (
+    SensorEntityDescription(
+        key="secondary_multi_color_box_current_temperature",
+        translation_key="secondary_multi_color_box_current_temperature",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+    ),
+    SensorEntityDescription(
+        key="secondary_multi_color_box_spools",
+        translation_key="secondary_multi_color_box_spools",
+    ),
+    SensorEntityDescription(
+        key="secondary_dry_status_raw_status_code",
+        translation_key="secondary_dry_status_raw_status_code",
+    ),
+    SensorEntityDescription(
+        key="secondary_dry_status_target_temperature",
+        translation_key="secondary_dry_status_target_temperature",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+    ),
+    SensorEntityDescription(
+        key="secondary_dry_status_total_duration",
+        translation_key="secondary_dry_status_total_duration",
+    ),
+    SensorEntityDescription(
+        key="secondary_dry_status_remaining_time",
+        translation_key="secondary_dry_status_remaining_time",
     ),
 )
 
@@ -190,7 +220,10 @@ async def async_setup_entry(
 
     for printer_id in entry.data[CONF_PRINTER_ID_LIST]:
         if printer_state_for_key(coordinator, printer_id, 'supports_function_multi_color_box'):
-            for description in MULTI_COLOR_BOX_SENSOR_TYPES:
+            for description in PRIMARY_MULTI_COLOR_BOX_SENSOR_TYPES:
+                sensors.append(AnycubicSensor(coordinator, printer_id, description))
+        if printer_state_for_key(coordinator, printer_id, 'connected_ace_units') > 1:
+            for description in SECONDARY_MULTI_COLOR_BOX_SENSOR_TYPES:
                 sensors.append(AnycubicSensor(coordinator, printer_id, description))
 
         for description in SENSOR_TYPES:

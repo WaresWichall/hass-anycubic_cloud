@@ -3,6 +3,8 @@ import { property, state } from "lit/decorators.js";
 import { styleMap } from "lit-html/directives/style-map.js";
 import { animate } from "@lit-labs/motion";
 
+import { localize } from "../../../../localize/localize";
+
 import { customElementIfUndef } from "../../../internal/register-custom-element";
 
 import {
@@ -26,11 +28,19 @@ const animOptionsCard = {
   properties: ["height", "opacity", "scale"],
 };
 
-const DRYING_PRESET_1 = "drying_preset_1";
-const DRYING_PRESET_2 = "drying_preset_2";
-const DRYING_PRESET_3 = "drying_preset_3";
-const DRYING_PRESET_4 = "drying_preset_4";
-const DRYING_STOP = "drying_stop";
+const PRIMARY_DRYING_PRESET_1 = "drying_preset_1";
+const PRIMARY_DRYING_PRESET_2 = "drying_preset_2";
+const PRIMARY_DRYING_PRESET_3 = "drying_preset_3";
+const PRIMARY_DRYING_PRESET_4 = "drying_preset_4";
+const PRIMARY_DRYING_STOP = "drying_stop";
+
+const SECONDARY_PREFIX = "secondary_";
+
+const SECONDARY_DRYING_PRESET_1 = SECONDARY_PREFIX + PRIMARY_DRYING_PRESET_1;
+const SECONDARY_DRYING_PRESET_2 = SECONDARY_PREFIX + PRIMARY_DRYING_PRESET_2;
+const SECONDARY_DRYING_PRESET_3 = SECONDARY_PREFIX + PRIMARY_DRYING_PRESET_3;
+const SECONDARY_DRYING_PRESET_4 = SECONDARY_PREFIX + PRIMARY_DRYING_PRESET_4;
+const SECONDARY_DRYING_STOP = SECONDARY_PREFIX + PRIMARY_DRYING_STOP;
 
 @customElementIfUndef("anycubic-printercard-multicolorbox_modal_drying")
 export class AnycubicPrintercardMulticolorboxModalDrying extends LitElement {
@@ -45,6 +55,24 @@ export class AnycubicPrintercardMulticolorboxModalDrying extends LitElement {
 
   @property()
   public printerEntityIdPart: string | undefined;
+
+  @state()
+  private box_id: number = 0;
+
+  @state()
+  private _dryingPresetId1: string = PRIMARY_DRYING_PRESET_1;
+
+  @state()
+  private _dryingPresetId2: string = PRIMARY_DRYING_PRESET_2;
+
+  @state()
+  private _dryingPresetId3: string = PRIMARY_DRYING_PRESET_3;
+
+  @state()
+  private _dryingPresetId4: string = PRIMARY_DRYING_PRESET_4;
+
+  @state()
+  private _dryingStopId: string = PRIMARY_DRYING_STOP;
 
   @state()
   private _hasDryingPreset1: boolean = false;
@@ -88,6 +116,9 @@ export class AnycubicPrintercardMulticolorboxModalDrying extends LitElement {
   @state()
   private _isOpen: boolean = false;
 
+  @state()
+  private language: string;
+
   async firstUpdated(): void {
     this.addEventListener("click", (e) => {
       this._closeModal(e);
@@ -107,6 +138,26 @@ export class AnycubicPrintercardMulticolorboxModalDrying extends LitElement {
   protected willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
 
+    if (changedProperties.has("hass") && this.hass.language !== this.language) {
+      this.language = this.hass.language;
+    }
+
+    if (changedProperties.has("box_id")) {
+      if (this.box_id === 1) {
+        this._dryingPresetId1 = SECONDARY_DRYING_PRESET_1;
+        this._dryingPresetId2 = SECONDARY_DRYING_PRESET_2;
+        this._dryingPresetId3 = SECONDARY_DRYING_PRESET_3;
+        this._dryingPresetId4 = SECONDARY_DRYING_PRESET_4;
+        this._dryingStopId = SECONDARY_DRYING_STOP;
+      } else {
+        this._dryingPresetId1 = PRIMARY_DRYING_PRESET_1;
+        this._dryingPresetId2 = PRIMARY_DRYING_PRESET_2;
+        this._dryingPresetId3 = PRIMARY_DRYING_PRESET_3;
+        this._dryingPresetId4 = PRIMARY_DRYING_PRESET_4;
+        this._dryingStopId = PRIMARY_DRYING_STOP;
+      }
+    }
+
     if (
       changedProperties.has("hass") ||
       changedProperties.has("selectedPrinterDevice")
@@ -115,7 +166,7 @@ export class AnycubicPrintercardMulticolorboxModalDrying extends LitElement {
         this.hass,
         this.printerEntities,
         this.printerEntityIdPart,
-        DRYING_PRESET_1,
+        this._dryingPresetId1,
       );
       this._hasDryingPreset1 =
         isPrinterButtonStateAvailable(dryingPresetState1);
@@ -125,7 +176,7 @@ export class AnycubicPrintercardMulticolorboxModalDrying extends LitElement {
         this.hass,
         this.printerEntities,
         this.printerEntityIdPart,
-        DRYING_PRESET_2,
+        this._dryingPresetId2,
       );
       this._hasDryingPreset2 =
         isPrinterButtonStateAvailable(dryingPresetState2);
@@ -135,7 +186,7 @@ export class AnycubicPrintercardMulticolorboxModalDrying extends LitElement {
         this.hass,
         this.printerEntities,
         this.printerEntityIdPart,
-        DRYING_PRESET_3,
+        this._dryingPresetId3,
       );
       this._hasDryingPreset3 =
         isPrinterButtonStateAvailable(dryingPresetState3);
@@ -145,7 +196,7 @@ export class AnycubicPrintercardMulticolorboxModalDrying extends LitElement {
         this.hass,
         this.printerEntities,
         this.printerEntityIdPart,
-        DRYING_PRESET_4,
+        this._dryingPresetId4,
       );
       this._hasDryingPreset4 =
         isPrinterButtonStateAvailable(dryingPresetState4);
@@ -155,7 +206,7 @@ export class AnycubicPrintercardMulticolorboxModalDrying extends LitElement {
         this.hass,
         this.printerEntities,
         this.printerEntityIdPart,
-        DRYING_STOP,
+        this._dryingStopId,
       );
       this._hasDryingStop = isPrinterButtonStateAvailable(dryingStopState);
     }
@@ -205,7 +256,9 @@ export class AnycubicPrintercardMulticolorboxModalDrying extends LitElement {
   _renderCard(): any {
     return html`
       <div>
-        <div class="ac-drying-header">Drying Options</div>
+        <div class="ac-drying-header">
+          ${localize("card.headings.drying_options", this.language)}
+        </div>
         <div class="ac-drying-buttonscont">
           ${this._hasDryingPreset1
             ? html`
@@ -215,7 +268,7 @@ export class AnycubicPrintercardMulticolorboxModalDrying extends LitElement {
                       this._handleDryingPreset1();
                     }}"
                   >
-                    Preset 1<br />
+                    ${localize("card.buttons.preset", this.language)} 1<br />
                     ${this._dryingPresetDur1} Mins @
                     ${this._dryingPresetTemp1}°C
                   </ha-control-button>
@@ -230,7 +283,7 @@ export class AnycubicPrintercardMulticolorboxModalDrying extends LitElement {
                       this._handleDryingPreset2();
                     }}"
                   >
-                    Preset 2<br />
+                    ${localize("card.buttons.preset", this.language)} 2<br />
                     ${this._dryingPresetDur2} Mins @
                     ${this._dryingPresetTemp2}°C
                   </ha-control-button>
@@ -245,7 +298,7 @@ export class AnycubicPrintercardMulticolorboxModalDrying extends LitElement {
                       this._handleDryingPreset3();
                     }}"
                   >
-                    Preset 3<br />
+                    ${localize("card.buttons.preset", this.language)} 3<br />
                     ${this._dryingPresetDur3} Mins @
                     ${this._dryingPresetTemp3}°C
                   </ha-control-button>
@@ -260,7 +313,7 @@ export class AnycubicPrintercardMulticolorboxModalDrying extends LitElement {
                       this._handleDryingPreset4();
                     }}"
                   >
-                    Preset 4<br />
+                    ${localize("card.buttons.preset", this.language)} 4<br />
                     ${this._dryingPresetDur4} Mins @
                     ${this._dryingPresetTemp4}°C
                   </ha-control-button>
@@ -276,7 +329,7 @@ export class AnycubicPrintercardMulticolorboxModalDrying extends LitElement {
                       this._handleDryingStop();
                     }}"
                   >
-                    Stop Drying
+                    ${localize("card.buttons.stop_drying", this.language)}
                   </ha-control-button>
                 </div>
               `
@@ -304,27 +357,27 @@ export class AnycubicPrintercardMulticolorboxModalDrying extends LitElement {
   }
 
   private _handleDryingPreset1(): void {
-    this._pressHassButton(DRYING_PRESET_1);
+    this._pressHassButton(this._dryingPresetId1);
     this._closeModal();
   }
 
   private _handleDryingPreset2(): void {
-    this._pressHassButton(DRYING_PRESET_2);
+    this._pressHassButton(this._dryingPresetId2);
     this._closeModal();
   }
 
   private _handleDryingPreset3(): void {
-    this._pressHassButton(DRYING_PRESET_3);
+    this._pressHassButton(this._dryingPresetId3);
     this._closeModal();
   }
 
   private _handleDryingPreset4(): void {
-    this._pressHassButton(DRYING_PRESET_4);
+    this._pressHassButton(this._dryingPresetId4);
     this._closeModal();
   }
 
   private _handleDryingStop(): void {
-    this._pressHassButton(DRYING_STOP);
+    this._pressHassButton(this._dryingStopId);
     this._closeModal();
   }
 
@@ -332,11 +385,7 @@ export class AnycubicPrintercardMulticolorboxModalDrying extends LitElement {
     e.stopPropagation();
     if (e.detail.modalOpen) {
       this._isOpen = true;
-      // this.spool_index = Number(e.detail.spool_index);
-      // this.material_type = e.detail.material_type
-      //   ? AnycubicMaterialType[e.detail.material_type.toUpperCase()]
-      //   : undefined;
-      // this.color = e.detail.color;
+      this.box_id = Number(e.detail.box_id);
     }
   };
 
@@ -345,9 +394,7 @@ export class AnycubicPrintercardMulticolorboxModalDrying extends LitElement {
       e.stopPropagation();
     }
     this._isOpen = false;
-    // this.spool_index = -1;
-    // this.material_type = undefined;
-    // this.color = undefined;
+    this.box_id = 0;
   }
 
   private _cardClick(e: Event): void {

@@ -64,7 +64,6 @@ export class AnycubicPrintercardProgressLine extends LitElement {
         margin: 0;
         font-size: 16px;
         display: block;
-        overflow: scroll;
         position: relative;
         top: 3px;
         left: 0px;

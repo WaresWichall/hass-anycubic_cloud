@@ -5,6 +5,8 @@ import { classMap } from "lit/directives/class-map.js";
 import { styleMap } from "lit-html/directives/style-map.js";
 import { animate } from "@lit-labs/motion";
 
+import { localize } from "../../../../localize/localize";
+
 import { customElementIfUndef } from "../../../internal/register-custom-element";
 
 import { fireEvent } from "../../../fire_event";
@@ -112,6 +114,9 @@ export class AnycubicPrintercardCard extends LitElement {
   private hasColorbox: boolean = false;
 
   @state({ type: Boolean })
+  private hasSecondaryColorbox: boolean = false;
+
+  @state({ type: Boolean })
   private lightIsOn: boolean = false;
 
   @state({ type: String })
@@ -126,8 +131,15 @@ export class AnycubicPrintercardCard extends LitElement {
   @state()
   private progressPercent: number = 0;
 
+  @state()
+  private language: string;
+
   protected willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
+
+    if (changedProperties.has("hass") && this.hass.language !== this.language) {
+      this.language = this.hass.language;
+    }
 
     if (changedProperties.has("monitoredStats")) {
       this.monitoredStats = undefinedDefault(
@@ -157,6 +169,14 @@ export class AnycubicPrintercardCard extends LitElement {
           this.printerEntities,
           this.printerEntityIdPart,
           "multi_color_box_spools",
+          "inactive",
+        ).state === "active";
+      this.hasSecondaryColorbox =
+        getPrinterSensorStateObj(
+          this.hass,
+          this.printerEntities,
+          this.printerEntityIdPart,
+          "secondary_multi_color_box_spools",
           "inactive",
         ).state === "active";
       if (this.cameraEntityId) {
@@ -351,6 +371,7 @@ export class AnycubicPrintercardCard extends LitElement {
       </div>
       ${this._renderPrintSettingsContainer()}
       ${this._renderMultiColorBoxContainer()}
+      ${this._renderSecondaryMultiColorBoxContainer()}
     `;
   }
 
@@ -385,7 +406,7 @@ export class AnycubicPrintercardCard extends LitElement {
                 }}"
               >
                 <ha-svg-icon .path=${mdiCog}></ha-svg-icon>
-                Print Settings
+                ${localize("card.buttons.print_settings", this.language)}
               </button>
             </div>
           </div>
@@ -415,6 +436,37 @@ export class AnycubicPrintercardCard extends LitElement {
                 .hass=${this.hass}
                 .printerEntities=${this.printerEntities}
                 .printerEntityIdPart=${this.printerEntityIdPart}
+                .box_id=${0}
+              ></anycubic-printercard-multicolorbox_view>
+            </div>
+          </div>
+        `
+      : nothing;
+  }
+
+  private _renderSecondaryMultiColorBoxContainer(): HTMLElement {
+    const classesMain = {
+      "ac-card-vertical": this.vertical ? true : false,
+    };
+    const stylesMain = {
+      height: this.isHidden ? "1px" : "auto",
+      opacity: this.isHidden ? 0.0 : 1.0,
+      scale: this.isHidden ? 0.0 : 1.0,
+    };
+
+    return this.hasSecondaryColorbox
+      ? html`
+          <div
+            class="ac-printer-card-infocontainer ${classMap(classesMain)}"
+            style=${styleMap(stylesMain)}
+            ${animate({ ...animOptionsCard })}
+          >
+            <div class="ac-printer-card-mcbsection ${classMap(classesMain)}">
+              <anycubic-printercard-multicolorbox_view
+                .hass=${this.hass}
+                .printerEntities=${this.printerEntities}
+                .printerEntityIdPart=${this.printerEntityIdPart}
+                .box_id=${1}
               ></anycubic-printercard-multicolorbox_view>
             </div>
           </div>

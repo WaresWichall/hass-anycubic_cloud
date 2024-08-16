@@ -2,7 +2,33 @@
   "title": "Anycubic Cloud",
   "common": {
     "actions": {
-      "print": "Print"
+      "print": "Print",
+      "yes": "Yes",
+      "no": "No"
+    }
+  },
+  "card": {
+    "headings": {
+      "drying_options": "Drying Options"
+    },
+    "buttons": {
+      "print_settings": "Print Settings",
+      "dry": "Dry",
+      "runout_refill": "Refill",
+      "preset": "Preset",
+      "stop_drying": "Stop Drying"
+    },
+    "print_settings": {
+      "confirm_message": "Are you sure you want to ${action} the print?",
+      "print_pause": "Pause Print",
+      "print_resume": "Resume Print",
+      "print_cancel": "Cancel Print",
+      "save_speed_mode": "Save Speed Mode",
+      "save_target_nozzle": "Save Target Nozzle",
+      "save_target_hotbed": "Save Target Hotbed",
+      "save_fan_speed": "Save Fan Speed",
+      "save_aux_fan_speed": "Save AUX Fan Speed",
+      "save_box_fan_speed": "Save Box Fan Speed"
     }
   },
   "panels": {

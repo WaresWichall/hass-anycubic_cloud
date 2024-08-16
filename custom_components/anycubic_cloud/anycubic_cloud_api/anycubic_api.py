@@ -3,6 +3,9 @@ import asyncio
 import hashlib
 import json
 import time
+from aiofiles import (
+    open as aio_file_open,
+)
 from aiofiles.os import (
     path as aio_path,
 )
@@ -467,16 +470,17 @@ class AnycubicAPI:
         if self._cache_key_path is None:
             return False
 
-        with open(self._cache_key_path, "w") as wo:
-            wo.write(json.dumps(self.build_token_dict()))
+        async with aio_file_open(self._cache_key_path, mode='w') as wo:
+            await wo.write(json.dumps(self.build_token_dict()))
 
     async def _load_main_tokens(self):
         tokens_loaded = False
         if self._cache_tokens_path is not None and (await aio_path.exists(self._cache_tokens_path)):
 
             try:
-                with open(self._cache_tokens_path, "r") as wo:
-                    data = json.load(wo)
+                async with aio_file_open(self._cache_tokens_path, mode='r') as wo:
+                    json_data = await wo.read()
+                    data = json.loads(json_data)
                 self.load_tokens_from_dict(data['data'])
                 tokens_loaded = True
 
@@ -489,8 +493,9 @@ class AnycubicAPI:
         if self._cache_key_path is not None and (await aio_path.exists(self._cache_key_path)):
 
             try:
-                with open(self._cache_key_path, "r") as wo:
-                    data = json.load(wo)
+                async with aio_file_open(self._cache_key_path, mode='r') as wo:
+                    json_data = await wo.read()
+                    data = json.loads(json_data)
                 self.load_tokens_from_dict(data)
                 tokens_loaded = True
 
@@ -1906,7 +1911,7 @@ class AnycubicAPI:
             order_params = [
                 {
                     'status': 0
-                } for x in range(int(printer.primary_multi_color_box.total_slots / 4))
+                } for x in range(printer.connected_ace_units)
             ]
 
         resp = await self._send_order_multi_color_box_dry(
@@ -2108,7 +2113,6 @@ class AnycubicAPI:
         printer,
         gcode_id,
         slot_index_list=None,
-        box_id=0,
     ):
         if printer is None:
             raise AnycubicErrorMessage.no_printer_to_print
@@ -2133,7 +2137,7 @@ class AnycubicAPI:
                     f"{len(slot_index_list)} slots supplied but {len(material_list)} materials found in gcode file."
                 )
 
-            ams_box_mapping = printer.multi_color_box[box_id].build_mapping_for_material_list(
+            ams_box_mapping = printer.build_mapping_for_material_list(
                 slot_index_list=slot_index_list,
                 material_list=material_list,
             )
@@ -2154,7 +2158,6 @@ class AnycubicAPI:
         file_name=None,
         file_bytes=None,
         slot_index_list=None,
-        box_id=0,
     ):
         if printer is None:
             raise AnycubicErrorMessage.no_printer_to_print
@@ -2179,7 +2182,6 @@ class AnycubicAPI:
             printer=printer,
             gcode_id=latest_cloud_file.gcode_id,
             slot_index_list=slot_index_list,
-            box_id=box_id,
         )
 
     async def print_and_upload_no_cloud_save(
@@ -2189,7 +2191,6 @@ class AnycubicAPI:
         file_name=None,
         file_bytes=None,
         slot_index_list=None,
-        box_id=0,
     ):
         if printer is None:
             raise AnycubicErrorMessage.no_printer_to_print
@@ -2215,7 +2216,7 @@ class AnycubicAPI:
                     f"{len(slot_index_list)} slots supplied but {len(material_list)} materials read from gcode file."
                 )
 
-            ams_box_mapping = printer.multi_color_box[box_id].build_mapping_for_material_list(
+            ams_box_mapping = printer.build_mapping_for_material_list(
                 slot_index_list=slot_index_list,
                 material_list=material_list,
             )
