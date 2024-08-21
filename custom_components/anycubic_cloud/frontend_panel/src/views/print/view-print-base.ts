@@ -55,9 +55,11 @@ export class AnycubicViewPrintBase extends LitElement {
     }
 
     if (this.selectedPrinterDevice) {
+      const srvName = `${platform}.${this._serviceName}`;
       this._scriptData = {
         ...this._scriptData,
-        service: `${platform}.${this._serviceName}`,
+        action: srvName,
+        service: srvName,
         data: {
           ...(this._scriptData.data || {}),
           config_entry: this.selectedPrinterDevice.primary_config_entry,

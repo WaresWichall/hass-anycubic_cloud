@@ -14,6 +14,7 @@ export interface Dictionary<TValue> {
 
 export interface ServiceCallRequest {
   domain: string;
+  action: string;
   service: string;
   serviceData?: Record<string, any>;
   target?: {
@@ -70,6 +71,7 @@ export interface HomeAssistant {
   ) => Promise<T>;
   callService: (
     domain: ServiceCallRequest["domain"],
+    action: ServiceCallRequest["action"],
     service: ServiceCallRequest["service"],
     serviceData?: ServiceCallRequest["serviceData"],
     target?: ServiceCallRequest["target"],

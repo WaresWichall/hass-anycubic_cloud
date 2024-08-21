@@ -10239,13 +10239,17 @@
       })();
     }
     willUpdate(t) {
-      super.willUpdate(t), t.has("hass") && this.hass.language !== this.language && (this.language = this.hass.language), t.has("selectedPrinterDevice") && this.selectedPrinterDevice && (this._scriptData = Object.assign(Object.assign({}, this._scriptData), {
-        service: `${ks}.${this._serviceName}`,
-        data: Object.assign(Object.assign({}, this._scriptData.data || {}), {
-          config_entry: this.selectedPrinterDevice.primary_config_entry,
-          device_id: this.selectedPrinterDevice.id
-        })
-      }));
+      if (super.willUpdate(t), t.has("hass") && this.hass.language !== this.language && (this.language = this.hass.language), t.has("selectedPrinterDevice") && this.selectedPrinterDevice) {
+        const t = `${ks}.${this._serviceName}`;
+        this._scriptData = Object.assign(Object.assign({}, this._scriptData), {
+          action: t,
+          service: t,
+          data: Object.assign(Object.assign({}, this._scriptData.data || {}), {
+            config_entry: this.selectedPrinterDevice.primary_config_entry,
+            device_id: this.selectedPrinterDevice.id
+          })
+        });
+      }
     }
     render() {
       return K`
@@ -10305,7 +10309,7 @@
     }
   };
   s([_t()], Xs.prototype, "_serviceName", void 0), Xs = s([ft("anycubic-view-print-save_in_cloud")], Xs);
-  var Ks = "0.0.12";
+  var Ks = "0.0.13";
   window.console.info(`%c ANYCUBIC-PANEL %c v${Ks} `, "color: orange; font-weight: bold; background: black", "color: white; font-weight: bold; background: dimgray"), t.AnycubicCloudPanel = class extends pt {
     constructor() {
       super(...arguments), this.selectedPage = "main", this._handleLocationChange = () => {

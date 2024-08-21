@@ -7,4 +7,4 @@ Version: 0.0.9  20240807 - Minor bug fixes
 Version: 0.0.10 20240811 - Bug fix for config flow, add more frontend buttons / option modals
 Version: 0.0.11 20240813 - Frontend improvements to panel print pages, data refactor, work on Resin printer bugs
 Version: 0.0.12 20240816 - Minor bug fix in MQTT reconnect, untested support for multiple ACE units, frontend refactoring
-Version: 0.0.13 20240821 - Minor bug fix for multiple printers
+Version: 0.0.13 20240821 - Minor bug fix for multiple printers and HomeAssistant 2024.8 service calls
