@@ -374,6 +374,10 @@ class AnycubicProject:
         return self._id
 
     @property
+    def printer_id(self):
+        return self._printer_id
+
+    @property
     def name(self):
         return self._gcode_name
 
@@ -641,7 +645,7 @@ class AnycubicProject:
 
     def __repr__(self):
         return (
-            f"AnycubicProject(id={self._id}, name={self.name},\n "
+            f"AnycubicProject(id={self._id}, name={self.name}, printer_id={self.printer_id},\n "
             f"progress_percentage={self.progress_percentage}, print_time_elapsed_minutes={self.print_time_elapsed_minutes}, "
             f"print_time_remaining_minutes={self.print_time_remaining_minutes}, pause={self._pause}, progress={self._progress}, "
             f"create_time={self._create_time}, total_time={self._total_time},\n "

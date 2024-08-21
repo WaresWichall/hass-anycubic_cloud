@@ -1646,7 +1646,7 @@ class AnycubicPrinter:
         await self._api_parent.printer_info_for_id(self._id, self)
 
         if with_project:
-            self._latest_project = await self._api_parent.get_latest_project()
+            self._latest_project = await self._api_parent.get_latest_project(self.id)
 
     async def request_local_file_list(
         self,
