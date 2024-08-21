@@ -122,11 +122,17 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
 
   public connectedCallback(): void {
     super.connectedCallback();
-    window.addEventListener("ac-printset-modal", this._handleModalEvent);
+    this.parentElement?.addEventListener(
+      "ac-printset-modal",
+      this._handleModalEvent,
+    );
   }
 
   public disconnectedCallback(): void {
-    window.removeEventListener("ac-printset-modal", this._handleModalEvent);
+    this.parentElement?.removeEventListener(
+      "ac-printset-modal",
+      this._handleModalEvent,
+    );
     super.disconnectedCallback();
   }
 

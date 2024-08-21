@@ -127,11 +127,17 @@ export class AnycubicPrintercardMulticolorboxModalDrying extends LitElement {
 
   public connectedCallback(): void {
     super.connectedCallback();
-    window.addEventListener("ac-mcbdry-modal", this._handleModalEvent);
+    this.parentElement?.addEventListener(
+      "ac-mcbdry-modal",
+      this._handleModalEvent,
+    );
   }
 
   public disconnectedCallback(): void {
-    window.removeEventListener("ac-mcbdry-modal", this._handleModalEvent);
+    this.parentElement?.removeEventListener(
+      "ac-mcbdry-modal",
+      this._handleModalEvent,
+    );
     super.disconnectedCallback();
   }
 

@@ -6637,10 +6637,12 @@
       });
     }
     connectedCallback() {
-      super.connectedCallback(), window.addEventListener("ac-mcbdry-modal", this._handleModalEvent);
+      var t;
+      super.connectedCallback(), null === (t = this.parentElement) || void 0 === t || t.addEventListener("ac-mcbdry-modal", this._handleModalEvent);
     }
     disconnectedCallback() {
-      window.removeEventListener("ac-mcbdry-modal", this._handleModalEvent), super.disconnectedCallback();
+      var t;
+      null === (t = this.parentElement) || void 0 === t || t.removeEventListener("ac-mcbdry-modal", this._handleModalEvent), super.disconnectedCallback();
     }
     willUpdate(t) {
       if (super.willUpdate(t), t.has("hass") && this.hass.language !== this.language && (this.language = this.hass.language), t.has("box_id") && (1 === this.box_id ? (this._dryingPresetId1 = qr, this._dryingPresetId2 = Jr, this._dryingPresetId3 = Qr, this._dryingPresetId4 = ts, this._dryingStopId = es) : (this._dryingPresetId1 = Gr, this._dryingPresetId2 = Vr, this._dryingPresetId3 = Wr, this._dryingPresetId4 = Xr, this._dryingStopId = Kr)), t.has("hass") || t.has("selectedPrinterDevice")) {
@@ -8767,10 +8769,12 @@
       }), this.addEventListener("ac-select-dropdown", this._handleDropdownEvent), this.addEventListener("colorchanged", this._handleColourEvent), this.addEventListener("colorpicked", this._handleColourPickEvent);
     }
     connectedCallback() {
-      super.connectedCallback(), window.addEventListener("ac-mcb-modal", this._handleModalEvent);
+      var t;
+      super.connectedCallback(), null === (t = this.parentElement) || void 0 === t || t.addEventListener("ac-mcb-modal", this._handleModalEvent);
     }
     disconnectedCallback() {
-      window.removeEventListener("ac-mcb-modal", this._handleModalEvent), super.disconnectedCallback();
+      var t;
+      null === (t = this.parentElement) || void 0 === t || t.removeEventListener("ac-mcb-modal", this._handleModalEvent), super.disconnectedCallback();
     }
     willUpdate(t) {
       super.willUpdate(t);
@@ -8961,10 +8965,12 @@
       });
     }
     connectedCallback() {
-      super.connectedCallback(), window.addEventListener("ac-printset-modal", this._handleModalEvent);
+      var t;
+      super.connectedCallback(), null === (t = this.parentElement) || void 0 === t || t.addEventListener("ac-printset-modal", this._handleModalEvent);
     }
     disconnectedCallback() {
-      window.removeEventListener("ac-printset-modal", this._handleModalEvent), super.disconnectedCallback();
+      var t;
+      null === (t = this.parentElement) || void 0 === t || t.removeEventListener("ac-printset-modal", this._handleModalEvent), super.disconnectedCallback();
     }
     willUpdate(t) {
       if (super.willUpdate(t), t.has("hass") && this.hass.language !== this.language && (this.language = this.hass.language), t.has("hass") || t.has("printerEntities") || t.has("printerEntityIdPart")) {
@@ -9661,7 +9667,7 @@
         ` : q;
     }
     _openPrintSettingsModal() {
-      At(this, "ac-printset-modal", {
+      At(this._printerCardContainer, "ac-printset-modal", {
         modalOpen: !0
       });
     }
@@ -9872,7 +9878,7 @@
     `;
     }
   };
-  s([vt()], Ns.prototype, "hass", void 0), s([vt()], Ns.prototype, "monitoredStats", void 0), s([vt()], Ns.prototype, "selectedPrinterID", void 0), s([vt()], Ns.prototype, "selectedPrinterDevice", void 0), s([vt({
+  s([wt(".ac-printer-card")], Ns.prototype, "_printerCardContainer", void 0), s([vt()], Ns.prototype, "hass", void 0), s([vt()], Ns.prototype, "monitoredStats", void 0), s([vt()], Ns.prototype, "selectedPrinterID", void 0), s([vt()], Ns.prototype, "selectedPrinterDevice", void 0), s([vt({
     type: Boolean
   })], Ns.prototype, "round", void 0), s([vt({
     type: Boolean
