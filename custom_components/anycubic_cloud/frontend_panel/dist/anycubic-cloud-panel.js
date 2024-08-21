@@ -10227,15 +10227,16 @@
     }
     async firstUpdated() {
       await (async () => {
-        var t, e, i, r, s, n, o;
+        var t, e, i, r, s, n, o, a;
         if (customElements.get("ha-service-control")) return;
-        const a = document.createElement("partial-panel-resolver").getRoutes([{
+        const l = document.createElement("partial-panel-resolver").getRoutes([{
           component_name: "developer-tools",
           url_path: "a"
         }]);
-        await (null === (i = null === (e = null === (t = null == a ? void 0 : a.routes) || void 0 === t ? void 0 : t.a) || void 0 === e ? void 0 : e.load) || void 0 === i ? void 0 : i.call(e));
-        const l = document.createElement("developer-tools-router");
-        await (null === (o = null === (n = null === (s = null === (r = null == l ? void 0 : l.routerOptions) || void 0 === r ? void 0 : r.routes) || void 0 === s ? void 0 : s.service) || void 0 === n ? void 0 : n.load) || void 0 === o ? void 0 : o.call(n));
+        await (null === (i = null === (e = null === (t = null == l ? void 0 : l.routes) || void 0 === t ? void 0 : t.a) || void 0 === e ? void 0 : e.load) || void 0 === i ? void 0 : i.call(e));
+        const h = document.createElement("developer-tools-router"),
+          c = null === (r = null == h ? void 0 : h.routerOptions) || void 0 === r ? void 0 : r.routes;
+        (null == c ? void 0 : c.service) && (await (null === (n = null === (s = null == c ? void 0 : c.service) || void 0 === s ? void 0 : s.load) || void 0 === n ? void 0 : n.call(s))), (null == c ? void 0 : c.action) && (await (null === (a = null === (o = null == c ? void 0 : c.action) || void 0 === o ? void 0 : o.load) || void 0 === a ? void 0 : a.call(o)));
       })();
     }
     willUpdate(t) {
