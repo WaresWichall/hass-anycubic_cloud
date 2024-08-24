@@ -346,11 +346,23 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     async def _async_force_data_refresh(self):
         self.async_set_updated_data(self._build_coordinator_data())
 
+    async def _async_print_job_started(self):
+        await self.force_state_update()
+
     @callback
     def _mqtt_callback_data_updated(self):
         self.hass.create_task(
             self._async_force_data_refresh(),
             f"Anycubic coordinator {self.entry.entry_id} data refresh",
+        )
+
+    @callback
+    def _mqtt_callback_print_job_started(
+        self,
+    ):
+        self.hass.create_task(
+            self._async_print_job_started(),
+            f"Anycubic coordinator {self.entry.entry_id} print job started",
         )
 
     def _anycubic_mqtt_connection_should_start(self):
@@ -446,7 +458,8 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 session=websession,
                 cookie_jar=cookie_jar,
                 debug_logger=LOGGER,
-                mqtt_callback_printer_update=self._mqtt_callback_data_updated
+                mqtt_callback_printer_update=self._mqtt_callback_data_updated,
+                mqtt_callback_printer_busy=self._mqtt_callback_print_job_started,
             )
 
             self._anycubic_api.set_mqtt_log_all_messages(self.entry.options.get(CONF_DEBUG))
