@@ -585,9 +585,15 @@ export function getDefaultMonitoredStats(): PrinterCardStatType[] {
     PrinterCardStatType.Status,
     PrinterCardStatType.ETA,
     PrinterCardStatType.Elapsed,
+    PrinterCardStatType.Remaining,
+  ];
+}
+
+export function getDefaultFDMMonitoredStats(): PrinterCardStatType[] {
+  return [
+    ...getDefaultMonitoredStats(),
     PrinterCardStatType.HotendCurrent,
     PrinterCardStatType.BedCurrent,
-    PrinterCardStatType.Remaining,
     PrinterCardStatType.HotendTarget,
     PrinterCardStatType.BedTarget,
   ];
@@ -603,9 +609,19 @@ export function getPanelBasicMonitoredStats(): PrinterCardStatType[] {
   ];
 }
 
+export function getPanelFDMMonitoredStats(): PrinterCardStatType[] {
+  return [
+    ...getDefaultFDMMonitoredStats(),
+    PrinterCardStatType.PrinterOnline,
+    PrinterCardStatType.Availability,
+    PrinterCardStatType.ProjectName,
+    PrinterCardStatType.CurrentLayer,
+  ];
+}
+
 export function getPanelACEMonitoredStats(): PrinterCardStatType[] {
   return [
-    ...getPanelBasicMonitoredStats(),
+    ...getPanelFDMMonitoredStats(),
     PrinterCardStatType.DryingStatus,
     PrinterCardStatType.DryingTime,
   ];

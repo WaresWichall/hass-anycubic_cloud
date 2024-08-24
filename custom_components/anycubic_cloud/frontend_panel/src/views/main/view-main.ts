@@ -1,4 +1,4 @@
-import { LitElement, html, css, PropertyValues } from "lit";
+import { LitElement, html, css, PropertyValues, nothing } from "lit";
 import { property, customElement, state } from "lit/decorators.js";
 
 import { localize } from "../../../localize/localize";
@@ -6,11 +6,13 @@ import { localize } from "../../../localize/localize";
 import {
   getPanelACEMonitoredStats,
   getPanelBasicMonitoredStats,
+  getPanelFDMMonitoredStats,
   getPrinterEntities,
   getPrinterEntityIdPart,
   getPrinterID,
   getPrinterMAC,
   getPrinterSensorStateFloat,
+  getPrinterSensorStateObj,
   getPrinterSensorStateString,
   getPrinterBinarySensorState,
   getPrinterUpdateEntityState,
@@ -29,6 +31,7 @@ import "../../components/printer_card/card/card.ts";
 const monitoredStatsACE: PrinterCardStatType[] = getPanelACEMonitoredStats();
 const monitoredStatsBasic: PrinterCardStatType[] =
   getPanelBasicMonitoredStats();
+const monitoredStatsFDM: PrinterCardStatType[] = getPanelFDMMonitoredStats();
 
 @customElement("anycubic-view-main")
 export class AnycubicViewMain extends LitElement {
@@ -105,6 +108,9 @@ export class AnycubicViewMain extends LitElement {
   private aceDryingProgress: string | undefined;
 
   @state()
+  private isFDM: boolean = false;
+
+  @state()
   private monitoredStats: PrinterCardStatType[] = monitoredStatsBasic;
 
   @state()
@@ -134,6 +140,13 @@ export class AnycubicViewMain extends LitElement {
       changedProperties.has("hass") ||
       changedProperties.has("selectedPrinterID")
     ) {
+      this.isFDM =
+        getPrinterSensorStateObj(
+          this.hass,
+          this.printerEntities,
+          this.printerEntityIdPart,
+          "current_status",
+        ).attributes.material_type === "Filament";
       this.printerStateFwUpdateAvailable = getPrinterUpdateEntityState(
         this.hass,
         this.printerEntities,
@@ -237,6 +250,8 @@ export class AnycubicViewMain extends LitElement {
           : undefined;
       if (this.aceStateFwUpdateAvailable) {
         this.monitoredStats = monitoredStatsACE;
+      } else if (this.isFDM) {
+        this.monitoredStats = monitoredStatsFDM;
       } else {
         this.monitoredStats = monitoredStatsBasic;
       }
@@ -302,22 +317,26 @@ export class AnycubicViewMain extends LitElement {
             "printer_available",
             this.printerStateAvailable,
           )}
-          ${this._renderInfoRow(
-            "curr_nozzle_temp",
-            this.printerStateCurrNozzleTemp,
-          )}
-          ${this._renderInfoRow(
-            "curr_hotbed_temp",
-            this.printerStateCurrHotbedTemp,
-          )}
-          ${this._renderInfoRow(
-            "target_nozzle_temp",
-            this.printerStateTargetNozzleTemp,
-          )}
-          ${this._renderInfoRow(
-            "target_hotbed_temp",
-            this.printerStateTargetHotbedTemp,
-          )}
+          ${this.isFDM
+            ? html`
+                ${this._renderInfoRow(
+                  "curr_nozzle_temp",
+                  this.printerStateCurrNozzleTemp,
+                )}
+                ${this._renderInfoRow(
+                  "curr_hotbed_temp",
+                  this.printerStateCurrHotbedTemp,
+                )}
+                ${this._renderInfoRow(
+                  "target_nozzle_temp",
+                  this.printerStateTargetNozzleTemp,
+                )}
+                ${this._renderInfoRow(
+                  "target_hotbed_temp",
+                  this.printerStateTargetHotbedTemp,
+                )}
+              `
+            : nothing}
           ${this._renderInfoRow("print_state", this.projectStatePrintState)}
           ${this._renderInfoRow("project_progress", this.projectStateProgress)}
           ${this._renderOptionalInfoRow(
