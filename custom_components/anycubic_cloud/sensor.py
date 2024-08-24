@@ -18,6 +18,10 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import dt as dt_util
 
+from .anycubic_cloud_api.anycubic_enums import (
+    AnycubicPrinterMaterialType
+)
+
 from .const import (
     CONF_PRINTER_ID_LIST,
     COORDINATOR,
@@ -88,6 +92,29 @@ SECONDARY_MULTI_COLOR_BOX_SENSOR_TYPES = (
     ),
 )
 
+FDM_SENSOR_TYPES = (
+    SensorEntityDescription(
+        key="curr_nozzle_temp",
+        translation_key="curr_nozzle_temp",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+    ),
+    SensorEntityDescription(
+        key="curr_hotbed_temp",
+        translation_key="curr_hotbed_temp",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+    ),
+    SensorEntityDescription(
+        key="target_nozzle_temp",
+        translation_key="target_nozzle_temp",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+    ),
+    SensorEntityDescription(
+        key="target_hotbed_temp",
+        translation_key="target_hotbed_temp",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+    ),
+)
+
 SENSOR_TYPES = (
     SensorEntityDescription(
         key="device_status",
@@ -100,16 +127,6 @@ SENSOR_TYPES = (
     SensorEntityDescription(
         key="current_status",
         translation_key="current_status",
-    ),
-    SensorEntityDescription(
-        key="curr_nozzle_temp",
-        translation_key="curr_nozzle_temp",
-        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
-    ),
-    SensorEntityDescription(
-        key="curr_hotbed_temp",
-        translation_key="curr_hotbed_temp",
-        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
     ),
     SensorEntityDescription(
         key="file_list_local",
@@ -180,16 +197,6 @@ SENSOR_TYPES = (
         native_unit_of_measurement=UNIT_LAYERS,
     ),
     SensorEntityDescription(
-        key="target_nozzle_temp",
-        translation_key="target_nozzle_temp",
-        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
-    ),
-    SensorEntityDescription(
-        key="target_hotbed_temp",
-        translation_key="target_hotbed_temp",
-        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
-    ),
-    SensorEntityDescription(
         key="print_speed_mode",
         translation_key="print_speed_mode",
     ),
@@ -224,6 +231,12 @@ async def async_setup_entry(
                 sensors.append(AnycubicSensor(coordinator, printer_id, description))
         if printer_state_for_key(coordinator, printer_id, 'connected_ace_units') > 1:
             for description in SECONDARY_MULTI_COLOR_BOX_SENSOR_TYPES:
+                sensors.append(AnycubicSensor(coordinator, printer_id, description))
+
+        status_attr = printer_attributes_for_key(coordinator, printer_id, 'current_status')
+
+        if status_attr['material_type'] == AnycubicPrinterMaterialType.FILAMENT:
+            for description in FDM_SENSOR_TYPES:
                 sensors.append(AnycubicSensor(coordinator, printer_id, description))
 
         for description in SENSOR_TYPES:

@@ -23,6 +23,7 @@ from .anycubic_data_model_project import (
 
 from .anycubic_enums import (
     AnycubicFunctionID,
+    AnycubicPrinterMaterialType,
     AnycubicPrintStatus,
 )
 
@@ -112,7 +113,7 @@ class AnycubicPrinter:
         self._last_update_time = last_update_time
         self._set_machine_data(machine_data)
         self._set_type_function_ids(type_function_ids)
-        self._material_type = material_type
+        self._set_material_type(material_type)
         self._set_parameter(parameter)
         self._set_fw_version(fw_version)
         self._available = available
@@ -150,6 +151,17 @@ class AnycubicPrinter:
             self._type_function_ids = type_function_ids
         else:
             self._type_function_ids = list()
+
+    def _set_material_type(self, material_type):
+        if material_type and isinstance(material_type, str):
+            try:
+                self._material_type = AnycubicPrinterMaterialType(material_type.title())
+
+            except ValueError:
+                self._material_type = material_type
+
+        else:
+            self._material_type = None
 
     def _set_local_file_list(self, file_list):
         if file_list is None:
@@ -413,7 +425,7 @@ class AnycubicPrinter:
         self._create_time = extra_data.get('create_time')
         self._set_machine_data(data.get('machine_data'))
         self._set_type_function_ids(data['type_function_ids'])
-        self._material_type = extra_data.get('material_type')
+        self._set_material_type(extra_data.get('material_type'))
         self._set_parameter(data.get('parameter'))
         self._update_fw_version_from_json(data['version'])
         self._set_tools(data.get('tools'))

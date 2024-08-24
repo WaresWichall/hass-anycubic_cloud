@@ -287,6 +287,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 "model": printer.model,
                 "machine_type": printer.machine_type,
                 "supported_functions": printer.supported_function_strings,
+                "material_type": printer.material_type,
             },
             "fw_version": {
                 "latest_version": printer.fw_version.available_version,
