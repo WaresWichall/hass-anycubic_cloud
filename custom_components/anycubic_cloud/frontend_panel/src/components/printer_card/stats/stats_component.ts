@@ -7,7 +7,6 @@ import { customElementIfUndef } from "../../../internal/register-custom-element"
 import {
   getPrinterBinarySensorState,
   getPrinterSensorStateObj,
-  prettyFilename,
   speedModesFromStateObj,
   toTitleCase,
 } from "../../../helpers";
@@ -232,14 +231,12 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
             return html`
               <anycubic-printercard-stat-line
                 .name=${condition}
-                .value=${prettyFilename(
-                  getPrinterSensorStateObj(
-                    this.hass,
-                    this.printerEntities,
-                    this.printerEntityIdPart,
-                    "project_name",
-                  ).state,
-                )}
+                .value=${getPrinterSensorStateObj(
+                  this.hass,
+                  this.printerEntities,
+                  this.printerEntityIdPart,
+                  "project_name",
+                ).state}
               ></anycubic-printercard-stat-line>
             `;
 
