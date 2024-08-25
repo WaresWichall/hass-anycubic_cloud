@@ -266,9 +266,20 @@ class AnycubicSensor(AnycubicCloudEntity, SensorEntity):
             self._attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
 
     @property
+    def available(self) -> bool:
+        return printer_state_for_key(
+            self.coordinator,
+            self._printer_id,
+            self.entity_description.key
+        ) is not None
+
+    @property
     def state(self) -> float:
         """Return the ...."""
         state = printer_state_for_key(self.coordinator, self._printer_id, self.entity_description.key)
+
+        if state is None:
+            return None
 
         if self.entity_description.native_unit_of_measurement == UnitOfTemperature.CELSIUS:
             return float(state)
