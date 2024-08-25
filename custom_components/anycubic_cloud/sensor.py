@@ -11,6 +11,7 @@ from homeassistant.components.sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     PERCENTAGE,
+    UnitOfLength,
     UnitOfTemperature,
     UnitOfTime,
 )
@@ -112,6 +113,51 @@ FDM_SENSOR_TYPES = (
         key="target_hotbed_temp",
         translation_key="target_hotbed_temp",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+    ),
+)
+
+LCD_SENSOR_TYPES = (
+    SensorEntityDescription(
+        key="print_on_time",
+        translation_key="print_on_time",
+        native_unit_of_measurement=UnitOfTime.SECONDS,
+    ),
+    SensorEntityDescription(
+        key="print_off_time",
+        translation_key="print_off_time",
+        native_unit_of_measurement=UnitOfTime.SECONDS,
+    ),
+    SensorEntityDescription(
+        key="print_bottom_time",
+        translation_key="print_bottom_time",
+        native_unit_of_measurement=UnitOfTime.SECONDS,
+    ),
+    SensorEntityDescription(
+        key="print_model_height",
+        translation_key="print_model_height",
+        native_unit_of_measurement=UnitOfLength.MILLIMETERS,
+    ),
+    SensorEntityDescription(
+        key="print_anti_alias_count",
+        translation_key="print_anti_alias_count",
+    ),
+    SensorEntityDescription(
+        key="print_bottom_layers",
+        translation_key="print_bottom_layers",
+        native_unit_of_measurement=UNIT_LAYERS,
+    ),
+    SensorEntityDescription(
+        key="print_z_up_height",
+        translation_key="print_z_up_height",
+        native_unit_of_measurement=UnitOfLength.MILLIMETERS,
+    ),
+    SensorEntityDescription(
+        key="print_z_up_speed",
+        translation_key="print_z_up_speed",
+    ),
+    SensorEntityDescription(
+        key="print_z_down_speed",
+        translation_key="print_z_down_speed",
     ),
 )
 
@@ -239,6 +285,10 @@ async def async_setup_entry(
             for description in FDM_SENSOR_TYPES:
                 sensors.append(AnycubicSensor(coordinator, printer_id, description))
 
+        elif status_attr['material_type'] == AnycubicPrinterMaterialType.RESIN:
+            for description in LCD_SENSOR_TYPES:
+                sensors.append(AnycubicSensor(coordinator, printer_id, description))
+
         for description in SENSOR_TYPES:
             sensors.append(AnycubicSensor(coordinator, printer_id, description))
 
@@ -274,19 +324,21 @@ class AnycubicSensor(AnycubicCloudEntity, SensorEntity):
         ) is not None
 
     @property
-    def state(self) -> float:
+    def state(self) -> Any:
         """Return the ...."""
         state = printer_state_for_key(self.coordinator, self._printer_id, self.entity_description.key)
 
         if state is None:
             return None
 
-        if self.entity_description.native_unit_of_measurement == UnitOfTemperature.CELSIUS:
+        if (
+            isinstance(state, float)
+            or self.entity_description.native_unit_of_measurement == UnitOfTemperature.CELSIUS
+        ):
             return float(state)
 
         elif (
-            self.entity_description.native_unit_of_measurement == UnitOfTime.MINUTES
-            or self.entity_description.native_unit_of_measurement == UnitOfTime.SECONDS
+            isinstance(state, int)
             or self.entity_description.native_unit_of_measurement == UNIT_LAYERS
             or self.entity_description.native_unit_of_measurement == PERCENTAGE
         ):
