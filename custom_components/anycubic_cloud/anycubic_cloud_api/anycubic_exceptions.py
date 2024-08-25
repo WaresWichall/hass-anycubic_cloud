@@ -22,6 +22,10 @@ class AnycubicInvalidValue(AnycubicAPIError):
     pass
 
 
+class AnycubicDataParsingError(AnycubicAPIError):
+    pass
+
+
 class AnycubicErrorMessage:
     no_printer_to_print = AnycubicAPIError('No printer to print with.')
     no_multi_color_box_for_map = AnycubicAPIError('No multi color box found for supplied box mapping.')

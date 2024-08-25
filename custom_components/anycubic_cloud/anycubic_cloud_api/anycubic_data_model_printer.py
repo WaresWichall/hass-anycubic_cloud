@@ -1613,6 +1613,69 @@ class AnycubicPrinter:
         return None
 
     @property
+    def latest_project_print_model_height(self):
+        if self.latest_project:
+            return self.latest_project.print_model_height
+
+        return None
+
+    @property
+    def latest_project_print_anti_alias_count(self):
+        if self.latest_project:
+            return self.latest_project.print_anti_alias_count
+
+        return None
+
+    @property
+    def latest_project_print_on_time(self):
+        if self.latest_project:
+            return self.latest_project.print_on_time
+
+        return None
+
+    @property
+    def latest_project_print_off_time(self):
+        if self.latest_project:
+            return self.latest_project.print_off_time
+
+        return None
+
+    @property
+    def latest_project_print_bottom_time(self):
+        if self.latest_project:
+            return self.latest_project.print_bottom_time
+
+        return None
+
+    @property
+    def latest_project_print_bottom_layers(self):
+        if self.latest_project:
+            return self.latest_project.print_bottom_layers
+
+        return None
+
+    @property
+    def latest_project_print_z_up_height(self):
+        if self.latest_project:
+            return self.latest_project.print_z_up_height
+
+        return None
+
+    @property
+    def latest_project_print_z_up_speed(self):
+        if self.latest_project:
+            return self.latest_project.print_z_up_speed
+
+        return None
+
+    @property
+    def latest_project_print_z_down_speed(self):
+        if self.latest_project:
+            return self.latest_project.print_z_down_speed
+
+        return None
+
+    @property
     def curr_nozzle_temp(self):
         if self.parameter:
             return self.parameter.curr_nozzle_temp

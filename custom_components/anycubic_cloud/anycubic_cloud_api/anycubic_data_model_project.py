@@ -10,6 +10,7 @@ from .anycubic_data_model_print_speed_mode import (
 )
 
 from .anycubic_exceptions import (
+    AnycubicDataParsingError,
     AnycubicInvalidValue,
     AnycubicPropertiesNotLoaded,
 )
@@ -112,13 +113,13 @@ class AnycubicProject:
         self._slice_start_time = int(slice_start_time) if slice_start_time is not None else None
         self._slice_end_time = int(slice_end_time) if slice_end_time is not None else None
         self._total_time = str(total_time) if total_time is not None else None
-        self._print_time = str(print_time) if print_time is not None else None
+        self._print_time = int(print_time) if print_time is not None else None
         self._slice_param = slice_param
         self._delete = int(delete) if delete is not None else None
         self._auto_operation = auto_operation
         self._monitor = monitor
         self._last_update_time = int(last_update_time) if last_update_time is not None else None
-        self._settings = settings
+        self._set_settings(settings)
         self._localtask = str(localtask) if localtask is not None else None
         self._source = str(source) if source is not None else None
         self._device_message = device_message
@@ -156,11 +157,6 @@ class AnycubicProject:
                 self._slice_param = json.loads(str(self._slice_param))
             except Exception as e:
                 print(f"Error in json parsing slice_param: {e}\n{self._slice_param}")
-        if self._settings and isinstance(self._settings, str):
-            try:
-                self._settings = json.loads(str(self._settings))
-            except Exception as e:
-                print(f"Error in json parsing settings: {e}\n{self._settings}")
         if self._slice_result and isinstance(self._slice_result, str):
             try:
                 self._slice_result = json.loads(str(self._slice_result))
@@ -363,11 +359,65 @@ class AnycubicProject:
     ):
         self._slice_param = new_slice_param
 
-    def update_settings(
+    def _set_settings(
         self,
         new_settings,
     ):
-        self._settings = new_settings
+        self._settings = {}
+
+        if new_settings and isinstance(new_settings, str):
+            try:
+                self._settings.update(json.loads(new_settings))
+            except Exception as e:
+                raise AnycubicDataParsingError(
+                    f"Error parsing project settings json: {e}\n{new_settings}"
+                )
+
+        elif new_settings and isinstance(new_settings, dict):
+            self._settings.update(new_settings)
+
+        elif new_settings:
+            raise AnycubicDataParsingError(
+                f"Unexpected data for project settings: {new_settings}"
+            )
+
+    def _get_print_setting(self, key):
+        return self._settings.get(key)
+
+    def _get_inner_print_setting(self, key):
+        return self._settings.get('settings', {}).get(key)
+
+    def _get_print_setting_as_int(self, key):
+        val = self._get_print_setting(key)
+
+        if val is not None:
+            return int(val)
+
+        return None
+
+    def _get_print_setting_as_float(self, key):
+        val = self._get_print_setting(key)
+
+        if val is not None:
+            return float(val)
+
+        return None
+
+    def _get_inner_print_setting_as_int(self, key):
+        val = self._get_inner_print_setting(key)
+
+        if val is not None:
+            return int(val)
+
+        return None
+
+    def _get_inner_print_setting_as_float(self, key):
+        val = self._get_inner_print_setting(key)
+
+        if val is not None:
+            return float(val)
+
+        return None
 
     @property
     def id(self):
@@ -445,17 +495,47 @@ class AnycubicProject:
 
     @property
     def print_current_layer(self):
-        if not self._settings:
-            return None
-
-        return self._settings.get('curr_layer')
+        return self._get_print_setting_as_int('curr_layer')
 
     @property
     def print_total_layers(self):
-        if not self._settings:
-            return None
+        return self._get_print_setting_as_int('total_layers')
 
-        return self._settings.get('total_layers')
+    @property
+    def print_model_height(self):
+        return self._get_print_setting_as_float('model_hight')
+
+    @property
+    def print_anti_alias_count(self):
+        return self._get_print_setting_as_int('anti_count')
+
+    @property
+    def print_on_time(self):
+        return self._get_inner_print_setting_as_float('on_time')
+
+    @property
+    def print_off_time(self):
+        return self._get_inner_print_setting_as_float('off_time')
+
+    @property
+    def print_bottom_time(self):
+        return self._get_inner_print_setting_as_float('bottom_time')
+
+    @property
+    def print_bottom_layers(self):
+        return self._get_inner_print_setting_as_int('bottom_layers')
+
+    @property
+    def print_z_up_height(self):
+        return self._get_inner_print_setting_as_float('z_up_height')
+
+    @property
+    def print_z_up_speed(self):
+        return self._get_inner_print_setting_as_int('z_up_speed')
+
+    @property
+    def print_z_down_speed(self):
+        return self._get_inner_print_setting_as_int('z_down_speed')
 
     @property
     def print_status(self):

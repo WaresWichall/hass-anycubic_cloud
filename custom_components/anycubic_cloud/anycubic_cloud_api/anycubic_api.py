@@ -2013,7 +2013,10 @@ class AnycubicAPI:
         data = list([AnycubicProject.from_list_json(self, x) for x in resp['data']])
         return data
 
-    async def project_info_for_id(self, project_id):
+    async def project_info_for_id(
+        self,
+        project_id,
+    ):
         query = {
             'id': str(project_id)
         }

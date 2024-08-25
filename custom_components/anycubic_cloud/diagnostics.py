@@ -95,6 +95,13 @@ async def async_get_config_entry_diagnostics(
     user_info = await coordinator.anycubic_api.get_user_info(raw_data=True)
     printer_info = await coordinator.anycubic_api.list_my_printers(raw_data=True)
     projects_info = await coordinator.anycubic_api.list_all_projects(raw_data=True)
+    latest_project_info = {}
+
+    if projects_info['data'] and len(projects_info['data']) > 0:
+        latest_project_info = await coordinator.anycubic_api.project_info_for_id(
+            project_id=projects_info['data'][0]['id'],
+        )
+
     detailed_printer_info = list()
     if printer_info.get('data') is not None:
         for printer in printer_info['data']:
@@ -128,6 +135,10 @@ async def async_get_config_entry_diagnostics(
         },
         "detailed_printer_info": tRedacter.redact_data(
             async_redact_data(detailed_printer_info, PRINTER_TO_REDACT),
+            TO_TAGGED_REDACT
+        ),
+        "latest_project_info": tRedacter.redact_data(
+            async_redact_data(latest_project_info, PROJECT_TO_REDACT),
             TO_TAGGED_REDACT
         ),
     }
