@@ -1,4 +1,4 @@
-import { LitElement, html, css, PropertyValues } from "lit";
+import { LitElement, html, css, PropertyValues, nothing } from "lit";
 import { property, state } from "lit/decorators.js";
 import { styleMap } from "lit-html/directives/style-map.js";
 import { animate } from "@lit-labs/motion";
@@ -52,6 +52,9 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
 
   @state()
   private availableSpeedModes: SelectDropdownProps[] = [];
+
+  @state()
+  private isFDM: boolean = false;
 
   @state()
   private currentSpeedModeKey: number = 0;
@@ -148,6 +151,13 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
       changedProperties.has("printerEntities") ||
       changedProperties.has("printerEntityIdPart")
     ) {
+      this.isFDM =
+        getPrinterSensorStateObj(
+          this.hass,
+          this.printerEntities,
+          this.printerEntityIdPart,
+          "current_status",
+        ).attributes.material_type === "Filament";
       if (!this._userEditFanSpeed) {
         this.currentFanSpeed = getPrinterSensorStateObj(
           this.hass,
@@ -324,127 +334,137 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
               ${localize("card.print_settings.print_cancel", this.language)}
             </ha-control-button>
           </div>
-          <div class="ac-settings-row">
-            <anycubic-ui-select-dropdown
-              .availableOptions=${this.availableSpeedModes}
-              .placeholder=${"Standard"}
-              .initialItem=${this.currentSpeedModeDescr}
-            ></anycubic-ui-select-dropdown>
-            <ha-control-button
-              @click="${(_e): void => {
-                this._handleSaveSpeedModeButton();
-              }}"
-            >
-              ${localize("card.print_settings.save_speed_mode", this.language)}
-            </ha-control-button>
-          </div>
-          <div class="ac-settings-row">
-            <ha-textfield
-              .value=${this.currentTargetTempNozzle}
-              .placeholder=${this.currentTargetTempNozzle}
-              .label=${"Nozzle Temperature"}
-              .type=${"number"}
-              .min=${this.minTargetTempNozzle}
-              .max=${this.maxTargetTempNozzle}
-              @input=${this._handleTargetTempNozzleChange}
-              @keydown=${this._handleTargetTempNozzleKeyDown}
-            ></ha-textfield>
-            <ha-control-button
-              @click="${(_e): void => {
-                this._handleSaveTargetTempNozzleButton();
-              }}"
-            >
-              ${localize(
-                "card.print_settings.save_target_nozzle",
-                this.language,
-              )}
-            </ha-control-button>
-          </div>
-          <div class="ac-settings-row">
-            <ha-textfield
-              .value=${this.currentTargetTempHotbed}
-              .placeholder=${this.currentTargetTempHotbed}
-              .label=${"Hotbed Temperature"}
-              .type=${"number"}
-              .min=${this.minTargetTempHotbed}
-              .max=${this.maxTargetTempHotbed}
-              @input=${this._handleTargetTempHotbedChange}
-              @keydown=${this._handleTargetTempHotbedKeyDown}
-            ></ha-textfield>
-            <ha-control-button
-              @click="${(_e): void => {
-                this._handleSaveTargetTempHotbedButton();
-              }}"
-            >
-              ${localize(
-                "card.print_settings.save_target_hotbed",
-                this.language,
-              )}
-            </ha-control-button>
-          </div>
-          <div class="ac-settings-row">
-            <ha-textfield
-              .value=${this.currentFanSpeed}
-              .placeholder=${this.currentFanSpeed}
-              .label=${"Fan Speed"}
-              .type=${"number"}
-              .min=${0}
-              .max=${100}
-              @input=${this._handleFanSpeedChange}
-              @keydown=${this._handleFanSpeedKeyDown}
-            ></ha-textfield>
-            <ha-control-button
-              @click="${(_e): void => {
-                this._handleSaveFanSpeedButton();
-              }}"
-            >
-              ${localize("card.print_settings.save_fan_speed", this.language)}
-            </ha-control-button>
-          </div>
-          <div class="ac-settings-row ac-disabled-feature">
-            <ha-textfield
-              .value=${this.currentAuxFanSpeed}
-              .placeholder=${this.currentAuxFanSpeed}
-              .label=${"AUX Fan Speed"}
-              .type=${"number"}
-              .min=${0}
-              .max=${100}
-              @input=${this._handleAuxFanSpeedChange}
-              @keydown=${this._handleAuxFanSpeedKeyDown}
-            ></ha-textfield>
-            <ha-control-button
-              @click="${(_e): void => {
-                this._handleSaveAuxFanSpeedButton();
-              }}"
-            >
-              ${localize(
-                "card.print_settings.save_aux_fan_speed",
-                this.language,
-              )}
-            </ha-control-button>
-          </div>
-          <div class="ac-settings-row ac-disabled-feature">
-            <ha-textfield
-              .value=${this.currentBoxFanSpeed}
-              .placeholder=${this.currentBoxFanSpeed}
-              .label=${"Box Fan Speed"}
-              .type=${"number"}
-              .min=${0}
-              .max=${100}
-              @input=${this._handleBoxFanSpeedChange}
-              @keydown=${this._handleBoxFanSpeedKeyDown}
-            ></ha-textfield>
-            <ha-control-button
-              @click="${(_e): void => {
-                this._handleSaveBoxFanSpeedButton();
-              }}"
-            >
-              ${localize(
-                "card.print_settings.save_box_fan_speed",
-                this.language,
-              )}
-            </ha-control-button>
-          </div>
+          ${this.isFDM
+            ? html`
+                <div class="ac-settings-row">
+                  <anycubic-ui-select-dropdown
+                    .availableOptions=${this.availableSpeedModes}
+                    .placeholder=${"Standard"}
+                    .initialItem=${this.currentSpeedModeDescr}
+                  ></anycubic-ui-select-dropdown>
+                  <ha-control-button
+                    @click="${(_e): void => {
+                      this._handleSaveSpeedModeButton();
+                    }}"
+                  >
+                    ${localize(
+                      "card.print_settings.save_speed_mode",
+                      this.language,
+                    )}
+                  </ha-control-button>
+                </div>
+                <div class="ac-settings-row">
+                  <ha-textfield
+                    .value=${this.currentTargetTempNozzle}
+                    .placeholder=${this.currentTargetTempNozzle}
+                    .label=${"Nozzle Temperature"}
+                    .type=${"number"}
+                    .min=${this.minTargetTempNozzle}
+                    .max=${this.maxTargetTempNozzle}
+                    @input=${this._handleTargetTempNozzleChange}
+                    @keydown=${this._handleTargetTempNozzleKeyDown}
+                  ></ha-textfield>
+                  <ha-control-button
+                    @click="${(_e): void => {
+                      this._handleSaveTargetTempNozzleButton();
+                    }}"
+                  >
+                    ${localize(
+                      "card.print_settings.save_target_nozzle",
+                      this.language,
+                    )}
+                  </ha-control-button>
+                </div>
+                <div class="ac-settings-row">
+                  <ha-textfield
+                    .value=${this.currentTargetTempHotbed}
+                    .placeholder=${this.currentTargetTempHotbed}
+                    .label=${"Hotbed Temperature"}
+                    .type=${"number"}
+                    .min=${this.minTargetTempHotbed}
+                    .max=${this.maxTargetTempHotbed}
+                    @input=${this._handleTargetTempHotbedChange}
+                    @keydown=${this._handleTargetTempHotbedKeyDown}
+                  ></ha-textfield>
+                  <ha-control-button
+                    @click="${(_e): void => {
+                      this._handleSaveTargetTempHotbedButton();
+                    }}"
+                  >
+                    ${localize(
+                      "card.print_settings.save_target_hotbed",
+                      this.language,
+                    )}
+                  </ha-control-button>
+                </div>
+                <div class="ac-settings-row">
+                  <ha-textfield
+                    .value=${this.currentFanSpeed}
+                    .placeholder=${this.currentFanSpeed}
+                    .label=${"Fan Speed"}
+                    .type=${"number"}
+                    .min=${0}
+                    .max=${100}
+                    @input=${this._handleFanSpeedChange}
+                    @keydown=${this._handleFanSpeedKeyDown}
+                  ></ha-textfield>
+                  <ha-control-button
+                    @click="${(_e): void => {
+                      this._handleSaveFanSpeedButton();
+                    }}"
+                  >
+                    ${localize(
+                      "card.print_settings.save_fan_speed",
+                      this.language,
+                    )}
+                  </ha-control-button>
+                </div>
+                <div class="ac-settings-row ac-disabled-feature">
+                  <ha-textfield
+                    .value=${this.currentAuxFanSpeed}
+                    .placeholder=${this.currentAuxFanSpeed}
+                    .label=${"AUX Fan Speed"}
+                    .type=${"number"}
+                    .min=${0}
+                    .max=${100}
+                    @input=${this._handleAuxFanSpeedChange}
+                    @keydown=${this._handleAuxFanSpeedKeyDown}
+                  ></ha-textfield>
+                  <ha-control-button
+                    @click="${(_e): void => {
+                      this._handleSaveAuxFanSpeedButton();
+                    }}"
+                  >
+                    ${localize(
+                      "card.print_settings.save_aux_fan_speed",
+                      this.language,
+                    )}
+                  </ha-control-button>
+                </div>
+                <div class="ac-settings-row ac-disabled-feature">
+                  <ha-textfield
+                    .value=${this.currentBoxFanSpeed}
+                    .placeholder=${this.currentBoxFanSpeed}
+                    .label=${"Box Fan Speed"}
+                    .type=${"number"}
+                    .min=${0}
+                    .max=${100}
+                    @input=${this._handleBoxFanSpeedChange}
+                    @keydown=${this._handleBoxFanSpeedKeyDown}
+                  ></ha-textfield>
+                  <ha-control-button
+                    @click="${(_e): void => {
+                      this._handleSaveBoxFanSpeedButton();
+                    }}"
+                  >
+                    ${localize(
+                      "card.print_settings.save_box_fan_speed",
+                      this.language,
+                    )}
+                  </ha-control-button>
+                </div>
+              `
+            : nothing}
         </div>
       </div>
     `;
