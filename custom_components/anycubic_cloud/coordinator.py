@@ -251,6 +251,15 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "print_speed_pct": printer.latest_project_print_speed_pct,
             "print_z_thick": printer.latest_project_z_thick,
             "fan_speed_pct": printer.latest_project_fan_speed_pct,
+            "print_model_height": printer.latest_project_print_model_height,
+            "print_anti_alias_count": printer.latest_project_print_anti_alias_count,
+            "print_on_time": printer.latest_project_print_on_time,
+            "print_off_time": printer.latest_project_print_off_time,
+            "print_bottom_time": printer.latest_project_print_bottom_time,
+            "print_bottom_layers": printer.latest_project_print_bottom_layers,
+            "print_z_up_height": printer.latest_project_print_z_up_height,
+            "print_z_up_speed": printer.latest_project_print_z_up_speed,
+            "print_z_down_speed": printer.latest_project_print_z_down_speed,
             "raw_print_status": printer.latest_project_raw_print_status,
             "manual_mqtt_connection_enabled": self._mqtt_manually_connected,
             "mqtt_connection_active": self._anycubic_api.mqtt_is_started,
@@ -287,6 +296,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 "model": printer.model,
                 "machine_type": printer.machine_type,
                 "supported_functions": printer.supported_function_strings,
+                "material_type": printer.material_type,
             },
             "fw_version": {
                 "latest_version": printer.fw_version.available_version,
@@ -345,11 +355,23 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     async def _async_force_data_refresh(self):
         self.async_set_updated_data(self._build_coordinator_data())
 
+    async def _async_print_job_started(self):
+        await self.force_state_update()
+
     @callback
     def _mqtt_callback_data_updated(self):
         self.hass.create_task(
             self._async_force_data_refresh(),
             f"Anycubic coordinator {self.entry.entry_id} data refresh",
+        )
+
+    @callback
+    def _mqtt_callback_print_job_started(
+        self,
+    ):
+        self.hass.create_task(
+            self._async_print_job_started(),
+            f"Anycubic coordinator {self.entry.entry_id} print job started",
         )
 
     def _anycubic_mqtt_connection_should_start(self):
@@ -445,7 +467,8 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 session=websession,
                 cookie_jar=cookie_jar,
                 debug_logger=LOGGER,
-                mqtt_callback_printer_update=self._mqtt_callback_data_updated
+                mqtt_callback_printer_update=self._mqtt_callback_data_updated,
+                mqtt_callback_printer_busy=self._mqtt_callback_print_job_started,
             )
 
             self._anycubic_api.set_mqtt_log_all_messages(self.entry.options.get(CONF_DEBUG))

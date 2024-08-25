@@ -14,6 +14,7 @@ export interface Dictionary<TValue> {
 
 export interface ServiceCallRequest {
   domain: string;
+  action: string;
   service: string;
   serviceData?: Record<string, any>;
   target?: {
@@ -70,6 +71,7 @@ export interface HomeAssistant {
   ) => Promise<T>;
   callService: (
     domain: ServiceCallRequest["domain"],
+    action: ServiceCallRequest["action"],
     service: ServiceCallRequest["service"],
     serviceData?: ServiceCallRequest["serviceData"],
     target?: ServiceCallRequest["target"],
@@ -163,6 +165,14 @@ export enum TextStatType {
   DryingTime = "Dry Time",
   SpeedMode = "Speed Mode",
   FanSpeed = "Fan Speed",
+  OnTime = "On Time",
+  OffTime = "Off Time",
+  BottomTime = "Bottom Time",
+  ModelHeight = "Model Height",
+  BottomLayers = "Bottom Layers",
+  ZUpHeight = "Z Up Height",
+  ZUpSpeed = "Z Up Speed",
+  ZDownSpeed = "Z Down Speed",
 }
 
 export const PrinterCardStatType = { ...CalculatedTimeType, ...TextStatType };

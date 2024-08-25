@@ -11,12 +11,17 @@ from homeassistant.components.sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     PERCENTAGE,
+    UnitOfLength,
     UnitOfTemperature,
     UnitOfTime,
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import dt as dt_util
+
+from .anycubic_cloud_api.anycubic_enums import (
+    AnycubicPrinterMaterialType
+)
 
 from .const import (
     CONF_PRINTER_ID_LIST,
@@ -88,6 +93,86 @@ SECONDARY_MULTI_COLOR_BOX_SENSOR_TYPES = (
     ),
 )
 
+FDM_SENSOR_TYPES = (
+    SensorEntityDescription(
+        key="print_speed_mode",
+        translation_key="print_speed_mode",
+    ),
+    SensorEntityDescription(
+        key="print_speed_pct",
+        translation_key="print_speed_pct",
+    ),
+    SensorEntityDescription(
+        key="fan_speed_pct",
+        translation_key="fan_speed_pct",
+    ),
+    SensorEntityDescription(
+        key="curr_nozzle_temp",
+        translation_key="curr_nozzle_temp",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+    ),
+    SensorEntityDescription(
+        key="curr_hotbed_temp",
+        translation_key="curr_hotbed_temp",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+    ),
+    SensorEntityDescription(
+        key="target_nozzle_temp",
+        translation_key="target_nozzle_temp",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+    ),
+    SensorEntityDescription(
+        key="target_hotbed_temp",
+        translation_key="target_hotbed_temp",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+    ),
+)
+
+LCD_SENSOR_TYPES = (
+    SensorEntityDescription(
+        key="print_on_time",
+        translation_key="print_on_time",
+        native_unit_of_measurement=UnitOfTime.SECONDS,
+    ),
+    SensorEntityDescription(
+        key="print_off_time",
+        translation_key="print_off_time",
+        native_unit_of_measurement=UnitOfTime.SECONDS,
+    ),
+    SensorEntityDescription(
+        key="print_bottom_time",
+        translation_key="print_bottom_time",
+        native_unit_of_measurement=UnitOfTime.SECONDS,
+    ),
+    SensorEntityDescription(
+        key="print_model_height",
+        translation_key="print_model_height",
+        native_unit_of_measurement=UnitOfLength.MILLIMETERS,
+    ),
+    SensorEntityDescription(
+        key="print_anti_alias_count",
+        translation_key="print_anti_alias_count",
+    ),
+    SensorEntityDescription(
+        key="print_bottom_layers",
+        translation_key="print_bottom_layers",
+        native_unit_of_measurement=UNIT_LAYERS,
+    ),
+    SensorEntityDescription(
+        key="print_z_up_height",
+        translation_key="print_z_up_height",
+        native_unit_of_measurement=UnitOfLength.MILLIMETERS,
+    ),
+    SensorEntityDescription(
+        key="print_z_up_speed",
+        translation_key="print_z_up_speed",
+    ),
+    SensorEntityDescription(
+        key="print_z_down_speed",
+        translation_key="print_z_down_speed",
+    ),
+)
+
 SENSOR_TYPES = (
     SensorEntityDescription(
         key="device_status",
@@ -100,16 +185,6 @@ SENSOR_TYPES = (
     SensorEntityDescription(
         key="current_status",
         translation_key="current_status",
-    ),
-    SensorEntityDescription(
-        key="curr_nozzle_temp",
-        translation_key="curr_nozzle_temp",
-        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
-    ),
-    SensorEntityDescription(
-        key="curr_hotbed_temp",
-        translation_key="curr_hotbed_temp",
-        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
     ),
     SensorEntityDescription(
         key="file_list_local",
@@ -180,30 +255,8 @@ SENSOR_TYPES = (
         native_unit_of_measurement=UNIT_LAYERS,
     ),
     SensorEntityDescription(
-        key="target_nozzle_temp",
-        translation_key="target_nozzle_temp",
-        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
-    ),
-    SensorEntityDescription(
-        key="target_hotbed_temp",
-        translation_key="target_hotbed_temp",
-        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
-    ),
-    SensorEntityDescription(
-        key="print_speed_mode",
-        translation_key="print_speed_mode",
-    ),
-    SensorEntityDescription(
-        key="print_speed_pct",
-        translation_key="print_speed_pct",
-    ),
-    SensorEntityDescription(
         key="print_z_thick",
         translation_key="print_z_thick",
-    ),
-    SensorEntityDescription(
-        key="fan_speed_pct",
-        translation_key="fan_speed_pct",
     ),
 )
 
@@ -224,6 +277,16 @@ async def async_setup_entry(
                 sensors.append(AnycubicSensor(coordinator, printer_id, description))
         if printer_state_for_key(coordinator, printer_id, 'connected_ace_units') > 1:
             for description in SECONDARY_MULTI_COLOR_BOX_SENSOR_TYPES:
+                sensors.append(AnycubicSensor(coordinator, printer_id, description))
+
+        status_attr = printer_attributes_for_key(coordinator, printer_id, 'current_status')
+
+        if status_attr['material_type'] == AnycubicPrinterMaterialType.FILAMENT:
+            for description in FDM_SENSOR_TYPES:
+                sensors.append(AnycubicSensor(coordinator, printer_id, description))
+
+        elif status_attr['material_type'] == AnycubicPrinterMaterialType.RESIN:
+            for description in LCD_SENSOR_TYPES:
                 sensors.append(AnycubicSensor(coordinator, printer_id, description))
 
         for description in SENSOR_TYPES:
@@ -253,16 +316,29 @@ class AnycubicSensor(AnycubicCloudEntity, SensorEntity):
             self._attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
 
     @property
-    def state(self) -> float:
+    def available(self) -> bool:
+        return printer_state_for_key(
+            self.coordinator,
+            self._printer_id,
+            self.entity_description.key
+        ) is not None
+
+    @property
+    def state(self) -> Any:
         """Return the ...."""
         state = printer_state_for_key(self.coordinator, self._printer_id, self.entity_description.key)
 
-        if self.entity_description.native_unit_of_measurement == UnitOfTemperature.CELSIUS:
+        if state is None:
+            return None
+
+        if (
+            isinstance(state, float)
+            or self.entity_description.native_unit_of_measurement == UnitOfTemperature.CELSIUS
+        ):
             return float(state)
 
         elif (
-            self.entity_description.native_unit_of_measurement == UnitOfTime.MINUTES
-            or self.entity_description.native_unit_of_measurement == UnitOfTime.SECONDS
+            isinstance(state, int)
             or self.entity_description.native_unit_of_measurement == UNIT_LAYERS
             or self.entity_description.native_unit_of_measurement == PERCENTAGE
         ):

@@ -1,6 +1,7 @@
 import { mdiCog, mdiPower, mdiLightbulbOn, mdiLightbulbOff } from "@mdi/js";
 import { LitElement, html, css, nothing, PropertyValues } from "lit";
 import { property, state } from "lit/decorators.js";
+import { query } from "lit/decorators/query.js";
 import { classMap } from "lit/directives/class-map.js";
 import { styleMap } from "lit-html/directives/style-map.js";
 import { animate } from "@lit-labs/motion";
@@ -53,6 +54,9 @@ const defaultMonitoredStats: PrinterCardStatType[] = getDefaultMonitoredStats();
 
 @customElementIfUndef("anycubic-printercard-card")
 export class AnycubicPrintercardCard extends LitElement {
+  @query(".ac-printer-card")
+  private _printerCardContainer!;
+
   @property()
   public hass!: HomeAssistant;
 
@@ -475,7 +479,7 @@ export class AnycubicPrintercardCard extends LitElement {
   }
 
   private _openPrintSettingsModal(): void {
-    fireEvent(this, "ac-printset-modal", {
+    fireEvent(this._printerCardContainer, "ac-printset-modal", {
       modalOpen: true,
     });
   }

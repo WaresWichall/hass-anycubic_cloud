@@ -1,4 +1,4 @@
-from enum import IntEnum
+from enum import IntEnum, StrEnum
 
 
 class AnycubicFeedType(IntEnum):
@@ -90,3 +90,8 @@ class AnycubicFunctionID(IntEnum):
     VIDEO_LIGHT = 40
     BOX_LIGHT = 41
     MULTI_COLOR_BOX = 2006
+
+
+class AnycubicPrinterMaterialType(StrEnum):
+    FILAMENT = "Filament"
+    RESIN = "Resin"

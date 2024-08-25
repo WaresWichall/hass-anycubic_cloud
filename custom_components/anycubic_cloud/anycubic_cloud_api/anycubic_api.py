@@ -2013,16 +2013,30 @@ class AnycubicAPI:
         data = list([AnycubicProject.from_list_json(self, x) for x in resp['data']])
         return data
 
-    async def project_info_for_id(self, project_id):
+    async def project_info_for_id(
+        self,
+        project_id,
+    ):
         query = {
             'id': str(project_id)
         }
         resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.project_info, query=query)
         return resp['data']
 
-    async def get_latest_project(self):
+    async def get_latest_project(
+        self,
+        printer_id=None,
+    ):
         projects = await self.list_all_projects()
-        latest_project = projects[0] if projects and len(projects) > 0 else None
+
+        latest_project = None
+
+        if projects and len(projects) > 0:
+            for proj in projects:
+                if printer_id is None or proj.printer_id == printer_id:
+                    latest_project = proj
+                    break
+
         if latest_project:
             extra_proj_data = await self.project_info_for_id(latest_project.id)
             latest_project.update_extra_data(extra_proj_data)

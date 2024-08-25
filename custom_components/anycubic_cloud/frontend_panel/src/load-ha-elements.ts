@@ -13,5 +13,11 @@ export const loadHaServiceControl = async (): void => {
   ]);
   await routes?.routes?.a?.load?.();
   const devToolsRouter = document.createElement("developer-tools-router");
-  await (devToolsRouter as any)?.routerOptions?.routes?.service?.load?.();
+  const devToolsRoutes = (devToolsRouter as any)?.routerOptions?.routes;
+  if (devToolsRoutes?.service) {
+    await devToolsRoutes?.service?.load?.();
+  }
+  if (devToolsRoutes?.action) {
+    await devToolsRoutes?.action?.load?.();
+  }
 };

@@ -41,6 +41,7 @@ class AnycubicMQTTAPI(AnycubicAPI):
         self,
         *args,
         mqtt_callback_printer_update=None,
+        mqtt_callback_printer_busy=None,
         **kwargs,
     ):
         self._api_username = None
@@ -53,6 +54,7 @@ class AnycubicMQTTAPI(AnycubicAPI):
         self._mqtt_connected: asyncio.Event | None = None
         self._mqtt_disconnected: asyncio.Event | None = None
         self._mqtt_callback_printer_update = mqtt_callback_printer_update
+        self._mqtt_callback_printer_busy = mqtt_callback_printer_busy
         super().__init__(*args, **kwargs)
 
     @property
@@ -144,11 +146,20 @@ class AnycubicMQTTAPI(AnycubicAPI):
 
             printer = self._mqtt_subscribed_printers[printer_key]
 
+            printer_was_available = printer.is_available
+
             try:
                 printer.process_mqtt_update(topic, payload)
 
                 if self._mqtt_callback_printer_update:
                     self._mqtt_callback_printer_update()
+
+                if (
+                    self._mqtt_callback_printer_busy and
+                    printer_was_available and printer.is_busy
+                ):
+                    self._mqtt_callback_printer_busy()
+
             except Exception as e:
                 tb = traceback.format_exc()
                 self._log_to_error(f"Anycubic MQTT Message error: {e}\n  on MQTT topic: {topic}\n    {payload}\n{tb}")

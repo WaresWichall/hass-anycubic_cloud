@@ -73,11 +73,17 @@ export class AnycubicPrintercardMulticolorboxModalSpool extends LitElement {
 
   public connectedCallback(): void {
     super.connectedCallback();
-    window.addEventListener("ac-mcb-modal", this._handleModalEvent);
+    this.parentElement?.addEventListener(
+      "ac-mcb-modal",
+      this._handleModalEvent,
+    );
   }
 
   public disconnectedCallback(): void {
-    window.removeEventListener("ac-mcb-modal", this._handleModalEvent);
+    this.parentElement?.removeEventListener(
+      "ac-mcb-modal",
+      this._handleModalEvent,
+    );
     super.disconnectedCallback();
   }
 

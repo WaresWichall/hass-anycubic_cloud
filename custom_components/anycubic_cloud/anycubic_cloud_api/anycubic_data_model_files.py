@@ -303,8 +303,8 @@ class AnycubicFile:
         is_dir,
     ):
         self._filename = str(filename)
-        self._timestamp = int(timestamp)
-        self._size = int(size)
+        self._timestamp = int(timestamp) if timestamp is not None else 0
+        self._size = int(size) if size is not None else 0
         self._is_dir = bool(is_dir)
 
     @classmethod
@@ -314,8 +314,8 @@ class AnycubicFile:
 
         return cls(
             filename=data['filename'],
-            timestamp=data['timestamp'],
-            size=data['size'],
+            timestamp=data.get('timestamp'),
+            size=data.get('size'),
             is_dir=data['is_dir'],
         )
 

@@ -247,6 +247,33 @@
       },
       "secondary_dry_status_remaining_time": {
         "name": "Secondary Drying Remaining Time"
+      },
+      "print_model_height": {
+        "name": "Print Model Height"
+      },
+      "print_anti_alias_count": {
+        "name": "Print Anti Alias"
+      },
+      "print_on_time": {
+        "name": "Print On Time"
+      },
+      "print_off_time": {
+        "name": "Print Off Time"
+      },
+      "print_bottom_time": {
+        "name": "Print Bottom Time"
+      },
+      "print_bottom_layers": {
+        "name": "Print Bottom Layers"
+      },
+      "print_z_up_height": {
+        "name": "Print Z Up Height"
+      },
+      "print_z_up_speed": {
+        "name": "Print Z Up Speed"
+      },
+      "print_z_down_speed": {
+        "name": "Print Z Down Speed"
       }
     },
     "switch": {
