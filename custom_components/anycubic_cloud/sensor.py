@@ -95,6 +95,18 @@ SECONDARY_MULTI_COLOR_BOX_SENSOR_TYPES = (
 
 FDM_SENSOR_TYPES = (
     SensorEntityDescription(
+        key="print_speed_mode",
+        translation_key="print_speed_mode",
+    ),
+    SensorEntityDescription(
+        key="print_speed_pct",
+        translation_key="print_speed_pct",
+    ),
+    SensorEntityDescription(
+        key="fan_speed_pct",
+        translation_key="fan_speed_pct",
+    ),
+    SensorEntityDescription(
         key="curr_nozzle_temp",
         translation_key="curr_nozzle_temp",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
@@ -243,20 +255,8 @@ SENSOR_TYPES = (
         native_unit_of_measurement=UNIT_LAYERS,
     ),
     SensorEntityDescription(
-        key="print_speed_mode",
-        translation_key="print_speed_mode",
-    ),
-    SensorEntityDescription(
-        key="print_speed_pct",
-        translation_key="print_speed_pct",
-    ),
-    SensorEntityDescription(
         key="print_z_thick",
         translation_key="print_z_thick",
-    ),
-    SensorEntityDescription(
-        key="fan_speed_pct",
-        translation_key="fan_speed_pct",
     ),
 )
 
