@@ -2,9 +2,16 @@
 
 ## WORK IN PROGRESS 
 
-Component is working very well so far with Kobra 3 Combos and Kobra 2s but will still have bugs that I'll need help ironing out.
+Component is working very well so far with:
+- Kobra 3 Combo
+- Kobra 2
+- Photon Mono M5s (Basic support still)
 
-Should also work with multiple printers but untested until someone buys me a second printer :)
+If you have success with other printers please report it :)
+
+It will still have bugs that I'll need help ironing out.
+
+Should also work with multiple printers now, although I can't test this myself :)
 
 ## Gallery
 
