@@ -342,6 +342,124 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
             `;
           }
 
+          case PrinterCardStatType.OnTime:
+            return html`
+              <anycubic-printercard-stat-line
+                .name=${condition}
+                .value=${getPrinterSensorStateObj(
+                  this.hass,
+                  this.printerEntities,
+                  this.printerEntityIdPart,
+                  "print_on_time",
+                  0,
+                ).state}
+                .unit=${"s"}
+              ></anycubic-printercard-stat-line>
+            `;
+
+          case PrinterCardStatType.OffTime:
+            return html`
+              <anycubic-printercard-stat-line
+                .name=${condition}
+                .value=${getPrinterSensorStateObj(
+                  this.hass,
+                  this.printerEntities,
+                  this.printerEntityIdPart,
+                  "print_off_time",
+                  0,
+                ).state}
+                .unit=${"s"}
+              ></anycubic-printercard-stat-line>
+            `;
+
+          case PrinterCardStatType.BottomTime:
+            return html`
+              <anycubic-printercard-stat-line
+                .name=${condition}
+                .value=${getPrinterSensorStateObj(
+                  this.hass,
+                  this.printerEntities,
+                  this.printerEntityIdPart,
+                  "print_bottom_time",
+                  0,
+                ).state}
+                .unit=${"s"}
+              ></anycubic-printercard-stat-line>
+            `;
+
+          case PrinterCardStatType.ModelHeight:
+            return html`
+              <anycubic-printercard-stat-line
+                .name=${condition}
+                .value=${getPrinterSensorStateObj(
+                  this.hass,
+                  this.printerEntities,
+                  this.printerEntityIdPart,
+                  "print_model_height",
+                  0,
+                ).state}
+                .unit=${"mm"}
+              ></anycubic-printercard-stat-line>
+            `;
+
+          case PrinterCardStatType.BottomLayers:
+            return html`
+              <anycubic-printercard-stat-line
+                .name=${condition}
+                .value=${getPrinterSensorStateObj(
+                  this.hass,
+                  this.printerEntities,
+                  this.printerEntityIdPart,
+                  "print_bottom_layers",
+                  0,
+                ).state}
+                .unit=${"layers"}
+              ></anycubic-printercard-stat-line>
+            `;
+
+          case PrinterCardStatType.ZUpHeight:
+            return html`
+              <anycubic-printercard-stat-line
+                .name=${condition}
+                .value=${getPrinterSensorStateObj(
+                  this.hass,
+                  this.printerEntities,
+                  this.printerEntityIdPart,
+                  "print_z_up_height",
+                  0,
+                ).state}
+                .unit=${"mm"}
+              ></anycubic-printercard-stat-line>
+            `;
+
+          case PrinterCardStatType.ZUpSpeed:
+            return html`
+              <anycubic-printercard-stat-line
+                .name=${condition}
+                .value=${getPrinterSensorStateObj(
+                  this.hass,
+                  this.printerEntities,
+                  this.printerEntityIdPart,
+                  "print_z_up_speed",
+                  0,
+                ).state}
+              ></anycubic-printercard-stat-line>
+            `;
+
+          case PrinterCardStatType.ZDownSpeed:
+            return html`
+              <anycubic-printercard-stat-line
+                .name=${condition}
+                .value=${getPrinterSensorStateObj(
+                  this.hass,
+                  this.printerEntities,
+                  this.printerEntityIdPart,
+                  "print_z_down_speed",
+                  0,
+                ).state}
+              ></anycubic-printercard-stat-line>
+            `;
+
           default:
             return html`
               <anycubic-printercard-stat-line

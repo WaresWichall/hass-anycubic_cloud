@@ -165,6 +165,14 @@ export enum TextStatType {
   DryingTime = "Dry Time",
   SpeedMode = "Speed Mode",
   FanSpeed = "Fan Speed",
+  OnTime = "On Time",
+  OffTime = "Off Time",
+  BottomTime = "Bottom Time",
+  ModelHeight = "Model Height",
+  BottomLayers = "Bottom Layers",
+  ZUpHeight = "Z Up Height",
+  ZUpSpeed = "Z Up Speed",
+  ZDownSpeed = "Z Down Speed",
 }
 
 export const PrinterCardStatType = { ...CalculatedTimeType, ...TextStatType };
