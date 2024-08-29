@@ -331,7 +331,10 @@ class AnycubicSensor(AnycubicCloudEntity, SensorEntity):
         if state is None:
             return None
 
-        if (
+        if self.entity_description.device_class == SensorDeviceClass.TIMESTAMP:
+            return dt_util.utc_from_timestamp(state).isoformat(timespec="seconds")
+
+        elif (
             isinstance(state, float)
             or self.entity_description.native_unit_of_measurement == UnitOfTemperature.CELSIUS
         ):
@@ -343,9 +346,6 @@ class AnycubicSensor(AnycubicCloudEntity, SensorEntity):
             or self.entity_description.native_unit_of_measurement == PERCENTAGE
         ):
             return int(state)
-
-        elif self.entity_description.device_class == SensorDeviceClass.TIMESTAMP:
-            return dt_util.utc_from_timestamp(state)
 
         return str(state)
 
