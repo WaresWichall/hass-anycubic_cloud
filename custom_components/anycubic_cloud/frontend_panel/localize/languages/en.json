@@ -19,7 +19,7 @@
       "stop_drying": "Stop Drying"
     },
     "print_settings": {
-      "confirm_message": "Are you sure you want to ${action} the print?",
+      "confirm_message": "Are you sure you want to {action} the print?",
       "print_pause": "Pause Print",
       "print_resume": "Resume Print",
       "print_cancel": "Cancel Print",

@@ -3465,7 +3465,7 @@
         stop_drying: "Stop Drying"
       },
       print_settings: {
-        confirm_message: "Are you sure you want to ${action} the print?",
+        confirm_message: "Are you sure you want to {action} the print?",
         print_pause: "Pause Print",
         print_resume: "Resume Print",
         print_cancel: "Cancel Print",
@@ -5472,30 +5472,37 @@
   const Er = {
       keyframeOptions: {
         duration: 2e3,
-        direction: "alternate"
+        direction: "alternate",
+        composite: "add"
       },
       properties: ["left"]
     },
     Sr = {
       keyframeOptions: {
-        duration: 100
+        duration: 100,
+        composite: "add"
       },
       properties: ["top"]
     };
   let Ar = class extends pt {
     constructor() {
-      super(...arguments), this._progressNum = 0, this.animKeyframeGantry = 0, this._isPrinting = !1, this._onResizeEvent = () => {
+      super(...arguments), this._progressNum = 0, this.animKeyframeGantry = 0, this._isPrinting = !1, this._gantryAnimOptions = () => Object.assign(Object.assign({}, Er), {
+        onComplete: this._moveGantry,
+        disabled: !(this.dimensions && this._isPrinting)
+      }), this._onResizeEvent = () => {
         if (this._rootElement) {
           const t = this._rootElement.clientHeight,
             e = this._rootElement.clientWidth;
           this._setDimensions(e, t);
         }
+      }, this._moveGantry = () => {
+        this.animKeyframeGantry = Number(!this.animKeyframeGantry);
       };
     }
     connectedCallback() {
       super.connectedCallback(), this.resizeObserver = new wr(this, {
         callback: this._onResizeEvent
-      });
+      }), this.dimensions && this._isPrinting && (this.animKeyframeGantry = 1);
     }
     disconnectedCallback() {
       super.disconnectedCallback();
@@ -5503,8 +5510,8 @@
     willUpdate(t) {
       if (super.willUpdate(t), t.has("scaleFactor") && this._onResizeEvent(), t.has("hass") || t.has("printerEntities") || t.has("printerEntityIdPart")) {
         this._progressNum = jt(this.hass, this.printerEntities, this.printerEntityIdPart, "project_progress", 0).state / 100;
-        const t = jt(this.hass, this.printerEntities, this.printerEntityIdPart, "print_state").state.toLowerCase();
-        this._isPrinting = Vt(t);
+        const t = Vt(jt(this.hass, this.printerEntities, this.printerEntityIdPart, "print_state").state.toLowerCase());
+        this.dimensions && !this._isPrinting && t && (this.animKeyframeGantry = 1), this._isPrinting = t;
       }
     }
     update(t) {
@@ -5538,13 +5545,11 @@
               <div
                 class="ac-apr-gantry"
                 ${De(Object.assign({}, Sr))}
-                ${this.dimensions && this._isPrinting ? De(Object.assign(Object.assign({}, Er), {
-        onComplete: () => this._moveGantry()
-      })) : null}
+                ${De(this._gantryAnimOptions)}
               >
                 <div class="ac-apr-nozzle"></div>
               </div>
-            </div>` : null}
+            </div>` : q}
       </div>
     `;
     }
@@ -5638,9 +5643,6 @@
         width: t,
         height: e
       }, this.scaleFactor || 1);
-    }
-    _moveGantry() {
-      this.animKeyframeGantry = Number(!this.animKeyframeGantry);
     }
     static get styles() {
       return u`
@@ -9020,9 +9022,7 @@
         <div class="ac-settings-header">Confirm Action</div>
         <div>
           <div class="ac-confirm-description">
-            ${cr("card.print_settings.confirm_message", this.language, {
-        action: this._confirmationType
-      })}
+            ${cr("card.print_settings.confirm_message", this.language, "action", this._confirmationType)}
           </div>
           <div class="ac-confirm-buttons">
             <ha-control-button
