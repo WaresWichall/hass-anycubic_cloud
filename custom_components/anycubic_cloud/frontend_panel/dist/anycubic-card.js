@@ -10240,7 +10240,7 @@
     `;
     }
   };
-  s([bt()], Os.prototype, "hass", void 0), s([bt()], Os.prototype, "cardConfig", void 0), s([bt()], Os.prototype, "printers", void 0), s([_t()], Os.prototype, "selectedPrinterDevice", void 0), s([_t()], Os.prototype, "formSchema", void 0), Os = s([gt("anycubic-printercard-configure")], Os), window.console.info("%c ANYCUBIC-CARD %c v0.0.13 ", "color: orange; font-weight: bold; background: black", "color: white; font-weight: bold; background: dimgray");
+  s([bt()], Os.prototype, "hass", void 0), s([bt()], Os.prototype, "cardConfig", void 0), s([bt()], Os.prototype, "printers", void 0), s([_t()], Os.prototype, "selectedPrinterDevice", void 0), s([_t()], Os.prototype, "formSchema", void 0), Os = s([gt("anycubic-printercard-configure")], Os), window.console.info("%c ANYCUBIC-CARD %c v0.0.14 ", "color: orange; font-weight: bold; background: black", "color: white; font-weight: bold; background: dimgray");
   const Is = {
     vertical: !1,
     round: !1,
