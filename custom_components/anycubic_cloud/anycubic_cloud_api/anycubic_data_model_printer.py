@@ -433,6 +433,17 @@ class AnycubicPrinter:
         self._set_external_shelves(data.get('external_shelves'))
         self._set_multi_color_box(data.get('multi_color_box'))
 
+    def _check_latest_project_id_valid(
+        self,
+        incoming_project_id,
+    ):
+        try:
+            project_id = int(incoming_project_id)
+        except Exception:
+            project_id = -1
+
+        return self._latest_project and (project_id < 0 or project_id == self._latest_project.id)
+
     def _update_latest_project_with_mqtt_print_status_data(
         self,
         incoming_project_id,
@@ -440,12 +451,7 @@ class AnycubicPrinter:
         mqtt_data,
         paused=None,
     ):
-        try:
-            project_id = int(incoming_project_id)
-        except Exception:
-            project_id = -1
-
-        if self._latest_project and (project_id < 0 or project_id == self._latest_project.id):
+        if self._check_latest_project_id_valid(incoming_project_id):
             self._latest_project.update_with_mqtt_print_status_data(
                 print_status,
                 mqtt_data,
@@ -461,12 +467,7 @@ class AnycubicPrinter:
         incoming_project_id,
         mqtt_data,
     ):
-        try:
-            project_id = int(incoming_project_id)
-        except Exception:
-            project_id = -1
-
-        if self._latest_project and (project_id < 0 or project_id == self._latest_project.id):
+        if self._check_latest_project_id_valid(incoming_project_id):
             self._latest_project.update_with_mqtt_download_status_data(
                 mqtt_data,
             )
@@ -479,12 +480,7 @@ class AnycubicPrinter:
         self,
         incoming_project_id,
     ):
-        try:
-            project_id = int(incoming_project_id)
-        except Exception:
-            project_id = -1
-
-        if self._latest_project and (project_id < 0 or project_id == self._latest_project.id):
+        if self._check_latest_project_id_valid(incoming_project_id):
             self._latest_project.update_with_mqtt_checking_status_data()
 
             return True
@@ -496,12 +492,7 @@ class AnycubicPrinter:
         incoming_project_id,
         new_slice_param,
     ):
-        try:
-            project_id = int(incoming_project_id)
-        except Exception:
-            project_id = -1
-
-        if self._latest_project and (project_id < 0 or project_id == self._latest_project.id):
+        if self._check_latest_project_id_valid(incoming_project_id):
             self._latest_project.update_slice_param(
                 new_slice_param,
             )
@@ -516,12 +507,7 @@ class AnycubicPrinter:
         new_target_hotbed_temp,
         new_target_nozzle_temp,
     ):
-        try:
-            project_id = int(incoming_project_id)
-        except Exception:
-            project_id = -1
-
-        if self._latest_project and (project_id < 0 or project_id == self._latest_project.id):
+        if self._check_latest_project_id_valid(incoming_project_id):
             self._latest_project.update_target_temps(
                 new_target_hotbed_temp,
                 new_target_nozzle_temp,
