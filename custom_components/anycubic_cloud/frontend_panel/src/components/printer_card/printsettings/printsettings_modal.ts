@@ -271,9 +271,12 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
         <div class="ac-settings-header">Confirm Action</div>
         <div>
           <div class="ac-confirm-description">
-            ${localize("card.print_settings.confirm_message", this.language, {
-              action: this._confirmationType,
-            })}
+            ${localize(
+              "card.print_settings.confirm_message",
+              this.language,
+              "action",
+              this._confirmationType,
+            )}
           </div>
           <div class="ac-confirm-buttons">
             <ha-control-button

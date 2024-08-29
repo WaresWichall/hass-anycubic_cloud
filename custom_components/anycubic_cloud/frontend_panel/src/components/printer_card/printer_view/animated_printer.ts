@@ -1,4 +1,4 @@
-import { LitElement, html, css, PropertyValues } from "lit";
+import { LitElement, html, css, PropertyValues, nothing } from "lit";
 import { property, state } from "lit/decorators.js";
 import { query } from "lit/decorators/query.js";
 import { ResizeController } from "@lit-labs/observers/resize-controller.js";
@@ -25,6 +25,7 @@ const animOptionsGantry = {
   keyframeOptions: {
     duration: 2000,
     direction: "alternate",
+    composite: "add",
   },
   properties: ["left"],
 };
@@ -32,6 +33,7 @@ const animOptionsGantry = {
 const animOptionsAxis = {
   keyframeOptions: {
     duration: 100,
+    composite: "add",
   },
   properties: ["top"],
 };
@@ -104,6 +106,10 @@ export class AnycubicPrintercardAnimatedPrinter extends LitElement {
     this.resizeObserver = new ResizeController(this, {
       callback: this._onResizeEvent,
     });
+
+    if (this.dimensions && this._isPrinting) {
+      this.animKeyframeGantry = 1;
+    }
   }
 
   public disconnectedCallback(): void {
@@ -137,7 +143,13 @@ export class AnycubicPrintercardAnimatedPrinter extends LitElement {
         "print_state",
       ).state.toLowerCase();
 
-      this._isPrinting = isPrintStatePrinting(printingState);
+      const newIsPrinting = isPrintStatePrinting(printingState);
+
+      if (this.dimensions && !this._isPrinting && newIsPrinting) {
+        this.animKeyframeGantry = 1;
+      }
+
+      this._isPrinting = newIsPrinting;
     }
   }
 
@@ -209,20 +221,23 @@ export class AnycubicPrintercardAnimatedPrinter extends LitElement {
               <div
                 class="ac-apr-gantry"
                 ${animate({ ...animOptionsAxis })}
-                ${this.dimensions && this._isPrinting
-                  ? animate({
-                      ...animOptionsGantry,
-                      onComplete: () => this._moveGantry(),
-                    })
-                  : null}
+                ${animate(this._gantryAnimOptions)}
               >
                 <div class="ac-apr-nozzle"></div>
               </div>
             </div>`
-          : null}
+          : nothing}
       </div>
     `;
   }
+
+  private _gantryAnimOptions = (): void => {
+    return {
+      ...animOptionsGantry,
+      onComplete: this._moveGantry,
+      disabled: !(this.dimensions && this._isPrinting),
+    };
+  };
 
   private _onResizeEvent = (): void => {
     if (this._rootElement) {
@@ -240,9 +255,9 @@ export class AnycubicPrintercardAnimatedPrinter extends LitElement {
     );
   }
 
-  private _moveGantry(): void {
+  private _moveGantry = (): void => {
     this.animKeyframeGantry = Number(!this.animKeyframeGantry);
-  }
+  };
 
   static get styles(): any {
     return css`

@@ -2010,6 +2010,9 @@ class AnycubicAPI:
         if raw_data:
             return resp
 
+        if resp is None or resp.get('data') is None:
+            return list()
+
         data = list([AnycubicProject.from_list_json(self, x) for x in resp['data']])
         return data
 
