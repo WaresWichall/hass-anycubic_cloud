@@ -353,10 +353,12 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         return data_dict
 
     async def _async_force_data_refresh(self):
-        self.async_set_updated_data(self._build_coordinator_data())
+        self.data = self._build_coordinator_data()
+        self.last_update_success = True
+        self.async_update_listeners()
 
     async def _async_print_job_started(self):
-        await self.force_state_update()
+        self._last_state_update = int(time.time()) - DEFAULT_SCAN_INTERVAL + 25
 
     @callback
     def _mqtt_callback_data_updated(self):
