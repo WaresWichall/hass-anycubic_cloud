@@ -258,12 +258,13 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
               this.hass,
               this.printerEntities,
               this.printerEntityIdPart,
-              "raw_print_speed_mode_code",
-              -1,
-              { available_modes: [] },
+              "print_speed_mode",
+              "",
+              { available_modes: [], print_speed_mode_code: -1 },
             );
             const availableSpeedModes = speedModesFromStateObj(speedModeState);
-            const currentSpeedModeKey = speedModeState.state;
+            const currentSpeedModeKey =
+              speedModeState.attributes.print_speed_mode_code;
             const currentSpeedModeDescr =
               currentSpeedModeKey >= 0 &&
               currentSpeedModeKey in availableSpeedModes

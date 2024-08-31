@@ -581,6 +581,17 @@ class AnycubicProject:
         return self._print_speed_mode
 
     @property
+    def print_speed_mode_string(self):
+        mode_string = None
+
+        for mode in self.available_print_speed_modes:
+            if mode == self.print_speed_mode:
+                mode_string = mode.title
+                break
+
+        return mode_string
+
+    @property
     def print_speed_pct(self):
         return self._print_speed_pct
 

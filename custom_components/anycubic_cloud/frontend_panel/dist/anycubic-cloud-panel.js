@@ -6307,11 +6307,12 @@
             `;
           case Ct.SpeedMode:
             {
-              const e = Wt(this.hass, this.printerEntities, this.printerEntityIdPart, "raw_print_speed_mode_code", -1, {
-                  available_modes: []
+              const e = Wt(this.hass, this.printerEntities, this.printerEntityIdPart, "print_speed_mode", "", {
+                  available_modes: [],
+                  print_speed_mode_code: -1
                 }),
                 i = ne(e),
-                r = e.state,
+                r = e.attributes.print_speed_mode_code,
                 s = r >= 0 && r in i ? i[r] : "Unknown";
               return X`
               <anycubic-printercard-stat-line
@@ -9084,10 +9085,11 @@
           this.currentTargetTempHotbed = t.state, this.minTargetTempHotbed = t.attributes.limit_min, this.maxTargetTempHotbed = t.attributes.limit_max;
         }
         if (!this._userEditSpeedMode) {
-          const t = Wt(this.hass, this.printerEntities, this.printerEntityIdPart, "raw_print_speed_mode_code", -1, {
-            available_modes: []
+          const t = Wt(this.hass, this.printerEntities, this.printerEntityIdPart, "print_speed_mode", "", {
+            available_modes: [],
+            print_speed_mode_code: -1
           });
-          this.availableSpeedModes = ne(t), this.currentSpeedModeKey = t.state, this.currentSpeedModeDescr = this.currentSpeedModeKey >= 0 && this.currentSpeedModeKey in this.availableSpeedModes ? this.availableSpeedModes[this.currentSpeedModeKey] : void 0;
+          this.availableSpeedModes = ne(t), this.currentSpeedModeKey = t.attributes.print_speed_mode_code, this.currentSpeedModeDescr = this.currentSpeedModeKey >= 0 && this.currentSpeedModeKey in this.availableSpeedModes ? this.availableSpeedModes[this.currentSpeedModeKey] : void 0;
         }
       }
     }
@@ -10434,7 +10436,7 @@
     }
   };
   s([_t()], Xs.prototype, "_serviceName", void 0), Xs = s([mt("anycubic-view-print-save_in_cloud")], Xs);
-  var Ks = "0.0.15";
+  var Ks = "0.1.0";
   window.console.info(`%c ANYCUBIC-PANEL %c v${Ks} `, "color: orange; font-weight: bold; background: black", "color: white; font-weight: bold; background: dimgray"), t.AnycubicCloudPanel = class extends pt {
     constructor() {
       super(...arguments), this.selectedPage = "main", this._handleLocationChange = () => {

@@ -45,10 +45,6 @@ PRIMARY_MULTI_COLOR_BOX_SENSOR_TYPES = (
         translation_key="multi_color_box_spools",
     ),
     SensorEntityDescription(
-        key="dry_status_raw_status_code",
-        translation_key="dry_status_raw_status_code",
-    ),
-    SensorEntityDescription(
         key="dry_status_target_temperature",
         translation_key="dry_status_target_temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
@@ -75,10 +71,6 @@ SECONDARY_MULTI_COLOR_BOX_SENSOR_TYPES = (
         translation_key="secondary_multi_color_box_spools",
     ),
     SensorEntityDescription(
-        key="secondary_dry_status_raw_status_code",
-        translation_key="secondary_dry_status_raw_status_code",
-    ),
-    SensorEntityDescription(
         key="secondary_dry_status_target_temperature",
         translation_key="secondary_dry_status_target_temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
@@ -95,8 +87,8 @@ SECONDARY_MULTI_COLOR_BOX_SENSOR_TYPES = (
 
 FDM_SENSOR_TYPES = (
     SensorEntityDescription(
-        key="print_speed_mode",
-        translation_key="print_speed_mode",
+        key="print_speed_mode_string",
+        translation_key="print_speed_mode_string",
     ),
     SensorEntityDescription(
         key="print_speed_pct",
@@ -175,14 +167,6 @@ LCD_SENSOR_TYPES = (
 
 SENSOR_TYPES = (
     SensorEntityDescription(
-        key="device_status",
-        translation_key="device_status",
-    ),
-    SensorEntityDescription(
-        key="is_printing",
-        translation_key="is_printing",
-    ),
-    SensorEntityDescription(
         key="current_status",
         translation_key="current_status",
     ),
@@ -234,10 +218,6 @@ SENSOR_TYPES = (
     SensorEntityDescription(
         key="print_state",
         translation_key="print_state",
-    ),
-    SensorEntityDescription(
-        key="raw_print_status",
-        translation_key="raw_print_status",
     ),
     SensorEntityDescription(
         key="print_approximate_completion_time",

@@ -137,12 +137,6 @@
       }
     },
     "sensor": {
-      "device_status": {
-        "name": "Raw Device Status Code"
-      },
-      "is_printing": {
-        "name": "Raw Is Printing Code"
-      },
       "current_status": {
         "name": "Current Status"
       },
@@ -176,9 +170,6 @@
       "print_state": {
         "name": "Print State"
       },
-      "raw_print_status": {
-        "name": "Raw Print Status Code"
-      },
       "print_approximate_completion_time": {
         "name": "Approximate Completion Time"
       },
@@ -194,8 +185,8 @@
       "target_hotbed_temp": {
         "name": "Target Hotbed Temperature"
       },
-      "print_speed_mode": {
-        "name": "Raw Print Speed Mode Code"
+      "print_speed_mode_string": {
+        "name": "Print Speed Mode"
       },
       "print_speed_pct": {
         "name": "Print Speed %"
@@ -221,9 +212,6 @@
       "multi_color_box_current_temperature": {
         "name": "Multi-Color Box Current Temperature"
       },
-      "dry_status_raw_status_code": {
-        "name": "Raw Drying Status Code"
-      },
       "dry_status_target_temperature": {
         "name": "Drying Target Temperature"
       },
@@ -238,9 +226,6 @@
       },
       "secondary_multi_color_box_current_temperature": {
         "name": "Secondary Multi-Color Box Current Temperature"
-      },
-      "secondary_dry_status_raw_status_code": {
-        "name": "Secondary Raw Drying Status Code"
       },
       "secondary_dry_status_target_temperature": {
         "name": "Secondary Drying Target Temperature"

@@ -1564,6 +1564,13 @@ class AnycubicPrinter:
         return None
 
     @property
+    def latest_project_print_speed_mode_string(self):
+        if self.latest_project:
+            return self.latest_project.print_speed_mode_string
+
+        return None
+
+    @property
     def latest_project_print_speed_pct(self):
         if self.latest_project:
             return self.latest_project.print_speed_pct

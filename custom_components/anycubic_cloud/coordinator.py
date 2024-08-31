@@ -201,9 +201,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         states = {
             "id": printer.id,
             "name": printer.name,
-            "device_status": printer.device_status,
             "printer_online": printer.printer_online,
-            "is_printing": printer.is_printing,
             "is_busy": printer.is_busy,
             "is_available": printer.is_available,
             "current_status": printer.current_status,
@@ -226,7 +224,6 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "secondary_multi_color_box_runout_refill": printer.secondary_multi_color_box_auto_feed,
             "secondary_multi_color_box_current_temperature": printer.secondary_multi_color_box_current_temperature,
             "dry_status_is_drying": printer.primary_drying_status_is_drying,
-            "dry_status_raw_status_code": printer.primary_drying_status_raw_status_code,
             "dry_status_target_temperature": printer.primary_drying_status_target_temperature,
             "dry_status_total_duration": printer.primary_drying_status_total_duration,
             "dry_status_remaining_time": printer.primary_drying_status_remaining_time,
@@ -252,7 +249,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "print_total_layers": printer.latest_project_print_total_layers,
             "target_nozzle_temp": printer.latest_project_target_nozzle_temp,
             "target_hotbed_temp": printer.latest_project_target_hotbed_temp,
-            "print_speed_mode": printer.latest_project_print_speed_mode,
+            "print_speed_mode_string": printer.latest_project_print_speed_mode_string,
             "print_speed_pct": printer.latest_project_print_speed_pct,
             "print_z_thick": printer.latest_project_z_thick,
             "fan_speed_pct": printer.latest_project_fan_speed_pct,
@@ -265,7 +262,6 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "print_z_up_height": printer.latest_project_print_z_up_height,
             "print_z_up_speed": printer.latest_project_print_z_up_speed,
             "print_z_down_speed": printer.latest_project_print_z_down_speed,
-            "raw_print_status": printer.latest_project_raw_print_status,
             "manual_mqtt_connection_enabled": self._mqtt_manually_connected,
             "mqtt_connection_active": self._anycubic_api.mqtt_is_started,
         }
@@ -294,14 +290,20 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 "limit_min": printer.latest_project_temp_min_hotbed,
                 "limit_max": printer.latest_project_temp_max_hotbed,
             },
-            "print_speed_mode": {
+            "print_speed_mode_string": {
                 "available_modes": printer.latest_project_available_print_speed_modes_data_object,
+                "print_speed_mode_code": printer.latest_project_print_speed_mode,
             },
             "current_status": {
                 "model": printer.model,
                 "machine_type": printer.machine_type,
                 "supported_functions": printer.supported_function_strings,
                 "material_type": printer.material_type,
+                "device_status_code": printer.device_status,
+                "is_printing_code": printer.is_printing,
+                "print_status_code": printer.latest_project_raw_print_status,
+                "dry_status_code": printer.primary_drying_status_raw_status_code,
+                "secondary_dry_status_code": printer.secondary_drying_status_raw_status_code,
             },
             "fw_version": {
                 "latest_version": printer.fw_version.available_version,
