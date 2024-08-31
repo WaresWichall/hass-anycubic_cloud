@@ -80,6 +80,10 @@ GLOBAL_BUTTON_TYPES = (
         key="request_file_list_cloud",
         translation_key="request_file_list_cloud",
     ),
+    ButtonEntityDescription(
+        key="refresh_mqtt_connection",
+        translation_key="refresh_mqtt_connection",
+    ),
 )
 
 

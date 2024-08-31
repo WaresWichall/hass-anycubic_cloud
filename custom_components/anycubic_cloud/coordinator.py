@@ -1,6 +1,7 @@
 """DataUpdateCoordinator for the Anycubic Cloud integration."""
 from __future__ import annotations
 
+import asyncio
 from datetime import timedelta
 from typing import Any
 import time
@@ -37,6 +38,7 @@ from .const import (
     MQTT_ACTION_RESPONSE_ALIVE_SECONDS,
     MQTT_IDLE_DISCONNECT_SECONDS,
     MQTT_SCAN_INTERVAL,
+    MQTT_REFRESH_INTERVAL,
     DOMAIN,
     LOGGER,
     STORAGE_KEY,
@@ -69,6 +71,9 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._mqtt_manually_connected = False
         self._mqtt_idle_since = None
         self._mqtt_last_action = None
+        self._mqtt_connect_check_lock = asyncio.Lock()
+        self._mqtt_refresh_lock = asyncio.Lock()
+        self._mqtt_last_refresh = None
         self._printer_device_map = None
         mqtt_connect_mode = self.entry.options.get(CONF_MQTT_CONNECT_MODE)
         self._mqtt_connection_mode = (
@@ -415,22 +420,26 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         return False
 
-    async def _check_anycubic_mqtt_connection(self):
-        if self._anycubic_mqtt_connection_should_start():
+    async def _check_anycubic_mqtt_connection(self, refreshing=False):
+        if not refreshing and self._mqtt_refresh_lock.locked():
+            return
 
-            for printer_id, printer in self._anycubic_printers.items():
-                self._anycubic_api.mqtt_add_subscribed_printer(
-                    printer
-                )
+        async with self._mqtt_connect_check_lock:
+            if self._anycubic_mqtt_connection_should_start():
 
-            if self._mqtt_task is None:
-                LOGGER.debug("Starting Anycubic MQTT Task.")
-                self._mqtt_task = self.hass.async_add_executor_job(
-                    self._anycubic_api.connect_mqtt
-                )
+                for printer_id, printer in self._anycubic_printers.items():
+                    self._anycubic_api.mqtt_add_subscribed_printer(
+                        printer
+                    )
 
-        elif self._anycubic_mqtt_connection_should_stop():
-            await self._stop_anycubic_mqtt_connection()
+                if self._mqtt_task is None:
+                    LOGGER.debug("Starting Anycubic MQTT Task.")
+                    self._mqtt_task = self.hass.async_add_executor_job(
+                        self._anycubic_api.connect_mqtt
+                    )
+
+            elif self._anycubic_mqtt_connection_should_stop():
+                await self._stop_anycubic_mqtt_connection()
 
     async def _stop_anycubic_mqtt_connection(self):
         for printer_id, printer in self._anycubic_printers.items():
@@ -452,6 +461,23 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     async def stop_anycubic_mqtt_connection_if_started(self):
         if self._anycubic_api and self._anycubic_api.mqtt_is_started:
             await self._stop_anycubic_mqtt_connection()
+
+    async def refresh_anycubic_mqtt_connection(self):
+        if self._mqtt_last_refresh and int(time.time()) < self._mqtt_last_refresh + MQTT_REFRESH_INTERVAL:
+            return
+
+        if self._mqtt_connect_check_lock.locked():
+            return
+
+        if self._anycubic_api and self._anycubic_api.mqtt_is_started:
+            await self._mqtt_refresh_lock.acquire()
+            self._mqtt_last_refresh = int(time.time())
+            try:
+                await self._stop_anycubic_mqtt_connection()
+                await asyncio.sleep(2)
+                await self._check_anycubic_mqtt_connection()
+            finally:
+                self._mqtt_refresh_lock.release()
 
     async def _setup_anycubic_api_connection(self, start_up: bool = False):
         store = Store[dict[str, Any]](self.hass, STORAGE_VERSION, STORAGE_KEY)
@@ -629,6 +655,9 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     target_temp=preset_temperature,
                     box_id=box_id,
                 )
+
+            elif printer and event_key == 'refresh_mqtt_connection':
+                await self.refresh_anycubic_mqtt_connection()
 
             elif printer and event_key == 'request_file_list_cloud':
                 await self._connect_mqtt_for_action_response()
