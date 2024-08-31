@@ -108,7 +108,7 @@ export class AnycubicPrintercardAnimatedPrinter extends LitElement {
     });
 
     if (this.dimensions && this._isPrinting) {
-      this.animKeyframeGantry = 1;
+      this._moveGantry();
     }
   }
 
@@ -146,7 +146,7 @@ export class AnycubicPrintercardAnimatedPrinter extends LitElement {
       const newIsPrinting = isPrintStatePrinting(printingState);
 
       if (this.dimensions && !this._isPrinting && newIsPrinting) {
-        this.animKeyframeGantry = 1;
+        this._moveGantry();
       }
 
       this._isPrinting = newIsPrinting;
@@ -256,7 +256,9 @@ export class AnycubicPrintercardAnimatedPrinter extends LitElement {
   }
 
   private _moveGantry = (): void => {
-    this.animKeyframeGantry = Number(!this.animKeyframeGantry);
+    this.animKeyframeGantry = this._isPrinting
+      ? Number(!this.animKeyframeGantry)
+      : 0;
   };
 
   static get styles(): any {

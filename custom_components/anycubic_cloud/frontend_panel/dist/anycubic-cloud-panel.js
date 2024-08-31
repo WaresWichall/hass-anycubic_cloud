@@ -5602,13 +5602,13 @@
           this._setDimensions(e, t);
         }
       }, this._moveGantry = () => {
-        this.animKeyframeGantry = Number(!this.animKeyframeGantry);
+        this.animKeyframeGantry = this._isPrinting ? Number(!this.animKeyframeGantry) : 0;
       };
     }
     connectedCallback() {
       super.connectedCallback(), this.resizeObserver = new Tr(this, {
         callback: this._onResizeEvent
-      }), this.dimensions && this._isPrinting && (this.animKeyframeGantry = 1);
+      }), this.dimensions && this._isPrinting && this._moveGantry();
     }
     disconnectedCallback() {
       super.disconnectedCallback();
@@ -5617,7 +5617,7 @@
       if (super.willUpdate(t), t.has("scaleFactor") && this._onResizeEvent(), t.has("hass") || t.has("printerEntities") || t.has("printerEntityIdPart")) {
         this._progressNum = Wt(this.hass, this.printerEntities, this.printerEntityIdPart, "project_progress", 0).state / 100;
         const t = Qt(Wt(this.hass, this.printerEntities, this.printerEntityIdPart, "print_state").state.toLowerCase());
-        this.dimensions && !this._isPrinting && t && (this.animKeyframeGantry = 1), this._isPrinting = t;
+        this.dimensions && !this._isPrinting && t && this._moveGantry(), this._isPrinting = t;
       }
     }
     update(t) {
