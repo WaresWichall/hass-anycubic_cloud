@@ -700,7 +700,7 @@
         },
         "slot_number": {
           "name": "Slot Number List",
-          "description": "Slot Number List (1-4) to map to print colours."
+          "description": "Slot Number List (1-4) to map to print colours. e.g. [1, 2]"
         },
         "uploaded_gcode_file": {
           "name": "Gcode File",
@@ -726,7 +726,7 @@
         },
         "slot_number": {
           "name": "Slot Number List",
-          "description": "Slot Number List (1-4) to map to print colours."
+          "description": "Slot Number List (1-4) to map to print colours. e.g. [1, 2]"
         },
         "uploaded_gcode_file": {
           "name": "Gcode File",
