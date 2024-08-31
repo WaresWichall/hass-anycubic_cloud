@@ -73,6 +73,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._mqtt_last_action = None
         self._mqtt_connect_check_lock = asyncio.Lock()
         self._mqtt_refresh_lock = asyncio.Lock()
+        self._mqtt_file_list_check_lock = asyncio.Lock()
         self._mqtt_last_refresh = None
         self._printer_device_map = None
         mqtt_connect_mode = self.entry.options.get(CONF_MQTT_CONNECT_MODE)
@@ -472,14 +473,32 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             return
 
         if self._anycubic_api and self._anycubic_api.mqtt_is_started:
-            await self._mqtt_refresh_lock.acquire()
-            self._mqtt_last_refresh = int(time.time())
-            try:
+            async with self._mqtt_refresh_lock:
+                self._mqtt_last_refresh = int(time.time())
                 await self._stop_anycubic_mqtt_connection()
                 await asyncio.sleep(2)
-                await self._check_anycubic_mqtt_connection()
-            finally:
-                self._mqtt_refresh_lock.release()
+                await self._check_anycubic_mqtt_connection(True)
+
+    async def _async_check_local_file_list_changed(
+        self,
+        prev_file_list,
+        printer,
+    ):
+        if self._mqtt_file_list_check_lock.locked():
+            return
+
+        async with self._mqtt_file_list_check_lock:
+            if not printer.printer_online:
+                return
+
+            await asyncio.sleep(5)
+            new_file_list = printer.local_file_list_object
+            if prev_file_list is None and new_file_list is None:
+                LOGGER.debug("Anycubic MQTT response for local file list appears to be empty, refreshing MQTT and retrying.")
+                await self.refresh_anycubic_mqtt_connection()
+                await self._anycubic_api.mqtt_wait_for_connect()
+                await asyncio.sleep(2)
+                await printer.request_local_file_list()
 
     async def _setup_anycubic_api_connection(self, start_up: bool = False):
         store = Store[dict[str, Any]](self.hass, STORAGE_VERSION, STORAGE_KEY)
@@ -666,8 +685,13 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 await self.refresh_cloud_files()
 
             elif printer and event_key == 'request_file_list_local':
+                prev_file_list = printer.local_file_list_object
                 await self._connect_mqtt_for_action_response()
                 await printer.request_local_file_list()
+                self.hass.create_task(
+                    self._async_check_local_file_list_changed(prev_file_list, printer),
+                    f"Anycubic coordinator {self.entry.entry_id} {printer.id} local file list check",
+                )
 
             elif printer and event_key == 'request_file_list_udisk':
                 await self._connect_mqtt_for_action_response()
