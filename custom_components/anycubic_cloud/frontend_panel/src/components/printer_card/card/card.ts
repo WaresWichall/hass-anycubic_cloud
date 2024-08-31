@@ -690,7 +690,7 @@ export class AnycubicPrintercardCard extends LitElement {
 
       .ac-printer-card-mcbsection {
         box-sizing: border-box;
-        padding: 5px 32px 5px 32px;
+        padding: 6px;
         width: 100%;
         height: 100%;
       }

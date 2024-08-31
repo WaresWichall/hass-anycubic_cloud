@@ -30,13 +30,13 @@ export const commonFilesStyle: any = css`
     min-width: 250px;
     border: 2px solid #ccc3;
     border-radius: 16px;
-    padding: 16px;
+    padding: 16px 32px;
     line-height: 20px;
     text-align: center;
     font-weight: 900;
     margin: 6px;
     width: 100%;
-    justify-content: space-around;
+    justify-content: space-between;
   }
 
   .file-name {
@@ -45,6 +45,8 @@ export const commonFilesStyle: any = css`
     text-align: center;
     font-weight: 900;
     margin: 6px;
+    word-wrap: break-word;
+    max-width: calc(100% - 58px);
   }
 
   .file-info:hover {
@@ -67,5 +69,20 @@ export const commonFilesStyle: any = css`
   }
 
   .file-delete-icon {
+  }
+
+  @media (max-width: 599px) {
+    :host {
+      padding: 6px;
+    }
+
+    .files-card {
+      padding: 0px;
+    }
+
+    .file-info {
+      padding: 6px 6px;
+      margin: 6px 0px;
+    }
   }
 `;

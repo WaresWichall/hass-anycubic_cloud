@@ -5259,8 +5259,10 @@
           this._editSpool(e, t.material_type, t.color);
         }}"
         >
-          <div class="ac-spool-color-ring" style=${ae(i)}>
-            <div class="ac-spool-color-num">${e + 1}</div>
+          <div class="ac-spool-color-ring-cont">
+            <div class="ac-spool-color-ring-inner" style=${ae(i)}>
+              <div class="ac-spool-color-num">${e + 1}</div>
+            </div>
           </div>
           <div class="ac-spool-material-type">
             ${t.spool_loaded ? t.material_type : "---"}
@@ -5294,15 +5296,16 @@
       .ac-printercard-mcbview {
         height: 100%;
         display: flex;
-        justify-content: space-between;
+        justify-content: space-around;
         align-items: center;
         box-sizing: border-box;
+        width: 100%;
       }
 
       .ac-printercard-mcbmenu {
         height: 100%;
-        min-width: 50px;
         position: relative;
+        width: 10.42%;
       }
 
       .ac-printercard-spoolcont {
@@ -5311,20 +5314,37 @@
         justify-content: center;
         align-items: center;
         box-sizing: border-box;
+        width: 62.5%;
       }
 
       .ac-spool-info {
         box-sizing: border-box;
         height: auto;
         cursor: pointer;
+        width: 25%;
+        padding: 5px;
       }
 
-      .ac-spool-color-ring {
+      .ac-spool-color-ring-cont {
+        position: relative;
+        width: 100%;
+        box-sizing: border-box;
+      }
+
+      .ac-spool-color-ring-cont:before {
+        content: "";
+        display: block;
+        padding-top: 100%;
+      }
+
+      .ac-spool-color-ring-inner {
+        position: absolute;
+        top: 0px;
+        left: 0px;
+        bottom: 0px;
+        right: 0px;
         background-color: #aaa;
-        height: 65px;
-        width: 65px;
         border-radius: 50%;
-        margin: 5px 5px;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -5335,11 +5355,18 @@
         box-sizing: border-box;
         border-radius: 50%;
         background-color: #eee;
-        width: 30px;
-        height: 30px;
-        line-height: 30px;
+        width: 46.5%;
+        height: 46.5%;
         color: #222;
         text-align: center;
+      }
+
+      .ac-spool-color-num:before {
+        content: "";
+        display: inline-block;
+        height: 100%;
+        vertical-align: middle;
+        padding-top: 2.5px;
       }
 
       .ac-spool-material-type {
@@ -5356,6 +5383,7 @@
         transform: translateY(-50%);
         min-width: 48px;
         min-height: 48px;
+        width: 100%;
       }
 
       .ac-printercard-menuright ha-control-button {
@@ -5971,6 +5999,7 @@
         display: inline-block;
         max-width: calc(100% - 120px);
         text-align: right;
+        word-wrap: break-word;
       }
 
       .ac-stat-heading {
@@ -6402,6 +6431,13 @@
   }
 
   .ac-modal-label {
+  }
+
+  @media (max-width: 599px) {
+    .ac-modal-container {
+      width: 95%;
+      padding: 6px;
+    }
   }
 `;
   let Ir = class extends pt {
@@ -9860,7 +9896,7 @@
 
       .ac-printer-card-mcbsection {
         box-sizing: border-box;
-        padding: 5px 32px 5px 32px;
+        padding: 6px;
         width: 100%;
         height: 100%;
       }
@@ -10240,7 +10276,7 @@
     `;
     }
   };
-  s([bt()], Os.prototype, "hass", void 0), s([bt()], Os.prototype, "cardConfig", void 0), s([bt()], Os.prototype, "printers", void 0), s([_t()], Os.prototype, "selectedPrinterDevice", void 0), s([_t()], Os.prototype, "formSchema", void 0), Os = s([gt("anycubic-printercard-configure")], Os), window.console.info("%c ANYCUBIC-CARD %c v0.0.14 ", "color: orange; font-weight: bold; background: black", "color: white; font-weight: bold; background: dimgray");
+  s([bt()], Os.prototype, "hass", void 0), s([bt()], Os.prototype, "cardConfig", void 0), s([bt()], Os.prototype, "printers", void 0), s([_t()], Os.prototype, "selectedPrinterDevice", void 0), s([_t()], Os.prototype, "formSchema", void 0), Os = s([gt("anycubic-printercard-configure")], Os), window.console.info("%c ANYCUBIC-CARD %c v0.0.15 ", "color: orange; font-weight: bold; background: black", "color: white; font-weight: bold; background: dimgray");
   const Is = {
     vertical: !1,
     round: !1,

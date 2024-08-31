@@ -5337,8 +5337,10 @@
           this._editSpool(e, t.material_type, t.color);
         }}"
         >
-          <div class="ac-spool-color-ring" style=${Vi(i)}>
-            <div class="ac-spool-color-num">${e + 1}</div>
+          <div class="ac-spool-color-ring-cont">
+            <div class="ac-spool-color-ring-inner" style=${Vi(i)}>
+              <div class="ac-spool-color-num">${e + 1}</div>
+            </div>
           </div>
           <div class="ac-spool-material-type">
             ${t.spool_loaded ? t.material_type : "---"}
@@ -5372,15 +5374,16 @@
       .ac-printercard-mcbview {
         height: 100%;
         display: flex;
-        justify-content: space-between;
+        justify-content: space-around;
         align-items: center;
         box-sizing: border-box;
+        width: 100%;
       }
 
       .ac-printercard-mcbmenu {
         height: 100%;
-        min-width: 50px;
         position: relative;
+        width: 10.42%;
       }
 
       .ac-printercard-spoolcont {
@@ -5389,20 +5392,37 @@
         justify-content: center;
         align-items: center;
         box-sizing: border-box;
+        width: 62.5%;
       }
 
       .ac-spool-info {
         box-sizing: border-box;
         height: auto;
         cursor: pointer;
+        width: 25%;
+        padding: 5px;
       }
 
-      .ac-spool-color-ring {
+      .ac-spool-color-ring-cont {
+        position: relative;
+        width: 100%;
+        box-sizing: border-box;
+      }
+
+      .ac-spool-color-ring-cont:before {
+        content: "";
+        display: block;
+        padding-top: 100%;
+      }
+
+      .ac-spool-color-ring-inner {
+        position: absolute;
+        top: 0px;
+        left: 0px;
+        bottom: 0px;
+        right: 0px;
         background-color: #aaa;
-        height: 65px;
-        width: 65px;
         border-radius: 50%;
-        margin: 5px 5px;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -5413,11 +5433,18 @@
         box-sizing: border-box;
         border-radius: 50%;
         background-color: #eee;
-        width: 30px;
-        height: 30px;
-        line-height: 30px;
+        width: 46.5%;
+        height: 46.5%;
         color: #222;
         text-align: center;
+      }
+
+      .ac-spool-color-num:before {
+        content: "";
+        display: inline-block;
+        height: 100%;
+        vertical-align: middle;
+        padding-top: 2.5px;
       }
 
       .ac-spool-material-type {
@@ -5434,6 +5461,7 @@
         transform: translateY(-50%);
         min-width: 48px;
         min-height: 48px;
+        width: 100%;
       }
 
       .ac-printercard-menuright ha-control-button {
@@ -6049,6 +6077,7 @@
         display: inline-block;
         max-width: calc(100% - 120px);
         text-align: right;
+        word-wrap: break-word;
       }
 
       .ac-stat-heading {
@@ -6480,6 +6509,13 @@
   }
 
   .ac-modal-label {
+  }
+
+  @media (max-width: 599px) {
+    .ac-modal-container {
+      width: 95%;
+      padding: 6px;
+    }
   }
 `;
   let Yr = class extends pt {
@@ -9922,7 +9958,7 @@
 
       .ac-printer-card-mcbsection {
         box-sizing: border-box;
-        padding: 5px 32px 5px 32px;
+        padding: 6px;
         width: 100%;
         height: 100%;
       }
@@ -10118,13 +10154,13 @@
     min-width: 250px;
     border: 2px solid #ccc3;
     border-radius: 16px;
-    padding: 16px;
+    padding: 16px 32px;
     line-height: 20px;
     text-align: center;
     font-weight: 900;
     margin: 6px;
     width: 100%;
-    justify-content: space-around;
+    justify-content: space-between;
   }
 
   .file-name {
@@ -10133,6 +10169,8 @@
     text-align: center;
     font-weight: 900;
     margin: 6px;
+    word-wrap: break-word;
+    max-width: calc(100% - 58px);
   }
 
   .file-info:hover {
@@ -10155,6 +10193,21 @@
   }
 
   .file-delete-icon {
+  }
+
+  @media (max-width: 599px) {
+    :host {
+      padding: 6px;
+    }
+
+    .files-card {
+      padding: 0px;
+    }
+
+    .file-info {
+      padding: 6px 6px;
+      margin: 6px 0px;
+    }
   }
 `;
   class Rs extends pt {
@@ -10291,7 +10344,7 @@
 `;
   class Ws extends pt {
     constructor() {
-      super(...arguments), this._scriptData = {}, this.narrow = !1, this._serviceName = "";
+      super(...arguments), this._scriptData = {}, this._serviceName = "";
     }
     async firstUpdated() {
       await (async () => {
@@ -10365,7 +10418,10 @@
   }
   s([vt({
     attribute: !1
-  })], Ws.prototype, "hass", void 0), s([vt()], Ws.prototype, "route", void 0), s([vt()], Ws.prototype, "panel", void 0), s([vt()], Ws.prototype, "selectedPrinterID", void 0), s([vt()], Ws.prototype, "selectedPrinterDevice", void 0), s([_t()], Ws.prototype, "_scriptData", void 0), s([_t()], Ws.prototype, "narrow", void 0), s([_t()], Ws.prototype, "_error", void 0), s([_t()], Ws.prototype, "_serviceName", void 0), s([_t()], Ws.prototype, "language", void 0);
+  })], Ws.prototype, "hass", void 0), s([vt({
+    type: Boolean,
+    reflect: !0
+  })], Ws.prototype, "narrow", void 0), s([vt()], Ws.prototype, "route", void 0), s([vt()], Ws.prototype, "panel", void 0), s([vt()], Ws.prototype, "selectedPrinterID", void 0), s([vt()], Ws.prototype, "selectedPrinterDevice", void 0), s([_t()], Ws.prototype, "_scriptData", void 0), s([_t()], Ws.prototype, "_error", void 0), s([_t()], Ws.prototype, "_serviceName", void 0), s([_t()], Ws.prototype, "language", void 0);
   let Zs = class extends Ws {
     constructor() {
       super(...arguments), this._serviceName = "print_and_upload_no_cloud_save";
@@ -10378,7 +10434,7 @@
     }
   };
   s([_t()], Xs.prototype, "_serviceName", void 0), Xs = s([mt("anycubic-view-print-save_in_cloud")], Xs);
-  var Ks = "0.0.14";
+  var Ks = "0.0.15";
   window.console.info(`%c ANYCUBIC-PANEL %c v${Ks} `, "color: orange; font-weight: bold; background: black", "color: white; font-weight: bold; background: dimgray"), t.AnycubicCloudPanel = class extends pt {
     constructor() {
       super(...arguments), this.selectedPage = "main", this._handleLocationChange = () => {
@@ -10517,6 +10573,7 @@
           <anycubic-view-print-no_cloud_save
             class="ac_wide_view"
             .hass=${this.hass}
+            .narrow=${this.narrow}
             .route=${t}
             .panel=${this.panel}
             .selectedPrinterID=${this.selectedPrinterID}
@@ -10528,6 +10585,7 @@
           <anycubic-view-print-save_in_cloud
             class="ac_wide_view"
             .hass=${this.hass}
+            .narrow=${this.narrow}
             .route=${t}
             .panel=${this.panel}
             .selectedPrinterID=${this.selectedPrinterID}
@@ -10679,6 +10737,12 @@
       .printer-select-box:hover {
         background-color: #ccc3;
         border-color: #ccc9;
+      }
+      @media (max-width: 599px) {
+        .view > * {
+          min-width: 100%;
+          max-width: 100%;
+        }
       }
     `;
     }

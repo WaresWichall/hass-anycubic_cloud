@@ -239,6 +239,7 @@ export class AnycubicCloudPanel extends LitElement {
           <anycubic-view-print-no_cloud_save
             class="ac_wide_view"
             .hass=${this.hass}
+            .narrow=${this.narrow}
             .route=${route}
             .panel=${this.panel}
             .selectedPrinterID=${this.selectedPrinterID}
@@ -250,6 +251,7 @@ export class AnycubicCloudPanel extends LitElement {
           <anycubic-view-print-save_in_cloud
             class="ac_wide_view"
             .hass=${this.hass}
+            .narrow=${this.narrow}
             .route=${route}
             .panel=${this.panel}
             .selectedPrinterID=${this.selectedPrinterID}
@@ -397,6 +399,12 @@ export class AnycubicCloudPanel extends LitElement {
       .printer-select-box:hover {
         background-color: #ccc3;
         border-color: #ccc9;
+      }
+      @media (max-width: 599px) {
+        .view > * {
+          min-width: 100%;
+          max-width: 100%;
+        }
       }
     `;
   }

@@ -14,6 +14,9 @@ import { commonPrintStyle } from "./styles";
 export class AnycubicViewPrintBase extends LitElement {
   @property({ attribute: false }) public hass!: HomeAssistant;
 
+  @property({ type: Boolean, reflect: true })
+  public narrow!: boolean;
+
   @property()
   public route!: HassRoute;
 
@@ -27,8 +30,6 @@ export class AnycubicViewPrintBase extends LitElement {
   public selectedPrinterDevice: HassDevice | undefined;
 
   @state() private _scriptData: Record<string, any> = {};
-
-  @state() private narrow = false;
 
   @state()
   private _error: string | undefined;
