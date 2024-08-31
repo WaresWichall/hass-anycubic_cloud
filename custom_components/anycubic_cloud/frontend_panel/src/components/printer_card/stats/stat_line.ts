@@ -46,6 +46,7 @@ export class AnycubicPrintercardStatLine extends LitElement {
         display: inline-block;
         max-width: calc(100% - 120px);
         text-align: right;
+        word-wrap: break-word;
       }
 
       .ac-stat-heading {

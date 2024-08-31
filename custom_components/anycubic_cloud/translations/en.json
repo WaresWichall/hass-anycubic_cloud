@@ -131,6 +131,9 @@
       },
       "request_file_list_cloud": {
         "name": "Request File List (Cloud)"
+      },
+      "refresh_mqtt_connection": {
+        "name": "Refresh MQTT Connection"
       }
     },
     "sensor": {

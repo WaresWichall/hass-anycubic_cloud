@@ -13,6 +13,11 @@ It will still have bugs that I'll need help ironing out.
 
 Should also work with multiple printers now, although I can't test this myself :)
 
+Anycubic Cloud is polled for data updates every 1 minute, whilst MQTT updates can be received multiple times per second.
+
+If you find updates for any sensors are only received every minute, please open an issue.
+
+
 ## Gallery
 
 
@@ -44,6 +49,8 @@ Should also work with multiple printers now, although I can't test this myself :
 - Is Printing
 - Printing file name
 - Progress
+- Configurable MQTT Connection Mode (Defaults to Printing Only)
+- And more ...
 
 ## How to Install
 

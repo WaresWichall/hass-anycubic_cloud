@@ -46,4 +46,11 @@ export const commonModalStyle: any = css`
 
   .ac-modal-label {
   }
+
+  @media (max-width: 599px) {
+    .ac-modal-container {
+      width: 95%;
+      padding: 6px;
+    }
+  }
 `;
