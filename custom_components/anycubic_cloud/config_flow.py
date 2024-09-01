@@ -282,25 +282,26 @@ class AnycubicCloudOptionsFlowHandler(OptionsFlow):
 
     def _build_options_schema(self):
         schema = dict()
+
+        schema[vol.Optional(
+            CONF_MQTT_CONNECT_MODE,
+            default=self.entry.options.get(CONF_MQTT_CONNECT_MODE, AnycubicMQTTConnectMode.Printing_Only)
+        )] = vol.In(MQTT_CONNECT_MODES)
+
         for x in range(MAX_DRYING_PRESETS):
             num = x + 1
 
             dur_key = f"{CONF_DRYING_PRESET_DURATION_}{num}"
             schema[vol.Optional(
                 dur_key,
-                default=self.entry.options.get(dur_key)
+                default=self.entry.options.get(dur_key, vol.UNDEFINED)
             )] = cv.positive_int
 
             temp_key = f"{CONF_DRYING_PRESET_TEMPERATURE_}{num}"
             schema[vol.Optional(
                 temp_key,
-                default=self.entry.options.get(temp_key)
+                default=self.entry.options.get(temp_key, vol.UNDEFINED)
             )] = cv.positive_int
-
-        schema[vol.Optional(
-            CONF_MQTT_CONNECT_MODE,
-            default=self.entry.options.get(CONF_MQTT_CONNECT_MODE)
-        )] = vol.In(MQTT_CONNECT_MODES)
 
         schema[vol.Optional(
             CONF_DEBUG,
