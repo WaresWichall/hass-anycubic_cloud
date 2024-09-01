@@ -47,6 +47,14 @@ export function toTitleCase(str: any): string {
     .join(" ");
 }
 
+export function buildImageUrlFromEntity(entityState: HassEntity): string {
+  return `${window.location.origin}/api/image_proxy/${entityState.entity_id}?token=${entityState.attributes.access_token}`;
+}
+
+export function buildCameraUrlFromEntity(entityState: HassEntity): string {
+  return `${window.location.origin}/api/camera_proxy_stream/${entityState.entity_id}?token=${entityState.attributes.access_token}`;
+}
+
 export function prettyFilename(str: string): string {
   const splitI = str.indexOf("-0.");
   const splitName =
@@ -250,6 +258,22 @@ export function getPrinterDryingButtonStateObj(
 
 export function isPrinterButtonStateAvailable(stateObj: HassEntity): boolean {
   return !["unavailable"].includes(stateObj.state) ? true : false;
+}
+
+export function getPrinterImageStateUrl(
+  hass: HomeAssistant,
+  entities: HassEntityInfos,
+  printerEntityIdPart: string | undefined,
+  suffix: string,
+): string | undefined {
+  const entInfo = getStrictMatchingEntity(
+    entities,
+    printerEntityIdPart,
+    "image",
+    suffix,
+  );
+  const stateObj = getEntityState(hass, entInfo);
+  return stateObj ? buildImageUrlFromEntity(stateObj) : undefined;
 }
 
 export function getPrinterSensorStateObj(

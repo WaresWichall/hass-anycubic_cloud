@@ -1,5 +1,6 @@
 import { LitElement, html, css, PropertyValues, nothing } from "lit";
 import { property, state } from "lit/decorators.js";
+import { styleMap } from "lit-html/directives/style-map.js";
 import { query } from "lit/decorators/query.js";
 import { ResizeController } from "@lit-labs/observers/resize-controller.js";
 import { animate } from "@lit-labs/motion";
@@ -7,6 +8,7 @@ import { animate } from "@lit-labs/motion";
 import { customElementIfUndef } from "../../../internal/register-custom-element";
 
 import {
+  getPrinterImageStateUrl,
   getPrinterSensorStateObj,
   isPrintStatePrinting,
   updateElementStyleWithObject,
@@ -100,6 +102,12 @@ export class AnycubicPrintercardAnimatedPrinter extends LitElement {
   @state({ type: Boolean })
   private _isPrinting: boolean = false;
 
+  @state()
+  private imagePreviewUrl: string | undefined;
+
+  @state()
+  private imagePreviewBgUrl: string | undefined;
+
   public connectedCallback(): void {
     super.connectedCallback();
 
@@ -128,6 +136,18 @@ export class AnycubicPrintercardAnimatedPrinter extends LitElement {
       changedProperties.has("printerEntities") ||
       changedProperties.has("printerEntityIdPart")
     ) {
+      const prevUrl = getPrinterImageStateUrl(
+        this.hass,
+        this.printerEntities,
+        this.printerEntityIdPart,
+        "project_image_preview",
+      );
+      if (this.imagePreviewUrl !== prevUrl) {
+        this.imagePreviewUrl = prevUrl;
+        this.imagePreviewBgUrl = this.imagePreviewUrl
+          ? `url('${prevUrl}')`
+          : undefined;
+      }
       this._progressNum =
         getPrinterSensorStateObj(
           this.hass,
@@ -203,6 +223,10 @@ export class AnycubicPrintercardAnimatedPrinter extends LitElement {
   }
 
   render(): any {
+    const stylesPreview = {
+      "background-image": this.imagePreviewBgUrl,
+    };
+
     return html`
       <div class="ac-printercard-animatedprinter">
         ${this.dimensions
@@ -211,7 +235,16 @@ export class AnycubicPrintercardAnimatedPrinter extends LitElement {
                 <div class="ac-apr-hole"></div>
               </div>
               <div class="ac-apr-buildarea">
-                <div class="ac-apr-animprint"></div>
+                <div class="ac-apr-animprint">
+                  ${this.imagePreviewBgUrl
+                    ? html`
+                        <div
+                          class="ac-apr-imgprev"
+                          style=${styleMap(stylesPreview)}
+                        ></div>
+                      `
+                    : nothing}
+                </div>
               </div>
               <div class="ac-apr-buildplate"></div>
               <div
@@ -331,6 +364,14 @@ export class AnycubicPrintercardAnimatedPrinter extends LitElement {
       .ac-apr-animprint {
         background-color: var(--primary-text-color);
         width: 100%;
+      }
+
+      .ac-apr-imgprev {
+        height: 100%;
+        width: 100%;
+        background-size: 100%;
+        background-repeat: no-repeat;
+        background-position-y: 100%;
       }
 
       .ac-apr-gantry {
