@@ -157,20 +157,11 @@
       "current_project_progress": {
         "name": "Project Progress %"
       },
-      "current_project_created_timestamp": {
-        "name": "Project Created At"
-      },
-      "current_project_finished_timestamp": {
-        "name": "Project Finished At"
-      },
       "current_project_time_elapsed": {
         "name": "Project Time Elapsed"
       },
       "current_project_time_remaining": {
         "name": "Project Time Remaining"
-      },
-      "current_project_print_total_time": {
-        "name": "Project Total Time Taken"
       },
       "print_state": {
         "name": "Print State"
@@ -211,11 +202,11 @@
       "file_list_cloud": {
         "name": "File List (Cloud)"
       },
-      "multi_color_box_spools": {
-        "name": "Multi-Color Box Spools"
+      "ace_spools": {
+        "name": "ACE Spools"
       },
-      "multi_color_box_current_temperature": {
-        "name": "Multi-Color Box Current Temperature"
+      "ace_current_temperature": {
+        "name": "ACE Current Temperature"
       },
       "dry_status_target_temperature": {
         "name": "Drying Target Temperature"
@@ -226,11 +217,11 @@
       "dry_status_remaining_time": {
         "name": "Drying Remaining Time"
       },
-      "secondary_multi_color_box_spools": {
-        "name": "Secondary Multi-Color Box Spools"
+      "secondary_ace_spools": {
+        "name": "Secondary ACE Spools"
       },
-      "secondary_multi_color_box_current_temperature": {
-        "name": "Secondary Multi-Color Box Current Temperature"
+      "secondary_ace_current_temperature": {
+        "name": "Secondary ACE Current Temperature"
       },
       "secondary_dry_status_target_temperature": {
         "name": "Secondary Drying Target Temperature"
@@ -294,8 +285,8 @@
   },
   "services": {
     "multi_color_box_set_slot_pla": {
-      "name": "Multi-Color Box Set Slot - PLA",
-      "description": "Sets PLA slot properties in Multi-Color Box unit.",
+      "name": "ACE Set Slot - PLA",
+      "description": "Sets PLA slot properties in ACE unit.",
       "fields": {
         "config_entry": {
           "name": "Config Entry",
@@ -332,8 +323,8 @@
       }
     },
     "multi_color_box_set_slot_petg": {
-      "name": "Multi-Color Box Set Slot - PETG",
-      "description": "Sets PETG slot properties in Multi-Color Box unit.",
+      "name": "ACE Set Slot - PETG",
+      "description": "Sets PETG slot properties in ACE unit.",
       "fields": {
         "config_entry": {
           "name": "Config Entry",
@@ -370,8 +361,8 @@
       }
     },
     "multi_color_box_set_slot_abs": {
-      "name": "Multi-Color Box Set Slot - ABS",
-      "description": "Sets ABS slot properties in Multi-Color Box unit.",
+      "name": "ACE Set Slot - ABS",
+      "description": "Sets ABS slot properties in ACE unit.",
       "fields": {
         "config_entry": {
           "name": "Config Entry",
@@ -408,8 +399,8 @@
       }
     },
     "multi_color_box_set_slot_pacf": {
-      "name": "Multi-Color Box Set Slot - PACF",
-      "description": "Sets PACF slot properties in Multi-Color Box unit.",
+      "name": "ACE Set Slot - PACF",
+      "description": "Sets PACF slot properties in ACE unit.",
       "fields": {
         "config_entry": {
           "name": "Config Entry",
@@ -446,8 +437,8 @@
       }
     },
     "multi_color_box_set_slot_pc": {
-      "name": "Multi-Color Box Set Slot - PC",
-      "description": "Sets PC slot properties in Multi-Color Box unit.",
+      "name": "ACE Set Slot - PC",
+      "description": "Sets PC slot properties in ACE unit.",
       "fields": {
         "config_entry": {
           "name": "Config Entry",
@@ -484,8 +475,8 @@
       }
     },
     "multi_color_box_set_slot_asa": {
-      "name": "Multi-Color Box Set Slot - ASA",
-      "description": "Sets ASA slot properties in Multi-Color Box unit.",
+      "name": "ACE Set Slot - ASA",
+      "description": "Sets ASA slot properties in ACE unit.",
       "fields": {
         "config_entry": {
           "name": "Config Entry",
@@ -522,8 +513,8 @@
       }
     },
     "multi_color_box_set_slot_hips": {
-      "name": "Multi-Color Box Set Slot - HIPS",
-      "description": "Sets HIPS slot properties in Multi-Color Box unit.",
+      "name": "ACE Set Slot - HIPS",
+      "description": "Sets HIPS slot properties in ACE unit.",
       "fields": {
         "config_entry": {
           "name": "Config Entry",
@@ -560,8 +551,8 @@
       }
     },
     "multi_color_box_set_slot_pa": {
-      "name": "Multi-Color Box Set Slot - PA",
-      "description": "Sets PA slot properties in Multi-Color Box unit.",
+      "name": "ACE Set Slot - PA",
+      "description": "Sets PA slot properties in ACE unit.",
       "fields": {
         "config_entry": {
           "name": "Config Entry",
@@ -598,8 +589,8 @@
       }
     },
     "multi_color_box_set_slot_pla_se": {
-      "name": "Multi-Color Box Set Slot - PLA SE",
-      "description": "Sets PLA SE slot properties in Multi-Color Box unit.",
+      "name": "ACE Set Slot - PLA SE",
+      "description": "Sets PLA SE slot properties in ACE unit.",
       "fields": {
         "config_entry": {
           "name": "Config Entry",
@@ -636,8 +627,8 @@
       }
     },
     "multi_color_box_filament_extrude": {
-      "name": "Multi-Color Box Filament Extrude",
-      "description": "Activate filament extrude on ACE Multi-Color Box.",
+      "name": "ACE Filament Extrude",
+      "description": "Activate filament extrude on ACE ACE.",
       "fields": {
         "config_entry": {
           "name": "Config Entry",
@@ -666,8 +657,8 @@
       }
     },
     "multi_color_box_filament_retract": {
-      "name": "Multi-Color Box Filament Retract",
-      "description": "Activate filament retract on ACE Multi-Color Box.",
+      "name": "ACE Filament Retract",
+      "description": "Activate filament retract on ACE ACE.",
       "fields": {
         "config_entry": {
           "name": "Config Entry",

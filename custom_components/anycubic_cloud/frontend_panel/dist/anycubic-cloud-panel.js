@@ -5287,7 +5287,7 @@
   const xr = "secondary_",
     Er = "ace_run_out_refill",
     Sr = xr + Er,
-    $r = "multi_color_box_spools",
+    $r = "ace_spools",
     Pr = xr + $r;
   let Ar = class extends pt {
     constructor() {
@@ -9546,7 +9546,7 @@
     willUpdate(t) {
       var e, i;
       if (super.willUpdate(t), t.has("hass") && this.hass.language !== this.language && (this.language = this.hass.language), t.has("monitoredStats") && (this.monitoredStats = (e = this.monitoredStats, i = Is, void 0 === e ? i : e)), t.has("selectedPrinterID") && (this.printerEntities = Ut(this.hass, this.selectedPrinterID), this.printerEntityIdPart = jt(this.printerEntities)), t.has("hass") || t.has("hiddenOverride") || t.has("selectedPrinterID")) {
-        this.progressPercent = this._percentComplete(), this.hasColorbox = "active" === Zt(this.hass, this.printerEntities, this.printerEntityIdPart, "multi_color_box_spools", "inactive").state, this.hasSecondaryColorbox = "active" === Zt(this.hass, this.printerEntities, this.printerEntityIdPart, "secondary_multi_color_box_spools", "inactive").state, this.cameraEntityId && (this.cameraEntityState = Ft(this.hass, {
+        this.progressPercent = this._percentComplete(), this.hasColorbox = "active" === Zt(this.hass, this.printerEntities, this.printerEntityIdPart, "ace_spools", "inactive").state, this.hasSecondaryColorbox = "active" === Zt(this.hass, this.printerEntities, this.printerEntityIdPart, "secondary_multi_color_box_spools", "inactive").state, this.cameraEntityId && (this.cameraEntityState = Ft(this.hass, {
           entity_id: this.cameraEntityId
         })), this.lightIsOn = Lt(this.hass, {
           entity_id: this.lightEntityId

@@ -5209,7 +5209,7 @@
   const gr = "secondary_",
     fr = "ace_run_out_refill",
     yr = gr + fr,
-    br = "multi_color_box_spools",
+    br = "ace_spools",
     _r = gr + br;
   let vr = class extends pt {
     constructor() {
@@ -9484,7 +9484,7 @@
           if ("binary_sensor" === i && r.endsWith("printer_online")) return r.split("printer_online")[0];
         }
       }(this.printerEntities)), t.has("hass") || t.has("hiddenOverride") || t.has("selectedPrinterID")) {
-        this.progressPercent = this._percentComplete(), this.hasColorbox = "active" === Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "multi_color_box_spools", "inactive").state, this.hasSecondaryColorbox = "active" === Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "secondary_multi_color_box_spools", "inactive").state, this.cameraEntityId && (this.cameraEntityState = Nt(this.hass, {
+        this.progressPercent = this._percentComplete(), this.hasColorbox = "active" === Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "ace_spools", "inactive").state, this.hasSecondaryColorbox = "active" === Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "secondary_multi_color_box_spools", "inactive").state, this.cameraEntityId && (this.cameraEntityState = Nt(this.hass, {
           entity_id: this.cameraEntityId
         })), this.lightIsOn = Bt(this.hass, {
           entity_id: this.lightEntityId

@@ -36,13 +36,13 @@ from .helpers import printer_attributes_for_key, printer_entity_unique_id, print
 
 PRIMARY_MULTI_COLOR_BOX_SENSOR_TYPES = (
     SensorEntityDescription(
-        key="multi_color_box_current_temperature",
-        translation_key="multi_color_box_current_temperature",
+        key="ace_current_temperature",
+        translation_key="ace_current_temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
     ),
     SensorEntityDescription(
-        key="multi_color_box_spools",
-        translation_key="multi_color_box_spools",
+        key="ace_spools",
+        translation_key="ace_spools",
     ),
     SensorEntityDescription(
         key="dry_status_target_temperature",
@@ -62,13 +62,13 @@ PRIMARY_MULTI_COLOR_BOX_SENSOR_TYPES = (
 
 SECONDARY_MULTI_COLOR_BOX_SENSOR_TYPES = (
     SensorEntityDescription(
-        key="secondary_multi_color_box_current_temperature",
-        translation_key="secondary_multi_color_box_current_temperature",
+        key="secondary_ace_current_temperature",
+        translation_key="secondary_ace_current_temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
     ),
     SensorEntityDescription(
-        key="secondary_multi_color_box_spools",
-        translation_key="secondary_multi_color_box_spools",
+        key="secondary_ace_spools",
+        translation_key="secondary_ace_spools",
     ),
     SensorEntityDescription(
         key="secondary_dry_status_target_temperature",
@@ -192,16 +192,6 @@ SENSOR_TYPES = (
         native_unit_of_measurement=PERCENTAGE,
     ),
     SensorEntityDescription(
-        key="current_project_created_timestamp",
-        translation_key="current_project_created_timestamp",
-        device_class=SensorDeviceClass.TIMESTAMP,
-    ),
-    SensorEntityDescription(
-        key="current_project_finished_timestamp",
-        translation_key="current_project_finished_timestamp",
-        device_class=SensorDeviceClass.TIMESTAMP,
-    ),
-    SensorEntityDescription(
         key="current_project_time_elapsed",
         translation_key="current_project_time_elapsed",
         native_unit_of_measurement=UnitOfTime.MINUTES,
@@ -210,10 +200,6 @@ SENSOR_TYPES = (
         key="current_project_time_remaining",
         translation_key="current_project_time_remaining",
         native_unit_of_measurement=UnitOfTime.MINUTES,
-    ),
-    SensorEntityDescription(
-        key="current_project_print_total_time",
-        translation_key="current_project_print_total_time",
     ),
     SensorEntityDescription(
         key="print_state",

@@ -8,6 +8,7 @@ from homeassistant.components.button import (
     ButtonEntityDescription,
 )
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
@@ -83,6 +84,7 @@ GLOBAL_BUTTON_TYPES = (
     ButtonEntityDescription(
         key="refresh_mqtt_connection",
         translation_key="refresh_mqtt_connection",
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
 )
 

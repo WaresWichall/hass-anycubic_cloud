@@ -172,7 +172,7 @@ export class AnycubicPrintercardCard extends LitElement {
           this.hass,
           this.printerEntities,
           this.printerEntityIdPart,
-          "multi_color_box_spools",
+          "ace_spools",
           "inactive",
         ).state === "active";
       this.hasSecondaryColorbox =

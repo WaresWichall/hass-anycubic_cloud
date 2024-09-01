@@ -217,13 +217,13 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "supports_function_multi_color_box": printer.supports_function_multi_color_box,
             "connected_ace_units": printer.connected_ace_units,
             "multi_color_box_fw_version": printer.primary_multi_color_box_fw_firmware_version,
-            "multi_color_box_spools": state_string_active(primary_ace_spool_info),
+            "ace_spools": state_string_active(primary_ace_spool_info),
             "multi_color_box_runout_refill": printer.primary_multi_color_box_auto_feed,
-            "multi_color_box_current_temperature": printer.primary_multi_color_box_current_temperature,
+            "ace_current_temperature": printer.primary_multi_color_box_current_temperature,
             "secondary_multi_color_box_fw_version": printer.secondary_multi_color_box_fw_firmware_version,
-            "secondary_multi_color_box_spools": state_string_active(secondary_ace_spool_info),
+            "secondary_ace_spools": state_string_active(secondary_ace_spool_info),
             "secondary_multi_color_box_runout_refill": printer.secondary_multi_color_box_auto_feed,
-            "secondary_multi_color_box_current_temperature": printer.secondary_multi_color_box_current_temperature,
+            "secondary_ace_current_temperature": printer.secondary_multi_color_box_current_temperature,
             "dry_status_is_drying": printer.primary_drying_status_is_drying,
             "dry_status_target_temperature": printer.primary_drying_status_target_temperature,
             "dry_status_total_duration": printer.primary_drying_status_total_duration,
@@ -235,11 +235,8 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "secondary_dry_status_remaining_time": printer.secondary_drying_status_remaining_time,
             "current_project_name": printer.latest_project_name,
             "current_project_progress": printer.latest_project_progress_percentage,
-            "current_project_created_timestamp": printer.latest_project_created_timestamp,
-            "current_project_finished_timestamp": printer.latest_project_finished_timestamp,
             "current_project_time_elapsed": printer.latest_project_print_time_elapsed_minutes,
             "current_project_time_remaining": printer.latest_project_print_time_remaining_minutes,
-            "current_project_print_total_time": printer.latest_project_print_total_time,
             "current_project_in_progress": printer.latest_project_print_in_progress,
             "current_project_complete": printer.latest_project_print_complete,
             "current_project_failed": printer.latest_project_print_failed,
@@ -269,10 +266,10 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         }
 
         attributes = {
-            "multi_color_box_spools": {
+            "ace_spools": {
                 "spool_info": primary_ace_spool_info
             },
-            "secondary_multi_color_box_spools": {
+            "secondary_ace_spools": {
                 "spool_info": secondary_ace_spool_info
             },
             "file_list_local": {
@@ -306,6 +303,11 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 "print_status_code": printer.latest_project_raw_print_status,
                 "dry_status_code": printer.primary_drying_status_raw_status_code,
                 "secondary_dry_status_code": printer.secondary_drying_status_raw_status_code,
+            },
+            "current_project_name": {
+                "created_timestamp": printer.latest_project_created_timestamp,
+                "finished_timestamp": printer.latest_project_finished_timestamp,
+                "print_total_time": printer.latest_project_print_total_time,
             },
             "fw_version": {
                 "latest_version": printer.fw_version.available_version,

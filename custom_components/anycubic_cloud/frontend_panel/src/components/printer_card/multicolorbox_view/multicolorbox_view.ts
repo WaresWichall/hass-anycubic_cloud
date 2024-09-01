@@ -27,7 +27,7 @@ const SECONDARY_PREFIX = "secondary_";
 const PRIMARY_ENTITY_ID_RUNOUT_REFILL = "ace_run_out_refill";
 const SECONDARY_ENTITY_ID_RUNOUT_REFILL =
   SECONDARY_PREFIX + PRIMARY_ENTITY_ID_RUNOUT_REFILL;
-const PRIMARY_ENTITY_ID_SPOOLS = "multi_color_box_spools";
+const PRIMARY_ENTITY_ID_SPOOLS = "ace_spools";
 const SECONDARY_ENTITY_ID_SPOOLS = SECONDARY_PREFIX + PRIMARY_ENTITY_ID_SPOOLS;
 
 @customElementIfUndef("anycubic-printercard-multicolorbox_view")
