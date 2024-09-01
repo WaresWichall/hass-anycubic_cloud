@@ -8,6 +8,7 @@
   "dependencies": [
     "file_upload",
     "http",
+    "image",
     "panel_custom"
   ],
   "documentation": "https://www.home-assistant.io/integrations/anycubic_cloud",

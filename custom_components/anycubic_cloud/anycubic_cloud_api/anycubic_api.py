@@ -2036,8 +2036,22 @@ class AnycubicAPI:
 
         if projects and len(projects) > 0:
             for proj in projects:
-                if printer_id is None or proj.printer_id == printer_id:
+                # Look for matching project and fill image URL from previous cloud print if available
+                if (
+                    latest_project is None and
+                    (printer_id is None or proj.printer_id == printer_id)
+                ):
                     latest_project = proj
+
+                    if latest_project.image_url or not latest_project.name:
+                        break
+
+                elif latest_project and proj.name == latest_project.name:
+                    if proj.image_url:
+                        latest_project.set_image_url(proj.image_url)
+                        break
+
+                elif latest_project:
                     break
 
         if latest_project:

@@ -2,6 +2,7 @@ import json
 import time
 
 from .anycubic_const import (
+    PROJECT_IMAGE_URL_BASE,
     REX_GCODE_EXT,
 )
 
@@ -91,7 +92,7 @@ class AnycubicProject:
         self._printer_id = int(printer_id) if printer_id is not None else None
         self._gcode_id = int(gcode_id)
         self._model = int(model) if model is not None else None
-        self._img = str(img) if img is not None else None
+        self.set_image_url(img)
         self._estimate = int(estimate)
         self._remain_time = int(remain_time) if remain_time is not None else None
         self._material = str(material) if material is not None else None
@@ -114,7 +115,7 @@ class AnycubicProject:
         self._slice_end_time = int(slice_end_time) if slice_end_time is not None else None
         self._total_time = str(total_time) if total_time is not None else None
         self._print_time = int(print_time) if print_time is not None else None
-        self._slice_param = slice_param
+        self.set_slice_param(slice_param)
         self._delete = int(delete) if delete is not None else None
         self._auto_operation = auto_operation
         self._monitor = monitor
@@ -152,11 +153,7 @@ class AnycubicProject:
         self._temp_min_nozzle = None
         self._temp_max_nozzle = None
         self._download_progress = 0
-        if self._slice_param and isinstance(self._slice_param, str):
-            try:
-                self._slice_param = json.loads(str(self._slice_param))
-            except Exception as e:
-                print(f"Error in json parsing slice_param: {e}\n{self._slice_param}")
+
         if self._slice_result and isinstance(self._slice_result, str):
             try:
                 self._slice_result = json.loads(str(self._slice_result))
@@ -241,6 +238,9 @@ class AnycubicProject:
             slice_result=data['slice_result'],
             slice_param=data['slice_param'],
         )
+
+    def set_image_url(self, image_url):
+        self._image_url = str(image_url) if image_url is not None else None
 
     def set_filename(self, filename):
         self._gcode_name = REX_GCODE_EXT.sub('', str(filename))
@@ -353,12 +353,6 @@ class AnycubicProject:
     ):
         self._print_status = int(AnycubicPrintStatus.Checking)
 
-    def update_slice_param(
-        self,
-        new_slice_param,
-    ):
-        self._slice_param = new_slice_param
-
     def _set_settings(
         self,
         new_settings,
@@ -379,6 +373,28 @@ class AnycubicProject:
         elif new_settings:
             raise AnycubicDataParsingError(
                 f"Unexpected data for project settings: {new_settings}"
+            )
+
+    def set_slice_param(
+        self,
+        new_slice_param,
+    ):
+        self._slice_param = {}
+
+        if new_slice_param and isinstance(new_slice_param, str):
+            try:
+                self._slice_param.update(json.loads(new_slice_param))
+            except Exception as e:
+                raise AnycubicDataParsingError(
+                    f"Error parsing project slice_param json: {e}\n{new_slice_param}"
+                )
+
+        elif new_slice_param and isinstance(new_slice_param, dict):
+            self._slice_param.update(new_slice_param)
+
+        elif new_slice_param:
+            raise AnycubicDataParsingError(
+                f"Unexpected data for project slice_param: {new_slice_param}"
             )
 
     def _get_print_setting(self, key):
@@ -615,9 +631,6 @@ class AnycubicProject:
 
     @property
     def slice_material_info_list(self):
-        if not isinstance(self._slice_param, dict):
-            return None
-
         material_info_list = self._slice_param.get('paint_infos')
 
         if not isinstance(material_info_list, list):
@@ -638,6 +651,18 @@ class AnycubicProject:
             total_filament += material.get('filament_used', 0.0)
 
         return total_filament
+
+    @property
+    def image_url(self):
+        if isinstance(self._image_url, str) and self._image_url.startswith("http"):
+            return self._image_url
+
+        img_endpoint = self._slice_param.get('image_id')
+
+        if img_endpoint and isinstance(img_endpoint, str):
+            return PROJECT_IMAGE_URL_BASE + img_endpoint
+
+        return None
 
     def validate_target_nozzle_temperature(
         self,

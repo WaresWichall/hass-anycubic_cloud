@@ -136,6 +136,11 @@
         "name": "Refresh MQTT Connection"
       }
     },
+    "image": {
+      "current_project_image_url": {
+        "name": "Project Image Preview"
+      }
+    },
     "sensor": {
       "current_status": {
         "name": "Current Status"

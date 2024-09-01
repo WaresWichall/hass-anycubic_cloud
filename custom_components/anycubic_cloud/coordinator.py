@@ -244,6 +244,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "current_project_complete": printer.latest_project_print_complete,
             "current_project_failed": printer.latest_project_print_failed,
             "current_project_is_paused": printer.latest_project_print_is_paused,
+            "current_project_image_url": printer.latest_project_image_url,
             "print_state": printer.latest_project_print_status,
             "print_approximate_completion_time": printer.latest_project_print_approximate_completion_time,
             "print_current_layer": printer.latest_project_print_current_layer,

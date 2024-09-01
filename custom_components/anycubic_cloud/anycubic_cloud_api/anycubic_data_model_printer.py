@@ -493,7 +493,7 @@ class AnycubicPrinter:
         new_slice_param,
     ):
         if self._check_latest_project_id_valid(incoming_project_id):
-            self._latest_project.update_slice_param(
+            self._latest_project.set_slice_param(
                 new_slice_param,
             )
 
@@ -1413,6 +1413,13 @@ class AnycubicPrinter:
     def latest_project_name(self):
         if self.latest_project:
             return self.latest_project.name
+
+        return None
+
+    @property
+    def latest_project_image_url(self):
+        if self.latest_project:
+            return self.latest_project.image_url
 
         return None
 
