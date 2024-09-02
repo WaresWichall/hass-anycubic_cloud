@@ -1,6 +1,8 @@
 """Support for Anycubic Cloud image."""
 from __future__ import annotations
 
+from datetime import datetime
+
 from homeassistant.components.image import (
     Image,
     ImageEntity,
@@ -85,6 +87,7 @@ class AnycubicCloudImage(AnycubicCloudEntity, ImageEntity):
 
     def reset_cached_image(self):
         self._cached_image = None
+        self._attr_image_last_updated = datetime.now()
 
     @property
     def image_url(self) -> str | None:
@@ -95,6 +98,16 @@ class AnycubicCloudImage(AnycubicCloudEntity, ImageEntity):
         self._known_image_url = image_url
 
         return self._known_image_url
+
+    @property
+    def image_last_updated(self) -> datetime | None:
+        return self._attr_image_last_updated
+
+    @property
+    def state(self) -> str | None:
+        if self.image_last_updated is None:
+            return None
+        return self.image_last_updated.isoformat()
 
     async def _async_load_image_from_url(self, url: str) -> Image | None:
         """Load an image by url."""
