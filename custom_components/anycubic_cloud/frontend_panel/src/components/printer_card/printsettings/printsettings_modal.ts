@@ -203,9 +203,9 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
           this.hass,
           this.printerEntities,
           this.printerEntityIdPart,
-          "print_speed_mode",
+          "job_speed_mode",
           "",
-          { available_modes: [], print_speed_mode_code: -1 },
+          { available_modes: [], job_speed_mode_code: -1 },
         );
         this.availableSpeedModes = speedModesFromStateObj(speedModeState);
         this.currentSpeedModeKey =

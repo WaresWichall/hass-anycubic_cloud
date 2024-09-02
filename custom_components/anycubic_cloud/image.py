@@ -24,8 +24,8 @@ from .helpers import printer_entity_unique_id, printer_state_for_key
 
 IMAGE_TYPES = (
     ImageEntityDescription(
-        key="current_project_image_url",
-        translation_key="current_project_image_url",
+        key="job_image_url",
+        translation_key="job_image_url",
     ),
 )
 

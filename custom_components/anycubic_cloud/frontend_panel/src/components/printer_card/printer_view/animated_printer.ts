@@ -140,7 +140,7 @@ export class AnycubicPrintercardAnimatedPrinter extends LitElement {
         this.hass,
         this.printerEntities,
         this.printerEntityIdPart,
-        "project_image_preview",
+        "job_preview",
       );
       if (this.imagePreviewUrl !== prevUrl) {
         this.imagePreviewUrl = prevUrl;
@@ -153,14 +153,14 @@ export class AnycubicPrintercardAnimatedPrinter extends LitElement {
           this.hass,
           this.printerEntities,
           this.printerEntityIdPart,
-          "project_progress",
+          "job_progress",
           0,
         ).state / 100;
       const printingState = getPrinterSensorStateObj(
         this.hass,
         this.printerEntities,
         this.printerEntityIdPart,
-        "print_state",
+        "job_state",
       ).state.toLowerCase();
 
       const newIsPrinting = isPrintStatePrinting(printingState);

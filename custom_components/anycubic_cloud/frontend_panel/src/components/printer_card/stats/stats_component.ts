@@ -85,7 +85,7 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
                     this.hass,
                     this.printerEntities,
                     this.printerEntityIdPart,
-                    "print_state",
+                    "job_state",
                   ).state,
                 )}
               ></anycubic-printercard-stat-line>
@@ -97,7 +97,7 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
                   this.hass,
                   this.printerEntities,
                   this.printerEntityIdPart,
-                  "project_time_remaining",
+                  "job_time_remaining",
                 )}
                 .timeType=${condition}
                 .direction=${0}
@@ -112,7 +112,7 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
                   this.hass,
                   this.printerEntities,
                   this.printerEntityIdPart,
-                  "project_time_elapsed",
+                  "job_time_elapsed",
                 )}
                 .timeType=${condition}
                 .direction=${1}
@@ -128,7 +128,7 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
                   this.hass,
                   this.printerEntities,
                   this.printerEntityIdPart,
-                  "project_time_remaining",
+                  "job_time_remaining",
                 )}
                 .timeType=${condition}
                 .direction=${-1}
@@ -235,7 +235,7 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
                   this.hass,
                   this.printerEntities,
                   this.printerEntityIdPart,
-                  "project_name",
+                  "job_name",
                 ).state}
               ></anycubic-printercard-stat-line>
             `;
@@ -248,7 +248,7 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
                   this.hass,
                   this.printerEntities,
                   this.printerEntityIdPart,
-                  "current_layer",
+                  "job_current_layer",
                 ).state}
               ></anycubic-printercard-stat-line>
             `;
@@ -258,7 +258,7 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
               this.hass,
               this.printerEntities,
               this.printerEntityIdPart,
-              "print_speed_mode",
+              "job_speed_mode",
               "",
               { available_modes: [], print_speed_mode_code: -1 },
             );
@@ -351,7 +351,7 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
                   this.hass,
                   this.printerEntities,
                   this.printerEntityIdPart,
-                  "print_on_time",
+                  "job_on_time",
                   0,
                 ).state}
                 .unit=${"s"}
@@ -366,7 +366,7 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
                   this.hass,
                   this.printerEntities,
                   this.printerEntityIdPart,
-                  "print_off_time",
+                  "job_off_time",
                   0,
                 ).state}
                 .unit=${"s"}
@@ -381,7 +381,7 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
                   this.hass,
                   this.printerEntities,
                   this.printerEntityIdPart,
-                  "print_bottom_time",
+                  "job_bottom_time",
                   0,
                 ).state}
                 .unit=${"s"}
@@ -396,7 +396,7 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
                   this.hass,
                   this.printerEntities,
                   this.printerEntityIdPart,
-                  "print_model_height",
+                  "job_model_height",
                   0,
                 ).state}
                 .unit=${"mm"}
@@ -411,7 +411,7 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
                   this.hass,
                   this.printerEntities,
                   this.printerEntityIdPart,
-                  "print_bottom_layers",
+                  "job_bottom_layers",
                   0,
                 ).state}
                 .unit=${"layers"}
@@ -426,7 +426,7 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
                   this.hass,
                   this.printerEntities,
                   this.printerEntityIdPart,
-                  "print_z_up_height",
+                  "job_z_up_height",
                   0,
                 ).state}
                 .unit=${"mm"}
@@ -441,7 +441,7 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
                   this.hass,
                   this.printerEntities,
                   this.printerEntityIdPart,
-                  "print_z_up_speed",
+                  "job_z_up_speed",
                   0,
                 ).state}
               ></anycubic-printercard-stat-line>
@@ -455,7 +455,7 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
                   this.hass,
                   this.printerEntities,
                   this.printerEntityIdPart,
-                  "print_z_down_speed",
+                  "job_z_down_speed",
                   0,
                 ).state}
               ></anycubic-printercard-stat-line>

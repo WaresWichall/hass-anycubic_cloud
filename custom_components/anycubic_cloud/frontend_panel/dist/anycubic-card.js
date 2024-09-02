@@ -3532,11 +3532,11 @@
               target_hotbed_temp: {
                 heading: "Target Hotbed Temperature"
               },
-              print_state: {
-                heading: "Project State"
+              job_state: {
+                heading: "Job State"
               },
-              project_progress: {
-                heading: "Project Progress"
+              job_progress: {
+                heading: "Job Progress"
               },
               ace_fw_version: {
                 heading: "ACE FW Version"
@@ -5543,9 +5543,9 @@
     }
     willUpdate(t) {
       if (super.willUpdate(t), t.has("scaleFactor") && this._onResizeEvent(), t.has("hass") || t.has("printerEntities") || t.has("printerEntityIdPart")) {
-        const t = jt(this.hass, this.printerEntities, this.printerEntityIdPart, "project_image_preview");
-        this.imagePreviewUrl !== t && (this.imagePreviewUrl = t, this.imagePreviewBgUrl = this.imagePreviewUrl ? `url('${t}')` : void 0), this._progressNum = Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "project_progress", 0).state / 100;
-        const e = Wt(Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "print_state").state.toLowerCase());
+        const t = jt(this.hass, this.printerEntities, this.printerEntityIdPart, "job_preview");
+        this.imagePreviewUrl !== t && (this.imagePreviewUrl = t, this.imagePreviewBgUrl = this.imagePreviewUrl ? `url('${t}')` : void 0), this._progressNum = Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "job_progress", 0).state / 100;
+        const e = Wt(Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "job_state").state.toLowerCase());
         this.dimensions && !this._isPrinting && e && this._moveGantry(), this._isPrinting = e;
       }
     }
@@ -6155,13 +6155,13 @@
             return X`
               <anycubic-printercard-stat-line
                 .name=${t}
-                .value=${Ft(Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "print_state").state)}
+                .value=${Ft(Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "job_state").state)}
               ></anycubic-printercard-stat-line>
             `;
           case Mt.ETA:
             return X`
               <anycubic-printercard-stat-time
-                .timeEntity=${Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "project_time_remaining")}
+                .timeEntity=${Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "job_time_remaining")}
                 .timeType=${t}
                 .direction=${0}
                 .round=${this.round}
@@ -6171,7 +6171,7 @@
           case Mt.Elapsed:
             return X`
               <anycubic-printercard-stat-time
-                .timeEntity=${Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "project_time_elapsed")}
+                .timeEntity=${Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "job_time_elapsed")}
                 .timeType=${t}
                 .direction=${1}
                 .round=${this.round}
@@ -6181,7 +6181,7 @@
           case Mt.Remaining:
             return X`
               <anycubic-printercard-stat-time
-                .timeEntity=${Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "project_time_remaining")}
+                .timeEntity=${Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "job_time_remaining")}
                 .timeType=${t}
                 .direction=${-1}
                 .round=${this.round}
@@ -6242,19 +6242,19 @@
             return X`
               <anycubic-printercard-stat-line
                 .name=${t}
-                .value=${Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "project_name").state}
+                .value=${Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "job_name").state}
               ></anycubic-printercard-stat-line>
             `;
           case Mt.CurrentLayer:
             return X`
               <anycubic-printercard-stat-line
                 .name=${t}
-                .value=${Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "current_layer").state}
+                .value=${Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "job_current_layer").state}
               ></anycubic-printercard-stat-line>
             `;
           case Mt.SpeedMode:
             {
-              const e = Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "print_speed_mode", "", {
+              const e = Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "job_speed_mode", "", {
                   available_modes: [],
                   print_speed_mode_code: -1
                 }),
@@ -6301,7 +6301,7 @@
             return X`
               <anycubic-printercard-stat-line
                 .name=${t}
-                .value=${Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "print_on_time", 0).state}
+                .value=${Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "job_on_time", 0).state}
                 .unit=${"s"}
               ></anycubic-printercard-stat-line>
             `;
@@ -6309,7 +6309,7 @@
             return X`
               <anycubic-printercard-stat-line
                 .name=${t}
-                .value=${Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "print_off_time", 0).state}
+                .value=${Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "job_off_time", 0).state}
                 .unit=${"s"}
               ></anycubic-printercard-stat-line>
             `;
@@ -6317,7 +6317,7 @@
             return X`
               <anycubic-printercard-stat-line
                 .name=${t}
-                .value=${Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "print_bottom_time", 0).state}
+                .value=${Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "job_bottom_time", 0).state}
                 .unit=${"s"}
               ></anycubic-printercard-stat-line>
             `;
@@ -6325,7 +6325,7 @@
             return X`
               <anycubic-printercard-stat-line
                 .name=${t}
-                .value=${Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "print_model_height", 0).state}
+                .value=${Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "job_model_height", 0).state}
                 .unit=${"mm"}
               ></anycubic-printercard-stat-line>
             `;
@@ -6333,7 +6333,7 @@
             return X`
               <anycubic-printercard-stat-line
                 .name=${t}
-                .value=${Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "print_bottom_layers", 0).state}
+                .value=${Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "job_bottom_layers", 0).state}
                 .unit=${"layers"}
               ></anycubic-printercard-stat-line>
             `;
@@ -6341,7 +6341,7 @@
             return X`
               <anycubic-printercard-stat-line
                 .name=${t}
-                .value=${Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "print_z_up_height", 0).state}
+                .value=${Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "job_z_up_height", 0).state}
                 .unit=${"mm"}
               ></anycubic-printercard-stat-line>
             `;
@@ -6349,14 +6349,14 @@
             return X`
               <anycubic-printercard-stat-line
                 .name=${t}
-                .value=${Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "print_z_up_speed", 0).state}
+                .value=${Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "job_z_up_speed", 0).state}
               ></anycubic-printercard-stat-line>
             `;
           case Mt.ZDownSpeed:
             return X`
               <anycubic-printercard-stat-line
                 .name=${t}
-                .value=${Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "print_z_down_speed", 0).state}
+                .value=${Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "job_z_down_speed", 0).state}
               ></anycubic-printercard-stat-line>
             `;
           default:
@@ -9035,9 +9035,9 @@
           this.currentTargetTempHotbed = t.state, this.minTargetTempHotbed = t.attributes.limit_min, this.maxTargetTempHotbed = t.attributes.limit_max;
         }
         if (!this._userEditSpeedMode) {
-          const t = Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "print_speed_mode", "", {
+          const t = Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "job_speed_mode", "", {
             available_modes: [],
-            print_speed_mode_code: -1
+            job_speed_mode_code: -1
           });
           this.availableSpeedModes = Qt(t), this.currentSpeedModeKey = t.attributes.print_speed_mode_code, this.currentSpeedModeDescr = this.currentSpeedModeKey >= 0 && this.currentSpeedModeKey in this.availableSpeedModes ? this.availableSpeedModes[this.currentSpeedModeKey] : void 0;
         }
@@ -9489,7 +9489,7 @@
         })), this.lightIsOn = Bt(this.hass, {
           entity_id: this.lightEntityId
         }, !0, !1);
-        const t = Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "print_state", "unknown").state.toLowerCase();
+        const t = Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "job_state", "unknown").state.toLowerCase();
         this.isPrinting = Wt(t), this.isHidden = !this.isPrinting && !this.hiddenOverride, this.statusColor = function (t) {
           return Wt(t) ? "#4caf50" : "unknown" === t ? "#f44336" : "operational" === t || "finished" === t ? "#00bcd4" : "#ffc107";
         }(t), this.lightIsOn = Bt(this.hass, {
@@ -9745,7 +9745,7 @@
       this.hiddenOverride = !this.hiddenOverride;
     }
     _percentComplete() {
-      return Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "project_progress", -1).state;
+      return Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "job_progress", -1).state;
     }
     static get styles() {
       return u`

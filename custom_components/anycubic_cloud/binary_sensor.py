@@ -31,20 +31,20 @@ SECONDARY_MULTI_COLOR_BOX_SENSOR_TYPES = (
 
 SENSOR_TYPES = (
     BinarySensorEntityDescription(
-        key="current_project_in_progress",
-        translation_key="current_project_in_progress",
+        key="job_in_progress",
+        translation_key="job_in_progress",
     ),
     BinarySensorEntityDescription(
-        key="current_project_complete",
-        translation_key="current_project_complete",
+        key="job_complete",
+        translation_key="job_complete",
     ),
     BinarySensorEntityDescription(
-        key="current_project_failed",
-        translation_key="current_project_failed",
+        key="job_failed",
+        translation_key="job_failed",
     ),
     BinarySensorEntityDescription(
-        key="current_project_is_paused",
-        translation_key="current_project_is_paused",
+        key="job_is_paused",
+        translation_key="job_is_paused",
     ),
     BinarySensorEntityDescription(
         key="printer_online",
