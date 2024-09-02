@@ -515,6 +515,9 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     async def _setup_anycubic_api_connection(self, start_up: bool = False):
         store = Store[dict[str, Any]](self.hass, STORAGE_VERSION, STORAGE_KEY)
 
+        if self.entry.data.get(CONF_USER_TOKEN) is None:
+            raise ConfigEntryAuthFailed("Authentication Token not found.")
+
         try:
             # config = await store.async_load()
             cookie_jar = CookieJar(unsafe=True)
