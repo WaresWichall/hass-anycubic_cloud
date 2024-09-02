@@ -301,7 +301,11 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 "device_status_code": printer.device_status,
                 "is_printing_code": printer.is_printing,
                 "print_status_code": printer.latest_project_raw_print_status,
+            },
+            "dry_status_is_drying": {
                 "dry_status_code": printer.primary_drying_status_raw_status_code,
+            },
+            "secondary_dry_status_is_drying": {
                 "secondary_dry_status_code": printer.secondary_drying_status_raw_status_code,
             },
             "job_name": {

@@ -1,5 +1,6 @@
 """Binary sensors for Anycubic Cloud."""
 from __future__ import annotations
+from typing import Any
 
 from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
@@ -13,7 +14,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from .const import CONF_PRINTER_ID_LIST, COORDINATOR, DOMAIN
 from .coordinator import AnycubicCloudDataUpdateCoordinator
 from .entity import AnycubicCloudEntity
-from .helpers import printer_entity_unique_id, printer_state_for_key
+from .helpers import printer_attributes_for_key, printer_entity_unique_id, printer_state_for_key
 
 PRIMARY_MULTI_COLOR_BOX_SENSOR_TYPES = (
     BinarySensorEntityDescription(
@@ -117,3 +118,12 @@ class AnycubicBinarySensor(AnycubicCloudEntity, BinarySensorEntity):
         return bool(
             printer_state_for_key(self.coordinator, self._printer_id, self.entity_description.key)
         )
+
+    @property
+    def state_attributes(self) -> dict[str, Any] | None:
+        """Return state attributes."""
+        attrib = printer_attributes_for_key(self.coordinator, self._printer_id, self.entity_description.key)
+        if attrib is not None:
+            return attrib
+        else:
+            return super().state_attributes
