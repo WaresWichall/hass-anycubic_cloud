@@ -551,6 +551,9 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             if printer_status is None:
                 raise ConfigEntryAuthFailed("Printer not found. Check config.")
 
+        except ConfigEntryAuthFailed:
+            raise
+
         except Exception as error:
             raise ConfigEntryAuthFailed(f"Authentication failed with unknown Error. Check credentials {error}")
 
