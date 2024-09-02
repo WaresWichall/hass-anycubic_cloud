@@ -56,6 +56,29 @@ MQTT_CONNECT_MODES = {
 }
 
 
+def async_create_anycubic_api(hass, username, password):
+    cookie_jar = CookieJar(unsafe=True)
+    websession = async_create_clientsession(
+        hass,
+        cookie_jar=cookie_jar,
+    )
+    return AnycubicAPI(
+        api_username=username,
+        api_password=password,
+        session=websession,
+        cookie_jar=cookie_jar,
+        debug_logger=LOGGER,
+    )
+
+
+async def async_load_tokens_from_store(hass, anycubic_api):
+    store = Store[dict[str, Any]](hass, STORAGE_VERSION, STORAGE_KEY)
+    config = await store.async_load()
+
+    if config:
+        anycubic_api.load_tokens_from_dict(config)
+
+
 class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for AnycubicCloud integration."""
 
@@ -83,18 +106,7 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
         return await self.async_step_reauth_confirm()
 
     def _async_create_anycubic_api(self):
-        cookie_jar = CookieJar(unsafe=True)
-        websession = async_create_clientsession(
-            self.hass,
-            cookie_jar=cookie_jar,
-        )
-        return AnycubicAPI(
-            api_username=self._username,
-            api_password=self._password,
-            session=websession,
-            cookie_jar=cookie_jar,
-            debug_logger=LOGGER,
-        )
+        return async_create_anycubic_api(self.hass, self._username, self._password)
 
     async def _async_check_anycubic_api_instance_exists(self):
         if self._anycubic_api is not None:
@@ -105,11 +117,7 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
         if not self.entry:
             return
 
-        store = Store[dict[str, Any]](self.hass, STORAGE_VERSION, STORAGE_KEY)
-        config = await store.async_load()
-
-        if config:
-            self._anycubic_api.load_tokens_from_dict(config)
+        await async_load_tokens_from_store(self.hass, self._anycubic_api)
 
     async def _async_check_login_errors(self):
         success = await self._anycubic_api.check_api_tokens()
@@ -279,6 +287,10 @@ class AnycubicCloudOptionsFlowHandler(OptionsFlow):
     def __init__(self, entry: ConfigEntry) -> None:
         """Initialize Anycubic Cloud options flow."""
         self.entry = entry
+        self._password: str | None = None
+        self._username: str | None = None
+        self._anycubic_api: AnycubicAPI | None = None
+        self._supports_drying = False
 
     def _build_options_schema(self):
         schema = dict()
@@ -288,20 +300,22 @@ class AnycubicCloudOptionsFlowHandler(OptionsFlow):
             default=self.entry.options.get(CONF_MQTT_CONNECT_MODE, AnycubicMQTTConnectMode.Printing_Only)
         )] = vol.In(MQTT_CONNECT_MODES)
 
-        for x in range(MAX_DRYING_PRESETS):
-            num = x + 1
+        if self._supports_drying:
 
-            dur_key = f"{CONF_DRYING_PRESET_DURATION_}{num}"
-            schema[vol.Optional(
-                dur_key,
-                default=self.entry.options.get(dur_key, vol.UNDEFINED)
-            )] = cv.positive_int
+            for x in range(MAX_DRYING_PRESETS):
+                num = x + 1
 
-            temp_key = f"{CONF_DRYING_PRESET_TEMPERATURE_}{num}"
-            schema[vol.Optional(
-                temp_key,
-                default=self.entry.options.get(temp_key, vol.UNDEFINED)
-            )] = cv.positive_int
+                dur_key = f"{CONF_DRYING_PRESET_DURATION_}{num}"
+                schema[vol.Optional(
+                    dur_key,
+                    default=self.entry.options.get(dur_key, vol.UNDEFINED)
+                )] = cv.positive_int
+
+                temp_key = f"{CONF_DRYING_PRESET_TEMPERATURE_}{num}"
+                schema[vol.Optional(
+                    temp_key,
+                    default=self.entry.options.get(temp_key, vol.UNDEFINED)
+                )] = cv.positive_int
 
         schema[vol.Optional(
             CONF_DEBUG,
@@ -309,6 +323,32 @@ class AnycubicCloudOptionsFlowHandler(OptionsFlow):
         )] = cv.boolean
 
         return vol.Schema(schema)
+
+    async def _async_check_printer_options(self):
+        try:
+            self._anycubic_api = async_create_anycubic_api(
+                self.hass,
+                self.entry.data[CONF_USERNAME],
+                self.entry.data[CONF_PASSWORD],
+            )
+
+            await async_load_tokens_from_store(
+                self.hass,
+                self._anycubic_api,
+            )
+            await self._anycubic_api.check_api_tokens()
+
+            printer_list = await self._anycubic_api.list_my_printers()
+
+            if printer_list and len(printer_list) > 0:
+                for printer in printer_list:
+
+                    if printer.supports_function_multi_color_box:
+                        self._supports_drying = True
+                        break
+
+        except Exception:
+            self._anycubic_api = None
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
@@ -318,6 +358,8 @@ class AnycubicCloudOptionsFlowHandler(OptionsFlow):
 
         if user_input:
             return self.async_create_entry(data=user_input)
+
+        await self._async_check_printer_options()
 
         return self.async_show_form(
             step_id="init",
