@@ -7,6 +7,7 @@ from homeassistant.components.switch import (
     SwitchEntityDescription,
 )
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
@@ -36,6 +37,7 @@ GLOBAL_SWITCH_TYPES = (
     SwitchEntityDescription(
         key="manual_mqtt_connection_enabled",
         translation_key="manual_mqtt_connection_enabled",
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
 )
 
