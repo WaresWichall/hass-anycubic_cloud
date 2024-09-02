@@ -108,6 +108,13 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
     def _async_create_anycubic_api(self):
         return async_create_anycubic_api(self.hass, self._username, self._password)
 
+    def _errors_unknown_authentication_failure(
+        self,
+        error,
+    ):
+        LOGGER.error("Authentication failed with unknown Error. Check credentials %s", error)
+        return {"base": "cannot_connect"}
+
     async def _async_check_anycubic_api_instance_exists(self):
         if self._anycubic_api is not None:
             return
@@ -127,6 +134,22 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
 
         return {}
 
+    async def _async_check_authentication_with_user_input(
+        self,
+        user_input,
+    ):
+        self._username = user_input[CONF_USERNAME]
+        self._password = user_input[CONF_PASSWORD]
+
+        try:
+            await self._async_check_anycubic_api_instance_exists()
+            errors = await self._async_check_login_errors()
+
+        except Exception as error:
+            errors = self._errors_unknown_authentication_failure(error)
+
+        return errors
+
     async def async_step_reauth_confirm(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
@@ -134,16 +157,7 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
         errors = {}
 
         if user_input is not None:
-            self._username = user_input[CONF_USERNAME]
-            self._password = user_input[CONF_PASSWORD]
-
-            try:
-                await self._async_check_anycubic_api_instance_exists()
-                errors = await self._async_check_login_errors()
-
-            except Exception as error:
-                LOGGER.error("Authentication failed with unknown Error. Check credentials %s", error)
-                errors = {"base": "cannot_connect"}
+            errors = await self._async_check_authentication_with_user_input(user_input)
 
             if not errors:
                 if self.entry:
@@ -170,16 +184,7 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
         errors = {}
 
         if user_input is not None:
-            self._username = user_input[CONF_USERNAME]
-            self._password = user_input[CONF_PASSWORD]
-
-            try:
-                await self._async_check_anycubic_api_instance_exists()
-                errors = await self._async_check_login_errors()
-
-            except Exception as error:
-                LOGGER.error("Authentication failed with unknown Error. Check credentials %s", error)
-                errors = {"base": "cannot_connect"}
+            errors = await self._async_check_authentication_with_user_input(user_input)
 
             if not errors:
                 return await self.async_step_printer()
@@ -214,8 +219,7 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
             printer_id_map = {f"{x.id}": x.name for x in printer_list}
 
         except Exception as error:
-            LOGGER.error("Authentication failed with unknown Error. Check credentials %s", error)
-            errors = {"base": "cannot_connect"}
+            errors = self._errors_unknown_authentication_failure(error)
 
         if user_input and not errors:
             printer_id_list = list([int(x) for x in user_input[CONF_PRINTER_ID_LIST]])
@@ -230,8 +234,7 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
                         break
 
                 except Exception as error:
-                    LOGGER.error("Authentication failed with unknown Error. Check credentials %s", error)
-                    errors = {"base": "cannot_connect"}
+                    errors = self._errors_unknown_authentication_failure(error)
                     break
 
             if not errors:

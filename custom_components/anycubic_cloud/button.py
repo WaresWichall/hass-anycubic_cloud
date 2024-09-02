@@ -23,7 +23,7 @@ from .const import (
 )
 from .coordinator import AnycubicCloudDataUpdateCoordinator
 from .entity import AnycubicCloudEntity
-from .helpers import printer_attributes_for_key, printer_entity_unique_id, printer_state_for_key
+from .helpers import printer_attributes_for_key, printer_state_for_key
 
 PRIMARY_DRYING_PRESET_BUTTON_TYPES = list([
     ButtonEntityDescription(
@@ -147,12 +147,10 @@ class AnycubicCloudButton(AnycubicCloudEntity, ButtonEntity):
         self,
         coordinator: AnycubicCloudDataUpdateCoordinator,
         printer_id: int,
-        description: ButtonEntityDescription,
+        entity_description: ButtonEntityDescription,
     ) -> None:
         """Initialize."""
-        super().__init__(coordinator, printer_id)
-        self.entity_description = description
-        self._attr_unique_id = printer_entity_unique_id(coordinator, self._printer_id, description.key)
+        super().__init__(coordinator, printer_id, entity_description)
 
     async def async_press(self) -> None:
         """Press the button."""

@@ -19,7 +19,7 @@ from .const import (
 )
 from .coordinator import AnycubicCloudDataUpdateCoordinator
 from .entity import AnycubicCloudEntity
-from .helpers import printer_entity_unique_id, printer_state_for_key
+from .helpers import printer_state_for_key
 
 
 IMAGE_TYPES = (
@@ -76,13 +76,11 @@ class AnycubicCloudImage(AnycubicCloudEntity, ImageEntity):
         hass: HomeAssistant,
         coordinator: AnycubicCloudDataUpdateCoordinator,
         printer_id: int,
-        description: ImageEntityDescription,
+        entity_description: ImageEntityDescription,
     ) -> None:
         """Initialize."""
-        super().__init__(coordinator, printer_id)
+        super().__init__(coordinator, printer_id, entity_description)
         ImageEntity.__init__(self, hass)
-        self.entity_description = description
-        self._attr_unique_id = printer_entity_unique_id(coordinator, self._printer_id, description.key)
         self._known_image_url = None
 
     def reset_cached_image(self):

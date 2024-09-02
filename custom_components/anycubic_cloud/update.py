@@ -22,7 +22,7 @@ from .const import (
 )
 from .coordinator import AnycubicCloudDataUpdateCoordinator
 from .entity import AnycubicCloudEntity
-from .helpers import printer_attributes_for_key, printer_entity_unique_id, printer_state_for_key
+from .helpers import printer_attributes_for_key, printer_state_for_key
 
 
 PRIMARY_MULTI_COLOR_BOX_UPDATE_TYPES = (
@@ -92,9 +92,7 @@ class AnycubicUpdateEntity(AnycubicCloudEntity, UpdateEntity):
         entity_description: UpdateEntityDescription,
     ) -> None:
         """Initiate Anycubic Sensor."""
-        super().__init__(coordinator, printer_id)
-        self.entity_description = entity_description
-        self._attr_unique_id = printer_entity_unique_id(coordinator, self._printer_id, entity_description.key)
+        super().__init__(coordinator, printer_id, entity_description)
 
     @property
     def installed_version(self) -> str:

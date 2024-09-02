@@ -14,7 +14,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from .const import CONF_PRINTER_ID_LIST, COORDINATOR, DOMAIN
 from .coordinator import AnycubicCloudDataUpdateCoordinator
 from .entity import AnycubicCloudEntity
-from .helpers import printer_attributes_for_key, printer_entity_unique_id, printer_state_for_key
+from .helpers import printer_attributes_for_key, printer_state_for_key
 
 PRIMARY_MULTI_COLOR_BOX_SENSOR_TYPES = (
     BinarySensorEntityDescription(
@@ -108,9 +108,7 @@ class AnycubicBinarySensor(AnycubicCloudEntity, BinarySensorEntity):
         entity_description: BinarySensorEntityDescription,
     ) -> None:
         """Initiate Anycubic Binary Sensor."""
-        super().__init__(coordinator, printer_id)
-        self.entity_description = entity_description
-        self._attr_unique_id = printer_entity_unique_id(coordinator, self._printer_id, entity_description.key)
+        super().__init__(coordinator, printer_id, entity_description)
 
     @property
     def is_on(self) -> bool:
