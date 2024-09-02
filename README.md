@@ -1,5 +1,11 @@
 # Anycubic Cloud Home Assistant Integration
 
+## NEW LOGIN METHOD
+
+Anycubic decided to break the login method I was using before, so you'll need to follow the install steps below to get a token, and set up the integration from a fresh start.
+
+Unfortunately this means that if you get logged out (by logging in elsewhere), you'll need to get a fresh token as below and re-authenticate the integration.
+
 ## WORK IN PROGRESS 
 
 Component is working very well so far with:
@@ -54,11 +60,18 @@ If you find updates for any sensors are only received every minute, please open 
 
 ## How to Install
 
-1. Add this repository to HACS under ... > Custom Repositories as an **Integration**
-2. Restart Home Assistant
-3. Go to Settings>Integrations>Add New and search Anycubic
-4. Enter your **email** and password, then press enter
-5. Select your printer, then you're good to go!
+1. Go to the [Anycubic Cloud Website](https://cloud-universe.anycubic.com/file)
+2. Log in
+3. Open Developer Tools in your browser
+4. Paste `window.localStorage["XX-Token"]` into the **console**
+5. Copy/save the long string of numbers and letters without the `''` - this is your user token.
+6. Add this repository to HACS under ... > Custom Repositories as an **Integration**
+7. Restart Home Assistant
+8. Go to Settings > Integrations > Add New and search Anycubic
+9. Paste your **user token** into the `User Token` box.
+10. Select your printer, then you're good to go!
+
+<img width="400" alt="" src="https://raw.githubusercontent.com/WaresWichall/hass-anycubic_cloud/dev/screenshots/anycubic_api_token.png">
 
 
 ## UI

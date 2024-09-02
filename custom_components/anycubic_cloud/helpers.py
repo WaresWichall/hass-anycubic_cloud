@@ -1,6 +1,5 @@
 from enum import IntEnum
 
-from homeassistant.const import CONF_USERNAME
 from homeassistant.helpers.device_registry import CONNECTION_NETWORK_MAC, DeviceInfo
 
 from .const import DOMAIN, MANUFACTURER
@@ -8,8 +7,9 @@ from .const import DOMAIN, MANUFACTURER
 
 def build_printer_device_info(entry_data, coordinator_data, printer_id: int) -> DeviceInfo:
     printer_data = coordinator_data['printers'][printer_id]['states']
+    user_data = coordinator_data['user_info']
     return DeviceInfo(
-        identifiers={(DOMAIN, f"{entry_data[CONF_USERNAME]}-{printer_data['id']}")},
+        identifiers={(DOMAIN, f"{user_data['id']}-{printer_data['id']}")},
         manufacturer=MANUFACTURER,
         model=printer_data["machine_name"],
         name=printer_data["name"],

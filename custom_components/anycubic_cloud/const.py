@@ -25,6 +25,7 @@ ATTR_CONFIG_ENTRY = "config_entry"
 
 ENTITY_ID_DRYING_START_PRESET_ = "drying_start_preset_"
 
+CONF_USER_TOKEN = "user_token"
 CONF_PRINTER_ID = "printer_id"
 CONF_PRINTER_ID_LIST = "printer_ids"
 CONF_PRINTER_NAME = "printer_name"

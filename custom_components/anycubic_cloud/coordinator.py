@@ -10,7 +10,6 @@ import traceback
 from aiohttp import CookieJar
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import callback, CoreState, HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
@@ -30,6 +29,7 @@ from .const import (
     CONF_DRYING_PRESET_TEMPERATURE_,
     CONF_MQTT_CONNECT_MODE,
     CONF_PRINTER_ID_LIST,
+    CONF_USER_TOKEN,
     DEFAULT_SCAN_INTERVAL,
     ENTITY_ID_DRYING_START_PRESET_,
     FAILED_UPDATE_DELAY,
@@ -347,6 +347,11 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     def _build_coordinator_data(self):
         data_dict = dict()
+
+        data_dict['user_info'] = {
+            "id": self._anycubic_api.api_user_id
+        }
+
         data_dict['printers'] = dict()
 
         for printer_id, printer in self._anycubic_printers.items():
@@ -511,30 +516,29 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         store = Store[dict[str, Any]](self.hass, STORAGE_VERSION, STORAGE_KEY)
 
         try:
-            config = await store.async_load()
+            # config = await store.async_load()
             cookie_jar = CookieJar(unsafe=True)
             websession = async_create_clientsession(
                 self.hass,
                 cookie_jar=cookie_jar,
             )
             self._anycubic_api = AnycubicAPI(
-                api_username=self.entry.data[CONF_USERNAME],
-                api_password=self.entry.data[CONF_PASSWORD],
                 session=websession,
                 cookie_jar=cookie_jar,
                 debug_logger=LOGGER,
+                auth_sig_token=self.entry.data[CONF_USER_TOKEN],
                 mqtt_callback_printer_update=self._mqtt_callback_data_updated,
                 mqtt_callback_printer_busy=self._mqtt_callback_print_job_started,
             )
 
             self._anycubic_api.set_mqtt_log_all_messages(self.entry.options.get(CONF_DEBUG))
 
-            if start_up and config is not None:
-                LOGGER.debug("Loading tokens from store.")
-                try:
-                    self._anycubic_api.load_tokens_from_dict(config)
-                except Exception as e:
-                    LOGGER.debug(f"Error loading tokens from store: {e}")
+            # if start_up and config is not None:
+            #     LOGGER.debug("Loading tokens from store.")
+            #     try:
+            #         self._anycubic_api.load_tokens_from_dict(config)
+            #     except Exception as e:
+            #         LOGGER.debug(f"Error loading tokens from store: {e}")
 
             success = await self._anycubic_api.check_api_tokens()
             if not success:
@@ -573,7 +577,10 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             self._printer_device_map[printer_device.id] = printer_id
 
     async def _check_or_save_tokens(self):
-        await self._anycubic_api.check_api_tokens()
+        success = await self._anycubic_api.check_api_tokens()
+
+        if not success:
+            raise ConfigEntryAuthFailed("Authentication failed. Check credentials.")
 
         if self._anycubic_api.tokens_changed:
             store = Store[dict[str, Any]](self.hass, STORAGE_VERSION, STORAGE_KEY)
@@ -612,6 +619,9 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             self._failed_updates = 0
 
             await self._check_anycubic_mqtt_connection()
+
+        except ConfigEntryAuthFailed:
+            raise
 
         except AnycubicAPIParsingError as error:
             # self._anycubic_api.clear_all_tokens()

@@ -99,23 +99,24 @@ from .anycubic_helpers import (
 class AnycubicAPI:
     def __init__(
         self,
-        api_username,
-        api_password,
         session,
         cookie_jar,
         debug_logger=None,
         auth_as_app=False,
+        auth_sig_token=None,
     ):
         # Cache
         self._cache_key_path = None
         self._cache_tokens_path = None
+        self._cache_sig_token_path = None
         # API
         self.base_url = f"https://{BASE_DOMAIN}/"
         self._public_api_root = f"{self.base_url}{PUBLIC_API_ENDPOINT}"
         # Internal
-        self._api_username = api_username
-        self._api_password = api_password
+        self._api_username = None
+        self._api_password = None
         self._api_user_id = None
+        self._api_user_email = None
         self._session: aiohttp.ClientSession = session
         self._sessionjar = cookie_jar
         self._cookie_state = generate_cookie_state()
@@ -132,12 +133,38 @@ class AnycubicAPI:
         # ANYCUBIC AUTH VARS
         self._login_auth_code = None
         self._auth_access_token = None
-        self._auth_sig_token = None
+        self._auth_sig_token = auth_sig_token
         self._auth_referer = None
+
+    def set_username_password(
+        self,
+        api_username,
+        api_password,
+    ):
+        self._api_username = api_username
+        self._api_password = api_password
+
+    def set_auth_sig_token(
+        self,
+        auth_sig_token,
+    ):
+        self._auth_sig_token = auth_sig_token
 
     @property
     def tokens_changed(self):
         return self._tokens_changed
+
+    @property
+    def api_user_id(self):
+        return self._api_user_id
+
+    @property
+    def api_user_email(self):
+        return self._api_user_email
+
+    @property
+    def api_user_identifier(self):
+        return self._api_user_email or self._api_user_id
 
     def _log_to_debug(self, msg):
         if self._debug_logger:
@@ -359,6 +386,12 @@ class AnycubicAPI:
             query=query,
             params=params
         )
+
+        if resp is None or not isinstance(resp['data'], str):
+            err_msg = "Unexpected response for login, rate limited?"
+            self._log_to_warn(err_msg)
+            raise AnycubicAPIParsingError(err_msg)
+
         self._login_auth_code = resp['data']
         self._log_to_debug("Successfully logged in.")
 
@@ -473,6 +506,16 @@ class AnycubicAPI:
         async with aio_file_open(self._cache_key_path, mode='w') as wo:
             await wo.write(json.dumps(self.build_token_dict()))
 
+    async def _load_cached_sig_token(self):
+        if self._cache_sig_token_path is not None and (await aio_path.exists(self._cache_sig_token_path)):
+
+            try:
+                async with aio_file_open(self._cache_sig_token_path, mode='r') as wo:
+                    self._auth_sig_token = await wo.read()
+
+            except Exception:
+                pass
+
     async def _load_main_tokens(self):
         tokens_loaded = False
         if self._cache_tokens_path is not None and (await aio_path.exists(self._cache_tokens_path)):
@@ -522,40 +565,55 @@ class AnycubicAPI:
         self,
         use_known=True,
     ):
-        if not self._api_tokens_loaded():
-            cached_tokens = await self._load_main_tokens()
-        else:
-            cached_tokens = True
-        if cached_tokens:
-            try:
-                await self.get_user_info()
-                return True
-            except APIAuthTokensExpired:
-                cached_tokens = None
-                self._log_to_debug("Tokens expired.")
-        if not cached_tokens:
-            try:
-                await self._login_retrieve_tokens(
-                    use_known=use_known
-                )
-                await self._save_main_tokens()
-            except Exception:
-                return False
+        self._set_known_app_vars()
+        await self._load_cached_sig_token()
         try:
             await self.get_user_info()
-        except Exception:
+            return True
+        except APIAuthTokensExpired:
+            self._log_to_debug("Tokens expired.")
             return False
-        return True
+
+    # async def _check_can_access_api(
+    #     self,
+    #     use_known=True,
+    # ):
+    #     if not self._api_tokens_loaded():
+    #         cached_tokens = await self._load_main_tokens()
+    #     else:
+    #         cached_tokens = True
+    #     if cached_tokens:
+    #         try:
+    #             await self.get_user_info()
+    #             return True
+    #         except APIAuthTokensExpired:
+    #             cached_tokens = None
+    #             self._log_to_debug("Tokens expired.")
+    #     if not cached_tokens:
+    #         try:
+    #             await self._login_retrieve_tokens(
+    #                 use_known=use_known
+    #             )
+    #             await self._save_main_tokens()
+    #         except Exception:
+    #             return False
+    #     try:
+    #         await self.get_user_info()
+    #     except Exception:
+    #         return False
+    #     return True
 
     async def check_api_tokens(self):
         if not await self._check_can_access_api(True):
-            if self._api_tokens_loaded() and not self._auth_as_app:
-                self._log_to_debug(
-                    "Login failed, retrying with new variables..."
-                )
-                return await self._check_can_access_api(False)
-            else:
-                return False
+            return False
+
+            # if self._api_tokens_loaded() and not self._auth_as_app:
+            #     self._log_to_debug(
+            #         "Login failed, retrying with new variables..."
+            #     )
+            #     return await self._check_can_access_api(False)
+            # else:
+            #     return False
 
         return True
 
@@ -694,6 +752,7 @@ class AnycubicAPI:
             raise APIAuthTokensExpired('Invalid credentials.')
 
         self._api_user_id = data['id']
+        self._api_user_email = data['user_email']
 
         return data
 

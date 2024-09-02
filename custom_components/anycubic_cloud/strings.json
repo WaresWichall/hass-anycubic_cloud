@@ -13,15 +13,13 @@
     "step": {
       "user": {
         "data": {
-          "username": "Username",
-          "password": "Password",
+          "user_token": "User Token",
           "name": "Printer Name"
         }
       },
       "reauth_confirm": {
         "data": {
-          "username": "Username",
-          "password": "Password",
+          "user_token": "User Token",
           "name": "Printer Name"
         }
       },
