@@ -502,6 +502,8 @@ class DeleteFileLocal(BaseDeletePrinterFile):
             await printer.delete_local_file(
                 file_name=file_name,
             )
+            await asyncio.sleep(2)
+            await printer.request_local_file_list()
             await asyncio.sleep(5)
             await printer.request_local_file_list()
 
@@ -523,6 +525,8 @@ class DeleteFileUdisk(BaseDeletePrinterFile):
             await printer.delete_udisk_file(
                 file_name=file_name,
             )
+            await asyncio.sleep(2)
+            await printer.request_udisk_file_list()
             await asyncio.sleep(5)
             await printer.request_udisk_file_list()
 

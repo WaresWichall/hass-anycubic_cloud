@@ -13,15 +13,13 @@
     "step": {
       "user": {
         "data": {
-          "username": "Username",
-          "password": "Password",
+          "user_token": "User Token",
           "name": "Printer Name"
         }
       },
       "reauth_confirm": {
         "data": {
-          "username": "Username",
-          "password": "Password",
+          "user_token": "User Token",
           "name": "Printer Name"
         }
       },
@@ -52,17 +50,17 @@
   },
   "entity": {
     "binary_sensor": {
-      "current_project_in_progress": {
-        "name": "Project In Progress"
+      "job_in_progress": {
+        "name": "Job In Progress"
       },
-      "current_project_complete": {
-        "name": "Project Complete"
+      "job_complete": {
+        "name": "Job Complete"
       },
-      "current_project_failed": {
-        "name": "Project Failed"
+      "job_failed": {
+        "name": "Job Failed"
       },
-      "current_project_is_paused": {
-        "name": "Project Paused"
+      "job_is_paused": {
+        "name": "Job Paused"
       },
       "printer_online": {
         "name": "Printer Online"
@@ -136,13 +134,12 @@
         "name": "Refresh MQTT Connection"
       }
     },
+    "image": {
+      "job_image_url": {
+        "name": "Job Preview"
+      }
+    },
     "sensor": {
-      "device_status": {
-        "name": "Raw Device Status Code"
-      },
-      "is_printing": {
-        "name": "Raw Is Printing Code"
-      },
       "current_status": {
         "name": "Current Status"
       },
@@ -152,41 +149,62 @@
       "curr_hotbed_temp": {
         "name": "Hotbed Temperature"
       },
-      "current_project_name": {
-        "name": "Project Name"
+      "job_name": {
+        "name": "Job Name"
       },
-      "current_project_progress": {
-        "name": "Project Progress %"
+      "job_progress": {
+        "name": "Job Progress %"
       },
-      "current_project_created_timestamp": {
-        "name": "Project Created At"
+      "job_time_elapsed": {
+        "name": "Job Time Elapsed"
       },
-      "current_project_finished_timestamp": {
-        "name": "Project Finished At"
+      "job_time_remaining": {
+        "name": "Job Time Remaining"
       },
-      "current_project_time_elapsed": {
-        "name": "Project Time Elapsed"
+      "job_eta": {
+        "name": "Job ETA"
       },
-      "current_project_time_remaining": {
-        "name": "Project Time Remaining"
+      "job_state": {
+        "name": "Job State"
       },
-      "current_project_print_total_time": {
-        "name": "Project Total Time Taken"
+      "job_current_layer": {
+        "name": "Job Current Layer"
       },
-      "print_state": {
-        "name": "Print State"
+      "job_total_layers": {
+        "name": "Job Total Layers"
       },
-      "raw_print_status": {
-        "name": "Raw Print Status Code"
+      "job_speed_mode": {
+        "name": "Job Speed Mode"
       },
-      "print_approximate_completion_time": {
-        "name": "Approximate Completion Time"
+      "job_z_thick": {
+        "name": "Job Z Thickness"
       },
-      "print_current_layer": {
-        "name": "Current Layer"
+      "job_model_height": {
+        "name": "Job Model Height"
       },
-      "print_total_layers": {
-        "name": "Total Layers"
+      "job_anti_alias_count": {
+        "name": "Job Anti Alias"
+      },
+      "job_on_time": {
+        "name": "Job On Time"
+      },
+      "job_off_time": {
+        "name": "Job Off Time"
+      },
+      "job_bottom_time": {
+        "name": "Job Bottom Time"
+      },
+      "job_bottom_layers": {
+        "name": "Job Bottom Layers"
+      },
+      "job_z_up_height": {
+        "name": "Job Z Up Height"
+      },
+      "job_z_up_speed": {
+        "name": "Job Z Up Speed"
+      },
+      "job_z_down_speed": {
+        "name": "Job Z Down Speed"
       },
       "target_nozzle_temp": {
         "name": "Target Nozzle Temperature"
@@ -194,14 +212,8 @@
       "target_hotbed_temp": {
         "name": "Target Hotbed Temperature"
       },
-      "print_speed_mode": {
-        "name": "Raw Print Speed Mode Code"
-      },
       "print_speed_pct": {
         "name": "Print Speed %"
-      },
-      "print_z_thick": {
-        "name": "Z Thickness"
       },
       "fan_speed_pct": {
         "name": "Fan Speed %"
@@ -215,14 +227,11 @@
       "file_list_cloud": {
         "name": "File List (Cloud)"
       },
-      "multi_color_box_spools": {
-        "name": "Multi-Color Box Spools"
+      "ace_spools": {
+        "name": "ACE Spools"
       },
-      "multi_color_box_current_temperature": {
-        "name": "Multi-Color Box Current Temperature"
-      },
-      "dry_status_raw_status_code": {
-        "name": "Raw Drying Status Code"
+      "ace_current_temperature": {
+        "name": "ACE Current Temperature"
       },
       "dry_status_target_temperature": {
         "name": "Drying Target Temperature"
@@ -233,14 +242,11 @@
       "dry_status_remaining_time": {
         "name": "Drying Remaining Time"
       },
-      "secondary_multi_color_box_spools": {
-        "name": "Secondary Multi-Color Box Spools"
+      "secondary_ace_spools": {
+        "name": "Secondary ACE Spools"
       },
-      "secondary_multi_color_box_current_temperature": {
-        "name": "Secondary Multi-Color Box Current Temperature"
-      },
-      "secondary_dry_status_raw_status_code": {
-        "name": "Secondary Raw Drying Status Code"
+      "secondary_ace_current_temperature": {
+        "name": "Secondary ACE Current Temperature"
       },
       "secondary_dry_status_target_temperature": {
         "name": "Secondary Drying Target Temperature"
@@ -250,33 +256,6 @@
       },
       "secondary_dry_status_remaining_time": {
         "name": "Secondary Drying Remaining Time"
-      },
-      "print_model_height": {
-        "name": "Print Model Height"
-      },
-      "print_anti_alias_count": {
-        "name": "Print Anti Alias"
-      },
-      "print_on_time": {
-        "name": "Print On Time"
-      },
-      "print_off_time": {
-        "name": "Print Off Time"
-      },
-      "print_bottom_time": {
-        "name": "Print Bottom Time"
-      },
-      "print_bottom_layers": {
-        "name": "Print Bottom Layers"
-      },
-      "print_z_up_height": {
-        "name": "Print Z Up Height"
-      },
-      "print_z_up_speed": {
-        "name": "Print Z Up Speed"
-      },
-      "print_z_down_speed": {
-        "name": "Print Z Down Speed"
       }
     },
     "switch": {
@@ -304,8 +283,8 @@
   },
   "services": {
     "multi_color_box_set_slot_pla": {
-      "name": "Multi-Color Box Set Slot - PLA",
-      "description": "Sets PLA slot properties in Multi-Color Box unit.",
+      "name": "ACE Set Slot - PLA",
+      "description": "Sets PLA slot properties in ACE unit.",
       "fields": {
         "config_entry": {
           "name": "Config Entry",
@@ -342,8 +321,8 @@
       }
     },
     "multi_color_box_set_slot_petg": {
-      "name": "Multi-Color Box Set Slot - PETG",
-      "description": "Sets PETG slot properties in Multi-Color Box unit.",
+      "name": "ACE Set Slot - PETG",
+      "description": "Sets PETG slot properties in ACE unit.",
       "fields": {
         "config_entry": {
           "name": "Config Entry",
@@ -380,8 +359,8 @@
       }
     },
     "multi_color_box_set_slot_abs": {
-      "name": "Multi-Color Box Set Slot - ABS",
-      "description": "Sets ABS slot properties in Multi-Color Box unit.",
+      "name": "ACE Set Slot - ABS",
+      "description": "Sets ABS slot properties in ACE unit.",
       "fields": {
         "config_entry": {
           "name": "Config Entry",
@@ -418,8 +397,8 @@
       }
     },
     "multi_color_box_set_slot_pacf": {
-      "name": "Multi-Color Box Set Slot - PACF",
-      "description": "Sets PACF slot properties in Multi-Color Box unit.",
+      "name": "ACE Set Slot - PACF",
+      "description": "Sets PACF slot properties in ACE unit.",
       "fields": {
         "config_entry": {
           "name": "Config Entry",
@@ -456,8 +435,8 @@
       }
     },
     "multi_color_box_set_slot_pc": {
-      "name": "Multi-Color Box Set Slot - PC",
-      "description": "Sets PC slot properties in Multi-Color Box unit.",
+      "name": "ACE Set Slot - PC",
+      "description": "Sets PC slot properties in ACE unit.",
       "fields": {
         "config_entry": {
           "name": "Config Entry",
@@ -494,8 +473,8 @@
       }
     },
     "multi_color_box_set_slot_asa": {
-      "name": "Multi-Color Box Set Slot - ASA",
-      "description": "Sets ASA slot properties in Multi-Color Box unit.",
+      "name": "ACE Set Slot - ASA",
+      "description": "Sets ASA slot properties in ACE unit.",
       "fields": {
         "config_entry": {
           "name": "Config Entry",
@@ -532,8 +511,8 @@
       }
     },
     "multi_color_box_set_slot_hips": {
-      "name": "Multi-Color Box Set Slot - HIPS",
-      "description": "Sets HIPS slot properties in Multi-Color Box unit.",
+      "name": "ACE Set Slot - HIPS",
+      "description": "Sets HIPS slot properties in ACE unit.",
       "fields": {
         "config_entry": {
           "name": "Config Entry",
@@ -570,8 +549,8 @@
       }
     },
     "multi_color_box_set_slot_pa": {
-      "name": "Multi-Color Box Set Slot - PA",
-      "description": "Sets PA slot properties in Multi-Color Box unit.",
+      "name": "ACE Set Slot - PA",
+      "description": "Sets PA slot properties in ACE unit.",
       "fields": {
         "config_entry": {
           "name": "Config Entry",
@@ -608,8 +587,8 @@
       }
     },
     "multi_color_box_set_slot_pla_se": {
-      "name": "Multi-Color Box Set Slot - PLA SE",
-      "description": "Sets PLA SE slot properties in Multi-Color Box unit.",
+      "name": "ACE Set Slot - PLA SE",
+      "description": "Sets PLA SE slot properties in ACE unit.",
       "fields": {
         "config_entry": {
           "name": "Config Entry",
@@ -646,8 +625,8 @@
       }
     },
     "multi_color_box_filament_extrude": {
-      "name": "Multi-Color Box Filament Extrude",
-      "description": "Activate filament extrude on ACE Multi-Color Box.",
+      "name": "ACE Filament Extrude",
+      "description": "Activate filament extrude on ACE ACE.",
       "fields": {
         "config_entry": {
           "name": "Config Entry",
@@ -676,8 +655,8 @@
       }
     },
     "multi_color_box_filament_retract": {
-      "name": "Multi-Color Box Filament Retract",
-      "description": "Activate filament retract on ACE Multi-Color Box.",
+      "name": "ACE Filament Retract",
+      "description": "Activate filament retract on ACE ACE.",
       "fields": {
         "config_entry": {
           "name": "Config Entry",
@@ -715,7 +694,7 @@
         },
         "slot_number": {
           "name": "Slot Number List",
-          "description": "Slot Number List (1-4) to map to print colours."
+          "description": "Slot Number List (1-4) to map to print colours. e.g. [1, 2]"
         },
         "uploaded_gcode_file": {
           "name": "Gcode File",
@@ -741,7 +720,7 @@
         },
         "slot_number": {
           "name": "Slot Number List",
-          "description": "Slot Number List (1-4) to map to print colours."
+          "description": "Slot Number List (1-4) to map to print colours. e.g. [1, 2]"
         },
         "uploaded_gcode_file": {
           "name": "Gcode File",

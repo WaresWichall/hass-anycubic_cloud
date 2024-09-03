@@ -172,7 +172,7 @@ export class AnycubicPrintercardCard extends LitElement {
           this.hass,
           this.printerEntities,
           this.printerEntityIdPart,
-          "multi_color_box_spools",
+          "ace_spools",
           "inactive",
         ).state === "active";
       this.hasSecondaryColorbox =
@@ -198,7 +198,7 @@ export class AnycubicPrintercardCard extends LitElement {
         this.hass,
         this.printerEntities,
         this.printerEntityIdPart,
-        "print_state",
+        "job_state",
         "unknown",
       ).state.toLowerCase();
       this.isPrinting = isPrintStatePrinting(printStateString);
@@ -509,7 +509,7 @@ export class AnycubicPrintercardCard extends LitElement {
       this.hass,
       this.printerEntities,
       this.printerEntityIdPart,
-      "project_progress",
+      "job_progress",
       -1.0,
     ).state;
   }

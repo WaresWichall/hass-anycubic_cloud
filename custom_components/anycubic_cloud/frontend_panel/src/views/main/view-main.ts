@@ -87,10 +87,10 @@ export class AnycubicViewMain extends LitElement {
   private printerStateTargetHotbedTemp: number | undefined;
 
   @state()
-  private projectStateProgress: string | undefined;
+  private jobStateProgress: string | undefined;
 
   @state()
-  private projectStatePrintState: string | undefined;
+  private jobStatePrintState: string | undefined;
 
   @state()
   private aceStateFwUpdateAvailable: string | boolean | undefined;
@@ -197,15 +197,15 @@ export class AnycubicViewMain extends LitElement {
         this.hass,
         this.printerEntities,
         this.printerEntityIdPart,
-        "project_progress",
+        "job_progress",
       );
-      this.projectStateProgress =
+      this.jobStateProgress =
         typeof projProgress !== "undefined" ? `${projProgress}%` : "0%";
-      this.projectStatePrintState = getPrinterSensorStateString(
+      this.jobStatePrintState = getPrinterSensorStateString(
         this.hass,
         this.printerEntities,
         this.printerEntityIdPart,
-        "print_state",
+        "job_state",
         true,
       );
       this.aceStateFwUpdateAvailable = getPrinterUpdateEntityState(
@@ -337,8 +337,8 @@ export class AnycubicViewMain extends LitElement {
                 )}
               `
             : nothing}
-          ${this._renderInfoRow("print_state", this.projectStatePrintState)}
-          ${this._renderInfoRow("project_progress", this.projectStateProgress)}
+          ${this._renderInfoRow("job_state", this.jobStatePrintState)}
+          ${this._renderInfoRow("job_progress", this.jobStateProgress)}
           ${this._renderOptionalInfoRow(
             "ace_fw_update_available",
             this.aceStateFwUpdateAvailable,

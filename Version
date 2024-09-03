@@ -10,3 +10,4 @@ Version: 0.0.12 20240816 - Minor bug fix in MQTT reconnect, untested support for
 Version: 0.0.13 20240825 - Bug fixes for multiple printers, HomeAssistant 2024.8 and Resin printers
 Version: 0.0.14 20240829 - Minor bug fixes
 Version: 0.0.15 20240831 - Minor bug fixes
+Version: 0.1.0  20240831 - Breaking changes, removed several raw sensors, add project image preview.

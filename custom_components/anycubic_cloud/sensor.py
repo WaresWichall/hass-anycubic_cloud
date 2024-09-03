@@ -31,22 +31,18 @@ from .const import (
 )
 from .coordinator import AnycubicCloudDataUpdateCoordinator
 from .entity import AnycubicCloudEntity
-from .helpers import printer_attributes_for_key, printer_entity_unique_id, printer_state_for_key
+from .helpers import printer_attributes_for_key, printer_state_for_key
 
 
 PRIMARY_MULTI_COLOR_BOX_SENSOR_TYPES = (
     SensorEntityDescription(
-        key="multi_color_box_current_temperature",
-        translation_key="multi_color_box_current_temperature",
+        key="ace_current_temperature",
+        translation_key="ace_current_temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
     ),
     SensorEntityDescription(
-        key="multi_color_box_spools",
-        translation_key="multi_color_box_spools",
-    ),
-    SensorEntityDescription(
-        key="dry_status_raw_status_code",
-        translation_key="dry_status_raw_status_code",
+        key="ace_spools",
+        translation_key="ace_spools",
     ),
     SensorEntityDescription(
         key="dry_status_target_temperature",
@@ -66,17 +62,13 @@ PRIMARY_MULTI_COLOR_BOX_SENSOR_TYPES = (
 
 SECONDARY_MULTI_COLOR_BOX_SENSOR_TYPES = (
     SensorEntityDescription(
-        key="secondary_multi_color_box_current_temperature",
-        translation_key="secondary_multi_color_box_current_temperature",
+        key="secondary_ace_current_temperature",
+        translation_key="secondary_ace_current_temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
     ),
     SensorEntityDescription(
-        key="secondary_multi_color_box_spools",
-        translation_key="secondary_multi_color_box_spools",
-    ),
-    SensorEntityDescription(
-        key="secondary_dry_status_raw_status_code",
-        translation_key="secondary_dry_status_raw_status_code",
+        key="secondary_ace_spools",
+        translation_key="secondary_ace_spools",
     ),
     SensorEntityDescription(
         key="secondary_dry_status_target_temperature",
@@ -95,8 +87,8 @@ SECONDARY_MULTI_COLOR_BOX_SENSOR_TYPES = (
 
 FDM_SENSOR_TYPES = (
     SensorEntityDescription(
-        key="print_speed_mode",
-        translation_key="print_speed_mode",
+        key="job_speed_mode",
+        translation_key="job_speed_mode",
     ),
     SensorEntityDescription(
         key="print_speed_pct",
@@ -130,58 +122,50 @@ FDM_SENSOR_TYPES = (
 
 LCD_SENSOR_TYPES = (
     SensorEntityDescription(
-        key="print_on_time",
-        translation_key="print_on_time",
+        key="job_on_time",
+        translation_key="job_on_time",
         native_unit_of_measurement=UnitOfTime.SECONDS,
     ),
     SensorEntityDescription(
-        key="print_off_time",
-        translation_key="print_off_time",
+        key="job_off_time",
+        translation_key="job_off_time",
         native_unit_of_measurement=UnitOfTime.SECONDS,
     ),
     SensorEntityDescription(
-        key="print_bottom_time",
-        translation_key="print_bottom_time",
+        key="job_bottom_time",
+        translation_key="job_bottom_time",
         native_unit_of_measurement=UnitOfTime.SECONDS,
     ),
     SensorEntityDescription(
-        key="print_model_height",
-        translation_key="print_model_height",
+        key="job_model_height",
+        translation_key="job_model_height",
         native_unit_of_measurement=UnitOfLength.MILLIMETERS,
     ),
     SensorEntityDescription(
-        key="print_anti_alias_count",
-        translation_key="print_anti_alias_count",
+        key="job_anti_alias_count",
+        translation_key="job_anti_alias_count",
     ),
     SensorEntityDescription(
-        key="print_bottom_layers",
-        translation_key="print_bottom_layers",
+        key="job_bottom_layers",
+        translation_key="job_bottom_layers",
         native_unit_of_measurement=UNIT_LAYERS,
     ),
     SensorEntityDescription(
-        key="print_z_up_height",
-        translation_key="print_z_up_height",
+        key="job_z_up_height",
+        translation_key="job_z_up_height",
         native_unit_of_measurement=UnitOfLength.MILLIMETERS,
     ),
     SensorEntityDescription(
-        key="print_z_up_speed",
-        translation_key="print_z_up_speed",
+        key="job_z_up_speed",
+        translation_key="job_z_up_speed",
     ),
     SensorEntityDescription(
-        key="print_z_down_speed",
-        translation_key="print_z_down_speed",
+        key="job_z_down_speed",
+        translation_key="job_z_down_speed",
     ),
 )
 
 SENSOR_TYPES = (
-    SensorEntityDescription(
-        key="device_status",
-        translation_key="device_status",
-    ),
-    SensorEntityDescription(
-        key="is_printing",
-        translation_key="is_printing",
-    ),
     SensorEntityDescription(
         key="current_status",
         translation_key="current_status",
@@ -199,64 +183,46 @@ SENSOR_TYPES = (
         translation_key="file_list_cloud",
     ),
     SensorEntityDescription(
-        key="current_project_name",
-        translation_key="current_project_name",
+        key="job_name",
+        translation_key="job_name",
     ),
     SensorEntityDescription(
-        key="current_project_progress",
-        translation_key="current_project_progress",
+        key="job_progress",
+        translation_key="job_progress",
         native_unit_of_measurement=PERCENTAGE,
     ),
     SensorEntityDescription(
-        key="current_project_created_timestamp",
-        translation_key="current_project_created_timestamp",
-        device_class=SensorDeviceClass.TIMESTAMP,
-    ),
-    SensorEntityDescription(
-        key="current_project_finished_timestamp",
-        translation_key="current_project_finished_timestamp",
-        device_class=SensorDeviceClass.TIMESTAMP,
-    ),
-    SensorEntityDescription(
-        key="current_project_time_elapsed",
-        translation_key="current_project_time_elapsed",
+        key="job_time_elapsed",
+        translation_key="job_time_elapsed",
         native_unit_of_measurement=UnitOfTime.MINUTES,
     ),
     SensorEntityDescription(
-        key="current_project_time_remaining",
-        translation_key="current_project_time_remaining",
+        key="job_time_remaining",
+        translation_key="job_time_remaining",
         native_unit_of_measurement=UnitOfTime.MINUTES,
     ),
     SensorEntityDescription(
-        key="current_project_print_total_time",
-        translation_key="current_project_print_total_time",
+        key="job_state",
+        translation_key="job_state",
     ),
     SensorEntityDescription(
-        key="print_state",
-        translation_key="print_state",
-    ),
-    SensorEntityDescription(
-        key="raw_print_status",
-        translation_key="raw_print_status",
-    ),
-    SensorEntityDescription(
-        key="print_approximate_completion_time",
-        translation_key="print_approximate_completion_time",
+        key="job_eta",
+        translation_key="job_eta",
         device_class=SensorDeviceClass.TIMESTAMP,
     ),
     SensorEntityDescription(
-        key="print_current_layer",
-        translation_key="print_current_layer",
+        key="job_current_layer",
+        translation_key="job_current_layer",
         native_unit_of_measurement=UNIT_LAYERS,
     ),
     SensorEntityDescription(
-        key="print_total_layers",
-        translation_key="print_total_layers",
+        key="job_total_layers",
+        translation_key="job_total_layers",
         native_unit_of_measurement=UNIT_LAYERS,
     ),
     SensorEntityDescription(
-        key="print_z_thick",
-        translation_key="print_z_thick",
+        key="job_z_thick",
+        translation_key="job_z_thick",
     ),
 )
 
@@ -308,9 +274,7 @@ class AnycubicSensor(AnycubicCloudEntity, SensorEntity):
         entity_description: SensorEntityDescription,
     ) -> None:
         """Initiate Anycubic Sensor."""
-        super().__init__(coordinator, printer_id)
-        self.entity_description = entity_description
-        self._attr_unique_id = printer_entity_unique_id(coordinator, self._printer_id, entity_description.key)
+        super().__init__(coordinator, printer_id, entity_description)
 
         if self.entity_description.native_unit_of_measurement == UnitOfTemperature.CELSIUS:
             self._attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS

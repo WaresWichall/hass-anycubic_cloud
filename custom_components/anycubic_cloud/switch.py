@@ -7,13 +7,14 @@ from homeassistant.components.switch import (
     SwitchEntityDescription,
 )
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import CONF_PRINTER_ID_LIST, COORDINATOR, DOMAIN
 from .coordinator import AnycubicCloudDataUpdateCoordinator
 from .entity import AnycubicCloudEntity
-from .helpers import printer_entity_unique_id, printer_state_for_key
+from .helpers import printer_state_for_key
 
 PRIMARY_MULTI_COLOR_BOX_SWITCH_TYPES = (
     SwitchEntityDescription(
@@ -36,6 +37,7 @@ GLOBAL_SWITCH_TYPES = (
     SwitchEntityDescription(
         key="manual_mqtt_connection_enabled",
         translation_key="manual_mqtt_connection_enabled",
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
 )
 
@@ -78,9 +80,7 @@ class AnycubicSwitch(AnycubicCloudEntity, SwitchEntity):
         entity_description: SwitchEntityDescription,
     ) -> None:
         """Initiate Anycubic Switch."""
-        super().__init__(coordinator, printer_id)
-        self.entity_description = entity_description
-        self._attr_unique_id = printer_entity_unique_id(coordinator, self._printer_id, entity_description.key)
+        super().__init__(coordinator, printer_id, entity_description)
 
     @property
     def is_on(self) -> bool:

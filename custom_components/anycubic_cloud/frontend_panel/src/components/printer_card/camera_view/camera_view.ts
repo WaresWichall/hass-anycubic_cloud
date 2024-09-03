@@ -3,6 +3,7 @@ import { property, state } from "lit/decorators.js";
 import { styleMap } from "lit-html/directives/style-map.js";
 
 import { customElementIfUndef } from "../../../internal/register-custom-element";
+import { buildCameraUrlFromEntity } from "../../../helpers";
 import { HassEntity } from "../../../types";
 
 @customElementIfUndef("anycubic-printercard-camera_view")
@@ -28,7 +29,7 @@ export class AnycubicPrintercardCameraview extends LitElement {
     ) {
       this.camImgString =
         this.showVideo && !!this.cameraEntity
-          ? `url('${window.location.origin}/api/camera_proxy_stream/${this.cameraEntity.entity_id}?token=${this.cameraEntity.attributes.access_token}')`
+          ? `url('${buildCameraUrlFromEntity(this.cameraEntity)}')`
           : "none";
     }
   }

@@ -1,18 +1,20 @@
 """Binary sensors for Anycubic Cloud."""
 from __future__ import annotations
+from typing import Any
 
 from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
     BinarySensorEntityDescription,
 )
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import CONF_PRINTER_ID_LIST, COORDINATOR, DOMAIN
 from .coordinator import AnycubicCloudDataUpdateCoordinator
 from .entity import AnycubicCloudEntity
-from .helpers import printer_entity_unique_id, printer_state_for_key
+from .helpers import printer_attributes_for_key, printer_state_for_key
 
 PRIMARY_MULTI_COLOR_BOX_SENSOR_TYPES = (
     BinarySensorEntityDescription(
@@ -30,20 +32,20 @@ SECONDARY_MULTI_COLOR_BOX_SENSOR_TYPES = (
 
 SENSOR_TYPES = (
     BinarySensorEntityDescription(
-        key="current_project_in_progress",
-        translation_key="current_project_in_progress",
+        key="job_in_progress",
+        translation_key="job_in_progress",
     ),
     BinarySensorEntityDescription(
-        key="current_project_complete",
-        translation_key="current_project_complete",
+        key="job_complete",
+        translation_key="job_complete",
     ),
     BinarySensorEntityDescription(
-        key="current_project_failed",
-        translation_key="current_project_failed",
+        key="job_failed",
+        translation_key="job_failed",
     ),
     BinarySensorEntityDescription(
-        key="current_project_is_paused",
-        translation_key="current_project_is_paused",
+        key="job_is_paused",
+        translation_key="job_is_paused",
     ),
     BinarySensorEntityDescription(
         key="printer_online",
@@ -60,6 +62,7 @@ SENSOR_TYPES = (
     BinarySensorEntityDescription(
         key="mqtt_connection_active",
         translation_key="mqtt_connection_active",
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
 )
 
@@ -105,9 +108,7 @@ class AnycubicBinarySensor(AnycubicCloudEntity, BinarySensorEntity):
         entity_description: BinarySensorEntityDescription,
     ) -> None:
         """Initiate Anycubic Binary Sensor."""
-        super().__init__(coordinator, printer_id)
-        self.entity_description = entity_description
-        self._attr_unique_id = printer_entity_unique_id(coordinator, self._printer_id, entity_description.key)
+        super().__init__(coordinator, printer_id, entity_description)
 
     @property
     def is_on(self) -> bool:
@@ -115,3 +116,12 @@ class AnycubicBinarySensor(AnycubicCloudEntity, BinarySensorEntity):
         return bool(
             printer_state_for_key(self.coordinator, self._printer_id, self.entity_description.key)
         )
+
+    @property
+    def state_attributes(self) -> dict[str, Any] | None:
+        """Return state attributes."""
+        attrib = printer_attributes_for_key(self.coordinator, self._printer_id, self.entity_description.key)
+        if attrib is not None:
+            return attrib
+        else:
+            return super().state_attributes

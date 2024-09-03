@@ -10,7 +10,6 @@ import traceback
 from aiohttp import CookieJar
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import callback, CoreState, HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
@@ -30,6 +29,7 @@ from .const import (
     CONF_DRYING_PRESET_TEMPERATURE_,
     CONF_MQTT_CONNECT_MODE,
     CONF_PRINTER_ID_LIST,
+    CONF_USER_TOKEN,
     DEFAULT_SCAN_INTERVAL,
     ENTITY_ID_DRYING_START_PRESET_,
     FAILED_UPDATE_DELAY,
@@ -73,6 +73,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._mqtt_last_action = None
         self._mqtt_connect_check_lock = asyncio.Lock()
         self._mqtt_refresh_lock = asyncio.Lock()
+        self._mqtt_file_list_check_lock = asyncio.Lock()
         self._mqtt_last_refresh = None
         self._printer_device_map = None
         mqtt_connect_mode = self.entry.options.get(CONF_MQTT_CONNECT_MODE)
@@ -201,9 +202,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         states = {
             "id": printer.id,
             "name": printer.name,
-            "device_status": printer.device_status,
             "printer_online": printer.printer_online,
-            "is_printing": printer.is_printing,
             "is_busy": printer.is_busy,
             "is_available": printer.is_available,
             "current_status": printer.current_status,
@@ -218,15 +217,14 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "supports_function_multi_color_box": printer.supports_function_multi_color_box,
             "connected_ace_units": printer.connected_ace_units,
             "multi_color_box_fw_version": printer.primary_multi_color_box_fw_firmware_version,
-            "multi_color_box_spools": state_string_active(primary_ace_spool_info),
+            "ace_spools": state_string_active(primary_ace_spool_info),
             "multi_color_box_runout_refill": printer.primary_multi_color_box_auto_feed,
-            "multi_color_box_current_temperature": printer.primary_multi_color_box_current_temperature,
+            "ace_current_temperature": printer.primary_multi_color_box_current_temperature,
             "secondary_multi_color_box_fw_version": printer.secondary_multi_color_box_fw_firmware_version,
-            "secondary_multi_color_box_spools": state_string_active(secondary_ace_spool_info),
+            "secondary_ace_spools": state_string_active(secondary_ace_spool_info),
             "secondary_multi_color_box_runout_refill": printer.secondary_multi_color_box_auto_feed,
-            "secondary_multi_color_box_current_temperature": printer.secondary_multi_color_box_current_temperature,
+            "secondary_ace_current_temperature": printer.secondary_multi_color_box_current_temperature,
             "dry_status_is_drying": printer.primary_drying_status_is_drying,
-            "dry_status_raw_status_code": printer.primary_drying_status_raw_status_code,
             "dry_status_target_temperature": printer.primary_drying_status_target_temperature,
             "dry_status_total_duration": printer.primary_drying_status_total_duration,
             "dry_status_remaining_time": printer.primary_drying_status_remaining_time,
@@ -235,46 +233,43 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "secondary_dry_status_target_temperature": printer.secondary_drying_status_target_temperature,
             "secondary_dry_status_total_duration": printer.secondary_drying_status_total_duration,
             "secondary_dry_status_remaining_time": printer.secondary_drying_status_remaining_time,
-            "current_project_name": printer.latest_project_name,
-            "current_project_progress": printer.latest_project_progress_percentage,
-            "current_project_created_timestamp": printer.latest_project_created_timestamp,
-            "current_project_finished_timestamp": printer.latest_project_finished_timestamp,
-            "current_project_time_elapsed": printer.latest_project_print_time_elapsed_minutes,
-            "current_project_time_remaining": printer.latest_project_print_time_remaining_minutes,
-            "current_project_print_total_time": printer.latest_project_print_total_time,
-            "current_project_in_progress": printer.latest_project_print_in_progress,
-            "current_project_complete": printer.latest_project_print_complete,
-            "current_project_failed": printer.latest_project_print_failed,
-            "current_project_is_paused": printer.latest_project_print_is_paused,
-            "print_state": printer.latest_project_print_status,
-            "print_approximate_completion_time": printer.latest_project_print_approximate_completion_time,
-            "print_current_layer": printer.latest_project_print_current_layer,
-            "print_total_layers": printer.latest_project_print_total_layers,
+            "job_name": printer.latest_project_name,
+            "job_progress": printer.latest_project_progress_percentage,
+            "job_time_elapsed": printer.latest_project_print_time_elapsed_minutes,
+            "job_time_remaining": printer.latest_project_print_time_remaining_minutes,
+            "job_in_progress": printer.latest_project_print_in_progress,
+            "job_complete": printer.latest_project_print_complete,
+            "job_failed": printer.latest_project_print_failed,
+            "job_is_paused": printer.latest_project_print_is_paused,
+            "job_image_url": printer.latest_project_image_url,
+            "job_state": printer.latest_project_print_status,
+            "job_eta": printer.latest_project_print_approximate_completion_time,
+            "job_current_layer": printer.latest_project_print_current_layer,
+            "job_total_layers": printer.latest_project_print_total_layers,
             "target_nozzle_temp": printer.latest_project_target_nozzle_temp,
             "target_hotbed_temp": printer.latest_project_target_hotbed_temp,
-            "print_speed_mode": printer.latest_project_print_speed_mode,
+            "job_speed_mode": printer.latest_project_print_speed_mode_string,
             "print_speed_pct": printer.latest_project_print_speed_pct,
-            "print_z_thick": printer.latest_project_z_thick,
+            "job_z_thick": printer.latest_project_z_thick,
             "fan_speed_pct": printer.latest_project_fan_speed_pct,
-            "print_model_height": printer.latest_project_print_model_height,
-            "print_anti_alias_count": printer.latest_project_print_anti_alias_count,
-            "print_on_time": printer.latest_project_print_on_time,
-            "print_off_time": printer.latest_project_print_off_time,
-            "print_bottom_time": printer.latest_project_print_bottom_time,
-            "print_bottom_layers": printer.latest_project_print_bottom_layers,
-            "print_z_up_height": printer.latest_project_print_z_up_height,
-            "print_z_up_speed": printer.latest_project_print_z_up_speed,
-            "print_z_down_speed": printer.latest_project_print_z_down_speed,
-            "raw_print_status": printer.latest_project_raw_print_status,
+            "job_model_height": printer.latest_project_print_model_height,
+            "job_anti_alias_count": printer.latest_project_print_anti_alias_count,
+            "job_on_time": printer.latest_project_print_on_time,
+            "job_off_time": printer.latest_project_print_off_time,
+            "job_bottom_time": printer.latest_project_print_bottom_time,
+            "job_bottom_layers": printer.latest_project_print_bottom_layers,
+            "job_z_up_height": printer.latest_project_print_z_up_height,
+            "job_z_up_speed": printer.latest_project_print_z_up_speed,
+            "job_z_down_speed": printer.latest_project_print_z_down_speed,
             "manual_mqtt_connection_enabled": self._mqtt_manually_connected,
             "mqtt_connection_active": self._anycubic_api.mqtt_is_started,
         }
 
         attributes = {
-            "multi_color_box_spools": {
+            "ace_spools": {
                 "spool_info": primary_ace_spool_info
             },
-            "secondary_multi_color_box_spools": {
+            "secondary_ace_spools": {
                 "spool_info": secondary_ace_spool_info
             },
             "file_list_local": {
@@ -294,14 +289,29 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 "limit_min": printer.latest_project_temp_min_hotbed,
                 "limit_max": printer.latest_project_temp_max_hotbed,
             },
-            "print_speed_mode": {
+            "job_speed_mode": {
                 "available_modes": printer.latest_project_available_print_speed_modes_data_object,
+                "print_speed_mode_code": printer.latest_project_print_speed_mode,
             },
             "current_status": {
                 "model": printer.model,
                 "machine_type": printer.machine_type,
                 "supported_functions": printer.supported_function_strings,
                 "material_type": printer.material_type,
+                "device_status_code": printer.device_status,
+                "is_printing_code": printer.is_printing,
+                "print_status_code": printer.latest_project_raw_print_status,
+            },
+            "dry_status_is_drying": {
+                "dry_status_code": printer.primary_drying_status_raw_status_code,
+            },
+            "secondary_dry_status_is_drying": {
+                "secondary_dry_status_code": printer.secondary_drying_status_raw_status_code,
+            },
+            "job_name": {
+                "created_timestamp": printer.latest_project_created_timestamp,
+                "finished_timestamp": printer.latest_project_finished_timestamp,
+                "print_total_time": printer.latest_project_print_total_time,
             },
             "fw_version": {
                 "latest_version": printer.fw_version.available_version,
@@ -337,6 +347,11 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     def _build_coordinator_data(self):
         data_dict = dict()
+
+        data_dict['user_info'] = {
+            "id": self._anycubic_api.api_user_id
+        }
+
         data_dict['printers'] = dict()
 
         for printer_id, printer in self._anycubic_printers.items():
@@ -470,43 +485,63 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             return
 
         if self._anycubic_api and self._anycubic_api.mqtt_is_started:
-            await self._mqtt_refresh_lock.acquire()
-            self._mqtt_last_refresh = int(time.time())
-            try:
+            async with self._mqtt_refresh_lock:
+                self._mqtt_last_refresh = int(time.time())
                 await self._stop_anycubic_mqtt_connection()
                 await asyncio.sleep(2)
-                await self._check_anycubic_mqtt_connection()
-            finally:
-                self._mqtt_refresh_lock.release()
+                await self._check_anycubic_mqtt_connection(True)
+
+    async def _async_check_local_file_list_changed(
+        self,
+        prev_file_list,
+        printer,
+    ):
+        if self._mqtt_file_list_check_lock.locked():
+            return
+
+        async with self._mqtt_file_list_check_lock:
+            if not printer.printer_online:
+                return
+
+            await asyncio.sleep(5)
+            new_file_list = printer.local_file_list_object
+            if prev_file_list is None and new_file_list is None:
+                LOGGER.debug("Anycubic MQTT response for local file list appears to be empty, refreshing MQTT and retrying.")
+                await self.refresh_anycubic_mqtt_connection()
+                await self._anycubic_api.mqtt_wait_for_connect()
+                await asyncio.sleep(2)
+                await printer.request_local_file_list()
 
     async def _setup_anycubic_api_connection(self, start_up: bool = False):
         store = Store[dict[str, Any]](self.hass, STORAGE_VERSION, STORAGE_KEY)
 
+        if self.entry.data.get(CONF_USER_TOKEN) is None:
+            raise ConfigEntryAuthFailed("Authentication Token not found.")
+
         try:
-            config = await store.async_load()
+            # config = await store.async_load()
             cookie_jar = CookieJar(unsafe=True)
             websession = async_create_clientsession(
                 self.hass,
                 cookie_jar=cookie_jar,
             )
             self._anycubic_api = AnycubicAPI(
-                api_username=self.entry.data[CONF_USERNAME],
-                api_password=self.entry.data[CONF_PASSWORD],
                 session=websession,
                 cookie_jar=cookie_jar,
                 debug_logger=LOGGER,
+                auth_sig_token=self.entry.data[CONF_USER_TOKEN],
                 mqtt_callback_printer_update=self._mqtt_callback_data_updated,
                 mqtt_callback_printer_busy=self._mqtt_callback_print_job_started,
             )
 
             self._anycubic_api.set_mqtt_log_all_messages(self.entry.options.get(CONF_DEBUG))
 
-            if start_up and config is not None:
-                LOGGER.debug("Loading tokens from store.")
-                try:
-                    self._anycubic_api.load_tokens_from_dict(config)
-                except Exception as e:
-                    LOGGER.debug(f"Error loading tokens from store: {e}")
+            # if start_up and config is not None:
+            #     LOGGER.debug("Loading tokens from store.")
+            #     try:
+            #         self._anycubic_api.load_tokens_from_dict(config)
+            #     except Exception as e:
+            #         LOGGER.debug(f"Error loading tokens from store: {e}")
 
             success = await self._anycubic_api.check_api_tokens()
             if not success:
@@ -522,6 +557,9 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
             if printer_status is None:
                 raise ConfigEntryAuthFailed("Printer not found. Check config.")
+
+        except ConfigEntryAuthFailed:
+            raise
 
         except Exception as error:
             raise ConfigEntryAuthFailed(f"Authentication failed with unknown Error. Check credentials {error}")
@@ -542,7 +580,10 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             self._printer_device_map[printer_device.id] = printer_id
 
     async def _check_or_save_tokens(self):
-        await self._anycubic_api.check_api_tokens()
+        success = await self._anycubic_api.check_api_tokens()
+
+        if not success:
+            raise ConfigEntryAuthFailed("Authentication failed. Check credentials.")
 
         if self._anycubic_api.tokens_changed:
             store = Store[dict[str, Any]](self.hass, STORAGE_VERSION, STORAGE_KEY)
@@ -581,6 +622,9 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             self._failed_updates = 0
 
             await self._check_anycubic_mqtt_connection()
+
+        except ConfigEntryAuthFailed:
+            raise
 
         except AnycubicAPIParsingError as error:
             # self._anycubic_api.clear_all_tokens()
@@ -664,8 +708,13 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 await self.refresh_cloud_files()
 
             elif printer and event_key == 'request_file_list_local':
+                prev_file_list = printer.local_file_list_object
                 await self._connect_mqtt_for_action_response()
                 await printer.request_local_file_list()
+                self.hass.create_task(
+                    self._async_check_local_file_list_changed(prev_file_list, printer),
+                    f"Anycubic coordinator {self.entry.entry_id} {printer.id} local file list check",
+                )
 
             elif printer and event_key == 'request_file_list_udisk':
                 await self._connect_mqtt_for_action_response()

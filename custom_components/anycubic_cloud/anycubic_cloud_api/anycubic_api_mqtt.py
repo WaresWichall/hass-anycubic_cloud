@@ -44,8 +44,6 @@ class AnycubicMQTTAPI(AnycubicAPI):
         mqtt_callback_printer_busy=None,
         **kwargs,
     ):
-        self._api_username = None
-        self._api_password = None
         self._auth_sig_token = None
         self._api_user_id = None
         self._mqtt_client = None
@@ -93,15 +91,15 @@ class AnycubicMQTTAPI(AnycubicAPI):
         return hashlib.md5(input_string.encode('utf-8')).hexdigest().lower()
 
     def _build_mqtt_client_id(self):
-        username_md5 = self._md5_hex_of_string(self._api_username)
+        username_md5 = self._md5_hex_of_string(self._api_user_email)
         return username_md5
 
     def _build_mqtt_login_info(self):
         token_md5 = self._md5_hex_of_string(self._auth_sig_token)
         token_bcrypt = bcrypt.hashpw(token_md5.encode('utf-8'), bcrypt.gensalt())
-        username_md5 = self._md5_hex_of_string(self._api_username)
+        username_md5 = self._md5_hex_of_string(self._api_user_email)
         sig_md5 = self._md5_hex_of_string(f"{username_md5}{token_bcrypt.decode('utf-8')}{username_md5}")
-        sig_str = f"user|app|{self._api_username}|{sig_md5}"
+        sig_str = f"user|app|{self._api_user_email}|{sig_md5}"
 
         return (sig_str, token_bcrypt.decode('utf-8'))
 

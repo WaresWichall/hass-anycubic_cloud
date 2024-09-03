@@ -81,11 +81,11 @@
             "target_hotbed_temp": {
               "heading": "Target Hotbed Temperature"
             },
-            "print_state": {
-              "heading": "Project State"
+            "job_state": {
+              "heading": "Job State"
             },
-            "project_progress": {
-              "heading": "Project Progress"
+            "job_progress": {
+              "heading": "Job Progress"
             },
             "ace_fw_version": {
               "heading": "ACE FW Version"

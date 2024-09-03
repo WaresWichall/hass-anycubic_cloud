@@ -7,6 +7,8 @@ AUTH_DOMAIN = "uc.makeronline.com"
 
 PUBLIC_API_ENDPOINT = "p/p/workbench/api"
 
+PROJECT_IMAGE_URL_BASE = "https://workbentch.s3.us-east-2.amazonaws.com/"
+
 REX_JS_FILE = re.compile(r'src="(/js/app\.[^.]+\.js)"')
 # REX_CLIENT_ID = re.compile(r',clientId:"([^"]+)",')
 REX_CLIENT_ID = re.compile(r'\'(?!getEl)([a-zA-Z0-9]{20})\'')
