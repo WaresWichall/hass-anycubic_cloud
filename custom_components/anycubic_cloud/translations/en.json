@@ -6,6 +6,7 @@
     },
     "error": {
       "invalid_auth": "Invalid authentication.",
+      "invalid_token": "Invalid user token.",
       "cannot_connect": "Cannot connect.",
       "no_printers": "No printers found.",
       "invalid_printer": "Invalid printer."
