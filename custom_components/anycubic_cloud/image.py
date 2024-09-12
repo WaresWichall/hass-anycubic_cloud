@@ -83,18 +83,19 @@ class AnycubicCloudImage(AnycubicCloudEntity, ImageEntity):
         ImageEntity.__init__(self, hass)
         self._known_image_url = None
 
-    def reset_cached_image(self):
+    def _reset_cached_image(self):
         self._cached_image = None
         self._attr_image_last_updated = datetime.now()
 
-    @property
-    def image_url(self) -> str | None:
+    def _check_image_url(self):
         image_url = printer_state_for_key(self.coordinator, self._printer_id, self.entity_description.key)
         if self._known_image_url != image_url:
-            self.reset_cached_image()
+            self._reset_cached_image()
 
-        self._known_image_url = image_url
+            self._known_image_url = image_url
 
+    @property
+    def image_url(self) -> str | None:
         return self._known_image_url
 
     @property
@@ -115,3 +116,10 @@ class AnycubicCloudImage(AnycubicCloudEntity, ImageEntity):
                 content_type="image/png",
             )
         return None
+
+    async def async_image(self) -> bytes | None:
+        """Return bytes of image."""
+
+        self._check_image_url()
+
+        return await ImageEntity.async_image(self)
