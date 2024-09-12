@@ -32,6 +32,7 @@ from .const import (
 
 from .helpers import (
     AnycubicMQTTConnectMode,
+    clean_user_token,
 )
 
 DATA_SCHEMA = vol.Schema(
@@ -128,7 +129,11 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
         self,
         user_input,
     ):
-        self._user_token = user_input[CONF_USER_TOKEN]
+        try:
+            self._user_token = clean_user_token(user_input[CONF_USER_TOKEN])
+        except TypeError as error:
+            LOGGER.error(error)
+            return {"base": "invalid_token"}
 
         try:
             await self._async_check_anycubic_api_instance_exists()

@@ -62,6 +62,8 @@ MQTT_REFRESH_INTERVAL = 60 * 5
 
 MAX_DRYING_PRESETS = 4
 
+EXPECTED_TOKEN_LENGTH = 238
+
 LOGGER = logging.getLogger(__package__)
 
 PLATFORMS = [
