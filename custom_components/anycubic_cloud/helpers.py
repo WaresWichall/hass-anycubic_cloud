@@ -4,7 +4,7 @@ import re
 
 from homeassistant.helpers.device_registry import CONNECTION_NETWORK_MAC, DeviceInfo
 
-from .const import DOMAIN, EXPECTED_TOKEN_LENGTH, MANUFACTURER
+from .const import DOMAIN, MANUFACTURER
 
 
 def build_printer_device_info(entry_data, coordinator_data, printer_id: int) -> DeviceInfo:
@@ -48,20 +48,20 @@ def state_string_loaded(state):
     return "loaded" if state is not None else "not loaded"
 
 
-REGEX_TOKEN_STRING = re.compile(r"^['\"]?([-A-Za-z0-9+\/.]{" + str(EXPECTED_TOKEN_LENGTH) + r"})['\"]?$")
+REGEX_TOKEN_STRING = re.compile(r"^['\"]?([-A-Za-z0-9+\/.]{236,238})['\"]?$")
 
 
 def clean_user_token(input_token):
     token_length = len(input_token)
 
-    if token_length == EXPECTED_TOKEN_LENGTH:
+    if token_length == 236:
         return input_token
 
-    if token_length > EXPECTED_TOKEN_LENGTH:
+    if token_length > 236:
 
         matches = REGEX_TOKEN_STRING.findall(input_token)
 
         if len(matches) == 1:
             return matches[0]
 
-    raise TypeError(f"Invalid token, expected {EXPECTED_TOKEN_LENGTH} chars, got {token_length}.")
+    raise TypeError(f"Invalid token, expected 236 or 238 chars, got {token_length}.")
