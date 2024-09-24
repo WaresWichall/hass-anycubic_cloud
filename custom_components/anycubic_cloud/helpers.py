@@ -48,7 +48,7 @@ def state_string_loaded(state):
     return "loaded" if state is not None else "not loaded"
 
 
-# REGEX_TOKEN_STRING = re.compile(r"^['\"]?([-A-Za-z0-9+\/.]{236,238})['\"]?$")
+# REGEX_TOKEN_STRING = re.compile(r"^['\"]?([_-A-Za-z0-9+\/.]{236,238})['\"]?$")
 
 
 # def clean_user_token(input_token):
