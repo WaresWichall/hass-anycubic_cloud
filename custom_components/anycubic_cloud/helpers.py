@@ -48,20 +48,27 @@ def state_string_loaded(state):
     return "loaded" if state is not None else "not loaded"
 
 
-REGEX_TOKEN_STRING = re.compile(r"^['\"]?([-A-Za-z0-9+\/.]{236,238})['\"]?$")
+# REGEX_TOKEN_STRING = re.compile(r"^['\"]?([-A-Za-z0-9+\/.]{236,238})['\"]?$")
 
 
-def clean_user_token(input_token):
-    token_length = len(input_token)
+# def clean_user_token(input_token):
+#     token_length = len(input_token)
+#     if token_length == 236:
+#         return input_token
+#     if token_length > 236:
+#         matches = REGEX_TOKEN_STRING.findall(input_token)
+#         if len(matches) == 1:
+#             return matches[0]
+#     raise TypeError(f"Invalid token, expected 236 or 238 chars, got {token_length}.")
 
-    if token_length == 236:
-        return input_token
 
-    if token_length > 236:
+REGEX_NOQUOTE_STRING = re.compile(r"^['\"]?([^'\"]+)['\"]?$")
 
-        matches = REGEX_TOKEN_STRING.findall(input_token)
 
-        if len(matches) == 1:
-            return matches[0]
+def remove_quotes_from_string(input_string):
+    matches = REGEX_NOQUOTE_STRING.findall(input_string)
 
-    raise TypeError(f"Invalid token, expected 236 or 238 chars, got {token_length}.")
+    if len(matches) == 1:
+        return matches[0]
+
+    raise TypeError("Unexpected quotes in string.")
