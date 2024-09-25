@@ -65,6 +65,7 @@ from .anycubic_const import (
     APP_REDIRECT_URI,
     AUTH_DOMAIN,
     MAX_PROJECT_IMAGE_SEARCH_COUNT,
+    MAX_PROJECT_LIST_RESULTS,
     PUBLIC_API_ENDPOINT,
     REX_JS_FILE,
     REX_CLIENT_ID,
@@ -86,6 +87,7 @@ from .anycubic_const import (
 from .anycubic_enums import (
     AnycubicFeedType,
     AnycubicOrderID,
+    AnycubicPrintStatus,
 )
 
 from .anycubic_helpers import (
@@ -2064,9 +2066,18 @@ class AnycubicAPI:
 
     async def list_all_projects(
         self,
+        page=1,
+        print_status: AnycubicPrintStatus | None = None,
         raw_data=False
     ):
-        resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.project_get_projects)
+        query = {
+            'page': str(int(page)),
+            'limit': MAX_PROJECT_LIST_RESULTS,
+        }
+        if print_status is not None:
+            query['print_status'] = str(int(print_status))
+
+        resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.project_get_projects, query=query)
         if raw_data:
             return resp
 
