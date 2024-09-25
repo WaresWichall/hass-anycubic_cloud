@@ -2100,6 +2100,7 @@ class AnycubicAPI:
     async def get_latest_project(
         self,
         printer_id=None,
+        project_to_update=None,
     ):
         projects = await self.list_all_projects()
 
@@ -2114,7 +2115,10 @@ class AnycubicAPI:
                     latest_project is None and
                     (printer_id is None or proj.printer_id == printer_id)
                 ):
-                    latest_project = proj
+                    if project_to_update and project_to_update.update_with_project(proj):
+                        latest_project = project_to_update
+                    else:
+                        latest_project = proj
 
                     if latest_project.image_url or not latest_project.name:
                         break

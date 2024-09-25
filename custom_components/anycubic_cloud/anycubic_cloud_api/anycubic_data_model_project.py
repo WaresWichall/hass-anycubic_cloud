@@ -88,55 +88,56 @@ class AnycubicProject:
         self._api_parent = api_parent
         self._id = int(id)
         self._taskid = int(taskid)
-        self._user_id = int(user_id) if user_id is not None else None
-        self._printer_id = int(printer_id) if printer_id is not None else None
-        self._gcode_id = int(gcode_id)
-        self._model = int(model) if model is not None else None
+        self._set_user_id(user_id)
+        self._set_printer_id(printer_id)
+        self._set_gcode_id(gcode_id)
+        self._set_model(model)
         self.set_image_url(img)
-        self._estimate = int(estimate)
-        self._remain_time = int(remain_time) if remain_time is not None else None
-        self._material = str(material) if material is not None else None
-        self._material_type = int(material_type) if material_type is not None else None
-        self._pause = int(pause) if pause is not None else None
-        self._progress = int(progress)
-        self._connect_status = int(connect_status) if connect_status is not None else None
-        self._print_status = int(print_status) if print_status is not None else None
-        self._reason = str(reason) if reason is not None else None
+        self._set_estimate(estimate)
+        self._set_remain_time(remain_time)
+        self._set_material(material)
+        self._set_material_type(material_type)
+        self._set_pause(pause)
+        self._set_progress(progress)
+        self._set_connect_status(connect_status)
+        self._print_status = None
+        self._set_print_status(print_status)
+        self._set_reason(reason)
         self._slice_data = slice_data  # check
-        self._slice_status = int(slice_status) if slice_status is not None else None
-        self._status = int(status)
-        self._ischeck = int(ischeck) if ischeck is not None else None
-        self._project_type = int(project_type) if project_type is not None else None
-        self._printed = int(printed) if printed is not None else None
-        self._create_time = int(create_time)
-        self._start_time = int(start_time) if start_time is not None else None
-        self._end_time = int(end_time) if end_time is not None else None
-        self._slice_start_time = int(slice_start_time) if slice_start_time is not None else None
-        self._slice_end_time = int(slice_end_time) if slice_end_time is not None else None
-        self._total_time = str(total_time) if total_time is not None else None
-        self._print_time = int(print_time) if print_time is not None else None
+        self._set_slice_status(slice_status)
+        self._set_status(status)
+        self._set_ischeck(ischeck)
+        self._set_project_type(project_type)
+        self._set_printed(printed)
+        self._set_create_time(create_time)
+        self._set_start_time(start_time)
+        self._set_end_time(end_time)
+        self._set_slice_start_time(slice_start_time)
+        self._set_slice_end_time(slice_end_time)
+        self._set_total_time(total_time)
+        self._set_print_time(print_time)
         self.set_slice_param(slice_param)
-        self._delete = int(delete) if delete is not None else None
+        self._set_delete(delete)
         self._auto_operation = auto_operation
         self._monitor = monitor
-        self._last_update_time = int(last_update_time) if last_update_time is not None else None
+        self._set_last_update_time(last_update_time)
         self._set_settings(settings)
-        self._localtask = str(localtask) if localtask is not None else None
-        self._source = str(source) if source is not None else None
+        self._set_localtask(localtask)
+        self._set_source(source)
         self._device_message = device_message
-        self._signal_strength = int(signal_strength) if signal_strength is not None else None
-        self._key = str(key) if key is not None else None
-        self._printer_type = str(printer_type) if printer_type is not None else None
-        self._machine_type = int(machine_type) if machine_type is not None else None
-        self._printer_name = str(printer_name) if printer_name is not None else None
-        self._machine_name = str(machine_name) if machine_name is not None else None
-        self._device_status = int(device_status) if device_status is not None else None
+        self._set_signal_strength(signal_strength)
+        self._set_key(key)
+        self._set_printer_type(printer_type)
+        self._set_machine_type(machine_type)
+        self._set_printer_name(printer_name)
+        self._set_machine_name(machine_name)
+        self._set_device_status(device_status)
         self._slice_result = slice_result
         self.set_filename(gcode_name)
         self._post_title = post_title
-        self._file_size = int(file_size) if file_size is not None else None
-        self._machine_class = int(machine_class) if machine_class is not None else None
-        self._material_unit = str(material_unit) if material_unit is not None else None
+        self._set_file_size(file_size)
+        self._set_machine_class(machine_class)
+        self._set_material_unit(material_unit)
         self._set_reason_id(reason_id)
         self._set_z_thick(z_thick)
         self._set_print_speed_mode(print_speed_mode)
@@ -239,6 +240,124 @@ class AnycubicProject:
             slice_param=data['slice_param'],
         )
 
+    def _set_user_id(self, user_id):
+        self._user_id = int(user_id) if user_id is not None else None
+
+    def _set_printer_id(self, printer_id):
+        self._printer_id = int(printer_id) if printer_id is not None else None
+
+    def _set_gcode_id(self, gcode_id):
+        self._gcode_id = int(gcode_id)
+
+    def _set_model(self, model):
+        self._model = int(model) if model is not None else None
+
+    def _set_estimate(self, estimate):
+        self._estimate = int(estimate)
+
+    def _set_remain_time(self, remain_time):
+        self._remain_time = int(remain_time) if remain_time is not None else None
+
+    def _set_material(self, material):
+        self._material = str(material) if material is not None else None
+
+    def _set_material_type(self, material_type):
+        self._material_type = int(material_type) if material_type is not None else None
+
+    def _set_pause(self, pause):
+        self._pause = int(pause) if pause is not None else None
+
+    def _set_progress(self, progress):
+        self._progress = int(progress)
+
+    def _set_connect_status(self, connect_status):
+        self._connect_status = int(connect_status) if connect_status is not None else None
+
+    def _set_print_status(self, print_status):
+        if self._print_status not in [AnycubicPrintStatus.Complete, AnycubicPrintStatus.Cancelled]:
+            self._print_status = int(print_status) if print_status is not None else None
+
+    def _set_reason(self, reason):
+        self._reason = str(reason) if reason is not None else None
+
+    def _set_slice_status(self, slice_status):
+        self._slice_status = int(slice_status) if slice_status is not None else None
+
+    def _set_status(self, status):
+        self._status = int(status)
+
+    def _set_ischeck(self, ischeck):
+        self._ischeck = int(ischeck) if ischeck is not None else None
+
+    def _set_project_type(self, project_type):
+        self._project_type = int(project_type) if project_type is not None else None
+
+    def _set_printed(self, printed):
+        self._printed = int(printed) if printed is not None else None
+
+    def _set_create_time(self, create_time):
+        self._create_time = int(create_time)
+
+    def _set_start_time(self, start_time):
+        self._start_time = int(start_time) if start_time is not None else None
+
+    def _set_end_time(self, end_time):
+        self._end_time = int(end_time) if end_time is not None else None
+
+    def _set_slice_start_time(self, slice_start_time):
+        self._slice_start_time = int(slice_start_time) if slice_start_time is not None else None
+
+    def _set_slice_end_time(self, slice_end_time):
+        self._slice_end_time = int(slice_end_time) if slice_end_time is not None else None
+
+    def _set_total_time(self, total_time):
+        self._total_time = str(total_time) if total_time is not None else None
+
+    def _set_print_time(self, print_time):
+        self._print_time = int(print_time) if print_time is not None else None
+
+    def _set_delete(self, delete):
+        self._delete = int(delete) if delete is not None else None
+
+    def _set_last_update_time(self, last_update_time):
+        self._last_update_time = int(last_update_time) if last_update_time is not None else None
+
+    def _set_localtask(self, localtask):
+        self._localtask = str(localtask) if localtask is not None else None
+
+    def _set_source(self, source):
+        self._source = str(source) if source is not None else None
+
+    def _set_signal_strength(self, signal_strength):
+        self._signal_strength = int(signal_strength) if signal_strength is not None else None
+
+    def _set_key(self, key):
+        self._key = str(key) if key is not None else None
+
+    def _set_printer_type(self, printer_type):
+        self._printer_type = str(printer_type) if printer_type is not None else None
+
+    def _set_machine_type(self, machine_type):
+        self._machine_type = int(machine_type) if machine_type is not None else None
+
+    def _set_printer_name(self, printer_name):
+        self._printer_name = str(printer_name) if printer_name is not None else None
+
+    def _set_machine_name(self, machine_name):
+        self._machine_name = str(machine_name) if machine_name is not None else None
+
+    def _set_device_status(self, device_status):
+        self._device_status = int(device_status) if device_status is not None else None
+
+    def _set_file_size(self, file_size):
+        self._file_size = int(file_size) if file_size is not None else None
+
+    def _set_machine_class(self, machine_class):
+        self._machine_class = int(machine_class) if machine_class is not None else None
+
+    def _set_material_unit(self, material_unit):
+        self._material_unit = str(material_unit) if material_unit is not None else None
+
     def set_image_url(self, image_url):
         self._image_url = str(image_url) if image_url is not None else None
 
@@ -316,6 +435,74 @@ class AnycubicProject:
         self._set_type_function_ids(data.get('type_function_ids'))
         self._set_temperature_data(data.get('temp'))
         self._set_available_print_speed_modes(data.get('print_speed_model_des'))
+
+    def update_with_project(self, update_project):
+        if update_project is None:
+            return False
+
+        if update_project.id != self._id:
+            return False
+
+        self._set_user_id(update_project._user_id)
+        self._set_printer_id(update_project._printer_id)
+        self._set_gcode_id(update_project._gcode_id)
+        self._set_model(update_project._model)
+        if self._image_url is None:
+            self.set_image_url(update_project._img)
+        self._set_estimate(update_project._estimate)
+        self._set_remain_time(update_project._remain_time)
+        self._set_material(update_project._material)
+        self._set_material_type(update_project._material_type)
+        self._set_pause(update_project._pause)
+        self._set_progress(update_project._progress)
+        self._set_connect_status(update_project._connect_status)
+        self._set_print_status(update_project._print_status)
+        self._set_reason(update_project._reason)
+        self._slice_data = update_project._slice_data  # check
+        self._set_slice_status(update_project._slice_status)
+        self._set_status(update_project._status)
+        self._set_ischeck(update_project._ischeck)
+        self._set_project_type(update_project._project_type)
+        self._set_printed(update_project._printed)
+        self._set_create_time(update_project._create_time)
+        self._set_start_time(update_project._start_time)
+        self._set_end_time(update_project._end_time)
+        self._set_slice_start_time(update_project._slice_start_time)
+        self._set_slice_end_time(update_project._slice_end_time)
+        self._set_total_time(update_project._total_time)
+        self._set_print_time(update_project._print_time)
+        self.set_slice_param(update_project._slice_param)
+        self._set_delete(update_project._delete)
+        self._auto_operation = update_project._auto_operation
+        self._monitor = update_project._monitor
+        self._set_last_update_time(update_project._last_update_time)
+        self._set_settings(update_project._settings)
+        self._set_localtask(update_project._localtask)
+        self._set_source(update_project._source)
+        self._device_message = update_project._device_message
+        self._set_signal_strength(update_project._signal_strength)
+        self._set_key(update_project._key)
+        self._set_printer_type(update_project._printer_type)
+        self._set_machine_type(update_project._machine_type)
+        self._set_printer_name(update_project._printer_name)
+        self._set_machine_name(update_project._machine_name)
+        self._set_device_status(update_project._device_status)
+        self._slice_result = update_project._slice_result
+        self.set_filename(update_project._gcode_name)
+        self._post_title = update_project._post_title
+        self._set_file_size(update_project._file_size)
+        self._set_machine_class(update_project._machine_class)
+        self._set_material_unit(update_project._material_unit)
+        self._set_reason_id(update_project._reason_id)
+        self._set_z_thick(update_project._z_thick)
+        self._set_print_speed_mode(update_project._print_speed_mode)
+        self._set_print_speed_pct(update_project._print_speed_pct)
+        self._set_fan_speed_pct(update_project._fan_speed_pct)
+        self._set_task_mode(update_project._task_mode)
+        self._set_type_function_ids(update_project._type_function_ids)
+        self._available_print_speed_modes = update_project._available_print_speed_modes
+
+        return True
 
     def update_target_temps(
         self,
@@ -440,8 +627,16 @@ class AnycubicProject:
         return self._id
 
     @property
+    def user_id(self):
+        return self._user_id
+
+    @property
     def printer_id(self):
         return self._printer_id
+
+    @property
+    def gcode_id(self):
+        return self._gcode_id
 
     @property
     def name(self):
