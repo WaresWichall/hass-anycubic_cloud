@@ -32,6 +32,8 @@ AC_KNOWN_VID_WEB = '1.0.0'
 AC_KNOWN_VID_APP = '1.4.5'
 AC_KNOWN_SEC = '0cf75926606049a3937f56b0373b99fb'
 
+MAX_PROJECT_IMAGE_SEARCH_COUNT = 20
+
 
 class AnycubicServerMessage:
     FILE_NOT_FOUND = "No file found"

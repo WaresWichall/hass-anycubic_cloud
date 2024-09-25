@@ -64,6 +64,7 @@ from .anycubic_const import (
     BASE_DOMAIN,
     APP_REDIRECT_URI,
     AUTH_DOMAIN,
+    MAX_PROJECT_IMAGE_SEARCH_COUNT,
     PUBLIC_API_ENDPOINT,
     REX_JS_FILE,
     REX_CLIENT_ID,
@@ -2093,6 +2094,8 @@ class AnycubicAPI:
 
         latest_project = None
 
+        image_search_counter = 0
+
         if projects and len(projects) > 0:
             for proj in projects:
                 # Look for matching project and fill image URL from previous cloud print if available
@@ -2105,8 +2108,10 @@ class AnycubicAPI:
                     if latest_project.image_url or not latest_project.name:
                         break
 
-                elif latest_project and proj.name == latest_project.name:
-                    if proj.image_url:
+                elif latest_project and image_search_counter < MAX_PROJECT_IMAGE_SEARCH_COUNT:
+                    image_search_counter += 1
+
+                    if proj.name == latest_project.name and proj.image_url:
                         latest_project.set_image_url(proj.image_url)
                         break
 
