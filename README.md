@@ -1,24 +1,14 @@
 # Anycubic Cloud Home Assistant Integration
 
-## NEW LOGIN METHOD
-
-Anycubic decided to break the login method I was using before, so you'll need to follow the install steps below to get a token, and set up the integration from a fresh start.
-
-Unfortunately this means that if you get logged out (by logging in elsewhere), you'll need to get a fresh token as below and re-authenticate the integration.
-
-
 ## WORK IN PROGRESS 
 
 Component is working very well so far with:
 - Kobra 3 Combo
 - Kobra 2
 - Photon Mono M5s (Basic support still)
+- M7 Pro (Basic support still)
 
-If you have success with other printers please report it :)
-
-It will still have bugs that I'll need help ironing out.
-
-Should also work with multiple printers now, although I can't test this myself :)
+If you have success with other printers please report it, or if you don't please report that too :)
 
 Anycubic Cloud is polled for data updates every 1 minute, whilst MQTT updates can be received multiple times per second.
 
@@ -39,6 +29,7 @@ This integration couples with my [Anycubic card for Home Assistant](https://gith
 
 ## Features
 
+- Supports multiple printers
 - Start print services / UI panel
 - Pause/Resume/Cancel print buttons
 - Edit ACE slot colours/settings via services / UI panel
@@ -77,6 +68,10 @@ Current features:
 10. Select your printer, then you're good to go!
 
 <img width="400" alt="" src="https://raw.githubusercontent.com/WaresWichall/hass-anycubic_cloud/dev/screenshots/anycubic_api_token.png">
+
+### Re-Authentication
+
+If you log yourself out or your token expires you'll get a re-authentication warning in Home Assistant, just grab a new token as above.
 
 
 ## Thanks
