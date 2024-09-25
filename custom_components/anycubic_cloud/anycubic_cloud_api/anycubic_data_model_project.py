@@ -491,7 +491,12 @@ class AnycubicProject:
 
     @property
     def print_in_progress(self):
-        return self._print_status == AnycubicPrintStatus.Printing or self._print_status == AnycubicPrintStatus.Preheating
+        return (
+            self._print_status == AnycubicPrintStatus.Printing or
+            self._print_status == AnycubicPrintStatus.Downloading or
+            self._print_status == AnycubicPrintStatus.Checking or
+            self._print_status == AnycubicPrintStatus.Preheating
+        )
 
     @property
     def print_preheating(self):
@@ -507,7 +512,7 @@ class AnycubicProject:
 
     @property
     def print_is_paused(self):
-        return self._pause != 0 and not self.print_failed
+        return self._pause != 0 and self.print_in_progress
 
     @property
     def print_current_layer(self):
@@ -555,16 +560,22 @@ class AnycubicProject:
 
     @property
     def print_status(self):
-        if self.print_preheating:
-            return "preheating"
-        elif self.print_in_progress:
-            return "printing"
-        elif self.print_complete:
-            return "finished"
-        elif self.print_failed:
-            return "failed"
-        elif self.print_is_paused:
+        if self.print_is_paused:
             return "paused"
+        elif self._print_status == AnycubicPrintStatus.Printing:
+            return "printing"
+        elif self._print_status == AnycubicPrintStatus.Complete:
+            return "finished"
+        elif self._print_status == AnycubicPrintStatus.Cancelled:
+            return "failed"
+        elif self._print_status == AnycubicPrintStatus.Downloading:
+            return "downloading"
+        elif self._print_status == AnycubicPrintStatus.Checking:
+            return "checking"
+        elif self._print_status == AnycubicPrintStatus.Preheating:
+            return "preheating"
+        elif self._print_status == AnycubicPrintStatus.Slicing:
+            return "slicing"
         else:
             return "unknown"
 
