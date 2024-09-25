@@ -2966,7 +2966,7 @@
     return o ? Bt(t, o, s, n) : void 0;
   }
   function Wt(t) {
-    return ["printing", "preheating"].includes(t);
+    return ["printing", "preheating", "paused", "downloading", "checking"].includes(t);
   }
   const Zt = (t, e) => e ? $t.duration(t, "seconds").humanize() : (() => {
     const e = $t.duration(t, "seconds"),
@@ -9491,7 +9491,7 @@
         }, !0, !1);
         const t = Gt(this.hass, this.printerEntities, this.printerEntityIdPart, "job_state", "unknown").state.toLowerCase();
         this.isPrinting = Wt(t), this.isHidden = !this.isPrinting && !this.hiddenOverride, this.statusColor = function (t) {
-          return Wt(t) ? "#4caf50" : "unknown" === t ? "#f44336" : "operational" === t || "finished" === t ? "#00bcd4" : "#ffc107";
+          return "preheating" === t ? "#ffc107" : Wt(t) ? "#4caf50" : "unknown" === t ? "#f44336" : "operational" === t || "finished" === t ? "#00bcd4" : "#f44336";
         }(t), this.lightIsOn = Bt(this.hass, {
           entity_id: this.lightEntityId
         }, !0, !1);

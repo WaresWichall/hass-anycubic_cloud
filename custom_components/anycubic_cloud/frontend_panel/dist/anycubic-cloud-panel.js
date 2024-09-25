@@ -3003,7 +3003,7 @@
     return e.length > 2 ? e[2] : "main";
   }
   function te(t) {
-    return ["printing", "preheating"].includes(t);
+    return ["printing", "preheating", "paused", "downloading", "checking"].includes(t);
   }
   const ee = (t, e) => e ? Pt.duration(t, "seconds").humanize() : (() => {
     const e = Pt.duration(t, "seconds"),
@@ -9553,7 +9553,7 @@
         }, !0, !1);
         const t = Zt(this.hass, this.printerEntities, this.printerEntityIdPart, "job_state", "unknown").state.toLowerCase();
         this.isPrinting = te(t), this.isHidden = !this.isPrinting && !this.hiddenOverride, this.statusColor = function (t) {
-          return te(t) ? "#4caf50" : "unknown" === t ? "#f44336" : "operational" === t || "finished" === t ? "#00bcd4" : "#ffc107";
+          return "preheating" === t ? "#ffc107" : te(t) ? "#4caf50" : "unknown" === t ? "#f44336" : "operational" === t || "finished" === t ? "#00bcd4" : "#f44336";
         }(t), this.lightIsOn = Lt(this.hass, {
           entity_id: this.lightEntityId
         }, !0, !1);

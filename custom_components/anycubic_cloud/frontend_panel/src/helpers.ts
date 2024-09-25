@@ -445,17 +445,25 @@ export function getPage(route: HassRoute): string {
 }
 
 export function isPrintStatePrinting(printStateString: string): boolean {
-  return ["printing", "preheating"].includes(printStateString);
+  return [
+    "printing",
+    "preheating",
+    "paused",
+    "downloading",
+    "checking",
+  ].includes(printStateString);
 }
 
 export function printStateStatusColor(printStateString: string): string {
-  return isPrintStatePrinting(printStateString)
-    ? "#4caf50"
-    : printStateString === "unknown"
-      ? "#f44336"
-      : printStateString === "operational" || printStateString === "finished"
-        ? "#00bcd4"
-        : "#ffc107";
+  return printStateString === "preheating"
+    ? "#ffc107"
+    : isPrintStatePrinting(printStateString)
+      ? "#4caf50"
+      : printStateString === "unknown"
+        ? "#f44336"
+        : printStateString === "operational" || printStateString === "finished"
+          ? "#00bcd4"
+          : "#f44336";
 }
 
 export const navigateToPrinter = (
