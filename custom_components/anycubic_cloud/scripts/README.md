@@ -9,7 +9,7 @@ Install all requirements with
 pip install homeassistant paho-mqtt aiofiles
 ```
 
-Copy `anycubic_credentials.sample.py` to `anycubic_credentials.py` and edit it with your credentials.
+Copy `anycubic_cached_sig_token.token.sample` to `anycubic_cached_sig_token.token` and replace the contents with your user token.
 
 Open a terminal or command prompt inside the `custom_components` directory and run scripts with e.g.
 
