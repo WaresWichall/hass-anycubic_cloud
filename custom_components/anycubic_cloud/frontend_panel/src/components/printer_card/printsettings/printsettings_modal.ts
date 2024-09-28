@@ -12,6 +12,7 @@ import { platform } from "../../../const";
 import {
   getPrinterEntityId,
   getPrinterSensorStateObj,
+  isFDMPrinter,
   speedModesFromStateObj,
 } from "../../../helpers";
 
@@ -151,13 +152,11 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
       changedProperties.has("printerEntities") ||
       changedProperties.has("printerEntityIdPart")
     ) {
-      this.isFDM =
-        getPrinterSensorStateObj(
-          this.hass,
-          this.printerEntities,
-          this.printerEntityIdPart,
-          "current_status",
-        ).attributes.material_type === "Filament";
+      this.isFDM = isFDMPrinter(
+        this.hass,
+        this.printerEntities,
+        this.printerEntityIdPart,
+      );
       if (!this._userEditFanSpeed) {
         this.currentFanSpeed = getPrinterSensorStateObj(
           this.hass,

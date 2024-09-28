@@ -377,6 +377,36 @@ export function getPrinterUpdateEntityState(
   }
 }
 
+export function isFDMPrinter(
+  hass: HomeAssistant,
+  entities: HassEntityInfos,
+  printerEntityIdPart: string | undefined,
+): boolean {
+  return (
+    getPrinterSensorStateObj(
+      hass,
+      entities,
+      printerEntityIdPart,
+      "current_status",
+    ).attributes.material_type === "Filament"
+  );
+}
+
+export function isLCDPrinter(
+  hass: HomeAssistant,
+  entities: HassEntityInfos,
+  printerEntityIdPart: string | undefined,
+): boolean {
+  return (
+    getPrinterSensorStateObj(
+      hass,
+      entities,
+      printerEntityIdPart,
+      "current_status",
+    ).attributes.material_type === "Resin"
+  );
+}
+
 export function getFileListLocalFilesEntity(
   entities: HassEntityInfos,
 ): HassEntityInfo | undefined {
@@ -512,7 +542,7 @@ export const formatDuration = (time: number, round: boolean): string => {
         const m = t.minutes();
         const s = t.seconds();
 
-        return `${d > 0 ? `${d}d` : ""}${h > 0 ? ` ${h}h` : ""}${m > 0 ? ` ${m}m` : ""}${s > 0 ? ` ${s}s` : ""}`;
+        return `${d > 0 ? `${d}d` : ""}${h > 0 ? ` ${h}h` : ""}${m > 0 ? ` ${m}m` : ""}${s > 0 ? ` ${s}s` : "0s"}`;
       })();
 };
 

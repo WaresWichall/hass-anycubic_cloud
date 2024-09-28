@@ -14,15 +14,21 @@ import {
   getPrinterEntities,
   getPrinterEntityIdPart,
   getPrinterSensorStateObj,
+  isLCDPrinter,
 } from "../../../helpers";
 
 import {
   AnycubicCardConfig,
+  CalculatedTimeType,
   HassDeviceList,
   HassEntityInfos,
   HaFormBaseSchema,
   HomeAssistant,
   PrinterCardStatType,
+  StatTypeGeneral,
+  StatTypeFDM,
+  StatTypeACE,
+  StatTypeLCD,
   TemperatureUnit,
 } from "../../../types";
 
@@ -45,6 +51,9 @@ export class AnycubicPrintercardConfigure extends LitElement {
   private configPage: string = "main";
 
   @state()
+  private availableStats: PrinterCardStatType[] = [];
+
+  @state()
   private formSchemaMain: HaFormBaseSchema[] = [];
 
   @state()
@@ -59,6 +68,9 @@ export class AnycubicPrintercardConfigure extends LitElement {
   @state({ type: Boolean })
   private hasColorbox: boolean = false;
 
+  @state({ type: Boolean })
+  private isLCD: boolean = false;
+
   protected willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
 
@@ -69,14 +81,12 @@ export class AnycubicPrintercardConfigure extends LitElement {
       );
 
       this.printerEntityIdPart = getPrinterEntityIdPart(this.printerEntities);
-    }
 
-    if (changedProperties.has("printers")) {
-      this.formSchemaMain = this._computeSchemaMain();
-      this.formSchemaColours = this._computeSchemaColours();
-    }
-
-    if (changedProperties.has("hass")) {
+      this.isLCD = isLCDPrinter(
+        this.hass,
+        this.printerEntities,
+        this.printerEntityIdPart,
+      );
       this.hasColorbox =
         getPrinterSensorStateObj(
           this.hass,
@@ -85,6 +95,32 @@ export class AnycubicPrintercardConfigure extends LitElement {
           "ace_spools",
           "inactive",
         ).state === "active";
+      this.availableStats = {
+        ...StatTypeGeneral,
+        ...CalculatedTimeType,
+      };
+      if (this.isLCD) {
+        this.availableStats = {
+          ...this.availableStats,
+          ...StatTypeLCD,
+        };
+      } else {
+        this.availableStats = {
+          ...this.availableStats,
+          ...StatTypeFDM,
+        };
+      }
+      if (this.hasColorbox) {
+        this.availableStats = {
+          ...this.availableStats,
+          ...StatTypeACE,
+        };
+      }
+    }
+
+    if (changedProperties.has("printers")) {
+      this.formSchemaMain = this._computeSchemaMain();
+      this.formSchemaColours = this._computeSchemaColours();
     }
   }
 
@@ -119,7 +155,7 @@ export class AnycubicPrintercardConfigure extends LitElement {
           <div class="ac-printer-card-configure-conf">
             <p class="ac-cconf-label">Choose Monitored Stats</p>
             <anycubic-ui-multi-select-reorder
-              .availableOptions=${PrinterCardStatType}
+              .availableOptions=${this.availableStats}
               .initialItems=${this.cardConfig.monitoredStats}
               .onChange=${(sel: any[]): void => this._selectedStatsChanged(sel)}
             ></anycubic-ui-multi-select-reorder>

@@ -172,7 +172,9 @@ export class AnycubicUIMultiSelectReorder extends LitElement {
 
   async firstUpdated(): void {
     this._allOptions = Object.values(this.availableOptions);
-    this._selectedItems = [...this.initialItems];
+    this._selectedItems = [...this.initialItems].filter((item) =>
+      this._allOptions.includes(item),
+    );
     this._unusedItems = this._allOptions.filter(
       (item) => !this.initialItems.includes(item),
     );

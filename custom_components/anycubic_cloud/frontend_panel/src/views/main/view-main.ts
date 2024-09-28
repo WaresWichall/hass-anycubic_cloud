@@ -12,10 +12,10 @@ import {
   getPrinterID,
   getPrinterMAC,
   getPrinterSensorStateFloat,
-  getPrinterSensorStateObj,
   getPrinterSensorStateString,
   getPrinterBinarySensorState,
   getPrinterUpdateEntityState,
+  isFDMPrinter,
 } from "../../helpers";
 import {
   HomeAssistant,
@@ -140,13 +140,11 @@ export class AnycubicViewMain extends LitElement {
       changedProperties.has("hass") ||
       changedProperties.has("selectedPrinterID")
     ) {
-      this.isFDM =
-        getPrinterSensorStateObj(
-          this.hass,
-          this.printerEntities,
-          this.printerEntityIdPart,
-          "current_status",
-        ).attributes.material_type === "Filament";
+      this.isFDM = isFDMPrinter(
+        this.hass,
+        this.printerEntities,
+        this.printerEntityIdPart,
+      );
       this.printerStateFwUpdateAvailable = getPrinterUpdateEntityState(
         this.hass,
         this.printerEntities,
