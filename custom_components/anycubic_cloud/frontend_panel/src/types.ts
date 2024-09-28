@@ -269,6 +269,7 @@ export interface AnycubicCardConfig {
   scaleFactor?: number;
   slotColors?: string[];
   showSettingsButton?: boolean;
+  alwaysShow?: boolean;
 }
 
 export enum AnycubicMaterialType {

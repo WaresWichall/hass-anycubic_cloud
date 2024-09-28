@@ -669,6 +669,7 @@ export function getDefaultCardConfig(): AnycubicCardConfig {
     scaleFactor: 1,
     slotColors: [],
     showSettingsButton: false,
+    alwaysShow: false,
   };
 }
 

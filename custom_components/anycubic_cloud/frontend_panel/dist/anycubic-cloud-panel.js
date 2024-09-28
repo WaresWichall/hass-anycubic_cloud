@@ -9545,14 +9545,14 @@
     }
     willUpdate(t) {
       var e, i;
-      if (super.willUpdate(t), t.has("hass") && this.hass.language !== this.language && (this.language = this.hass.language), t.has("monitoredStats") && (this.monitoredStats = (e = this.monitoredStats, i = Is, void 0 === e ? i : e)), t.has("selectedPrinterID") && (this.printerEntities = Ut(this.hass, this.selectedPrinterID), this.printerEntityIdPart = jt(this.printerEntities)), t.has("hass") || t.has("hiddenOverride") || t.has("selectedPrinterID")) {
+      if (super.willUpdate(t), t.has("hass") && this.hass.language !== this.language && (this.language = this.hass.language), t.has("monitoredStats") && (this.monitoredStats = (e = this.monitoredStats, i = Is, void 0 === e ? i : e)), t.has("selectedPrinterID") && (this.printerEntities = Ut(this.hass, this.selectedPrinterID), this.printerEntityIdPart = jt(this.printerEntities)), t.has("hass") || t.has("alwaysShow") || t.has("hiddenOverride") || t.has("selectedPrinterID")) {
         this.progressPercent = this._percentComplete(), this.hasColorbox = "active" === Zt(this.hass, this.printerEntities, this.printerEntityIdPart, "ace_spools", "inactive").state, this.hasSecondaryColorbox = "active" === Zt(this.hass, this.printerEntities, this.printerEntityIdPart, "secondary_multi_color_box_spools", "inactive").state, this.cameraEntityId && (this.cameraEntityState = Ft(this.hass, {
           entity_id: this.cameraEntityId
         })), this.lightIsOn = Lt(this.hass, {
           entity_id: this.lightEntityId
         }, !0, !1);
         const t = Zt(this.hass, this.printerEntities, this.printerEntityIdPart, "job_state", "unknown").state.toLowerCase();
-        this.isPrinting = te(t), this.isHidden = !this.isPrinting && !this.hiddenOverride, this.statusColor = function (t) {
+        this.isPrinting = te(t), this.isHidden = !this.alwaysShow && !this.hiddenOverride && !this.isPrinting, this.statusColor = function (t) {
           return "preheating" === t ? "#ffc107" : te(t) ? "#4caf50" : "unknown" === t ? "#f44336" : "operational" === t || "finished" === t ? "#00bcd4" : "#f44336";
         }(t), this.lightIsOn = Lt(this.hass, {
           entity_id: this.lightEntityId
@@ -10007,6 +10007,8 @@
   })], Ns.prototype, "use_24hr", void 0), s([vt({
     type: Boolean
   })], Ns.prototype, "showSettingsButton", void 0), s([vt({
+    type: Boolean
+  })], Ns.prototype, "alwaysShow", void 0), s([vt({
     type: String
   })], Ns.prototype, "temperatureUnit", void 0), s([vt({
     type: String

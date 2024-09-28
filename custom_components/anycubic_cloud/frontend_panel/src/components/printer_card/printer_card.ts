@@ -61,6 +61,10 @@ export class AnycubicPrintercardEditor extends LitElement {
         this.config.use_24hr,
         defaultConfig.use_24hr,
       );
+      this.config.alwaysShow = undefinedDefault(
+        this.config.alwaysShow,
+        defaultConfig.alwaysShow,
+      );
       this.config.showSettingsButton = undefinedDefault(
         this.config.showSettingsButton,
         defaultConfig.showSettingsButton,
@@ -124,6 +128,9 @@ export class AnycubicCard extends LitElement {
   @state({ type: Boolean })
   private showSettingsButton?: boolean;
 
+  @state({ type: Boolean })
+  private alwaysShow?: boolean;
+
   @state({ type: String })
   private temperatureUnit: TemperatureUnit | undefined;
 
@@ -162,6 +169,10 @@ export class AnycubicCard extends LitElement {
       this.use_24hr = undefinedDefault(
         this.config.use_24hr,
         defaultConfig.use_24hr,
+      );
+      this.alwaysShow = undefinedDefault(
+        this.config.alwaysShow,
+        defaultConfig.alwaysShow,
       );
       this.showSettingsButton = undefinedDefault(
         this.config.showSettingsButton,
@@ -202,6 +213,7 @@ export class AnycubicCard extends LitElement {
         .round=${this.round}
         .use_24hr=${this.use_24hr}
         .showSettingsButton=${this.showSettingsButton}
+        .alwaysShow=${this.alwaysShow}
         .temperatureUnit=${this.temperatureUnit}
         .lightEntityId=${this.lightEntityId}
         .powerEntityId=${this.powerEntityId}

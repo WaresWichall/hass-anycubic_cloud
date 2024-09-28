@@ -78,6 +78,9 @@ export class AnycubicPrintercardCard extends LitElement {
   @property({ type: Boolean })
   public showSettingsButton?: boolean;
 
+  @property({ type: Boolean })
+  public alwaysShow?: boolean;
+
   @property({ type: String })
   public temperatureUnit: TemperatureUnit = TemperatureUnit.C;
 
@@ -163,6 +166,7 @@ export class AnycubicPrintercardCard extends LitElement {
 
     if (
       changedProperties.has("hass") ||
+      changedProperties.has("alwaysShow") ||
       changedProperties.has("hiddenOverride") ||
       changedProperties.has("selectedPrinterID")
     ) {
@@ -202,7 +206,9 @@ export class AnycubicPrintercardCard extends LitElement {
         "unknown",
       ).state.toLowerCase();
       this.isPrinting = isPrintStatePrinting(printStateString);
-      this.isHidden = !this.isPrinting && !this.hiddenOverride;
+      this.isHidden = !this.alwaysShow
+        ? !this.hiddenOverride && !this.isPrinting
+        : false;
       this.statusColor = printStateStatusColor(printStateString);
       this.lightIsOn = getEntityStateBinary(
         this.hass,
