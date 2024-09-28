@@ -10174,7 +10174,7 @@
       };
     }
     willUpdate(t) {
-      super.willUpdate(t), t.has("cardConfig") && (this.printerEntities = Ut(this.hass, this.cardConfig.printer_id), this.printerEntityIdPart = zt(this.printerEntities)), t.has("printers") && (this.formSchemaMain = this._computeSchemaMain(), this.formSchemaColours = this._computeSchemaColours()), t.has("hass") && (this.hasColorbox = "active" === Wt(this.hass, this.printerEntities, this.printerEntityIdPart, "ace_spools", "inactive").state);
+      super.willUpdate(t), (t.has("hass") || t.has("cardConfig")) && (this.printerEntities = Ut(this.hass, this.cardConfig.printer_id), this.printerEntityIdPart = zt(this.printerEntities)), t.has("printers") && (this.formSchemaMain = this._computeSchemaMain(), this.formSchemaColours = this._computeSchemaColours()), t.has("hass") && (this.hasColorbox = "active" === Wt(this.hass, this.printerEntities, this.printerEntityIdPart, "ace_spools", "inactive").state);
     }
     render() {
       return X`

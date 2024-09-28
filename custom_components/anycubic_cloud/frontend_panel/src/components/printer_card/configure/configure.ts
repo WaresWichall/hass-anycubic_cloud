@@ -62,7 +62,7 @@ export class AnycubicPrintercardConfigure extends LitElement {
   protected willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
 
-    if (changedProperties.has("cardConfig")) {
+    if (changedProperties.has("hass") || changedProperties.has("cardConfig")) {
       this.printerEntities = getPrinterEntities(
         this.hass,
         this.cardConfig.printer_id,
