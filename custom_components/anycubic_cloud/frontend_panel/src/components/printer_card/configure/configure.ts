@@ -9,6 +9,8 @@ import {
 
 import { fireEvent } from "../../../fire_event";
 
+import { getDefaultCardConfig } from "../../../helpers";
+
 import {
   AnycubicCardConfig,
   HassDevice,
@@ -20,6 +22,8 @@ import {
 } from "../../../types";
 
 import "../../ui/multi-select-reorder.ts";
+
+const defaultConfig = getDefaultCardConfig();
 
 @customElement("anycubic-printercard-configure")
 export class AnycubicPrintercardConfigure extends LitElement {
@@ -76,7 +80,13 @@ export class AnycubicPrintercardConfigure extends LitElement {
   }
 
   private _configChanged(newConfig: AnycubicCardConfig): void {
-    fireEvent(this, "config-changed", { config: newConfig });
+    const filteredConfig = Object.keys(newConfig)
+      .filter((key) => newConfig[key] !== defaultConfig[key])
+      .reduce((fConf, key) => {
+        fConf[key] = newConfig[key];
+        return fConf;
+      }, {});
+    fireEvent(this, "config-changed", { config: filteredConfig });
   }
 
   private _formValueChanged(ev: Event): void {
