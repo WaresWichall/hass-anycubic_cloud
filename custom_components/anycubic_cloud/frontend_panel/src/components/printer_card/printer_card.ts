@@ -81,6 +81,10 @@ export class AnycubicPrintercardEditor extends LitElement {
         this.config.slotColors,
         defaultConfig.slotColors,
       );
+      this.config.scaleFactor = undefinedDefault(
+        this.config.scaleFactor,
+        defaultConfig.scaleFactor,
+      );
     }
   }
 

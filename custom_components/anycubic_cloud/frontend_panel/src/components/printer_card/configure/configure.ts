@@ -1,4 +1,4 @@
-import { LitElement, html, css, PropertyValues } from "lit";
+import { LitElement, html, css, PropertyValues, nothing } from "lit";
 import { property, customElement, state } from "lit/decorators.js";
 
 import {
@@ -9,12 +9,17 @@ import {
 
 import { fireEvent } from "../../../fire_event";
 
-import { getDefaultCardConfig } from "../../../helpers";
+import {
+  getDefaultCardConfig,
+  getPrinterEntities,
+  getPrinterEntityIdPart,
+  getPrinterSensorStateObj,
+} from "../../../helpers";
 
 import {
   AnycubicCardConfig,
-  HassDevice,
   HassDeviceList,
+  HassEntityInfos,
   HaFormBaseSchema,
   HomeAssistant,
   PrinterCardStatType,
@@ -37,42 +42,135 @@ export class AnycubicPrintercardConfigure extends LitElement {
   public printers!: HassDeviceList;
 
   @state()
-  private selectedPrinterDevice: HassDevice | undefined;
+  private configPage: string = "main";
 
   @state()
-  private formSchema: HaFormBaseSchema[] = [];
+  private formSchemaMain: HaFormBaseSchema[] = [];
+
+  @state()
+  private formSchemaColours: HaFormBaseSchema[] = [];
+
+  @state()
+  private printerEntities: HassEntityInfos;
+
+  @state()
+  private printerEntityIdPart: string | undefined;
+
+  @state({ type: Boolean })
+  private hasColorbox: boolean = false;
 
   protected willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
 
+    if (changedProperties.has("cardConfig")) {
+      this.printerEntities = getPrinterEntities(
+        this.hass,
+        this.cardConfig.printer_id,
+      );
+
+      this.printerEntityIdPart = getPrinterEntityIdPart(this.printerEntities);
+    }
+
     if (changedProperties.has("printers")) {
-      this.formSchema = this._computeSchema();
+      this.formSchemaMain = this._computeSchemaMain();
+      this.formSchemaColours = this._computeSchemaColours();
+    }
+
+    if (changedProperties.has("hass")) {
+      this.hasColorbox =
+        getPrinterSensorStateObj(
+          this.hass,
+          this.printerEntities,
+          this.printerEntityIdPart,
+          "ace_spools",
+          "inactive",
+        ).state === "active";
     }
   }
 
   render(): any {
     return html`
       <div class="ac-printer-card-configure-cont">
-        <div class="ac-printer-card-configure-conf">
-          <ha-form
-            .hass=${this.hass}
-            .data=${this.cardConfig}
-            .schema=${this.formSchema}
-            .computeLabel=${this._computeLabel}
-            @value-changed=${this._formValueChanged}
-          ></ha-form>
-        </div>
-        <div class="ac-printer-card-configure-advanced">
-          <p class="ac-cconf-label">Choose Monitored Stats</p>
-          <anycubic-ui-multi-select-reorder
-            .availableOptions=${PrinterCardStatType}
-            .initialItems=${this.cardConfig.monitoredStats}
-            .onChange=${(sel: any[]): void => this._selectedStatsChanged(sel)}
-          ></anycubic-ui-multi-select-reorder>
-        </div>
+        ${this._renderMenu()} ${this._renderConfMain()}
+        ${this._renderConfColours()} ${this._renderConfStats()}
       </div>
     `;
   }
+
+  private _renderConfMain(): any {
+    return this.configPage === "main"
+      ? html`
+          <div class="ac-printer-card-configure-conf">
+            <ha-form
+              .hass=${this.hass}
+              .data=${this.cardConfig}
+              .schema=${this.formSchemaMain}
+              .computeLabel=${this._computeLabel}
+              @value-changed=${this._formValueChanged}
+            ></ha-form>
+          </div>
+        `
+      : nothing;
+  }
+
+  private _renderConfStats(): any {
+    return this.configPage === "stats"
+      ? html`
+          <div class="ac-printer-card-configure-conf">
+            <p class="ac-cconf-label">Choose Monitored Stats</p>
+            <anycubic-ui-multi-select-reorder
+              .availableOptions=${PrinterCardStatType}
+              .initialItems=${this.cardConfig.monitoredStats}
+              .onChange=${(sel: any[]): void => this._selectedStatsChanged(sel)}
+            ></anycubic-ui-multi-select-reorder>
+          </div>
+        `
+      : nothing;
+  }
+
+  private _renderConfColours(): any {
+    return this.configPage === "colours"
+      ? html`
+          <div class="ac-printer-card-configure-conf">
+            <ha-form
+              .hass=${this.hass}
+              .data=${this.cardConfig}
+              .schema=${this.formSchemaColours}
+              .computeLabel=${this._computeLabel}
+              @value-changed=${this._formValueChanged}
+            ></ha-form>
+          </div>
+        `
+      : nothing;
+  }
+
+  private _renderMenu(): HTMLElement {
+    return html`
+      <div class="header">
+        <ha-tabs
+          scrollable
+          attr-for-selected="page-name"
+          .selected=${this.configPage}
+          @iron-activate=${this._handlePageSelected}
+        >
+          <paper-tab page-name="main"> Main </paper-tab>
+          <paper-tab page-name="stats"> Stats </paper-tab>
+          ${this.hasColorbox
+            ? html`<paper-tab page-name="colours">
+                ACE Colour Presets
+              </paper-tab>`
+            : nothing}
+        </ha-tabs>
+      </div>
+    `;
+  }
+
+  private _handlePageSelected = (ev): void => {
+    const newPage = ev.detail.item.getAttribute("page-name");
+    if (newPage !== this.configPage) {
+      this.configPage = newPage;
+    }
+  };
 
   private _selectedStatsChanged(selected: any[]): void {
     this.cardConfig.monitoredStats = selected;
@@ -125,7 +223,7 @@ export class AnycubicPrintercardConfigure extends LitElement {
     }
   };
 
-  private _computeSchema(): HaFormBaseSchema[] {
+  private _computeSchemaMain(): HaFormBaseSchema[] {
     const printerOptions = Object.keys(this.printers).map(
       (printerID, _index) => ({
         value: printerID,
@@ -184,18 +282,6 @@ export class AnycubicPrintercardConfigure extends LitElement {
             selector: { boolean: {} },
           },
           {
-            name: "lightEntityId",
-            selector: { entity: { domain: LIGHT_ENTITY_DOMAINS } },
-          },
-          {
-            name: "powerEntityId",
-            selector: { entity: { domain: SWITCH_ENTITY_DOMAINS } },
-          },
-          {
-            name: "cameraEntityId",
-            selector: { entity: { domain: CAMERA_ENTITY_DOMAINS } },
-          },
-          {
             name: "scaleFactor",
             selector: {
               select: {
@@ -219,6 +305,25 @@ export class AnycubicPrintercardConfigure extends LitElement {
             },
           },
           {
+            name: "lightEntityId",
+            selector: { entity: { domain: LIGHT_ENTITY_DOMAINS } },
+          },
+          {
+            name: "powerEntityId",
+            selector: { entity: { domain: SWITCH_ENTITY_DOMAINS } },
+          },
+          {
+            name: "cameraEntityId",
+            selector: { entity: { domain: CAMERA_ENTITY_DOMAINS } },
+          },
+        ]
+      : [];
+  }
+
+  private _computeSchemaColours(): HaFormBaseSchema[] {
+    return this.printers
+      ? [
+          {
             name: "slotColors",
             description: "Slot Colour Presets",
             selector: {
@@ -237,8 +342,19 @@ export class AnycubicPrintercardConfigure extends LitElement {
         display: block;
       }
 
-      .ac-printer-card-configure-advanced {
-        margin-top: 30px;
+      .header {
+        color: var(--primary-text-color);
+      }
+
+      ha-tabs {
+        margin-left: max(env(safe-area-inset-left), 24px);
+        margin-right: max(env(safe-area-inset-right), 24px);
+        --paper-tabs-selection-bar-color: var(--primary-color);
+        text-transform: uppercase;
+      }
+
+      .ac-printer-card-configure-conf {
+        margin-top: 10px;
       }
 
       .ac-cconf-label {
