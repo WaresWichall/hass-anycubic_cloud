@@ -430,6 +430,7 @@ class BasePrintWithFile(AnycubicCloudServiceCall):
                     file_name, gcode_bytes = await self.hass.async_add_executor_job(
                         self._read_uploaded_file_bytes, service.data[CONF_UPLOADED_GCODE_FILE]
                     )
+                    break
                 except ValueError:
                     if x < MAX_FILE_UPLOAD_RETRIES - 1:
                         await asyncio.sleep(1)
