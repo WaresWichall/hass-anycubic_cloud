@@ -11,7 +11,7 @@ from aiohttp import CookieJar
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import callback, CoreState, HomeAssistant
-from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
+from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryError, HomeAssistantError
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
 from homeassistant.helpers.device_registry import (
     DeviceInfo,
@@ -512,7 +512,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 await asyncio.sleep(2)
                 await printer.request_local_file_list()
 
-    async def _setup_anycubic_api_connection(self, start_up: bool = False):
+    async def _setup_anycubic_api_connection(self):
         store = Store[dict[str, Any]](self.hass, STORAGE_VERSION, STORAGE_KEY)
 
         if self.entry.data.get(CONF_USER_TOKEN) is None:
@@ -536,7 +536,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
             self._anycubic_api.set_mqtt_log_all_messages(self.entry.options.get(CONF_DEBUG))
 
-            # if start_up and config is not None:
+            # if config is not None:
             #     LOGGER.debug("Loading tokens from store.")
             #     try:
             #         self._anycubic_api.load_tokens_from_dict(config)
@@ -547,9 +547,8 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             if not success:
                 raise ConfigEntryAuthFailed("Authentication failed. Check credentials.")
 
-            if start_up:
-                # Create config
-                await store.async_save(self._anycubic_api.build_token_dict())
+            # Create config
+            await store.async_save(self._anycubic_api.build_token_dict())
 
             first_printer_id = self.entry.data[CONF_PRINTER_ID_LIST][0]
 
@@ -569,7 +568,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             try:
                 self._anycubic_printers[int(printer_id)] = await self._anycubic_api.printer_info_for_id(printer_id)
             except Exception as error:
-                raise UpdateFailed(error) from error
+                raise ConfigEntryError(error) from error
 
     async def _register_printer_devices(self, data_dict):
         self._printer_device_map = dict()
@@ -597,7 +596,11 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 "Anycubic MQTT Timed out waiting for connection, try manually enabling MQTT."
             )
 
-    async def get_anycubic_updates(self, start_up: bool = False) -> dict[str, Any]:
+    async def _async_setup(self) -> None:
+        await self._setup_anycubic_api_connection()
+        await self._setup_anycubic_printer_objects()
+
+    async def get_anycubic_updates(self) -> dict[str, Any]:
         """Fetch data from AnycubicCloud."""
 
         if self._failed_updates >= MAX_FAILED_UPDATES:
@@ -606,12 +609,6 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             return
 
         self._last_state_update = int(time.time())
-
-        if self._anycubic_api is None:
-            await self._setup_anycubic_api_connection(start_up=start_up)
-
-        if len(self._anycubic_printers) < 1:
-            await self._setup_anycubic_printer_objects()
 
         try:
             await self._check_or_save_tokens()

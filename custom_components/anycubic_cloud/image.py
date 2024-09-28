@@ -11,6 +11,7 @@ from homeassistant.components.image import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.util import dt as dt_util
 
 from .const import (
     CONF_PRINTER_ID_LIST,
@@ -85,7 +86,7 @@ class AnycubicCloudImage(AnycubicCloudEntity, ImageEntity):
 
     def _reset_cached_image(self):
         self._cached_image = None
-        self._attr_image_last_updated = datetime.now()
+        self._attr_image_last_updated = dt_util.utcnow()
 
     def _check_image_url(self):
         image_url = printer_state_for_key(self.coordinator, self._printer_id, self.entity_description.key)

@@ -47,18 +47,77 @@ from .const import (
 from .coordinator import AnycubicCloudDataUpdateCoordinator
 
 
+def build_anycubic_service_schema(
+    input_service_schema={},
+    with_slot_number=False,
+    with_slot_colours=False,
+    with_opt_box=False,
+    with_speed=False,
+    with_speed_mode=False,
+    with_temperature=False,
+    with_time=False,
+    with_layers=False,
+):
+    service_schema = {
+        **input_service_schema,
+    }
+
+    if with_slot_number:
+        service_schema[vol.Required(CONF_SLOT_NUMBER)] = cv.positive_int
+
+    if with_slot_colours:
+        service_schema[vol.Required(CONF_SLOT_COLOR_RED)] = vol.All(
+            vol.Coerce(int), vol.Range(min=0, max=255)
+        )
+        service_schema[vol.Required(CONF_SLOT_COLOR_GREEN)] = vol.All(
+            vol.Coerce(int), vol.Range(min=0, max=255)
+        )
+        service_schema[vol.Required(CONF_SLOT_COLOR_BLUE)] = vol.All(
+            vol.Coerce(int), vol.Range(min=0, max=255)
+        )
+
+    if with_opt_box:
+        service_schema[vol.Optional(CONF_BOX_ID)] = cv.positive_int
+
+    if with_speed:
+        service_schema[vol.Required(CONF_SPEED)] = cv.positive_int
+
+    if with_speed_mode:
+        service_schema[vol.Required(CONF_SPEED_MODE)] = cv.positive_int
+
+    if with_temperature:
+        service_schema[vol.Required(CONF_TEMPERATURE)] = cv.positive_int
+
+    if with_time:
+        service_schema[vol.Required(CONF_TIME)] = cv.positive_float
+
+    if with_layers:
+        service_schema[vol.Required(CONF_LAYERS)] = cv.positive_int
+
+    return vol.Schema(
+        vol.All(
+            cv.make_entity_service_schema(
+                {
+                    vol.Required(ATTR_CONFIG_ENTRY): selector.ConfigEntrySelector(
+                        {
+                            "integration": DOMAIN,
+                        }
+                    ),
+                    vol.Optional(ATTR_DEVICE_ID): cv.string,
+                    vol.Optional(CONF_PRINTER_ID): cv.positive_int,
+                    **service_schema,
+                }
+            ),
+            cv.has_at_least_one_key(
+                ATTR_DEVICE_ID,
+                CONF_PRINTER_ID,
+            ),
+        ),
+    )
+
+
 class AnycubicCloudServiceCall:
     """Parent class for all Anycubic Cloud service calls."""
-
-    schema = vol.Schema({
-        vol.Required(ATTR_CONFIG_ENTRY): selector.ConfigEntrySelector(
-            {
-                "integration": DOMAIN,
-            }
-        ),
-        vol.Optional(ATTR_DEVICE_ID): cv.string,
-        vol.Optional(CONF_PRINTER_ID): cv.positive_int,
-    })
 
     def __init__(self, hass: HomeAssistant) -> None:
         """Initialize service call."""
@@ -119,28 +178,10 @@ class AnycubicCloudServiceCall:
 class BaseMultiColorBoxSetSlot(AnycubicCloudServiceCall):
     """Base for setting multi color box slots."""
 
-    schema = vol.Schema(
-        vol.All(
-            AnycubicCloudServiceCall.schema.extend(
-                {
-                    vol.Optional(CONF_BOX_ID): cv.positive_int,
-                    vol.Required(CONF_SLOT_NUMBER): cv.positive_int,
-                    vol.Required(CONF_SLOT_COLOR_RED): vol.All(
-                        vol.Coerce(int), vol.Range(min=0, max=255)
-                    ),
-                    vol.Required(CONF_SLOT_COLOR_GREEN): vol.All(
-                        vol.Coerce(int), vol.Range(min=0, max=255)
-                    ),
-                    vol.Required(CONF_SLOT_COLOR_BLUE): vol.All(
-                        vol.Coerce(int), vol.Range(min=0, max=255)
-                    ),
-                }
-            ),
-            cv.has_at_least_one_key(
-                ATTR_DEVICE_ID,
-                CONF_PRINTER_ID,
-            ),
-        ),
+    schema = build_anycubic_service_schema(
+        with_opt_box=True,
+        with_slot_number=True,
+        with_slot_colours=True,
     )
 
     async def async_set_box_slot(
@@ -337,20 +378,12 @@ class MultiColorBoxSetSlotPlaSe(BaseMultiColorBoxSetSlot):
 class MultiColorBoxFilamentExtrude(AnycubicCloudServiceCall):
     """Extrude filament."""
 
-    schema = vol.Schema(
-        vol.All(
-            AnycubicCloudServiceCall.schema.extend(
-                {
-                    vol.Required(CONF_SLOT_NUMBER): cv.positive_int,
-                    vol.Optional(CONF_BOX_ID): cv.positive_int,
-                    vol.Optional(CONF_FINISHED): cv.boolean,
-                }
-            ),
-            cv.has_at_least_one_key(
-                ATTR_DEVICE_ID,
-                CONF_PRINTER_ID,
-            ),
-        ),
+    schema = build_anycubic_service_schema(
+        input_service_schema={
+            vol.Optional(CONF_FINISHED): cv.boolean,
+        },
+        with_opt_box=True,
+        with_slot_number=True,
     )
 
     async def async_call_service(self, service: ServiceCall) -> None:
@@ -370,18 +403,8 @@ class MultiColorBoxFilamentExtrude(AnycubicCloudServiceCall):
 class MultiColorBoxFilamentRetract(AnycubicCloudServiceCall):
     """Retract filament."""
 
-    schema = vol.Schema(
-        vol.All(
-            AnycubicCloudServiceCall.schema.extend(
-                {
-                    vol.Optional(CONF_BOX_ID): cv.positive_int,
-                }
-            ),
-            cv.has_at_least_one_key(
-                ATTR_DEVICE_ID,
-                CONF_PRINTER_ID,
-            ),
-        ),
+    schema = build_anycubic_service_schema(
+        with_opt_box=True,
     )
 
     async def async_call_service(self, service: ServiceCall) -> None:
@@ -397,21 +420,13 @@ class MultiColorBoxFilamentRetract(AnycubicCloudServiceCall):
 class BasePrintWithFile(AnycubicCloudServiceCall):
     """ Base for print with file service calls """
 
-    schema = vol.Schema(
-        vol.All(
-            AnycubicCloudServiceCall.schema.extend(
-                {
-                    vol.Required(CONF_UPLOADED_GCODE_FILE): selector.FileSelector(
-                        selector.FileSelectorConfig(accept=".gcode")
-                    ),
-                    vol.Optional(CONF_SLOT_NUMBER): vol.All(cv.ensure_list, [cv.positive_int]),
-                }
+    schema = build_anycubic_service_schema(
+        input_service_schema={
+            vol.Required(CONF_UPLOADED_GCODE_FILE): selector.FileSelector(
+                selector.FileSelectorConfig(accept=".gcode")
             ),
-            cv.has_at_least_one_key(
-                ATTR_DEVICE_ID,
-                CONF_PRINTER_ID,
-            ),
-        ),
+            vol.Optional(CONF_SLOT_NUMBER): vol.All(cv.ensure_list, [cv.positive_int]),
+        }
     )
 
     def _read_uploaded_file_bytes(
@@ -483,18 +498,10 @@ class PrintAndUploadNoCloudSave(BasePrintWithFile):
 class BaseDeletePrinterFile(AnycubicCloudServiceCall):
     """ Base for printer file deletions """
 
-    schema = vol.Schema(
-        vol.All(
-            AnycubicCloudServiceCall.schema.extend(
-                {
-                    vol.Required(CONF_FILENAME): cv.string,
-                }
-            ),
-            cv.has_at_least_one_key(
-                ATTR_DEVICE_ID,
-                CONF_PRINTER_ID,
-            ),
-        ),
+    schema = build_anycubic_service_schema(
+        input_service_schema={
+            vol.Required(CONF_FILENAME): cv.string,
+        }
     )
 
 
@@ -547,18 +554,10 @@ class DeleteFileUdisk(BaseDeletePrinterFile):
 class DeleteFileCloud(AnycubicCloudServiceCall):
     """Delete a file (Cloud)"""
 
-    schema = vol.Schema(
-        vol.All(
-            AnycubicCloudServiceCall.schema.extend(
-                {
-                    vol.Required(CONF_FILE_ID): cv.positive_int,
-                }
-            ),
-            cv.has_at_least_one_key(
-                ATTR_DEVICE_ID,
-                CONF_PRINTER_ID,
-            ),
-        ),
+    schema = build_anycubic_service_schema(
+        input_service_schema={
+            vol.Required(CONF_FILE_ID): cv.positive_int,
+        }
     )
 
     async def async_call_service(self, service: ServiceCall) -> None:
@@ -615,18 +614,8 @@ class BaseChangePrintSetting(AnycubicCloudServiceCall):
 class ChangePrintSpeedMode(BaseChangePrintSetting):
     """Change print speed mode"""
 
-    schema = vol.Schema(
-        vol.All(
-            AnycubicCloudServiceCall.schema.extend(
-                {
-                    vol.Required(CONF_SPEED_MODE): cv.positive_int,
-                }
-            ),
-            cv.has_at_least_one_key(
-                ATTR_DEVICE_ID,
-                CONF_PRINTER_ID,
-            ),
-        ),
+    schema = build_anycubic_service_schema(
+        with_speed_mode=True,
     )
 
     async def async_call_service(self, service: ServiceCall) -> None:
@@ -645,18 +634,8 @@ class ChangePrintSpeedMode(BaseChangePrintSetting):
 class ChangePrintTargetNozzleTemperature(BaseChangePrintSetting):
     """Change print target nozzle temperature"""
 
-    schema = vol.Schema(
-        vol.All(
-            AnycubicCloudServiceCall.schema.extend(
-                {
-                    vol.Required(CONF_TEMPERATURE): cv.positive_int,
-                }
-            ),
-            cv.has_at_least_one_key(
-                ATTR_DEVICE_ID,
-                CONF_PRINTER_ID,
-            ),
-        ),
+    schema = build_anycubic_service_schema(
+        with_temperature=True,
     )
 
     async def async_call_service(self, service: ServiceCall) -> None:
@@ -675,18 +654,8 @@ class ChangePrintTargetNozzleTemperature(BaseChangePrintSetting):
 class ChangePrintTargetHotbedTemperature(BaseChangePrintSetting):
     """Change print target hotbed temperature"""
 
-    schema = vol.Schema(
-        vol.All(
-            AnycubicCloudServiceCall.schema.extend(
-                {
-                    vol.Required(CONF_TEMPERATURE): cv.positive_int,
-                }
-            ),
-            cv.has_at_least_one_key(
-                ATTR_DEVICE_ID,
-                CONF_PRINTER_ID,
-            ),
-        ),
+    schema = build_anycubic_service_schema(
+        with_temperature=True,
     )
 
     async def async_call_service(self, service: ServiceCall) -> None:
@@ -705,18 +674,8 @@ class ChangePrintTargetHotbedTemperature(BaseChangePrintSetting):
 class ChangePrintFanSpeed(BaseChangePrintSetting):
     """Change print fan speed"""
 
-    schema = vol.Schema(
-        vol.All(
-            AnycubicCloudServiceCall.schema.extend(
-                {
-                    vol.Required(CONF_SPEED): cv.positive_int,
-                }
-            ),
-            cv.has_at_least_one_key(
-                ATTR_DEVICE_ID,
-                CONF_PRINTER_ID,
-            ),
-        ),
+    schema = build_anycubic_service_schema(
+        with_speed=True,
     )
 
     async def async_call_service(self, service: ServiceCall) -> None:
@@ -735,18 +694,8 @@ class ChangePrintFanSpeed(BaseChangePrintSetting):
 class ChangePrintAuxFanSpeed(BaseChangePrintSetting):
     """Change print aux fan speed"""
 
-    schema = vol.Schema(
-        vol.All(
-            AnycubicCloudServiceCall.schema.extend(
-                {
-                    vol.Required(CONF_SPEED): cv.positive_int,
-                }
-            ),
-            cv.has_at_least_one_key(
-                ATTR_DEVICE_ID,
-                CONF_PRINTER_ID,
-            ),
-        ),
+    schema = build_anycubic_service_schema(
+        with_speed=True,
     )
 
     async def async_call_service(self, service: ServiceCall) -> None:
@@ -765,18 +714,8 @@ class ChangePrintAuxFanSpeed(BaseChangePrintSetting):
 class ChangePrintBoxFanSpeed(BaseChangePrintSetting):
     """Change print box fan speed"""
 
-    schema = vol.Schema(
-        vol.All(
-            AnycubicCloudServiceCall.schema.extend(
-                {
-                    vol.Required(CONF_SPEED): cv.positive_int,
-                }
-            ),
-            cv.has_at_least_one_key(
-                ATTR_DEVICE_ID,
-                CONF_PRINTER_ID,
-            ),
-        ),
+    schema = build_anycubic_service_schema(
+        with_speed=True,
     )
 
     async def async_call_service(self, service: ServiceCall) -> None:
@@ -795,18 +734,8 @@ class ChangePrintBoxFanSpeed(BaseChangePrintSetting):
 class ChangePrintBottomLayers(BaseChangePrintSetting):
     """Change print bottom layers"""
 
-    schema = vol.Schema(
-        vol.All(
-            AnycubicCloudServiceCall.schema.extend(
-                {
-                    vol.Required(CONF_LAYERS): cv.positive_int,
-                }
-            ),
-            cv.has_at_least_one_key(
-                ATTR_DEVICE_ID,
-                CONF_PRINTER_ID,
-            ),
-        ),
+    schema = build_anycubic_service_schema(
+        with_layers=True,
     )
 
     async def async_call_service(self, service: ServiceCall) -> None:
@@ -825,18 +754,8 @@ class ChangePrintBottomLayers(BaseChangePrintSetting):
 class ChangePrintBottomTime(BaseChangePrintSetting):
     """Change print bottom time"""
 
-    schema = vol.Schema(
-        vol.All(
-            AnycubicCloudServiceCall.schema.extend(
-                {
-                    vol.Required(CONF_TIME): cv.positive_float,
-                }
-            ),
-            cv.has_at_least_one_key(
-                ATTR_DEVICE_ID,
-                CONF_PRINTER_ID,
-            ),
-        ),
+    schema = build_anycubic_service_schema(
+        with_time=True,
     )
 
     async def async_call_service(self, service: ServiceCall) -> None:
@@ -855,18 +774,8 @@ class ChangePrintBottomTime(BaseChangePrintSetting):
 class ChangePrintOffTime(BaseChangePrintSetting):
     """Change print off time"""
 
-    schema = vol.Schema(
-        vol.All(
-            AnycubicCloudServiceCall.schema.extend(
-                {
-                    vol.Required(CONF_TIME): cv.positive_float,
-                }
-            ),
-            cv.has_at_least_one_key(
-                ATTR_DEVICE_ID,
-                CONF_PRINTER_ID,
-            ),
-        ),
+    schema = build_anycubic_service_schema(
+        with_time=True,
     )
 
     async def async_call_service(self, service: ServiceCall) -> None:
@@ -885,18 +794,8 @@ class ChangePrintOffTime(BaseChangePrintSetting):
 class ChangePrintOnTime(BaseChangePrintSetting):
     """Change print on time"""
 
-    schema = vol.Schema(
-        vol.All(
-            AnycubicCloudServiceCall.schema.extend(
-                {
-                    vol.Required(CONF_TIME): cv.positive_float,
-                }
-            ),
-            cv.has_at_least_one_key(
-                ATTR_DEVICE_ID,
-                CONF_PRINTER_ID,
-            ),
-        ),
+    schema = build_anycubic_service_schema(
+        with_time=True,
     )
 
     async def async_call_service(self, service: ServiceCall) -> None:

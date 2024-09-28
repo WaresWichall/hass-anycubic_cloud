@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import ConfigEntryAuthFailed
 
 from .const import COORDINATOR, DOMAIN, PLATFORMS
 from .coordinator import AnycubicCloudDataUpdateCoordinator
@@ -18,8 +17,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Anycubic Cloud from a config entry."""
 
     coordinator = AnycubicCloudDataUpdateCoordinator(hass, entry)
-    if not await coordinator.get_anycubic_updates(True):
-        raise ConfigEntryAuthFailed
 
     await coordinator.async_config_entry_first_refresh()
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = {
@@ -33,7 +30,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     for service_name, service in SERVICES:
         if not hass.services.has_service(DOMAIN, service_name):
             hass.services.async_register(
-                DOMAIN, service_name, service(hass).async_call_service, service.schema
+                DOMAIN,
+                service_name,
+                service(hass).async_call_service,
+                service.schema,
             )
 
     # register panel
