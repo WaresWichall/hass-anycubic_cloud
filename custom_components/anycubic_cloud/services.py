@@ -42,6 +42,7 @@ from .const import (
     COORDINATOR,
     DOMAIN,
     LOGGER,
+    MAX_FILE_UPLOAD_RETRIES,
 )
 from .coordinator import AnycubicCloudDataUpdateCoordinator
 
@@ -424,11 +425,19 @@ class BasePrintWithFile(AnycubicCloudServiceCall):
 
     async def _get_gcode_data(self, service: ServiceCall):
         try:
-            file_name, gcode_bytes = await self.hass.async_add_executor_job(
-                self._read_uploaded_file_bytes, service.data[CONF_UPLOADED_GCODE_FILE]
-            )
+            for x in range(MAX_FILE_UPLOAD_RETRIES):
+                try:
+                    file_name, gcode_bytes = await self.hass.async_add_executor_job(
+                        self._read_uploaded_file_bytes, service.data[CONF_UPLOADED_GCODE_FILE]
+                    )
+                except ValueError:
+                    if x < MAX_FILE_UPLOAD_RETRIES - 1:
+                        await asyncio.sleep(1)
+                    else:
+                        raise
+
         except Exception as e:
-            LOGGER.debug(f"Gcode file read error: {e}")
+            LOGGER.warning(f"Gcode file read error: {e}")
             raise ServiceValidationError(
                 "Could not read gcode file."
             )

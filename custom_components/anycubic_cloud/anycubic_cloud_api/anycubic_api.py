@@ -175,7 +175,7 @@ class AnycubicAPI:
 
     def _log_to_warn(self, msg):
         if self._debug_logger:
-            self._debug_logger.warn(msg)
+            self._debug_logger.warning(msg)
 
     def _log_to_error(self, msg):
         if self._debug_logger:
