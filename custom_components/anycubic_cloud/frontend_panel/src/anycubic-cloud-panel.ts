@@ -64,6 +64,33 @@ export class AnycubicCloudPanel extends LitElement {
   @state()
   private language: string;
 
+  @state()
+  private _tabMain: string;
+
+  @state()
+  private _tabFilesLocal: string;
+
+  @state()
+  private _tabFilesUdisk: string;
+
+  @state()
+  private _tabFilesCloud: string;
+
+  @state()
+  private _tabPrintNoSave: string;
+
+  @state()
+  private _tabPrintSave: string;
+
+  @state()
+  private _tabDebug: string;
+
+  @state()
+  private _mainTitle: string;
+
+  @state()
+  private _selectPrinter: string;
+
   async firstUpdated(): void {
     this.printers = await getPrinterDevices(this.hass);
     this.requestUpdate();
@@ -91,6 +118,24 @@ export class AnycubicCloudPanel extends LitElement {
 
     if (changedProperties.has("hass") && this.hass.language !== this.language) {
       this.language = this.hass.language;
+      this._tabMain = localize("panels.main.title", this.language);
+      this._tabFilesLocal = localize("panels.files_local.title", this.language);
+      this._tabFilesUdisk = localize("panels.files_udisk.title", this.language);
+      this._tabFilesCloud = localize("panels.files_cloud.title", this.language);
+      this._tabPrintNoSave = localize(
+        "panels.print_no_cloud_save.title",
+        this.language,
+      );
+      this._tabPrintSave = localize(
+        "panels.print_save_in_cloud.title",
+        this.language,
+      );
+      this._tabDebug = localize("panels.debug.title", this.language);
+      this._mainTitle = localize("title", this.language);
+      this._selectPrinter = localize(
+        "panels.initial.printer_select",
+        this.language,
+      );
     }
 
     if (!changedProperties.has("route") && !changedProperties.has("printers")) {
@@ -119,29 +164,25 @@ export class AnycubicCloudPanel extends LitElement {
           .selected=${this.selectedPage}
           @iron-activate=${this.handlePageSelected}
         >
-          <paper-tab page-name="main">
-            ${localize("panels.main.title", this.language)}
-          </paper-tab>
+          <paper-tab page-name="main"> ${this._tabMain} </paper-tab>
           <paper-tab page-name="local-files">
-            ${localize("panels.files_local.title", this.language)}
+            ${this._tabFilesLocal}
           </paper-tab>
           <paper-tab page-name="udisk-files">
-            ${localize("panels.files_udisk.title", this.language)}
+            ${this._tabFilesUdisk}
           </paper-tab>
           <paper-tab page-name="cloud-files">
-            ${localize("panels.files_cloud.title", this.language)}
+            ${this._tabFilesCloud}
           </paper-tab>
           <paper-tab page-name="print-no_cloud_save">
-            ${localize("panels.print_no_cloud_save.title", this.language)}
+            ${this._tabPrintNoSave}
           </paper-tab>
           <paper-tab page-name="print-save_in_cloud">
-            ${localize("panels.print_save_in_cloud.title", this.language)}
+            ${this._tabPrintSave}
           </paper-tab>
           ${DEBUG
             ? html`
-                <paper-tab page-name="debug">
-                  ${localize("panels.debug.title", this.language)}
-                </paper-tab>
+                <paper-tab page-name="debug"> ${this._tabDebug} </paper-tab>
               `
             : null}
         </ha-tabs>
@@ -157,7 +198,7 @@ export class AnycubicCloudPanel extends LitElement {
           .hass=${this.hass}
           .narrow=${this.narrow}
         ></ha-menu-button>
-        <div class="main-title">${localize("title", this.language)}</div>
+        <div class="main-title">${this._mainTitle}</div>
         <div class="version">v${pkgjson.version}</div>
       </div>
     `;
@@ -170,12 +211,7 @@ export class AnycubicCloudPanel extends LitElement {
       return html`
         <div class="header">${this.renderToolbar()}</div>
         <printer-select elevation="2">
-          <p>
-            ${localize(
-              "panels.initial.fields.printer_select.heading",
-              this.language,
-            )}
-          </p>
+          <p>${this._selectPrinter}</p>
           <ul class="printers-container">
             ${this.printers
               ? Object.keys(this.printers).map(
@@ -203,6 +239,7 @@ export class AnycubicCloudPanel extends LitElement {
           <anycubic-view-files_local
             class="ac_wide_view"
             .hass=${this.hass}
+            .language=${this.language}
             .narrow=${this.narrow}
             .route=${route}
             .panel=${this.panel}
@@ -215,6 +252,7 @@ export class AnycubicCloudPanel extends LitElement {
           <anycubic-view-files_udisk
             class="ac_wide_view"
             .hass=${this.hass}
+            .language=${this.language}
             .narrow=${this.narrow}
             .route=${route}
             .panel=${this.panel}
@@ -227,6 +265,7 @@ export class AnycubicCloudPanel extends LitElement {
           <anycubic-view-files_cloud
             class="ac_wide_view"
             .hass=${this.hass}
+            .language=${this.language}
             .narrow=${this.narrow}
             .route=${route}
             .panel=${this.panel}
@@ -239,6 +278,7 @@ export class AnycubicCloudPanel extends LitElement {
           <anycubic-view-print-no_cloud_save
             class="ac_wide_view"
             .hass=${this.hass}
+            .language=${this.language}
             .narrow=${this.narrow}
             .route=${route}
             .panel=${this.panel}
@@ -251,6 +291,7 @@ export class AnycubicCloudPanel extends LitElement {
           <anycubic-view-print-save_in_cloud
             class="ac_wide_view"
             .hass=${this.hass}
+            .language=${this.language}
             .narrow=${this.narrow}
             .route=${route}
             .panel=${this.panel}
@@ -262,6 +303,7 @@ export class AnycubicCloudPanel extends LitElement {
         return html`
           <anycubic-view-main
             .hass=${this.hass}
+            .language=${this.language}
             .narrow=${this.narrow}
             .route=${route}
             .panel=${this.panel}
@@ -273,6 +315,7 @@ export class AnycubicCloudPanel extends LitElement {
         return html`
           <anycubic-view-debug
             .hass=${this.hass}
+            .language=${this.language}
             .narrow=${this.narrow}
             .route=${route}
             .panel=${this.panel}

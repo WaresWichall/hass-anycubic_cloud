@@ -24,6 +24,7 @@ import {
   HassPanel,
   HassRoute,
   PrinterCardStatType,
+  TranslationDict,
 } from "../../types";
 
 import "../../components/printer_card/card/card.ts";
@@ -33,10 +34,34 @@ const monitoredStatsBasic: PrinterCardStatType[] =
   getPanelBasicMonitoredStats();
 const monitoredStatsFDM: PrinterCardStatType[] = getPanelFDMMonitoredStats();
 
+const infoFields: string[] = [
+  "printer_name",
+  "printer_id",
+  "printer_mac",
+  "printer_model",
+  "printer_fw_version",
+  "printer_fw_update_available",
+  "printer_online",
+  "printer_available",
+  "curr_nozzle_temp",
+  "curr_hotbed_temp",
+  "target_nozzle_temp",
+  "target_hotbed_temp",
+  "job_state",
+  "job_progress",
+  "ace_fw_version",
+  "ace_fw_update_available",
+  "drying_active",
+  "drying_progress",
+];
+
 @customElement("anycubic-view-main")
 export class AnycubicViewMain extends LitElement {
   @property()
   public hass!: HomeAssistant;
+
+  @property()
+  public language!: string;
 
   @property({ type: Boolean, reflect: true })
   public narrow!: boolean;
@@ -114,13 +139,19 @@ export class AnycubicViewMain extends LitElement {
   private monitoredStats: PrinterCardStatType[] = monitoredStatsBasic;
 
   @state()
-  private language: string;
+  private _statTranslations: TranslationDict;
 
   protected willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
 
-    if (changedProperties.has("hass") && this.hass.language !== this.language) {
-      this.language = this.hass.language;
+    if (changedProperties.has("language")) {
+      this._statTranslations = infoFields.reduce((fConf, fieldKey) => {
+        fConf[fieldKey] = localize(
+          `panels.main.cards.main.fields.${fieldKey}`,
+          this.language,
+        );
+        return fConf;
+      }, {});
     }
 
     if (changedProperties.has("selectedPrinterDevice")) {
@@ -257,12 +288,9 @@ export class AnycubicViewMain extends LitElement {
   }
 
   private _renderInfoRow(fieldKey, rowData): HTMLElement {
-    const languageKey = `panels.main.cards.main.fields.${fieldKey}.heading`;
     return html`
       <div class="info-row">
-        <span class="info-heading">
-          ${localize(languageKey, this.language)}:</span
-        >
+        <span class="info-heading"> ${this._statTranslations[fieldKey]}:</span>
         <span class="info-detail">${rowData}</span>
       </div>
     `;
@@ -279,6 +307,7 @@ export class AnycubicViewMain extends LitElement {
       <printer-card elevation="2">
         <anycubic-printercard-card
           .hass=${this.hass}
+          .language=${this.language}
           .selectedPrinterID=${this.selectedPrinterID}
           .selectedPrinterDevice=${this.selectedPrinterDevice}
           .vertical=${false}

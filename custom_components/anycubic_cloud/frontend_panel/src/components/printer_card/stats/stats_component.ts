@@ -1,6 +1,8 @@
-import { LitElement, html, css } from "lit";
-import { property } from "lit/decorators.js";
+import { LitElement, html, css, PropertyValues } from "lit";
+import { property, state } from "lit/decorators.js";
 import { repeat } from "lit/directives/repeat.js";
+
+import { localize } from "../../../../localize/localize";
 
 import { customElementIfUndef } from "../../../internal/register-custom-element";
 
@@ -15,6 +17,7 @@ import {
   HomeAssistant,
   PrinterCardStatType,
   TemperatureUnit,
+  TranslationDict,
 } from "../../../types";
 
 import "./progress_line.ts";
@@ -26,6 +29,9 @@ import "./time_stat.ts";
 export class AnycubicPrintercardStatsComponent extends LitElement {
   @property()
   public hass!: HomeAssistant;
+
+  @property()
+  public language!: string;
 
   @property()
   public monitoredStats: PrinterCardStatType[];
@@ -50,6 +56,25 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
 
   @property()
   public progressPercent: number = 0;
+
+  @state()
+  private _statTranslations: TranslationDict;
+
+  protected willUpdate(changedProperties: PropertyValues<this>): void {
+    super.willUpdate(changedProperties);
+    if (
+      changedProperties.has("language") ||
+      changedProperties.has("monitoredStats")
+    ) {
+      this._statTranslations = this.monitoredStats.reduce((fConf, statKey) => {
+        fConf[statKey] = localize(
+          `card.monitored_stats.${statKey}`,
+          this.language,
+        );
+        return fConf;
+      }, {});
+    }
+  }
 
   render(): any {
     return html`
@@ -79,7 +104,7 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
           case PrinterCardStatType.Status:
             return html`
               <anycubic-printercard-stat-line
-                .name=${condition}
+                .name=${this._statTranslations[condition]}
                 .value=${toTitleCase(
                   getPrinterSensorStateObj(
                     this.hass,
@@ -100,6 +125,7 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
                   "job_time_remaining",
                 )}
                 .timeType=${condition}
+                .name=${this._statTranslations[condition]}
                 .direction=${0}
                 .round=${this.round}
                 .use_24hr=${this.use_24hr}
@@ -115,6 +141,7 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
                   "job_time_elapsed",
                 )}
                 .timeType=${condition}
+                .name=${this._statTranslations[condition]}
                 .direction=${1}
                 .round=${this.round}
                 .use_24hr=${this.use_24hr}
@@ -131,6 +158,7 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
                   "job_time_remaining",
                 )}
                 .timeType=${condition}
+                .name=${this._statTranslations[condition]}
                 .direction=${-1}
                 .round=${this.round}
                 .use_24hr=${this.use_24hr}
@@ -140,7 +168,7 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
           case PrinterCardStatType.BedCurrent:
             return html`
               <anycubic-printercard-stat-temperature
-                .name=${condition}
+                .name=${this._statTranslations[condition]}
                 .temperatureEntity=${getPrinterSensorStateObj(
                   this.hass,
                   this.printerEntities,
@@ -155,7 +183,7 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
           case PrinterCardStatType.HotendCurrent:
             return html`
               <anycubic-printercard-stat-temperature
-                .name=${condition}
+                .name=${this._statTranslations[condition]}
                 .temperatureEntity=${getPrinterSensorStateObj(
                   this.hass,
                   this.printerEntities,
@@ -170,7 +198,7 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
           case PrinterCardStatType.BedTarget:
             return html`
               <anycubic-printercard-stat-temperature
-                .name=${condition}
+                .name=${this._statTranslations[condition]}
                 .temperatureEntity=${getPrinterSensorStateObj(
                   this.hass,
                   this.printerEntities,
@@ -185,7 +213,7 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
           case PrinterCardStatType.HotendTarget:
             return html`
               <anycubic-printercard-stat-temperature
-                .name=${condition}
+                .name=${this._statTranslations[condition]}
                 .temperatureEntity=${getPrinterSensorStateObj(
                   this.hass,
                   this.printerEntities,
@@ -200,7 +228,7 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
           case PrinterCardStatType.PrinterOnline:
             return html`
               <anycubic-printercard-stat-line
-                .name=${condition}
+                .name=${this._statTranslations[condition]}
                 .value=${getPrinterBinarySensorState(
                   this.hass,
                   this.printerEntities,
@@ -215,7 +243,7 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
           case PrinterCardStatType.Availability:
             return html`
               <anycubic-printercard-stat-line
-                .name=${condition}
+                .name=${this._statTranslations[condition]}
                 .value=${toTitleCase(
                   getPrinterSensorStateObj(
                     this.hass,
@@ -230,7 +258,7 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
           case PrinterCardStatType.ProjectName:
             return html`
               <anycubic-printercard-stat-line
-                .name=${condition}
+                .name=${this._statTranslations[condition]}
                 .value=${getPrinterSensorStateObj(
                   this.hass,
                   this.printerEntities,
@@ -243,7 +271,7 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
           case PrinterCardStatType.CurrentLayer:
             return html`
               <anycubic-printercard-stat-line
-                .name=${condition}
+                .name=${this._statTranslations[condition]}
                 .value=${getPrinterSensorStateObj(
                   this.hass,
                   this.printerEntities,
@@ -272,7 +300,7 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
                 : "Unknown";
             return html`
               <anycubic-printercard-stat-line
-                .name=${condition}
+                .name=${this._statTranslations[condition]}
                 .value=${currentSpeedModeDescr}
               ></anycubic-printercard-stat-line>
             `;
@@ -281,7 +309,7 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
           case PrinterCardStatType.FanSpeed:
             return html`
               <anycubic-printercard-stat-line
-                .name=${condition}
+                .name=${this._statTranslations[condition]}
                 .value=${getPrinterSensorStateObj(
                   this.hass,
                   this.printerEntities,
@@ -296,7 +324,7 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
           case PrinterCardStatType.DryingStatus:
             return html`
               <anycubic-printercard-stat-line
-                .name=${condition}
+                .name=${this._statTranslations[condition]}
                 .value=${getPrinterBinarySensorState(
                   this.hass,
                   this.printerEntities,
@@ -336,7 +364,7 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
                 : 0;
             return html`
               <anycubic-printercard-progress-line
-                .name=${condition}
+                .name=${this._statTranslations[condition]}
                 .value=${dryRemainMinutes}
                 .progress=${dryProgress}
               ></anycubic-printercard-progress-line>
@@ -346,7 +374,7 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
           case PrinterCardStatType.OnTime:
             return html`
               <anycubic-printercard-stat-line
-                .name=${condition}
+                .name=${this._statTranslations[condition]}
                 .value=${getPrinterSensorStateObj(
                   this.hass,
                   this.printerEntities,
@@ -361,7 +389,7 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
           case PrinterCardStatType.OffTime:
             return html`
               <anycubic-printercard-stat-line
-                .name=${condition}
+                .name=${this._statTranslations[condition]}
                 .value=${getPrinterSensorStateObj(
                   this.hass,
                   this.printerEntities,
@@ -376,7 +404,7 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
           case PrinterCardStatType.BottomTime:
             return html`
               <anycubic-printercard-stat-line
-                .name=${condition}
+                .name=${this._statTranslations[condition]}
                 .value=${getPrinterSensorStateObj(
                   this.hass,
                   this.printerEntities,
@@ -391,7 +419,7 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
           case PrinterCardStatType.ModelHeight:
             return html`
               <anycubic-printercard-stat-line
-                .name=${condition}
+                .name=${this._statTranslations[condition]}
                 .value=${getPrinterSensorStateObj(
                   this.hass,
                   this.printerEntities,
@@ -406,7 +434,7 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
           case PrinterCardStatType.BottomLayers:
             return html`
               <anycubic-printercard-stat-line
-                .name=${condition}
+                .name=${this._statTranslations[condition]}
                 .value=${getPrinterSensorStateObj(
                   this.hass,
                   this.printerEntities,
@@ -421,7 +449,7 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
           case PrinterCardStatType.ZUpHeight:
             return html`
               <anycubic-printercard-stat-line
-                .name=${condition}
+                .name=${this._statTranslations[condition]}
                 .value=${getPrinterSensorStateObj(
                   this.hass,
                   this.printerEntities,
@@ -436,7 +464,7 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
           case PrinterCardStatType.ZUpSpeed:
             return html`
               <anycubic-printercard-stat-line
-                .name=${condition}
+                .name=${this._statTranslations[condition]}
                 .value=${getPrinterSensorStateObj(
                   this.hass,
                   this.printerEntities,
@@ -450,7 +478,7 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
           case PrinterCardStatType.ZDownSpeed:
             return html`
               <anycubic-printercard-stat-line
-                .name=${condition}
+                .name=${this._statTranslations[condition]}
                 .value=${getPrinterSensorStateObj(
                   this.hass,
                   this.printerEntities,

@@ -302,7 +302,11 @@ export enum AnycubicMaterialType {
 }
 
 export enum AnycubicPrintOptionConfirmationType {
-  PAUSE = "Pause",
-  RESUME = "Resume",
-  CANCEL = "Cancel",
+  PAUSE = "pause",
+  RESUME = "resume",
+  CANCEL = "cancel",
+}
+
+export interface TranslationDict {
+  [id: string]: string;
 }

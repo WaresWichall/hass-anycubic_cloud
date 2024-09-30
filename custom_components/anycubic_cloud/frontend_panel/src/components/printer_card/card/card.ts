@@ -61,6 +61,9 @@ export class AnycubicPrintercardCard extends LitElement {
   public hass!: HomeAssistant;
 
   @property()
+  public language!: string;
+
+  @property()
   public monitoredStats?: PrinterCardStatType[] = defaultMonitoredStats;
 
   @property()
@@ -139,13 +142,16 @@ export class AnycubicPrintercardCard extends LitElement {
   private progressPercent: number = 0;
 
   @state()
-  private language: string;
+  private _buttonPrintSettings: string;
 
   protected willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
 
-    if (changedProperties.has("hass") && this.hass.language !== this.language) {
-      this.language = this.hass.language;
+    if (changedProperties.has("language")) {
+      this._buttonPrintSettings = localize(
+        "card.buttons.print_settings",
+        this.language,
+      );
     }
 
     if (changedProperties.has("monitoredStats")) {
@@ -237,17 +243,20 @@ export class AnycubicPrintercardCard extends LitElement {
         ></anycubic-printercard-camera_view>
         <anycubic-printercard-multicolorbox_modal_spool
           .hass=${this.hass}
+          .language=${this.language}
           .selectedPrinterDevice=${this.selectedPrinterDevice}
           .slotColors=${this.slotColors}
         ></anycubic-printercard-multicolorbox_modal_spool>
         <anycubic-printercard-printsettings_modal
           .hass=${this.hass}
+          .language=${this.language}
           .selectedPrinterDevice=${this.selectedPrinterDevice}
           .printerEntities=${this.printerEntities}
           .printerEntityIdPart=${this.printerEntityIdPart}
         ></anycubic-printercard-printsettings_modal>
         <anycubic-printercard-multicolorbox_modal_drying
           .hass=${this.hass}
+          .language=${this.language}
           .selectedPrinterDevice=${this.selectedPrinterDevice}
           .printerEntities=${this.printerEntities}
           .printerEntityIdPart=${this.printerEntityIdPart}
@@ -368,6 +377,7 @@ export class AnycubicPrintercardCard extends LitElement {
         >
           <anycubic-printercard-stats-component
             .hass=${this.hass}
+            .language=${this.language}
             .monitoredStats=${this.monitoredStats}
             .printerEntities=${this.printerEntities}
             .printerEntityIdPart=${this.printerEntityIdPart}
@@ -416,7 +426,7 @@ export class AnycubicPrintercardCard extends LitElement {
                 }}"
               >
                 <ha-svg-icon .path=${mdiCog}></ha-svg-icon>
-                ${localize("card.buttons.print_settings", this.language)}
+                ${this._buttonPrintSettings}
               </button>
             </div>
           </div>
@@ -444,6 +454,7 @@ export class AnycubicPrintercardCard extends LitElement {
             <div class="ac-printer-card-mcbsection ${classMap(classesMain)}">
               <anycubic-printercard-multicolorbox_view
                 .hass=${this.hass}
+                .language=${this.language}
                 .printerEntities=${this.printerEntities}
                 .printerEntityIdPart=${this.printerEntityIdPart}
                 .box_id=${0}
@@ -474,6 +485,7 @@ export class AnycubicPrintercardCard extends LitElement {
             <div class="ac-printer-card-mcbsection ${classMap(classesMain)}">
               <anycubic-printercard-multicolorbox_view
                 .hass=${this.hass}
+                .language=${this.language}
                 .printerEntities=${this.printerEntities}
                 .printerEntityIdPart=${this.printerEntityIdPart}
                 .box_id=${1}

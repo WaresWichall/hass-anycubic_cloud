@@ -41,12 +41,19 @@ export class AnycubicPrintercardEditor extends LitElement {
   @state()
   private printers?: HassDeviceList;
 
+  @state()
+  private language: string;
+
   async firstUpdated(): void {
     this.printers = await getPrinterDevices(this.hass);
   }
 
   protected willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
+
+    if (changedProperties.has("hass") && this.hass.language !== this.language) {
+      this.language = this.hass.language;
+    }
 
     if (changedProperties.has("config")) {
       this.config.vertical = undefinedDefault(
@@ -96,6 +103,7 @@ export class AnycubicPrintercardEditor extends LitElement {
     return html`
       <anycubic-printercard-configure
         .hass=${this.hass}
+        .language=${this.language}
         .printers=${this.printers}
         .cardConfig=${this.config}
       ></anycubic-printercard-configure>
@@ -113,6 +121,9 @@ export class AnycubicCard extends LitElement {
 
   @state()
   private printers?: HassDeviceList;
+
+  @state()
+  private language: string;
 
   @state()
   private selectedPrinterID: string | undefined;
@@ -164,6 +175,10 @@ export class AnycubicCard extends LitElement {
   protected willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
 
+    if (changedProperties.has("hass") && this.hass.language !== this.language) {
+      this.language = this.hass.language;
+    }
+
     if (changedProperties.has("config") || changedProperties.has("printers")) {
       this.vertical = undefinedDefault(
         this.config.vertical,
@@ -210,6 +225,7 @@ export class AnycubicCard extends LitElement {
     return html`
       <anycubic-printercard-card
         .hass=${this.hass}
+        .language=${this.language}
         .monitoredStats=${this.config.monitoredStats}
         .selectedPrinterID=${this.selectedPrinterID}
         .selectedPrinterDevice=${this.selectedPrinterDevice}

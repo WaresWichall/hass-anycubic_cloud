@@ -36,6 +36,9 @@ export class AnycubicPrintercardMulticolorboxview extends LitElement {
   public hass!: HomeAssistant;
 
   @property()
+  public language!: string;
+
+  @property()
   public printerEntities: HassEntityInfos;
 
   @property()
@@ -66,13 +69,20 @@ export class AnycubicPrintercardMulticolorboxview extends LitElement {
   private _runoutRefillState: HassEntity | undefined;
 
   @state()
-  private language: string;
+  private _buttonRefill: string;
+
+  @state()
+  private _buttonDry: string;
 
   protected willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
 
-    if (changedProperties.has("hass") && this.hass.language !== this.language) {
-      this.language = this.hass.language;
+    if (changedProperties.has("language")) {
+      this._buttonRefill = localize(
+        "card.buttons.runout_refill",
+        this.language,
+      );
+      this._buttonDry = localize("card.buttons.dry", this.language);
     }
 
     if (changedProperties.has("box_id")) {
@@ -112,9 +122,7 @@ export class AnycubicPrintercardMulticolorboxview extends LitElement {
       <div class="ac-printercard-mcbview">
         <div class="ac-printercard-mcbmenu ac-printercard-menuleft">
           <div class="ac-switch" @click="${this._handleRunoutRefillChanged}">
-            <div class="ac-switch-label">
-              ${localize("card.buttons.runout_refill", this.language)}
-            </div>
+            <div class="ac-switch-label">${this._buttonRefill}</div>
             <ha-entity-toggle
               .hass=${this.hass}
               .stateObj=${this._runoutRefillState}
@@ -129,7 +137,7 @@ export class AnycubicPrintercardMulticolorboxview extends LitElement {
             }}"
           >
             <ha-svg-icon .path=${mdiRadiator}></ha-svg-icon>
-            ${localize("card.buttons.dry", this.language)}
+            ${this._buttonDry}
           </ha-control-button>
         </div>
       </div>

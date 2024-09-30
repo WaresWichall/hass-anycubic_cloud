@@ -2,24 +2,52 @@
   "title": "Anycubic Cloud",
   "common": {
     "actions": {
+      "cancel": "Cancel",
+      "pause": "Pause",
       "print": "Print",
+      "resume": "Resume",
       "yes": "Yes",
-      "no": "No"
+      "no": "No",
+      "save": "Save"
     }
   },
   "card": {
-    "headings": {
-      "drying_options": "Drying Options"
-    },
     "buttons": {
       "print_settings": "Print Settings",
       "dry": "Dry",
       "runout_refill": "Refill",
       "preset": "Preset",
-      "stop_drying": "Stop Drying"
+      "stop_drying": "Stop Drying",
+      "minutes": "Mins"
+    },
+    "configure": {
+      "tabs": {
+        "main": "Main",
+        "stats": "Stats",
+        "colours": "ACE Colour Presets"
+      },
+      "labels": {
+        "printer_id": "Select Printer",
+        "vertical": "Vertical Layout?",
+        "round": "Round Stats?",
+        "use_24hr": "Use 24hr Time?",
+        "show_settings_button": "Always show print settings button?",
+        "always_show": "Always show card?",
+        "temperature_unit": "Temperature Unit",
+        "light_entity_id": "Light Entity",
+        "power_entity_id": "Power Entity",
+        "camera_entity_id": "Camera Entity",
+        "scale_factor": "Scale Factor",
+        "slot_colors": "Slot Colour Presets"
+      }
     },
     "print_settings": {
       "confirm_message": "Are you sure you want to {action} the print?",
+      "label_nozzle_temp": "Nozzle Temperature",
+      "label_hotbed_temp": "Hotbed Temperature",
+      "label_fan_speed": "Fan Speed",
+      "label_aux_fan_speed": "AUX Fan Speed",
+      "label_box_fan_speed": "Box Fan Speed",
       "print_pause": "Pause Print",
       "print_resume": "Resume Print",
       "print_cancel": "Cancel Print",
@@ -29,15 +57,50 @@
       "save_fan_speed": "Save Fan Speed",
       "save_aux_fan_speed": "Save AUX Fan Speed",
       "save_box_fan_speed": "Save Box Fan Speed"
+    },
+    "drying_settings": {
+      "heading": "Drying Options",
+      "button_preset": "Preset",
+      "button_stop_drying": "Stop Drying",
+      "button_minutes": "Mins"
+    },
+    "spool_settings": {
+      "heading": "Editing Slot",
+      "label_select_material": "Select Material",
+      "label_select_colour": "Manually select colour"
+    },
+    "monitored_stats": {
+      "ETA": "ETA",
+      "Elapsed": "Elapsed",
+      "Remaining": "Remaining",
+      "Status": "Status",
+      "Online": "Online",
+      "Availability": "Availability",
+      "Project": "Project",
+      "Layer": "Layer",
+      "Hotend": "Hotend",
+      "Bed": "Bed",
+      "T Hotend": "T Hotend",
+      "T Bed": "T Bed",
+      "Dry Status": "Dry Status",
+      "Dry Time": "Dry Time",
+      "Speed Mode": "Speed Mode",
+      "Fan Speed": "Fan Speed",
+      "Dry Status": "Dry Status",
+      "Dry Time": "Dry Time",
+      "On Time": "On Time",
+      "Off Time": "Off Time",
+      "Bottom Time": "Bottom Time",
+      "Model Height": "Model Height",
+      "Bottom Layers": "Bottom Layers",
+      "Z Up Height": "Z Up Height",
+      "Z Up Speed": "Z Up Speed",
+      "Z Down Speed": "Z Down Speed"
     }
   },
   "panels": {
     "initial": {
-      "fields": {
-        "printer_select": {
-          "heading": "Select a printer."
-        }
-      }
+      "printer_select": "Select a printer."
     },
     "main": {
       "title": "Main",
@@ -45,60 +108,24 @@
         "main": {
           "description": "General information about the printer.",
           "fields": {
-            "printer_name": {
-              "heading": "Name"
-            },
-            "printer_id": {
-              "heading": "ID"
-            },
-            "printer_mac": {
-              "heading": "MAC"
-            },
-            "printer_model": {
-              "heading": "Model"
-            },
-            "printer_fw_version": {
-              "heading": "FW Version"
-            },
-            "printer_fw_update_available": {
-              "heading": "FW Status"
-            },
-            "printer_online": {
-              "heading": "Online"
-            },
-            "printer_available": {
-              "heading": "Available"
-            },
-            "curr_nozzle_temp": {
-              "heading": "Current Nozzle Temperature"
-            },
-            "curr_hotbed_temp": {
-              "heading": "Current Hotbed Temperature"
-            },
-            "target_nozzle_temp": {
-              "heading": "Target Nozzle Temperature"
-            },
-            "target_hotbed_temp": {
-              "heading": "Target Hotbed Temperature"
-            },
-            "job_state": {
-              "heading": "Job State"
-            },
-            "job_progress": {
-              "heading": "Job Progress"
-            },
-            "ace_fw_version": {
-              "heading": "ACE FW Version"
-            },
-            "ace_fw_update_available": {
-              "heading": "ACE FW Status"
-            },
-            "drying_active": {
-              "heading": "ACE Drying Status"
-            },
-            "drying_progress": {
-              "heading": "ACE Drying Progress"
-            }
+            "printer_name": "Name",
+            "printer_id": "ID",
+            "printer_mac": "MAC",
+            "printer_model": "Model",
+            "printer_fw_version": "FW Version",
+            "printer_fw_update_available": "FW Status",
+            "printer_online": "Online",
+            "printer_available": "Available",
+            "curr_nozzle_temp": "Current Nozzle Temperature",
+            "curr_hotbed_temp": "Current Hotbed Temperature",
+            "target_nozzle_temp": "Target Nozzle Temperature",
+            "target_hotbed_temp": "Target Hotbed Temperature",
+            "job_state": "Job State",
+            "job_progress": "Job Progress",
+            "ace_fw_version": "ACE FW Version",
+            "ace_fw_update_available": "ACE FW Status",
+            "drying_active": "ACE Drying Status",
+            "drying_progress": "ACE Drying Progress"
           }
         }
       }
