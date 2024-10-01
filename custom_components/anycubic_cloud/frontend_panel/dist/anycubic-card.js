@@ -3501,10 +3501,7 @@
       buttons: {
         print_settings: "Print Settings",
         dry: "Dry",
-        runout_refill: "Refill",
-        preset: "Preset",
-        stop_drying: "Stop Drying",
-        minutes: "Mins"
+        runout_refill: "Refill"
       },
       configure: {
         tabs: {
