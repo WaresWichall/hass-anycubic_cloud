@@ -1137,6 +1137,26 @@ class AnycubicPrinter:
         ])
 
     @property
+    def has_peripheral_camera(self):
+        return self._has_peripheral_camera
+
+    @property
+    def has_peripheral_multi_color_box(self):
+        return self._has_peripheral_multi_color_box
+
+    @property
+    def has_peripheral_udisk(self):
+        return self._has_peripheral_udisk
+
+    @property
+    def connected_peripherals(self):
+        return {
+            "camera": self.has_peripheral_camera,
+            "ace": self.has_peripheral_multi_color_box,
+            "usb_disk": self.has_peripheral_udisk,
+        }
+
+    @property
     def material_type(self):
         return self._material_type
 
