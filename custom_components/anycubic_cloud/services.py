@@ -122,6 +122,7 @@ class AnycubicCloudServiceCall:
     def __init__(self, hass: HomeAssistant) -> None:
         """Initialize service call."""
         self.hass = hass
+        self._device_id = None
 
     def _get_coordinator(self, service: ServiceCall) -> AnycubicCloudDataUpdateCoordinator:
         """Get AnycubicCloudDataUpdateCoordinator object."""
@@ -142,7 +143,17 @@ class AnycubicCloudServiceCall:
 
         if service.data.get(ATTR_DEVICE_ID) is not None:
             device_id = service.data[ATTR_DEVICE_ID]
-            printer = coordinator.get_printer_for_device_id(device_id)
+            if isinstance(device_id, list):
+                if len(device_id) == 1:
+                    device_id = device_id[0]
+                else:
+                    raise ServiceValidationError(
+                        "Can only call services for one printer at a time."
+                    )
+
+            self._device_id = device_id
+
+            printer = coordinator.get_printer_for_device_id(self._device_id)
         else:
             printer_id = service.data[CONF_PRINTER_ID]
             printer = coordinator.get_printer_for_id(printer_id)
