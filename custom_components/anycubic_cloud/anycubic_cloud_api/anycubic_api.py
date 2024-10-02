@@ -26,6 +26,10 @@ from .anycubic_data_model_orders import (
     AnycubicStartPrintRequestLocal,
 )
 
+from .anycubic_data_model_print_response import (
+    AnycubicPrintResponse,
+)
+
 from .anycubic_data_model_printer import (
     AnycubicPrinter,
 )
@@ -2223,6 +2227,7 @@ class AnycubicAPI:
         printer,
         gcode_id,
         slot_index_list=None,
+        file_name=None,
     ):
         if printer is None:
             raise AnycubicErrorMessage.no_printer_to_print
@@ -2255,9 +2260,20 @@ class AnycubicAPI:
         else:
             ams_box_mapping = None
 
-        return await self.print_with_cloud_file_id(
+        order_msg_id = await self.print_with_cloud_file_id(
             printer=printer,
             cloud_file_id=proj.id,
+            ams_box_mapping=ams_box_mapping,
+        )
+
+        return AnycubicPrintResponse(
+            order_msg_id=str(order_msg_id),
+            printer_id=printer.id,
+            saved_in_cloud=True,
+            file_name=file_name,
+            cloud_file_id=proj.id,
+            gcode_id=gcode_id,
+            material_list=proj.slice_material_info_list,
             ams_box_mapping=ams_box_mapping,
         )
 
@@ -2292,6 +2308,7 @@ class AnycubicAPI:
             printer=printer,
             gcode_id=latest_cloud_file.gcode_id,
             slot_index_list=slot_index_list,
+            file_name=file_name,
         )
 
     async def print_and_upload_no_cloud_save(
@@ -2341,9 +2358,19 @@ class AnycubicAPI:
             temp_file=True,
         )
 
-        return await self.print_with_cloud_file_id(
+        order_msg_id = await self.print_with_cloud_file_id(
             printer=printer,
             cloud_file_id=cloud_file_id,
             ams_box_mapping=ams_box_mapping,
             temp_file=True,
+        )
+
+        return AnycubicPrintResponse(
+            order_msg_id=str(order_msg_id),
+            printer_id=printer.id,
+            saved_in_cloud=False,
+            file_name=file_name,
+            cloud_file_id=cloud_file_id,
+            material_list=material_list,
+            ams_box_mapping=ams_box_mapping,
         )

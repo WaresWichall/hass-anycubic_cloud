@@ -22,6 +22,7 @@ PANEL_TITLE = "Anycubic Cloud"
 PANEL_ICON = "mdi:printer-3d"
 
 ATTR_CONFIG_ENTRY = "config_entry"
+ATTR_ANYCUBIC_EVENT = "anycubic_cloud"
 
 ENTITY_ID_DRYING_START_PRESET_ = "drying_start_preset_"
 
@@ -46,6 +47,8 @@ CONF_SPEED = "speed"
 CONF_TEMPERATURE = "temperature"
 CONF_LAYERS = "layers"
 CONF_TIME = "time"
+
+AC_EVENT_PRINT_CLOUD_START = "print_cloud_start"
 
 UNIT_LAYERS = "Layers"
 

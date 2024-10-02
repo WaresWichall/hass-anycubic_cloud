@@ -6,7 +6,10 @@ import voluptuous as vol
 from homeassistant.components.file_upload import process_uploaded_file
 from homeassistant.const import (
     ATTR_DEVICE_ID,
+    CONF_DEVICE_ID,
+    CONF_EVENT_DATA,
     CONF_FILENAME,
+    CONF_TYPE,
 )
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
@@ -23,13 +26,20 @@ from .anycubic_cloud_api.anycubic_data_model_printer import (
     AnycubicPrinter,
 )
 
+from .anycubic_cloud_api.anycubic_data_model_print_response import (
+    AnycubicPrintResponse,
+)
+
 from .const import (
+    AC_EVENT_PRINT_CLOUD_START,
+    ATTR_ANYCUBIC_EVENT,
     ATTR_CONFIG_ENTRY,
     CONF_BOX_ID,
     CONF_FILE_ID,
     CONF_FINISHED,
     CONF_LAYERS,
     CONF_PRINTER_ID,
+    CONF_PRINTER_NAME,
     CONF_SLOT_COLOR_BLUE,
     CONF_SLOT_COLOR_GREEN,
     CONF_SLOT_COLOR_RED,
@@ -471,6 +481,22 @@ class BasePrintWithFile(AnycubicCloudServiceCall):
 
         return file_name, gcode_bytes
 
+    def _async_fire_event(
+        self,
+        service: ServiceCall,
+        printer: AnycubicPrinter,
+        print_response: AnycubicPrintResponse,
+    ):
+        # Fire event
+        data = {
+            CONF_PRINTER_ID: printer.id,
+            CONF_PRINTER_NAME: printer.name,
+            CONF_DEVICE_ID: self._device_id,
+            CONF_TYPE: AC_EVENT_PRINT_CLOUD_START,
+            CONF_EVENT_DATA: print_response.event_dict,
+        }
+        self.hass.bus.async_fire(ATTR_ANYCUBIC_EVENT, data)
+
 
 class PrintAndUploadSaveInCloud(BasePrintWithFile):
     """Print and upload (save in user cloud)."""
@@ -482,11 +508,18 @@ class PrintAndUploadSaveInCloud(BasePrintWithFile):
         printer = self._get_printer(service)
         slot_idx_list = self._get_slot_num_list(service)
 
-        await printer.print_and_upload_save_in_cloud(
+        print_response = await printer.print_and_upload_save_in_cloud(
             file_name=file_name,
             file_bytes=gcode_bytes,
             slot_index_list=slot_idx_list,
         )
+
+        if print_response:
+            self._async_fire_event(
+                service=service,
+                printer=printer,
+                print_response=print_response,
+            )
 
 
 class PrintAndUploadNoCloudSave(BasePrintWithFile):
@@ -499,11 +532,18 @@ class PrintAndUploadNoCloudSave(BasePrintWithFile):
         printer = self._get_printer(service)
         slot_idx_list = self._get_slot_num_list(service)
 
-        await printer.print_and_upload_no_cloud_save(
+        print_response = await printer.print_and_upload_no_cloud_save(
             file_name=file_name,
             file_bytes=gcode_bytes,
             slot_index_list=slot_idx_list,
         )
+
+        if print_response:
+            self._async_fire_event(
+                service=service,
+                printer=printer,
+                print_response=print_response,
+            )
 
 
 class BaseDeletePrinterFile(AnycubicCloudServiceCall):
