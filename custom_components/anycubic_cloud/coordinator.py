@@ -382,6 +382,10 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     async def _async_print_job_started(self):
         self._last_state_update = int(time.time()) - DEFAULT_SCAN_INTERVAL + 25
 
+    async def _async_mqtt_callback_subscribed(self):
+        for printer_id, printer in self._anycubic_printers.items():
+            await printer.query_printer_options()
+
     @callback
     def _mqtt_callback_data_updated(self):
         self.hass.create_task(
@@ -396,6 +400,15 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self.hass.create_task(
             self._async_print_job_started(),
             f"Anycubic coordinator {self.entry.entry_id} print job started",
+        )
+
+    @callback
+    def _mqtt_callback_subscribed(
+        self,
+    ):
+        self.hass.create_task(
+            self._async_mqtt_callback_subscribed(),
+            f"Anycubic coordinator {self.entry.entry_id} MQTT subscribed",
         )
 
     def _anycubic_mqtt_connection_should_start(self):
@@ -534,6 +547,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 auth_sig_token=self.entry.data[CONF_USER_TOKEN],
                 mqtt_callback_printer_update=self._mqtt_callback_data_updated,
                 mqtt_callback_printer_busy=self._mqtt_callback_print_job_started,
+                mqtt_callback_subscribed=self._mqtt_callback_subscribed,
             )
 
             self._anycubic_api.set_mqtt_log_all_messages(self.entry.options.get(CONF_DEBUG))

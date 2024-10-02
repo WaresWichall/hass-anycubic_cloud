@@ -1253,6 +1253,46 @@ class AnycubicAPI:
             ),
         )
 
+    async def _send_order_query_peripherals(
+        self,
+        printer,
+    ):
+        """
+        Response is sent over MQTT.
+        """
+        if not printer:
+            return
+
+        return await self._send_anycubic_order(
+            order_request=AnycubicBaseProjectOrderRequest(
+                order_id=AnycubicOrderID.QUERY_PERIPHERALS,
+                printer_id=printer.id,
+                project_id=0,
+            ),
+        )
+
+    async def _send_order_get_light_status(
+        self,
+        printer,
+        project,
+    ):
+        """
+        Response is sent over MQTT.
+        """
+        if not printer:
+            return
+
+        if not project:
+            return
+
+        return await self._send_anycubic_order(
+            order_request=AnycubicBaseProjectOrderRequest(
+                order_id=AnycubicOrderID.GET_LIGHT_STATUS,
+                printer_id=printer.id,
+                project_id=project.id,
+            ),
+        )
+
     #
     #
     # WIP Unused ORDER Functions
@@ -1303,46 +1343,6 @@ class AnycubicAPI:
                 order_id=AnycubicOrderID.MULTI_COLOR_BOX_GET_INFO,
                 printer_id=printer.id,
                 project_id=0,
-            ),
-        )
-
-    async def _send_order_query_peripherals(
-        self,
-        printer,
-    ):
-        """
-        Response is sent over MQTT.
-        """
-        if not printer:
-            return
-
-        return await self._send_anycubic_order(
-            order_request=AnycubicBaseProjectOrderRequest(
-                order_id=AnycubicOrderID.QUERY_PERIPHERALS,
-                printer_id=printer.id,
-                project_id=0,
-            ),
-        )
-
-    async def _send_order_get_light_status(
-        self,
-        printer,
-        project,
-    ):
-        """
-        Response is sent over MQTT.
-        """
-        if not printer:
-            return
-
-        if not project:
-            return
-
-        return await self._send_anycubic_order(
-            order_request=AnycubicBaseProjectOrderRequest(
-                order_id=AnycubicOrderID.GET_LIGHT_STATUS,
-                printer_id=printer.id,
-                project_id=project.id,
             ),
         )
 
@@ -2373,4 +2373,29 @@ class AnycubicAPI:
             cloud_file_id=cloud_file_id,
             material_list=material_list,
             ams_box_mapping=ams_box_mapping,
+        )
+
+    async def query_printer_options(
+        self,
+        printer,
+        project=None,
+    ):
+        """ Responses are sent via MQTT """
+
+        if not printer:
+            return
+
+        await self._send_order_query_peripherals(
+            printer=printer,
+        )
+
+        if not project and not printer.latest_project:
+            return
+
+        if not project:
+            project = printer.latest_project
+
+        await self._send_order_get_light_status(
+            printer=printer,
+            project=project,
         )

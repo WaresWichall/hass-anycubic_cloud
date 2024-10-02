@@ -2303,6 +2303,15 @@ class AnycubicPrinter:
             ),
         )
 
+    async def query_printer_options(
+        self,
+        project=None,
+    ):
+        return await self._api_parent.query_printer_options(
+            printer=self,
+            project=project,
+        )
+
     def __repr__(self):
         if self._id is None:
             return f"AnycubicPrinter(machine_type={self._machine_type}, machine_name={self._machine_name})"

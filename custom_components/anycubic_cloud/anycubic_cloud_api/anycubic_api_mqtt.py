@@ -43,6 +43,7 @@ class AnycubicMQTTAPI(AnycubicAPI):
         *args,
         mqtt_callback_printer_update=None,
         mqtt_callback_printer_busy=None,
+        mqtt_callback_subscribed=None,
         **kwargs,
     ):
         self._auth_sig_token = None
@@ -54,6 +55,7 @@ class AnycubicMQTTAPI(AnycubicAPI):
         self._mqtt_disconnected: asyncio.Event | None = None
         self._mqtt_callback_printer_update = mqtt_callback_printer_update
         self._mqtt_callback_printer_busy = mqtt_callback_printer_busy
+        self._mqtt_callback_subscribed = mqtt_callback_subscribed
         super().__init__(*args, **kwargs)
 
     @property
@@ -286,6 +288,9 @@ class AnycubicMQTTAPI(AnycubicAPI):
                 self._mqtt_subscribe_printer_status(printer)
 
             self._log_to_debug("Anycubic MQTT Subscribed.")
+
+            if (self._mqtt_callback_subscribed):
+                self._mqtt_callback_subscribed()
         else:
             self._log_to_warn(f"Anycubic MQTT Failed to connect, return code {rc}")
 
