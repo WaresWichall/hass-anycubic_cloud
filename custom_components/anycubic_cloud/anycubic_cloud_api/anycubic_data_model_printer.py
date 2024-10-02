@@ -27,6 +27,11 @@ from .anycubic_enums import (
     AnycubicPrintStatus,
 )
 
+from .anycubic_exceptions import (
+    AnycubicAPIError,
+    AnycubicMQTTUnhandledData,
+)
+
 from .anycubic_helpers import (
     get_part_from_mqtt_topic,
 )
@@ -448,7 +453,7 @@ class AnycubicPrinter:
         self,
         incoming_project_id,
         print_status: AnycubicPrintStatus,
-        mqtt_data,
+        mqtt_data=None,
         paused=None,
     ):
         if self._check_latest_project_id_valid(incoming_project_id):
@@ -611,14 +616,26 @@ class AnycubicPrinter:
     def _process_mqtt_update_temperature(self, action, state, payload):
         if action == 'auto' and state == 'done':
             data = payload['data']
+            parsed_mqtt_data = {
+                **data,
+            }
+            if 'taskid' in parsed_mqtt_data:
+                parsed_mqtt_data.pop("taskid")
+
             self._parameter.update_current_temps(
-                data['curr_hotbed_temp'],
-                data['curr_nozzle_temp'],
+                parsed_mqtt_data.pop('curr_hotbed_temp'),
+                parsed_mqtt_data.pop('curr_nozzle_temp'),
             )
             if self._latest_project:
                 self._latest_project.update_target_temps(
-                    data['target_hotbed_temp'],
-                    data['target_nozzle_temp'],
+                    parsed_mqtt_data.pop('target_hotbed_temp'),
+                    parsed_mqtt_data.pop('target_nozzle_temp'),
+                )
+
+            if len(parsed_mqtt_data) > 0:
+                raise AnycubicMQTTUnhandledData(
+                    "process_mqtt_update_temperature",
+                    unhandled_mqtt_data=parsed_mqtt_data,
                 )
             return
         else:
@@ -627,8 +644,19 @@ class AnycubicPrinter:
     def _process_mqtt_update_fan(self, action, state, payload):
         if action == 'auto' and state == 'done':
             data = payload['data']
-            fan_speed_pct = int(data['fan_speed_pct'])
-            self._fan_speed = fan_speed_pct
+            parsed_mqtt_data = {
+                **data,
+            }
+            if 'taskid' in parsed_mqtt_data:
+                parsed_mqtt_data.pop("taskid")
+
+            self._fan_speed = int(parsed_mqtt_data.pop('fan_speed_pct'))
+
+            if len(parsed_mqtt_data) > 0:
+                raise AnycubicMQTTUnhandledData(
+                    "process_mqtt_update_fan",
+                    unhandled_mqtt_data=parsed_mqtt_data,
+                )
             return
         else:
             raise Exception('Unknown fan data.')
@@ -727,6 +755,14 @@ class AnycubicPrinter:
                 data['settings']['target_nozzle_temp'],
             )
             return
+        elif action in ['start', 'stop'] and state in ['failed']:
+            err_msg = payload.get('msg')
+            self._is_printing = 1
+            self._update_latest_project_with_mqtt_print_status_data(
+                project_id,
+                AnycubicPrintStatus.Cancelled,
+            )
+            raise AnycubicAPIError(f"Print Failed: {err_msg}")
         else:
             raise Exception('Unknown print status data.')
 
@@ -825,15 +861,24 @@ class AnycubicPrinter:
     ):
         if action == 'query' and state == 'done':
             data = payload['data']
-            if 'camera' in data:
-                self.set_has_peripheral_camera(data['camera'])
-            if 'multiColorBox' in data:
-                self.set_has_peripheral_multi_color_box(data['multiColorBox'])
-            if 'udisk' in data:
-                self.set_has_peripheral_udisk(data['udisk'])
+            parsed_mqtt_data = {
+                **data,
+            }
+            if 'camera' in parsed_mqtt_data:
+                self.set_has_peripheral_camera(parsed_mqtt_data.pop('camera'))
+            if 'multiColorBox' in parsed_mqtt_data:
+                self.set_has_peripheral_multi_color_box(parsed_mqtt_data.pop('multiColorBox'))
+            if 'udisk' in parsed_mqtt_data:
+                self.set_has_peripheral_udisk(parsed_mqtt_data.pop('udisk'))
+
+            if len(parsed_mqtt_data) > 0:
+                raise AnycubicMQTTUnhandledData(
+                    "process_mqtt_update_peripherals",
+                    unhandled_mqtt_data=parsed_mqtt_data,
+                )
             return
         else:
-            raise Exception('Unknown file data.')
+            raise Exception('Unknown peripherals data.')
 
     def process_mqtt_update(self, topic, payload):
         msg_type = payload['type']

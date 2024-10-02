@@ -26,6 +26,21 @@ class AnycubicDataParsingError(AnycubicAPIError):
     pass
 
 
+class AnycubicMQTTUnhandledData(AnycubicDataParsingError):
+    def __init__(
+        self,
+        *args,
+        unhandled_mqtt_data=None,
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
+        self._unhandled_mqtt_data = unhandled_mqtt_data
+
+    @property
+    def unhandled_mqtt_data(self):
+        return self._unhandled_mqtt_data
+
+
 class AnycubicErrorMessage:
     no_printer_to_print = AnycubicAPIError('No printer to print with.')
     no_multi_color_box_for_map = AnycubicAPIError('No multi color box found for supplied box mapping.')

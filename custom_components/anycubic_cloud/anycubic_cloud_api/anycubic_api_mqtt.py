@@ -14,6 +14,7 @@ from .anycubic_api import (
 
 from .anycubic_exceptions import (
     AnycubicAPIError,
+    AnycubicMQTTUnhandledData,
 )
 
 from .anycubic_const_mqtt import (
@@ -127,11 +128,18 @@ class AnycubicMQTTAPI(AnycubicAPI):
             topic = str(message.topic)
             payload = json.loads(message.payload.decode('utf-8'))
         except Exception as e:
-            self._log_to_error(f"Anycubic MQTT Message decode error: {e}\n  on MQTT topic: {message.topic}\n    {message.payload}")
+            self._log_to_error(
+                f"Anycubic MQTT Message decode error: {e}\n"
+                f"  on MQTT topic: {message.topic}\n"
+                f"    {message.payload}"
+            )
             return
 
         if self._mqtt_topic_is_user_topic(topic):
-            self._log_to_debug(f"Anycubic MQTT USER Msg Received on `{topic}`:\n    {payload}")
+            self._log_to_debug(
+                f"Anycubic MQTT USER Msg Received on `{topic}`:\n"
+                f"    {payload}"
+            )
 
         else:
             printer_key = get_part_from_mqtt_topic(topic, 6)
@@ -149,6 +157,23 @@ class AnycubicMQTTAPI(AnycubicAPI):
             try:
                 printer.process_mqtt_update(topic, payload)
 
+            except AnycubicMQTTUnhandledData as e:
+                self._log_to_warn(
+                    f"Anycubic MQTT Message unhandled data in: {e}\n"
+                    f"  on MQTT topic: {topic}\n"
+                    f"    unhandled data: {e.unhandled_mqtt_data}"
+                )
+
+            except Exception as e:
+                tb = traceback.format_exc()
+                self._log_to_error(
+                    f"Anycubic MQTT Message error: {e}\n"
+                    f"  on MQTT topic: {topic}\n"
+                    f"    {payload}\n"
+                    f"{tb}"
+                )
+
+            try:
                 if self._mqtt_callback_printer_update:
                     self._mqtt_callback_printer_update()
 
@@ -160,10 +185,16 @@ class AnycubicMQTTAPI(AnycubicAPI):
 
             except Exception as e:
                 tb = traceback.format_exc()
-                self._log_to_error(f"Anycubic MQTT Message error: {e}\n  on MQTT topic: {topic}\n    {payload}\n{tb}")
+                self._log_to_error(
+                    f"Anycubic MQTT Callback error: {e}\n"
+                    f"{tb}"
+                )
 
             if self._mqtt_log_all_messages:
-                self._log_to_debug(f"Anycubic MQTT Message processed on topic: {topic}\n    {payload}")
+                self._log_to_debug(
+                    f"Anycubic MQTT Message processed on topic: {topic}\n"
+                    f"    {payload}"
+                )
 
     def _mqtt_publish_on_topic(self, topic, payload):
         if self._mqtt_client is None:
