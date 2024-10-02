@@ -1580,6 +1580,13 @@ class AnycubicPrinter:
         return None
 
     @property
+    def latest_project_print_supplies_usage(self):
+        if self.latest_project:
+            return self.latest_project.print_supplies_usage
+
+        return None
+
+    @property
     def latest_project_print_total_layers(self):
         if self.latest_project:
             return self.latest_project.print_total_layers

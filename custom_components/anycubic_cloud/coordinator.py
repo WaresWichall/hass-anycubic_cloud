@@ -313,6 +313,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 "created_timestamp": printer.latest_project_created_timestamp,
                 "finished_timestamp": printer.latest_project_finished_timestamp,
                 "print_total_time": printer.latest_project_print_total_time,
+                "print_supplies_usage": printer.latest_project_print_supplies_usage,
             },
             "fw_version": {
                 "latest_version": printer.fw_version.available_version,
