@@ -383,8 +383,14 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._last_state_update = int(time.time()) - DEFAULT_SCAN_INTERVAL + 25
 
     async def _async_mqtt_callback_subscribed(self):
+        await asyncio.sleep(10)
         for printer_id, printer in self._anycubic_printers.items():
-            await printer.query_printer_options()
+            try:
+                if printer.printer_online:
+                    await printer.query_printer_options()
+            except Exception as error:
+                tb = traceback.format_exc()
+                LOGGER.warning(f"Anycubic MQTT on subscribe error: {error}\n{tb}")
 
     @callback
     def _mqtt_callback_data_updated(self):
