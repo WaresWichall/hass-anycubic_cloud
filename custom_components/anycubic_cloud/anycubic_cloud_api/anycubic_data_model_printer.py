@@ -1,3 +1,7 @@
+from .anycubic_data_model_consumable import (
+    AnycubicConsumableData,
+)
+
 from .anycubic_data_model_files import (
     AnycubicFile,
 )
@@ -616,27 +620,17 @@ class AnycubicPrinter:
     def _process_mqtt_update_temperature(self, action, state, payload):
         if action == 'auto' and state == 'done':
             data = payload['data']
-            parsed_mqtt_data = {
-                **data,
-            }
-            if 'taskid' in parsed_mqtt_data:
-                parsed_mqtt_data.pop("taskid")
 
             self._parameter.update_current_temps(
-                parsed_mqtt_data.pop('curr_hotbed_temp'),
-                parsed_mqtt_data.pop('curr_nozzle_temp'),
+                data['curr_hotbed_temp'],
+                data['curr_nozzle_temp'],
             )
             if self._latest_project:
                 self._latest_project.update_target_temps(
-                    parsed_mqtt_data.pop('target_hotbed_temp'),
-                    parsed_mqtt_data.pop('target_nozzle_temp'),
+                    data['target_hotbed_temp'],
+                    data['target_nozzle_temp'],
                 )
 
-            if len(parsed_mqtt_data) > 0:
-                raise AnycubicMQTTUnhandledData(
-                    "process_mqtt_update_temperature",
-                    unhandled_mqtt_data=parsed_mqtt_data,
-                )
             return
         else:
             raise Exception('Unknown temperature data.')
@@ -644,19 +638,9 @@ class AnycubicPrinter:
     def _process_mqtt_update_fan(self, action, state, payload):
         if action == 'auto' and state == 'done':
             data = payload['data']
-            parsed_mqtt_data = {
-                **data,
-            }
-            if 'taskid' in parsed_mqtt_data:
-                parsed_mqtt_data.pop("taskid")
 
-            self._fan_speed = int(parsed_mqtt_data.pop('fan_speed_pct'))
+            self._fan_speed = int(data['fan_speed_pct'])
 
-            if len(parsed_mqtt_data) > 0:
-                raise AnycubicMQTTUnhandledData(
-                    "process_mqtt_update_fan",
-                    unhandled_mqtt_data=parsed_mqtt_data,
-                )
             return
         else:
             raise Exception('Unknown fan data.')
@@ -861,71 +845,88 @@ class AnycubicPrinter:
     ):
         if action == 'query' and state == 'done':
             data = payload['data']
-            parsed_mqtt_data = {
-                **data,
-            }
-            if 'camera' in parsed_mqtt_data:
-                self.set_has_peripheral_camera(parsed_mqtt_data.pop('camera'))
-            if 'multiColorBox' in parsed_mqtt_data:
-                self.set_has_peripheral_multi_color_box(parsed_mqtt_data.pop('multiColorBox'))
-            if 'udisk' in parsed_mqtt_data:
-                self.set_has_peripheral_udisk(parsed_mqtt_data.pop('udisk'))
 
-            if len(parsed_mqtt_data) > 0:
-                raise AnycubicMQTTUnhandledData(
-                    "process_mqtt_update_peripherals",
-                    unhandled_mqtt_data=parsed_mqtt_data,
-                )
+            if 'camera' in data:
+                self.set_has_peripheral_camera(data['camera'])
+
+            if 'multiColorBox' in data:
+                self.set_has_peripheral_multi_color_box(data['multiColorBox'])
+
+            if 'udisk' in data:
+                self.set_has_peripheral_udisk(data['udisk'])
+
             return
         else:
             raise Exception('Unknown peripherals data.')
 
-    def process_mqtt_update(self, topic, payload):
+    def process_mqtt_update(
+        self,
+        topic: str,
+        payload: AnycubicConsumableData,
+    ):
         msg_type = payload['type']
         action = payload['action']
         state = payload.get('state')
         multi_color_topic = bool('multiColorBox' in topic)
 
         if msg_type == 'lastWill':
-            return self._process_mqtt_update_lastwill(action, state, payload)
+            self._process_mqtt_update_lastwill(action, state, payload)
 
         elif msg_type == 'user':
-            return self._process_mqtt_update_user(action, state, payload)
+            self._process_mqtt_update_user(action, state, payload)
 
         elif msg_type == 'status':
-            return self._process_mqtt_update_status(action, state, payload)
+            self._process_mqtt_update_status(action, state, payload)
 
         elif msg_type == 'ota' and multi_color_topic:
             box_id_str = get_part_from_mqtt_topic(topic, 9)
             box_id = int(box_id_str) if box_id_str.isdigit() else 0
-            return self._process_mqtt_update_ota_multicolorbox(action, state, payload, box_id)
+            self._process_mqtt_update_ota_multicolorbox(action, state, payload, box_id)
 
         elif msg_type == 'ota':
-            return self._process_mqtt_update_ota_printer(action, state, payload)
+            self._process_mqtt_update_ota_printer(action, state, payload)
 
         elif msg_type == 'tempature':
-            return self._process_mqtt_update_temperature(action, state, payload)
+            self._process_mqtt_update_temperature(action, state, payload)
 
         elif msg_type == 'fan':
-            return self._process_mqtt_update_fan(action, state, payload)
+            self._process_mqtt_update_fan(action, state, payload)
 
         elif msg_type == 'print':
-            return self._process_mqtt_update_print(action, state, payload)
+            self._process_mqtt_update_print(action, state, payload)
 
         elif msg_type == 'multiColorBox':
-            return self._process_mqtt_update_multicolorbox(action, state, payload)
+            self._process_mqtt_update_multicolorbox(action, state, payload)
 
         elif msg_type == 'extfilbox':
-            return self._process_mqtt_update_shelves(action, state, payload)
+            self._process_mqtt_update_shelves(action, state, payload)
 
         elif msg_type == 'file':
-            return self._process_mqtt_update_file(action, state, payload)
+            self._process_mqtt_update_file(action, state, payload)
 
         elif msg_type == 'peripherie':
-            return self._process_mqtt_update_peripherals(action, state, payload)
+            self._process_mqtt_update_peripherals(action, state, payload)
 
         else:
             raise Exception("Unknown mqtt update.")
+
+        remaining_data = payload.get('data')
+
+        if remaining_data:
+            remaining_data.get('taskid')
+            remaining_data.get('localtask')
+
+        payload.get('data')
+        payload.get('msg')
+        payload.get('timestamp')
+        payload.get('msgid')
+        payload.get('code')
+
+        if not payload.is_empty:
+            raise AnycubicMQTTUnhandledData(
+                "process_mqtt_update",
+                unhandled_mqtt_data=payload.remaining_data,
+            )
 
     @property
     def initialisation_error(self):

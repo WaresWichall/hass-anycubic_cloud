@@ -13,7 +13,6 @@ from .anycubic_data_model_print_speed_mode import (
 from .anycubic_exceptions import (
     AnycubicDataParsingError,
     AnycubicInvalidValue,
-    AnycubicMQTTUnhandledData,
     AnycubicPropertiesNotLoaded,
 )
 
@@ -527,44 +526,28 @@ class AnycubicProject:
         if not mqtt_data:
             return
 
-        parsed_mqtt_data = {
-            **mqtt_data,
-        }
+        if 'curr_layer' in mqtt_data:
+            self._settings['curr_layer'] = int(mqtt_data['curr_layer'])
 
-        if 'localtask' in parsed_mqtt_data:
-            parsed_mqtt_data.pop('localtask')
+        if 'total_layers' in mqtt_data:
+            self._settings['total_layers'] = int(mqtt_data['total_layers'])
 
-        if 'taskid' in parsed_mqtt_data:
-            parsed_mqtt_data.pop('taskid')
+        if 'filename' in mqtt_data:
+            self.set_filename(mqtt_data['filename'])
 
-        if 'curr_layer' in parsed_mqtt_data:
-            self._settings['curr_layer'] = int(parsed_mqtt_data.pop('curr_layer'))
+        if 'print_time' in mqtt_data:
+            self._print_time = int(mqtt_data['print_time'])
 
-        if 'total_layers' in parsed_mqtt_data:
-            self._settings['total_layers'] = int(parsed_mqtt_data.pop('total_layers'))
+        if 'progress' in mqtt_data:
+            self._progress = int(mqtt_data['progress'])
 
-        if 'filename' in parsed_mqtt_data:
-            self.set_filename(parsed_mqtt_data.pop('filename'))
+        if 'remain_time' in mqtt_data:
+            self._remain_time = int(mqtt_data['remain_time'])
 
-        if 'print_time' in parsed_mqtt_data:
-            self._print_time = int(parsed_mqtt_data.pop('print_time'))
-
-        if 'progress' in parsed_mqtt_data:
-            self._progress = int(parsed_mqtt_data.pop('progress'))
-
-        if 'remain_time' in parsed_mqtt_data:
-            self._remain_time = int(parsed_mqtt_data.pop('remain_time'))
-
-        if 'supplies_usage' in parsed_mqtt_data:
+        if 'supplies_usage' in mqtt_data:
             self._set_print_setting(
                 'supplies_usage',
-                int(parsed_mqtt_data.pop('supplies_usage'))
-            )
-
-        if len(parsed_mqtt_data) > 0:
-            raise AnycubicMQTTUnhandledData(
-                "update_with_mqtt_print_status_data",
-                unhandled_mqtt_data=parsed_mqtt_data,
+                int(mqtt_data['supplies_usage'])
             )
 
     def update_with_mqtt_download_status_data(

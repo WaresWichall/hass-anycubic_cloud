@@ -27,6 +27,10 @@ from .anycubic_const_mqtt import (
     MQTT_TIMEOUT,
 )
 
+from .anycubic_data_model_consumable import (
+    AnycubicConsumableData,
+)
+
 from .anycubic_helpers import (
     get_part_from_mqtt_topic,
 )
@@ -157,7 +161,7 @@ class AnycubicMQTTAPI(AnycubicAPI):
             printer_was_available = printer.is_available
 
             try:
-                printer.process_mqtt_update(topic, payload)
+                printer.process_mqtt_update(topic, AnycubicConsumableData(payload))
 
             except AnycubicMQTTUnhandledData as e:
                 self._log_to_warn(
