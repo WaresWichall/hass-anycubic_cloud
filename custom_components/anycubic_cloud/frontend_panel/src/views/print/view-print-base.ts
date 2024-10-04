@@ -43,6 +43,9 @@ export class AnycubicViewPrintBase extends LitElement {
   @state()
   private _buttonPrint: string;
 
+  @state({ type: Boolean })
+  private _buttonProgress: boolean = false;
+
   async firstUpdated(): void {
     await loadHaServiceControl();
   }
@@ -89,6 +92,7 @@ export class AnycubicViewPrintBase extends LitElement {
           class="print-button"
           raised
           @click=${this._runScript}
+          .progress=${this._buttonProgress}
         >
           <ha-svg-icon .path=${mdiPlay}></ha-svg-icon>
           ${this._buttonPrint}
@@ -102,19 +106,22 @@ export class AnycubicViewPrintBase extends LitElement {
     this._error = undefined;
   }
 
-  private async _runScript(ev: Event): void {
+  private async _runScript(ev: Event): Promise<void> {
     const button = ev.currentTarget as any;
     this._error = undefined;
     ev.stopPropagation();
+    this._buttonProgress = true;
     fireHaptic();
     this.hass
       .callService(platform, this._serviceName, this._scriptData.data)
       .then(() => {
         button.actionSuccess();
+        this._buttonProgress = false;
       })
       .catch((e) => {
         this._error = e.message;
         button.actionError();
+        this._buttonProgress = false;
       });
   }
 

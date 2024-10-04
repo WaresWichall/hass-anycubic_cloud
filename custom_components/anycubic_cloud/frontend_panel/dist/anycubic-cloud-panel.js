@@ -10410,7 +10410,7 @@
 `;
   class Qs extends pt {
     constructor() {
-      super(...arguments), this._scriptData = {}, this._serviceName = "";
+      super(...arguments), this._scriptData = {}, this._serviceName = "", this._buttonProgress = !1;
     }
     async firstUpdated() {
       await (async () => {
@@ -10455,6 +10455,7 @@
           class="print-button"
           raised
           @click=${this._runScript}
+          .progress=${this._buttonProgress}
         >
           <ha-svg-icon .path=${"M8,5.14V19.14L19,12.14L8,5.14Z"}></ha-svg-icon>
           ${this._buttonPrint}
@@ -10467,13 +10468,13 @@
     }
     async _runScript(t) {
       const e = t.currentTarget;
-      this._error = void 0, t.stopPropagation(), ((t = qs.Medium) => {
+      this._error = void 0, t.stopPropagation(), this._buttonProgress = !0, ((t = qs.Medium) => {
         const e = new Event("haptic");
         e.detail = t, window && window.dispatchEvent(e);
       })(), this.hass.callService(Hs, this._serviceName, this._scriptData.data).then(() => {
-        e.actionSuccess();
+        e.actionSuccess(), this._buttonProgress = !1;
       }).catch(t => {
-        this._error = t.message, e.actionError();
+        this._error = t.message, e.actionError(), this._buttonProgress = !1;
       });
     }
     static get styles() {
@@ -10487,7 +10488,9 @@
   })], Qs.prototype, "hass", void 0), s([yt()], Qs.prototype, "language", void 0), s([yt({
     type: Boolean,
     reflect: !0
-  })], Qs.prototype, "narrow", void 0), s([yt()], Qs.prototype, "route", void 0), s([yt()], Qs.prototype, "panel", void 0), s([yt()], Qs.prototype, "selectedPrinterID", void 0), s([yt()], Qs.prototype, "selectedPrinterDevice", void 0), s([vt()], Qs.prototype, "_scriptData", void 0), s([vt()], Qs.prototype, "_error", void 0), s([vt()], Qs.prototype, "_serviceName", void 0), s([vt()], Qs.prototype, "_buttonPrint", void 0);
+  })], Qs.prototype, "narrow", void 0), s([yt()], Qs.prototype, "route", void 0), s([yt()], Qs.prototype, "panel", void 0), s([yt()], Qs.prototype, "selectedPrinterID", void 0), s([yt()], Qs.prototype, "selectedPrinterDevice", void 0), s([vt()], Qs.prototype, "_scriptData", void 0), s([vt()], Qs.prototype, "_error", void 0), s([vt()], Qs.prototype, "_serviceName", void 0), s([vt()], Qs.prototype, "_buttonPrint", void 0), s([vt({
+    type: Boolean
+  })], Qs.prototype, "_buttonProgress", void 0);
   let tn = class extends Qs {
     constructor() {
       super(...arguments), this._serviceName = "print_and_upload_no_cloud_save";
