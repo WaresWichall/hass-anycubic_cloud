@@ -2349,6 +2349,7 @@ class AnycubicAPI:
             )
 
         else:
+            material_list = None
             ams_box_mapping = None
 
         cloud_file_id = await self.upload_file_to_cloud(
