@@ -3,10 +3,6 @@ import re
 import struct
 import uuid
 
-from aiofiles import (
-    open as aio_file_open,
-)
-
 
 ALPHANUMERIC_CHARS = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 GCODE_STRING_FIRST_ATTR_LINE = '; filament used'
@@ -99,57 +95,3 @@ def gcode_key_value_pair_to_dict(
     return {
         key: value
     }
-
-
-async def async_read_slicer_data_from_gcode_file(
-    full_file_path=None,
-    file_bytes=None,
-):
-    data_found = False
-    file_lines = list()
-    slicer_data = dict()
-
-    if full_file_path is not None:
-        async with aio_file_open(full_file_path, mode='r') as f:
-            file_lines = await f.readlines()
-    elif file_bytes is not None:
-        file_lines = file_bytes.decode('utf-8').split('\n')
-    else:
-        raise Exception('Cannot read slicer data without file path or bytes.')
-
-    for line in file_lines:
-        if not data_found and line.startswith(GCODE_STRING_FIRST_ATTR_LINE):
-            data_found = True
-        if not data_found:
-            continue
-        slicer_data.update(gcode_key_value_pair_to_dict(REX_GCODE_DATA_KEY_VALUE, line))
-
-    return slicer_data
-
-
-async def async_read_material_list_from_gcode_file(
-    full_file_path=None,
-    file_bytes=None,
-):
-    slicer_data = await async_read_slicer_data_from_gcode_file(
-        full_file_path=full_file_path,
-        file_bytes=file_bytes,
-    )
-
-    filament_used = slicer_data.get('filament_used_g')
-    ams_data = slicer_data.get('paint_info')
-
-    if not ams_data:
-        raise ValueError('Cannot load AMS paint info from gcode.')
-
-    if len(filament_used) < 1:
-        raise ValueError('Cannot load used filament info from gcode.')
-
-    if len(filament_used) < len(ams_data):
-        raise ValueError('Not enough used filament info parsed for AMS data.')
-
-    for paint_info in ams_data:
-        paint_index = paint_info['paint_index']
-        paint_info['filament_used'] = filament_used[paint_index]
-
-    return ams_data

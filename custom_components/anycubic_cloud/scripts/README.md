@@ -13,6 +13,12 @@ Copy `anycubic_cached_sig_token.token.sample` to `anycubic_cached_sig_token.toke
 
 Open a terminal or command prompt inside the `custom_components` directory and run scripts with e.g.
 
+### Gcode Metadata Dump
+
+```bash
+python -m anycubic_cloud.scripts.gcode_metadata_parser --filepath ~/some_gcode_file.gcode
+```
+
 ### File Dump
 
 ```bash

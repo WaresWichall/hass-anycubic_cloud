@@ -15,6 +15,10 @@ from .anycubic_data_model_files import (
     AnycubicCloudStore,
 )
 
+from .anycubic_data_model_gcode_file import (
+    AnycubicGcodeFile,
+)
+
 from .anycubic_data_model_orders import (
     AnycubicBaseOrderRequest,
     AnycubicBaseProjectOrderRequest,
@@ -95,7 +99,6 @@ from .anycubic_enums import (
 )
 
 from .anycubic_helpers import (
-    async_read_material_list_from_gcode_file,
     generate_app_nonce,
     generate_cookie_state,
     generate_fake_device_id,
@@ -2142,7 +2145,7 @@ class AnycubicAPI:
             latest_project.update_extra_data(extra_proj_data)
         return latest_project
 
-    async def read_material_list_from_gcode_file(
+    async def read_gcode_file(
         self,
         full_file_path=None,
         file_name=None,
@@ -2162,7 +2165,7 @@ class AnycubicAPI:
                 "Can only parse gcode files."
             )
 
-        return await async_read_material_list_from_gcode_file(
+        return await AnycubicGcodeFile.async_read_from_file(
             full_file_path=full_file_path,
             file_bytes=file_bytes,
         )
@@ -2329,11 +2332,12 @@ class AnycubicAPI:
             raise AnycubicErrorMessage.no_slot_list_for_multi_color_box
 
         if slot_index_list is not None:
-            material_list = await self.read_material_list_from_gcode_file(
+            gcode_file = await self.read_gcode_file(
                 full_file_path=full_file_path,
                 file_name=file_name,
                 file_bytes=file_bytes,
             )
+            material_list = gcode_file.material_list
 
             if not material_list:
                 raise AnycubicAPIError('Empty material list read from gcode file.')
