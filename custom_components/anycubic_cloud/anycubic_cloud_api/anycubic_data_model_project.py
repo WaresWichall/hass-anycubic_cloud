@@ -132,7 +132,7 @@ class AnycubicProject:
         self._set_printer_name(printer_name)
         self._set_machine_name(machine_name)
         self._set_device_status(device_status)
-        self._slice_result = slice_result
+        self.set_slice_result(slice_result)
         self.set_filename(gcode_name)
         self._post_title = post_title
         self._set_file_size(file_size)
@@ -154,12 +154,6 @@ class AnycubicProject:
         self._temp_min_nozzle = None
         self._temp_max_nozzle = None
         self._download_progress = 0
-
-        if self._slice_result and isinstance(self._slice_result, str):
-            try:
-                self._slice_result = json.loads(str(self._slice_result))
-            except Exception as e:
-                print(f"Error in json parsing slice_result: {e}\n{self._slice_result}")
 
     @classmethod
     def from_list_json(cls, api_parent, data):
@@ -487,7 +481,7 @@ class AnycubicProject:
         self._set_printer_name(update_project._printer_name)
         self._set_machine_name(update_project._machine_name)
         self._set_device_status(update_project._device_status)
-        self._slice_result = update_project._slice_result
+        self.set_slice_result(update_project._slice_result)
         self.set_filename(update_project._gcode_name)
         self._post_title = update_project._post_title
         self._set_file_size(update_project._file_size)
@@ -604,6 +598,28 @@ class AnycubicProject:
         elif new_slice_param:
             raise AnycubicDataParsingError(
                 f"Unexpected data for project slice_param: {new_slice_param}"
+            )
+
+    def set_slice_result(
+        self,
+        new_slice_result,
+    ):
+        self._slice_result = {}
+
+        if new_slice_result and isinstance(new_slice_result, str):
+            try:
+                self._slice_result.update(json.loads(new_slice_result))
+            except Exception as e:
+                raise AnycubicDataParsingError(
+                    f"Error parsing project slice_result json: {e}\n{new_slice_result}"
+                )
+
+        elif new_slice_result and isinstance(new_slice_result, dict):
+            self._slice_result.update(new_slice_result)
+
+        elif new_slice_result:
+            raise AnycubicDataParsingError(
+                f"Unexpected data for project slice_result: {new_slice_result}"
             )
 
     def _get_print_setting(self, key):
