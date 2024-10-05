@@ -85,7 +85,7 @@ class AnycubicGcodeFile(UserDict):
         self._material_list = list([
             {
                 **paint_info,
-                'filament_used_g': filament_used_g[paint_info['paint_index']],
+                'filament_used': filament_used_g[paint_info['paint_index']],
                 'filament_used_mm': filament_used_mm[paint_info['paint_index']],
                 'filament_used_cm3': filament_used_cm3[paint_info['paint_index']],
             } for paint_info in ams_data

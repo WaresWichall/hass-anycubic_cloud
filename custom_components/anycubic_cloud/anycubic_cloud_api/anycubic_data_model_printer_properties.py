@@ -485,7 +485,7 @@ class AnycubicMultiColorBox:
             ams_slot = box_slots[slot_index]
             material = AnycubicMaterialMapping(
                 spool_index=spool_index,
-                filament_used=mat_conf['filament_used_g'],
+                filament_used=mat_conf['filament_used'],
                 material_type=mat_conf['material_type'],
                 color_red=ams_slot.color_red,
                 color_green=ams_slot.color_green,

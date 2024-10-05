@@ -904,7 +904,7 @@ class AnycubicProject:
         total_filament = 0.0
 
         for material in material_info_list:
-            total_filament += material.get('filament_used_g', 0.0)
+            total_filament += material.get('filament_used', 0.0)
 
         return total_filament
 
