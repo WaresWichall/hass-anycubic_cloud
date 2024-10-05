@@ -14,14 +14,6 @@ class AnycubicConsumableData(UserDict):
     @property
     def remaining_data(self):
         return self.data
-        new_data = dict()
-        for k, v in self.data.items():
-            if isinstance(v, AnycubicConsumableData):
-                new_data[k] = v.remaining_data
-            else:
-                new_data[k] = v
-
-        return new_data
 
     def _encode_list(
         self,
