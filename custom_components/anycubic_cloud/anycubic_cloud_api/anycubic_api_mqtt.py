@@ -33,6 +33,7 @@ from .anycubic_data_model_consumable import (
 
 from .anycubic_helpers import (
     get_part_from_mqtt_topic,
+    redact_part_from_mqtt_topic,
 )
 
 # DEBUG
@@ -164,9 +165,10 @@ class AnycubicMQTTAPI(AnycubicAPI):
                 printer.process_mqtt_update(topic, AnycubicConsumableData(payload))
 
             except AnycubicMQTTUnhandledData as e:
+                redacted_topic = redact_part_from_mqtt_topic(topic, 6)
                 self._log_to_warn(
                     f"Anycubic MQTT Message unhandled data in: {e}\n"
-                    f"  on MQTT topic: {topic}\n"
+                    f"  on MQTT topic: {redacted_topic}\n"
                     f"  with type: {e.unhandled_mqtt_type}, "
                     f"action: {e.unhandled_mqtt_action}, "
                     f"state: {e.unhandled_mqtt_state}\n"
@@ -175,9 +177,10 @@ class AnycubicMQTTAPI(AnycubicAPI):
 
             except Exception as e:
                 tb = traceback.format_exc()
+                redacted_topic = redact_part_from_mqtt_topic(topic, 6)
                 self._log_to_error(
                     f"Anycubic MQTT Message error: {e}\n"
-                    f"  on MQTT topic: {topic}\n"
+                    f"  on MQTT topic: {redacted_topic}\n"
                     f"    {payload}\n"
                     f"{tb}"
                 )

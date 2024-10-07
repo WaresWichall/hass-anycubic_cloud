@@ -18,6 +18,21 @@ def get_part_from_mqtt_topic(topic: str, part: int):
     return split_topic[part]
 
 
+def redact_part_from_mqtt_topic(topic: str, part: int):
+    split_topic = topic.split("/")
+    new_chunk = list()
+    if len(split_topic) < part + 1:
+        return topic
+
+    for idx, chunk in enumerate(split_topic):
+        if idx != part:
+            new_chunk.append(chunk)
+        else:
+            new_chunk.append("**REDACTED**")
+
+    return "/".join(new_chunk)
+
+
 def base_62_encode_int(num):
     rounds = 11
     enc_arr = list(['0' for x in range(rounds)])
