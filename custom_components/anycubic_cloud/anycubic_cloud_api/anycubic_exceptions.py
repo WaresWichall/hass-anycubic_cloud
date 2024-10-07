@@ -31,14 +31,32 @@ class AnycubicMQTTUnhandledData(AnycubicDataParsingError):
         self,
         *args,
         unhandled_mqtt_data=None,
+        unhandled_mqtt_type=None,
+        unhandled_mqtt_action=None,
+        unhandled_mqtt_state=None,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self._unhandled_mqtt_data = unhandled_mqtt_data
+        self._unhandled_mqtt_type = unhandled_mqtt_type
+        self._unhandled_mqtt_action = unhandled_mqtt_action
+        self._unhandled_mqtt_state = unhandled_mqtt_state
 
     @property
     def unhandled_mqtt_data(self):
         return self._unhandled_mqtt_data
+
+    @property
+    def unhandled_mqtt_type(self):
+        return self._unhandled_mqtt_type
+
+    @property
+    def unhandled_mqtt_action(self):
+        return self._unhandled_mqtt_action
+
+    @property
+    def unhandled_mqtt_state(self):
+        return self._unhandled_mqtt_state
 
 
 class AnycubicErrorMessage:

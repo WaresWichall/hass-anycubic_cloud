@@ -167,6 +167,9 @@ class AnycubicMQTTAPI(AnycubicAPI):
                 self._log_to_warn(
                     f"Anycubic MQTT Message unhandled data in: {e}\n"
                     f"  on MQTT topic: {topic}\n"
+                    f"  with type: {e.unhandled_mqtt_type}, "
+                    f"action: {e.unhandled_mqtt_action}, "
+                    f"state: {e.unhandled_mqtt_state}\n"
                     f"    unhandled data: {e.unhandled_mqtt_data}"
                 )
 

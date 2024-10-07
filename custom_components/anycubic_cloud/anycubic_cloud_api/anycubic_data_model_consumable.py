@@ -15,6 +15,10 @@ class AnycubicConsumableData(UserDict):
     def remaining_data(self):
         return self.data
 
+    def force_empty(self):
+        for key in list(self.data.keys()):
+            self._consumed_data[key] = self.data.pop(key)
+
     def _encode_list(
         self,
         data,
@@ -88,3 +92,13 @@ class AnycubicConsumableData(UserDict):
             raise
 
         return value
+
+    def get(
+        self,
+        key,
+        default=None,
+    ):
+        try:
+            return self[key]
+        except KeyError:
+            return default

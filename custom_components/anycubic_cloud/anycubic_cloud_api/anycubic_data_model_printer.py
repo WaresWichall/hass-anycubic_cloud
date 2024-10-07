@@ -563,6 +563,7 @@ class AnycubicPrinter:
         payload,
         box_id,
     ):
+        data = payload.get('data', {})
         if (
             self.multi_color_box_fw_version is None or
             len(self.multi_color_box_fw_version) < (box_id + 1)
@@ -576,7 +577,10 @@ class AnycubicPrinter:
             # Not needed
             return
         elif action == 'reportVersion' and state == 'done':
-            data = payload['data']
+            data.get('device_unionid')
+            data.get('machine_version')
+            data.get('peripheral_version')
+            data.get('model_id')
             self.multi_color_box_fw_version[box_id].update_version(data['firmware_version'])
             return
         elif action == 'update' and state == 'downloading':
@@ -593,8 +597,13 @@ class AnycubicPrinter:
             raise Exception('Unknown ota multiColorBox data.')
 
     def _process_mqtt_update_ota_printer(self, action, state, payload):
+        data = payload.get('data', {})
+
         if action == 'reportVersion' and state == 'done':
-            data = payload['data']
+            data.get('device_unionid')
+            data.get('machine_version')
+            data.get('peripheral_version')
+            data.get('model_id')
             if self.fw_version is not None:
                 self.fw_version.update_version(data['firmware_version'])
             return
@@ -833,6 +842,7 @@ class AnycubicPrinter:
             return
         elif action == 'cloudRecommendList' and state == 'done':
             # Not Yet Needed
+            payload.force_empty()
             return
         else:
             raise Exception('Unknown file data.')
@@ -926,6 +936,9 @@ class AnycubicPrinter:
             raise AnycubicMQTTUnhandledData(
                 "process_mqtt_update",
                 unhandled_mqtt_data=payload.remaining_data,
+                unhandled_mqtt_type=msg_type,
+                unhandled_mqtt_action=action,
+                unhandled_mqtt_state=state,
             )
 
     @property
@@ -1380,14 +1393,14 @@ class AnycubicPrinter:
         if self.primary_drying_status:
             return self.primary_drying_status.total_duration
 
-        return None
+        return 0
 
     @property
     def primary_drying_status_remaining_time(self):
         if self.primary_drying_status:
             return self.primary_drying_status.remaining_time
 
-        return None
+        return 0
 
     @property
     def secondary_multi_color_box_fw_firmware_version(self):
@@ -1466,14 +1479,14 @@ class AnycubicPrinter:
         if self.secondary_drying_status:
             return self.secondary_drying_status.total_duration
 
-        return None
+        return 0
 
     @property
     def secondary_drying_status_remaining_time(self):
         if self.secondary_drying_status:
             return self.secondary_drying_status.remaining_time
 
-        return None
+        return 0
 
     @property
     def latest_project_name(self):
