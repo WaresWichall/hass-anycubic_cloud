@@ -29,6 +29,8 @@ export interface HassDevice {
   config_entries: string[];
   primary_config_entry: string;
   manufacturer: string | null;
+  serial_number: string | undefined;
+  connections: string[][];
 }
 
 export interface HassDeviceList {

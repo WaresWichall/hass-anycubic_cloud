@@ -43,6 +43,7 @@ def build_printer_device_info(
         connections={(CONNECTION_NETWORK_MAC, printer_data["machine_mac"])},
         sw_version=printer_data["fw_version"],
         hw_version=f"Printer ID: {printer_id}",
+        serial_number=f"{printer_id}",
     )
 
 

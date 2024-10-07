@@ -466,7 +466,7 @@ export function getPrinterMAC(printer: HassDevice | undefined): string | null {
 export function getPrinterID(
   printer: HassDevice | undefined,
 ): string | undefined {
-  return printer ? printer.hw_version.split("Printer ID: ")[1] : undefined;
+  return printer ? printer.serial_number : undefined;
 }
 
 export function getPage(route: HassRoute): string {
