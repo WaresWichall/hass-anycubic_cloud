@@ -1,5 +1,7 @@
 """Support for Anycubic Cloud image."""
 from __future__ import annotations
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from datetime import datetime
 
@@ -9,29 +11,40 @@ from homeassistant.components.image import (
     ImageEntityDescription,
 )
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import dt as dt_util
 
 from .const import (
-    CONF_PRINTER_ID_LIST,
     COORDINATOR,
     DOMAIN,
+    PrinterEntityType,
 )
-from .coordinator import AnycubicCloudDataUpdateCoordinator
 from .entity import AnycubicCloudEntity
 from .helpers import printer_state_for_key
 
+if TYPE_CHECKING:
+    from .coordinator import AnycubicCloudDataUpdateCoordinator
 
-IMAGE_TYPES = (
-    ImageEntityDescription(
+
+@dataclass(frozen=True)
+class AnycubicImageEntityDescription(ImageEntityDescription):
+    """Describes Anycubic Cloud image entity."""
+
+    printer_entity_type: PrinterEntityType | None = None
+
+
+IMAGE_TYPES = list([
+    AnycubicImageEntityDescription(
         key="job_image_url",
         translation_key="job_image_url",
+        printer_entity_type=PrinterEntityType.PRINTER,
     ),
-)
+])
 
-GLOBAL_IMAGE_TYPES = (
-)
+GLOBAL_IMAGE_TYPES = list([
+])
 
 
 async def async_setup_entry(
@@ -45,39 +58,28 @@ async def async_setup_entry(
         COORDINATOR
     ]
 
-    entity_list = list()
-
-    for printer_id in entry.data[CONF_PRINTER_ID_LIST]:
-        for description in IMAGE_TYPES:
-            entity_list.append(AnycubicCloudImage(
-                hass,
-                coordinator,
-                printer_id,
-                description,
-            ))
-
-    for description in GLOBAL_IMAGE_TYPES:
-        entity_list.append(AnycubicCloudImage(
-            hass,
-            coordinator,
-            entry.data[CONF_PRINTER_ID_LIST][0],
-            description,
-        ))
-
-    async_add_entities(entity_list)
+    coordinator.add_entities_for_seen_printers(
+        async_add_entities=async_add_entities,
+        entity_constructor=AnycubicCloudImage,
+        platform=Platform.IMAGE,
+        available_descriptors=(
+            IMAGE_TYPES
+            + GLOBAL_IMAGE_TYPES
+        ),
+    )
 
 
 class AnycubicCloudImage(AnycubicCloudEntity, ImageEntity):
     """An image for Anycubic Cloud."""
 
-    entity_description: ImageEntityDescription
+    entity_description: AnycubicImageEntityDescription
 
     def __init__(
         self,
         hass: HomeAssistant,
         coordinator: AnycubicCloudDataUpdateCoordinator,
         printer_id: int,
-        entity_description: ImageEntityDescription,
+        entity_description: AnycubicImageEntityDescription,
     ) -> None:
         """Initialize."""
         super().__init__(coordinator, printer_id, entity_description)

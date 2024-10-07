@@ -3,13 +3,14 @@ from __future__ import annotations
 
 import asyncio
 from datetime import timedelta
-from typing import Any
+from typing import Any, TYPE_CHECKING
 import time
 import traceback
 
 from aiohttp import CookieJar
 
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import Platform
 from homeassistant.core import callback, CoreState, HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryError, HomeAssistantError
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
@@ -17,6 +18,7 @@ from homeassistant.helpers.device_registry import (
     DeviceInfo,
     async_get as async_get_device_registry,
 )
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
@@ -25,8 +27,6 @@ from .anycubic_cloud_api.anycubic_api_mqtt import AnycubicMQTTAPI as AnycubicAPI
 
 from .const import (
     CONF_DEBUG,
-    CONF_DRYING_PRESET_DURATION_,
-    CONF_DRYING_PRESET_TEMPERATURE_,
     CONF_MQTT_CONNECT_MODE,
     CONF_PRINTER_ID_LIST,
     CONF_USER_TOKEN,
@@ -44,12 +44,28 @@ from .const import (
     STORAGE_KEY,
     STORAGE_VERSION,
 )
+
 from .helpers import (
     AnycubicMQTTConnectMode,
     build_printer_device_info,
+    check_descriptor_state_ace_not_supported,
+    check_descriptor_state_ace_primary_unavailable,
+    check_descriptor_state_ace_secondary_unavailable,
+    check_descriptor_state_drying_unavailable,
+    check_descriptor_status_not_fdm,
+    check_descriptor_status_not_lcd,
+    get_drying_preset_from_entry_options,
+    printer_attributes_for_key,
+    printer_state_connected_ace_units,
+    printer_state_supports_ace,
     state_string_active,
     state_string_loaded,
 )
+
+if TYPE_CHECKING:
+    from homeassistant.helpers.entity import EntityDescription
+    from .anycubic_cloud_api.anycubic_data_model_printer import AnycubicPrinter
+    from .entity import AnycubicCloudEntity
 
 
 class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
@@ -61,9 +77,9 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         entry: ConfigEntry,
     ) -> None:
         """Initialize AnycubicCloud."""
-        self.entry = entry
+        self.entry: ConfigEntry = entry
         self._anycubic_api: AnycubicAPI | None = None
-        self._anycubic_printers = dict()
+        self._anycubic_printers: dict[int, AnycubicPrinter] = dict()
         self._cloud_file_list = None
         self._last_state_update = None
         self._failed_updates = 0
@@ -82,6 +98,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             if mqtt_connect_mode is None
             else mqtt_connect_mode
         )
+        self._unregistered_descriptors = dict()
         super().__init__(
             hass,
             LOGGER,
@@ -330,9 +347,10 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         }
 
         for x in range(MAX_DRYING_PRESETS):
-            num = x + 1
-            preset_duration = self.entry.options.get(f"{CONF_DRYING_PRESET_DURATION_}{num}")
-            preset_temperature = self.entry.options.get(f"{CONF_DRYING_PRESET_TEMPERATURE_}{num}")
+            preset_duration, preset_temperature = get_drying_preset_from_entry_options(
+                self.entry.options,
+                x + 1,
+            )
             attributes[f"{ENTITY_ID_DRYING_START_PRESET_}{x + 1}"] = {
                 "duration": preset_duration,
                 "temperature": preset_temperature,
@@ -378,6 +396,109 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self.data = self._build_coordinator_data()
         self.last_update_success = True
         self.async_update_listeners()
+
+    @callback
+    def add_entities_for_seen_printers[_AnycubicCloudEntityT: AnycubicCloudEntity](
+        self,
+        async_add_entities: AddEntitiesCallback,
+        entity_constructor: type[_AnycubicCloudEntityT],
+        platform: Platform,
+        available_descriptors: list[EntityDescription],
+    ) -> None:
+        """Add Anycubic Cloud entities.
+
+        Called from a platforms `async_setup_entry`.
+        """
+
+        for printer_id in self.entry.data[CONF_PRINTER_ID_LIST]:
+            if printer_id not in self._unregistered_descriptors:
+                self._unregistered_descriptors[printer_id] = dict()
+
+            self._unregistered_descriptors[printer_id][platform] = available_descriptors.copy()
+
+        @callback
+        def _add_entities_for_unregistered_descriptors() -> None:
+            new_entities: list[_AnycubicCloudEntityT] = []
+
+            for printer_id in self.entry.data[CONF_PRINTER_ID_LIST]:
+                if printer_id not in self._unregistered_descriptors:
+                    continue
+                if platform not in self._unregistered_descriptors[printer_id]:
+                    continue
+
+                status_attr = printer_attributes_for_key(self, printer_id, 'current_status')
+                material_type = status_attr['material_type']
+                connected_ace_units = printer_state_connected_ace_units(self, printer_id)
+                supports_ace = printer_state_supports_ace(self, printer_id)
+
+                remaining_unregistered_descriptors = list()
+
+                for description in self._unregistered_descriptors[printer_id][platform]:
+                    if (
+                        check_descriptor_status_not_lcd(
+                            description,
+                            material_type,
+                        )
+                        or
+                        check_descriptor_status_not_fdm(
+                            description,
+                            material_type,
+                        )
+                        or
+                        check_descriptor_state_ace_not_supported(
+                            description,
+                            supports_ace,
+                        )
+                    ):
+                        continue
+                    elif (
+                        check_descriptor_state_ace_primary_unavailable(
+                            description,
+                            supports_ace,
+                            connected_ace_units,
+                        )
+                        or
+                        check_descriptor_state_ace_secondary_unavailable(
+                            description,
+                            supports_ace,
+                            connected_ace_units,
+                        )
+                        or
+                        check_descriptor_state_drying_unavailable(
+                            description,
+                            supports_ace,
+                            connected_ace_units,
+                            self.entry.options,
+                        )
+                    ):
+                        remaining_unregistered_descriptors.append(description)
+                        continue
+                    elif description.printer_entity_type is None:
+                        raise ConfigEntryError(f"Descriptor {description.key} is missing printer_entity_type.")
+
+                    new_entities.append(
+                        entity_constructor(
+                            self.hass,
+                            self,
+                            printer_id,
+                            description
+                        )
+                    )
+
+                if len(remaining_unregistered_descriptors) > 0:
+                    self._unregistered_descriptors[printer_id][platform] = remaining_unregistered_descriptors
+                else:
+                    self._unregistered_descriptors[printer_id].pop(platform)
+
+                if len(self._unregistered_descriptors[printer_id]) == 0:
+                    self._unregistered_descriptors.pop(printer_id)
+
+            async_add_entities(new_entities)
+
+        _add_entities_for_unregistered_descriptors()
+        self.entry.async_on_unload(
+            self.async_add_listener(_add_entities_for_unregistered_descriptors)
+        )
 
     async def _async_print_job_started(self):
         self._last_state_update = int(time.time()) - DEFAULT_SCAN_INTERVAL + 25
@@ -596,8 +717,14 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self._printer_device_map = dict()
         dev_reg = async_get_device_registry(self.hass)
         for printer_id in self.entry.data[CONF_PRINTER_ID_LIST]:
-            printer_device_info: DeviceInfo = build_printer_device_info(self.entry.data, data_dict, printer_id)
-            printer_device = dev_reg.async_get_or_create(config_entry_id=self.entry.entry_id, **printer_device_info)
+            printer_device_info: DeviceInfo = build_printer_device_info(
+                data_dict,
+                printer_id,
+            )
+            printer_device = dev_reg.async_get_or_create(
+                config_entry_id=self.entry.entry_id,
+                **printer_device_info,
+            )
             self._printer_device_map[printer_device.id] = printer_id
 
     async def _check_or_save_tokens(self):
@@ -701,9 +828,10 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 event_key.startswith(ENTITY_ID_DRYING_START_PRESET_) or
                 event_key.startswith(f"secondary_{ENTITY_ID_DRYING_START_PRESET_}")
             ):
-                num = event_key[-1]
-                preset_duration = self.entry.options.get(f"{CONF_DRYING_PRESET_DURATION_}{num}")
-                preset_temperature = self.entry.options.get(f"{CONF_DRYING_PRESET_TEMPERATURE_}{num}")
+                preset_duration, preset_temperature = get_drying_preset_from_entry_options(
+                    self.entry.options,
+                    event_key[-1],
+                )
                 if preset_duration is None or preset_temperature is None:
                     return
 

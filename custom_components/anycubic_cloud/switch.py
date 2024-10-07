@@ -1,45 +1,63 @@
 """Switches for Anycubic Cloud."""
 from __future__ import annotations
-from typing import Any
+from dataclasses import dataclass
+from typing import Any, TYPE_CHECKING
 
 from homeassistant.components.switch import (
     SwitchEntity,
     SwitchEntityDescription,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import EntityCategory
+from homeassistant.const import EntityCategory, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import CONF_PRINTER_ID_LIST, COORDINATOR, DOMAIN
-from .coordinator import AnycubicCloudDataUpdateCoordinator
+from .const import (
+    COORDINATOR,
+    DOMAIN,
+    PrinterEntityType,
+)
 from .entity import AnycubicCloudEntity
 from .helpers import printer_state_for_key
 
-PRIMARY_MULTI_COLOR_BOX_SWITCH_TYPES = (
-    SwitchEntityDescription(
+if TYPE_CHECKING:
+    from .coordinator import AnycubicCloudDataUpdateCoordinator
+
+
+@dataclass(frozen=True)
+class AnycubicSwitchEntityDescription(SwitchEntityDescription):
+    """Describes Anycubic Cloud switch entity."""
+
+    printer_entity_type: PrinterEntityType | None = None
+
+
+PRIMARY_MULTI_COLOR_BOX_SWITCH_TYPES = list([
+    AnycubicSwitchEntityDescription(
         key="multi_color_box_runout_refill",
         translation_key="multi_color_box_runout_refill",
+        printer_entity_type=PrinterEntityType.ACE_PRIMARY,
     ),
-)
+])
 
-SECONDARY_MULTI_COLOR_BOX_SWITCH_TYPES = (
-    SwitchEntityDescription(
+SECONDARY_MULTI_COLOR_BOX_SWITCH_TYPES = list([
+    AnycubicSwitchEntityDescription(
         key="secondary_multi_color_box_runout_refill",
         translation_key="secondary_multi_color_box_runout_refill",
+        printer_entity_type=PrinterEntityType.ACE_SECONDARY,
     ),
-)
+])
 
-SWITCH_TYPES = (
-)
+SWITCH_TYPES = list([
+])
 
-GLOBAL_SWITCH_TYPES = (
-    SwitchEntityDescription(
+GLOBAL_SWITCH_TYPES = list([
+    AnycubicSwitchEntityDescription(
         key="manual_mqtt_connection_enabled",
         translation_key="manual_mqtt_connection_enabled",
         entity_category=EntityCategory.DIAGNOSTIC,
+        printer_entity_type=PrinterEntityType.GLOBAL,
     ),
-)
+])
 
 
 async def async_setup_entry(
@@ -50,34 +68,30 @@ async def async_setup_entry(
     coordinator: AnycubicCloudDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id][
         COORDINATOR
     ]
-    entities: list[AnycubicSwitch] = []
-    for printer_id in entry.data[CONF_PRINTER_ID_LIST]:
-        if printer_state_for_key(coordinator, printer_id, 'supports_function_multi_color_box'):
-            for description in PRIMARY_MULTI_COLOR_BOX_SWITCH_TYPES:
-                entities.append(AnycubicSwitch(coordinator, printer_id, description))
-        if printer_state_for_key(coordinator, printer_id, 'connected_ace_units') > 1:
-            for description in SECONDARY_MULTI_COLOR_BOX_SWITCH_TYPES:
-                entities.append(AnycubicSwitch(coordinator, printer_id, description))
-
-        for description in SWITCH_TYPES:
-            entities.append(AnycubicSwitch(coordinator, printer_id, description))
-
-    for description in GLOBAL_SWITCH_TYPES:
-        entities.append(AnycubicSwitch(coordinator, entry.data[CONF_PRINTER_ID_LIST][0], description))
-
-    async_add_entities(entities)
+    coordinator.add_entities_for_seen_printers(
+        async_add_entities=async_add_entities,
+        entity_constructor=AnycubicSwitch,
+        platform=Platform.SWITCH,
+        available_descriptors=(
+            SWITCH_TYPES
+            + PRIMARY_MULTI_COLOR_BOX_SWITCH_TYPES
+            + SECONDARY_MULTI_COLOR_BOX_SWITCH_TYPES
+            + GLOBAL_SWITCH_TYPES
+        ),
+    )
 
 
 class AnycubicSwitch(AnycubicCloudEntity, SwitchEntity):
     """Representation of a Anycubic switch."""
 
-    entity_description: SwitchEntityDescription
+    entity_description: AnycubicSwitchEntityDescription
 
     def __init__(
         self,
+        hass: HomeAssistant,
         coordinator: AnycubicCloudDataUpdateCoordinator,
         printer_id: int,
-        entity_description: SwitchEntityDescription,
+        entity_description: AnycubicSwitchEntityDescription,
     ) -> None:
         """Initiate Anycubic Switch."""
         super().__init__(coordinator, printer_id, entity_description)

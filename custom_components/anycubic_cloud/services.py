@@ -1,4 +1,6 @@
 """Service calls related dependencies for Anycubic Cloud component."""
+from __future__ import annotations
+from typing import TYPE_CHECKING
 
 import asyncio
 import voluptuous as vol
@@ -54,7 +56,9 @@ from .const import (
     LOGGER,
     MAX_FILE_UPLOAD_RETRIES,
 )
-from .coordinator import AnycubicCloudDataUpdateCoordinator
+
+if TYPE_CHECKING:
+    from .coordinator import AnycubicCloudDataUpdateCoordinator
 
 
 def build_anycubic_service_schema(

@@ -1,6 +1,7 @@
 """Sensors for Anycubic Cloud Printers."""
 from __future__ import annotations
-from typing import Any
+from dataclasses import dataclass
+from typing import Any, TYPE_CHECKING
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -11,6 +12,7 @@ from homeassistant.components.sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     PERCENTAGE,
+    Platform,
     UnitOfLength,
     UnitOfTemperature,
     UnitOfTime,
@@ -19,212 +21,259 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util import dt as dt_util
 
-from .anycubic_cloud_api.anycubic_enums import (
-    AnycubicPrinterMaterialType
-)
-
 from .const import (
-    CONF_PRINTER_ID_LIST,
     COORDINATOR,
     DOMAIN,
+    PrinterEntityType,
     UNIT_LAYERS,
 )
-from .coordinator import AnycubicCloudDataUpdateCoordinator
 from .entity import AnycubicCloudEntity
 from .helpers import printer_attributes_for_key, printer_state_for_key
 
+if TYPE_CHECKING:
+    from .coordinator import AnycubicCloudDataUpdateCoordinator
 
-PRIMARY_MULTI_COLOR_BOX_SENSOR_TYPES = (
-    SensorEntityDescription(
+
+@dataclass(frozen=True)
+class AnycubicSensorEntityDescription(SensorEntityDescription):
+    """Describes Anycubic Cloud sensor entity."""
+
+    printer_entity_type: PrinterEntityType | None = None
+
+
+PRIMARY_MULTI_COLOR_BOX_SENSOR_TYPES = list([
+    AnycubicSensorEntityDescription(
         key="ace_current_temperature",
         translation_key="ace_current_temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        printer_entity_type=PrinterEntityType.ACE_PRIMARY,
     ),
-    SensorEntityDescription(
+    AnycubicSensorEntityDescription(
         key="ace_spools",
         translation_key="ace_spools",
+        printer_entity_type=PrinterEntityType.ACE_PRIMARY,
     ),
-    SensorEntityDescription(
+    AnycubicSensorEntityDescription(
         key="dry_status_target_temperature",
         translation_key="dry_status_target_temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        printer_entity_type=PrinterEntityType.ACE_PRIMARY,
     ),
-    SensorEntityDescription(
+    AnycubicSensorEntityDescription(
         key="dry_status_total_duration",
         translation_key="dry_status_total_duration",
+        printer_entity_type=PrinterEntityType.ACE_PRIMARY,
     ),
-    SensorEntityDescription(
+    AnycubicSensorEntityDescription(
         key="dry_status_remaining_time",
         translation_key="dry_status_remaining_time",
+        printer_entity_type=PrinterEntityType.ACE_PRIMARY,
     ),
-)
+])
 
 
-SECONDARY_MULTI_COLOR_BOX_SENSOR_TYPES = (
-    SensorEntityDescription(
+SECONDARY_MULTI_COLOR_BOX_SENSOR_TYPES = list([
+    AnycubicSensorEntityDescription(
         key="secondary_ace_current_temperature",
         translation_key="secondary_ace_current_temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        printer_entity_type=PrinterEntityType.ACE_SECONDARY,
     ),
-    SensorEntityDescription(
+    AnycubicSensorEntityDescription(
         key="secondary_ace_spools",
         translation_key="secondary_ace_spools",
+        printer_entity_type=PrinterEntityType.ACE_SECONDARY,
     ),
-    SensorEntityDescription(
+    AnycubicSensorEntityDescription(
         key="secondary_dry_status_target_temperature",
         translation_key="secondary_dry_status_target_temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        printer_entity_type=PrinterEntityType.ACE_SECONDARY,
     ),
-    SensorEntityDescription(
+    AnycubicSensorEntityDescription(
         key="secondary_dry_status_total_duration",
         translation_key="secondary_dry_status_total_duration",
+        printer_entity_type=PrinterEntityType.ACE_SECONDARY,
     ),
-    SensorEntityDescription(
+    AnycubicSensorEntityDescription(
         key="secondary_dry_status_remaining_time",
         translation_key="secondary_dry_status_remaining_time",
+        printer_entity_type=PrinterEntityType.ACE_SECONDARY,
     ),
-)
+])
 
-FDM_SENSOR_TYPES = (
-    SensorEntityDescription(
+FDM_SENSOR_TYPES = list([
+    AnycubicSensorEntityDescription(
         key="job_speed_mode",
         translation_key="job_speed_mode",
+        printer_entity_type=PrinterEntityType.FDM,
     ),
-    SensorEntityDescription(
+    AnycubicSensorEntityDescription(
         key="print_speed_pct",
         translation_key="print_speed_pct",
+        printer_entity_type=PrinterEntityType.FDM,
     ),
-    SensorEntityDescription(
+    AnycubicSensorEntityDescription(
         key="fan_speed_pct",
         translation_key="fan_speed_pct",
+        printer_entity_type=PrinterEntityType.FDM,
     ),
-    SensorEntityDescription(
+    AnycubicSensorEntityDescription(
         key="curr_nozzle_temp",
         translation_key="curr_nozzle_temp",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        printer_entity_type=PrinterEntityType.FDM,
     ),
-    SensorEntityDescription(
+    AnycubicSensorEntityDescription(
         key="curr_hotbed_temp",
         translation_key="curr_hotbed_temp",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        printer_entity_type=PrinterEntityType.FDM,
     ),
-    SensorEntityDescription(
+    AnycubicSensorEntityDescription(
         key="target_nozzle_temp",
         translation_key="target_nozzle_temp",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        printer_entity_type=PrinterEntityType.FDM,
     ),
-    SensorEntityDescription(
+    AnycubicSensorEntityDescription(
         key="target_hotbed_temp",
         translation_key="target_hotbed_temp",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        printer_entity_type=PrinterEntityType.FDM,
     ),
-)
+])
 
-LCD_SENSOR_TYPES = (
-    SensorEntityDescription(
+LCD_SENSOR_TYPES = list([
+    AnycubicSensorEntityDescription(
         key="job_on_time",
         translation_key="job_on_time",
         native_unit_of_measurement=UnitOfTime.SECONDS,
+        printer_entity_type=PrinterEntityType.LCD,
     ),
-    SensorEntityDescription(
+    AnycubicSensorEntityDescription(
         key="job_off_time",
         translation_key="job_off_time",
         native_unit_of_measurement=UnitOfTime.SECONDS,
+        printer_entity_type=PrinterEntityType.LCD,
     ),
-    SensorEntityDescription(
+    AnycubicSensorEntityDescription(
         key="job_bottom_time",
         translation_key="job_bottom_time",
         native_unit_of_measurement=UnitOfTime.SECONDS,
+        printer_entity_type=PrinterEntityType.LCD,
     ),
-    SensorEntityDescription(
+    AnycubicSensorEntityDescription(
         key="job_model_height",
         translation_key="job_model_height",
         native_unit_of_measurement=UnitOfLength.MILLIMETERS,
+        printer_entity_type=PrinterEntityType.LCD,
     ),
-    SensorEntityDescription(
+    AnycubicSensorEntityDescription(
         key="job_anti_alias_count",
         translation_key="job_anti_alias_count",
+        printer_entity_type=PrinterEntityType.LCD,
     ),
-    SensorEntityDescription(
+    AnycubicSensorEntityDescription(
         key="job_bottom_layers",
         translation_key="job_bottom_layers",
         native_unit_of_measurement=UNIT_LAYERS,
+        printer_entity_type=PrinterEntityType.LCD,
     ),
-    SensorEntityDescription(
+    AnycubicSensorEntityDescription(
         key="job_z_up_height",
         translation_key="job_z_up_height",
         native_unit_of_measurement=UnitOfLength.MILLIMETERS,
+        printer_entity_type=PrinterEntityType.LCD,
     ),
-    SensorEntityDescription(
+    AnycubicSensorEntityDescription(
         key="job_z_up_speed",
         translation_key="job_z_up_speed",
+        printer_entity_type=PrinterEntityType.LCD,
     ),
-    SensorEntityDescription(
+    AnycubicSensorEntityDescription(
         key="job_z_down_speed",
         translation_key="job_z_down_speed",
+        printer_entity_type=PrinterEntityType.LCD,
     ),
-)
+])
 
-SENSOR_TYPES = (
-    SensorEntityDescription(
+SENSOR_TYPES = list([
+    AnycubicSensorEntityDescription(
         key="current_status",
         translation_key="current_status",
+        printer_entity_type=PrinterEntityType.PRINTER,
     ),
-    SensorEntityDescription(
+    AnycubicSensorEntityDescription(
         key="file_list_local",
         translation_key="file_list_local",
+        printer_entity_type=PrinterEntityType.PRINTER,
     ),
-    SensorEntityDescription(
+    AnycubicSensorEntityDescription(
         key="file_list_udisk",
         translation_key="file_list_udisk",
+        printer_entity_type=PrinterEntityType.PRINTER,
     ),
-    SensorEntityDescription(
+    AnycubicSensorEntityDescription(
         key="file_list_cloud",
         translation_key="file_list_cloud",
+        printer_entity_type=PrinterEntityType.PRINTER,
     ),
-    SensorEntityDescription(
+    AnycubicSensorEntityDescription(
         key="job_name",
         translation_key="job_name",
+        printer_entity_type=PrinterEntityType.PRINTER,
     ),
-    SensorEntityDescription(
+    AnycubicSensorEntityDescription(
         key="job_progress",
         translation_key="job_progress",
         native_unit_of_measurement=PERCENTAGE,
+        printer_entity_type=PrinterEntityType.PRINTER,
     ),
-    SensorEntityDescription(
+    AnycubicSensorEntityDescription(
         key="job_time_elapsed",
         translation_key="job_time_elapsed",
         native_unit_of_measurement=UnitOfTime.MINUTES,
+        printer_entity_type=PrinterEntityType.PRINTER,
     ),
-    SensorEntityDescription(
+    AnycubicSensorEntityDescription(
         key="job_time_remaining",
         translation_key="job_time_remaining",
         native_unit_of_measurement=UnitOfTime.MINUTES,
+        printer_entity_type=PrinterEntityType.PRINTER,
     ),
-    SensorEntityDescription(
+    AnycubicSensorEntityDescription(
         key="job_state",
         translation_key="job_state",
+        printer_entity_type=PrinterEntityType.PRINTER,
     ),
-    SensorEntityDescription(
+    AnycubicSensorEntityDescription(
         key="job_eta",
         translation_key="job_eta",
         device_class=SensorDeviceClass.TIMESTAMP,
+        printer_entity_type=PrinterEntityType.PRINTER,
     ),
-    SensorEntityDescription(
+    AnycubicSensorEntityDescription(
         key="job_current_layer",
         translation_key="job_current_layer",
         native_unit_of_measurement=UNIT_LAYERS,
+        printer_entity_type=PrinterEntityType.PRINTER,
     ),
-    SensorEntityDescription(
+    AnycubicSensorEntityDescription(
         key="job_total_layers",
         translation_key="job_total_layers",
         native_unit_of_measurement=UNIT_LAYERS,
+        printer_entity_type=PrinterEntityType.PRINTER,
     ),
-    SensorEntityDescription(
+    AnycubicSensorEntityDescription(
         key="job_z_thick",
         translation_key="job_z_thick",
+        printer_entity_type=PrinterEntityType.PRINTER,
     ),
-)
+])
+
+GLOBAL_SENSOR_TYPES = list([
+])
 
 
 async def async_setup_entry(
@@ -235,43 +284,34 @@ async def async_setup_entry(
     coordinator: AnycubicCloudDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id][
         COORDINATOR
     ]
-    sensors: list[AnycubicSensor] = []
 
-    for printer_id in entry.data[CONF_PRINTER_ID_LIST]:
-        if printer_state_for_key(coordinator, printer_id, 'supports_function_multi_color_box'):
-            for description in PRIMARY_MULTI_COLOR_BOX_SENSOR_TYPES:
-                sensors.append(AnycubicSensor(coordinator, printer_id, description))
-        if printer_state_for_key(coordinator, printer_id, 'connected_ace_units') > 1:
-            for description in SECONDARY_MULTI_COLOR_BOX_SENSOR_TYPES:
-                sensors.append(AnycubicSensor(coordinator, printer_id, description))
-
-        status_attr = printer_attributes_for_key(coordinator, printer_id, 'current_status')
-
-        if status_attr['material_type'] == AnycubicPrinterMaterialType.FILAMENT:
-            for description in FDM_SENSOR_TYPES:
-                sensors.append(AnycubicSensor(coordinator, printer_id, description))
-
-        elif status_attr['material_type'] == AnycubicPrinterMaterialType.RESIN:
-            for description in LCD_SENSOR_TYPES:
-                sensors.append(AnycubicSensor(coordinator, printer_id, description))
-
-        for description in SENSOR_TYPES:
-            sensors.append(AnycubicSensor(coordinator, printer_id, description))
-
-    async_add_entities(sensors)
+    coordinator.add_entities_for_seen_printers(
+        async_add_entities=async_add_entities,
+        entity_constructor=AnycubicSensor,
+        platform=Platform.SENSOR,
+        available_descriptors=(
+            SENSOR_TYPES
+            + LCD_SENSOR_TYPES
+            + FDM_SENSOR_TYPES
+            + PRIMARY_MULTI_COLOR_BOX_SENSOR_TYPES
+            + SECONDARY_MULTI_COLOR_BOX_SENSOR_TYPES
+            + GLOBAL_SENSOR_TYPES
+        ),
+    )
 
 
 class AnycubicSensor(AnycubicCloudEntity, SensorEntity):
     """Representation of a Anycubic Cloud sensor."""
 
-    entity_description: SensorEntityDescription
+    entity_description: AnycubicSensorEntityDescription
     _attr_state_class = SensorStateClass.MEASUREMENT
 
     def __init__(
         self,
+        hass: HomeAssistant,
         coordinator: AnycubicCloudDataUpdateCoordinator,
         printer_id: int,
-        entity_description: SensorEntityDescription,
+        entity_description: AnycubicSensorEntityDescription,
     ) -> None:
         """Initiate Anycubic Sensor."""
         super().__init__(coordinator, printer_id, entity_description)

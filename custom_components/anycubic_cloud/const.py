@@ -1,4 +1,5 @@
 """Anycubic Cloud integration constants."""
+from enum import IntEnum
 import logging
 
 from homeassistant.const import (
@@ -65,6 +66,18 @@ MQTT_REFRESH_INTERVAL = 60 * 5
 MAX_FILE_UPLOAD_RETRIES = 3
 
 MAX_DRYING_PRESETS = 4
+
+
+class PrinterEntityType(IntEnum):
+    GLOBAL = 1
+    PRINTER = 2
+    FDM = 3
+    LCD = 4
+    ACE_PRIMARY = 5
+    ACE_SECONDARY = 6
+    DRY_PRESET_PRIMARY = 7
+    DRY_PRESET_SECONDARY = 8
+
 
 LOGGER = logging.getLogger(__package__)
 

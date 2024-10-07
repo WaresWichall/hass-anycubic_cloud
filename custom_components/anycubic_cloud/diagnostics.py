@@ -1,14 +1,16 @@
 """Diagnostics support for Anycubic Cloud."""
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 from homeassistant.components.diagnostics import async_redact_data
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 from .const import COORDINATOR, DOMAIN
-from .coordinator import AnycubicCloudDataUpdateCoordinator
+
+if TYPE_CHECKING:
+    from .coordinator import AnycubicCloudDataUpdateCoordinator
 
 USER_TO_REDACT = {
     "birthday",
