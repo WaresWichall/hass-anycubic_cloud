@@ -1,6 +1,6 @@
 """Service calls related dependencies for Anycubic Cloud component."""
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import asyncio
 import voluptuous as vol
@@ -62,16 +62,16 @@ if TYPE_CHECKING:
 
 
 def build_anycubic_service_schema(
-    input_service_schema={},
-    with_slot_number=False,
-    with_slot_colours=False,
-    with_opt_box=False,
-    with_speed=False,
-    with_speed_mode=False,
-    with_temperature=False,
-    with_time=False,
-    with_layers=False,
-):
+    input_service_schema: dict[Any, Any] = {},
+    with_slot_number: bool = False,
+    with_slot_colours: bool = False,
+    with_opt_box: bool = False,
+    with_speed: bool = False,
+    with_speed_mode: bool = False,
+    with_temperature: bool = False,
+    with_time: bool = False,
+    with_layers: bool = False,
+) -> vol.Schema:
     service_schema = {
         **input_service_schema,
     }
@@ -136,13 +136,18 @@ class AnycubicCloudServiceCall:
     def __init__(self, hass: HomeAssistant) -> None:
         """Initialize service call."""
         self.hass = hass
-        self._device_id = None
+        self._device_id: str | None = None
 
     def _get_coordinator(self, service: ServiceCall) -> AnycubicCloudDataUpdateCoordinator:
         """Get AnycubicCloudDataUpdateCoordinator object."""
         entry_id = service.data[ATTR_CONFIG_ENTRY]
 
         entry = self.hass.config_entries.async_get_entry(entry_id)
+
+        if not entry:
+            raise ServiceValidationError(
+                "Could not find Anycubic Cloud config entry."
+            )
 
         coordinator: AnycubicCloudDataUpdateCoordinator = self.hass.data[DOMAIN][entry.entry_id][
             COORDINATOR
@@ -186,7 +191,7 @@ class AnycubicCloudServiceCall:
 
         return box_id
 
-    def _get_slot_num_list(self, service: ServiceCall) -> list:
+    def _get_slot_num_list(self, service: ServiceCall) -> list[int] | None:
         slot_idx_list = None
         slot_num_list = service.data.get(CONF_SLOT_NUMBER)
 
@@ -211,6 +216,7 @@ class BaseMultiColorBoxSetSlot(AnycubicCloudServiceCall):
 
     async def async_set_box_slot(
         self,
+        printer: AnycubicPrinter,
         slot_index: int,
         slot_color: AnycubicMaterialColor,
         box_id: int,
@@ -456,14 +462,17 @@ class BasePrintWithFile(AnycubicCloudServiceCall):
 
     def _read_uploaded_file_bytes(
         self, uploaded_file_id: str
-    ):
+    ) -> tuple[str, bytes]:
         with process_uploaded_file(self.hass, uploaded_file_id) as file_path:
             filename = file_path.name
             contents = file_path.read_bytes()
 
         return filename, contents
 
-    async def _get_gcode_data(self, service: ServiceCall):
+    async def _get_gcode_data(
+        self,
+        service: ServiceCall,
+    ) -> tuple[str, bytes]:
         try:
             for x in range(MAX_FILE_UPLOAD_RETRIES):
                 try:
@@ -490,7 +499,7 @@ class BasePrintWithFile(AnycubicCloudServiceCall):
         service: ServiceCall,
         printer: AnycubicPrinter,
         print_response: AnycubicPrintResponse,
-    ):
+    ) -> None:
         # Fire event
         data = {
             CONF_PRINTER_ID: printer.id,
@@ -645,7 +654,7 @@ class BaseChangePrintSetting(AnycubicCloudServiceCall):
     def _get_printer_if_printing(
         self,
         service: ServiceCall,
-    ):
+    ) -> AnycubicPrinter:
         printer = self._get_printer(service)
 
         if not printer.is_busy:

@@ -17,7 +17,7 @@ from .const import (
     DOMAIN,
     PrinterEntityType,
 )
-from .entity import AnycubicCloudEntity
+from .entity import AnycubicCloudEntity, AnycubicCloudEntityDescription
 from .helpers import printer_state_for_key
 
 if TYPE_CHECKING:
@@ -25,13 +25,13 @@ if TYPE_CHECKING:
 
 
 @dataclass(frozen=True)
-class AnycubicSwitchEntityDescription(SwitchEntityDescription):
+class AnycubicSwitchEntityDescription(
+    SwitchEntityDescription, AnycubicCloudEntityDescription
+):
     """Describes Anycubic Cloud switch entity."""
 
-    printer_entity_type: PrinterEntityType | None = None
 
-
-PRIMARY_MULTI_COLOR_BOX_SWITCH_TYPES = list([
+PRIMARY_MULTI_COLOR_BOX_SWITCH_TYPES: list[AnycubicSwitchEntityDescription] = list([
     AnycubicSwitchEntityDescription(
         key="multi_color_box_runout_refill",
         translation_key="multi_color_box_runout_refill",
@@ -39,7 +39,7 @@ PRIMARY_MULTI_COLOR_BOX_SWITCH_TYPES = list([
     ),
 ])
 
-SECONDARY_MULTI_COLOR_BOX_SWITCH_TYPES = list([
+SECONDARY_MULTI_COLOR_BOX_SWITCH_TYPES: list[AnycubicSwitchEntityDescription] = list([
     AnycubicSwitchEntityDescription(
         key="secondary_multi_color_box_runout_refill",
         translation_key="secondary_multi_color_box_runout_refill",
@@ -47,10 +47,10 @@ SECONDARY_MULTI_COLOR_BOX_SWITCH_TYPES = list([
     ),
 ])
 
-SWITCH_TYPES = list([
+SWITCH_TYPES: list[AnycubicSwitchEntityDescription] = list([
 ])
 
-GLOBAL_SWITCH_TYPES = list([
+GLOBAL_SWITCH_TYPES: list[AnycubicSwitchEntityDescription] = list([
     AnycubicSwitchEntityDescription(
         key="manual_mqtt_connection_enabled",
         translation_key="manual_mqtt_connection_enabled",
@@ -72,7 +72,7 @@ async def async_setup_entry(
         async_add_entities=async_add_entities,
         entity_constructor=AnycubicSwitch,
         platform=Platform.SWITCH,
-        available_descriptors=(
+        available_descriptors=list(
             SWITCH_TYPES
             + PRIMARY_MULTI_COLOR_BOX_SWITCH_TYPES
             + SECONDARY_MULTI_COLOR_BOX_SWITCH_TYPES
@@ -94,7 +94,7 @@ class AnycubicSwitch(AnycubicCloudEntity, SwitchEntity):
         entity_description: AnycubicSwitchEntityDescription,
     ) -> None:
         """Initiate Anycubic Switch."""
-        super().__init__(coordinator, printer_id, entity_description)
+        super().__init__(hass, coordinator, printer_id, entity_description)
 
     @property
     def is_on(self) -> bool:

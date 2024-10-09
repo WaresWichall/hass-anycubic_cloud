@@ -17,7 +17,7 @@ from .const import (
     DOMAIN,
     PrinterEntityType,
 )
-from .entity import AnycubicCloudEntity
+from .entity import AnycubicCloudEntity, AnycubicCloudEntityDescription
 from .helpers import printer_attributes_for_key, printer_state_for_key
 
 if TYPE_CHECKING:
@@ -25,13 +25,13 @@ if TYPE_CHECKING:
 
 
 @dataclass(frozen=True)
-class AnycubicBinarySensorEntityDescription(BinarySensorEntityDescription):
+class AnycubicBinarySensorEntityDescription(
+    BinarySensorEntityDescription, AnycubicCloudEntityDescription
+):
     """Describes Anycubic Cloud binary sensor entity."""
 
-    printer_entity_type: PrinterEntityType | None = None
 
-
-PRIMARY_MULTI_COLOR_BOX_SENSOR_TYPES = list([
+PRIMARY_MULTI_COLOR_BOX_SENSOR_TYPES: list[AnycubicBinarySensorEntityDescription] = list([
     AnycubicBinarySensorEntityDescription(
         key="dry_status_is_drying",
         translation_key="dry_status_is_drying",
@@ -39,7 +39,7 @@ PRIMARY_MULTI_COLOR_BOX_SENSOR_TYPES = list([
     ),
 ])
 
-SECONDARY_MULTI_COLOR_BOX_SENSOR_TYPES = list([
+SECONDARY_MULTI_COLOR_BOX_SENSOR_TYPES: list[AnycubicBinarySensorEntityDescription] = list([
     AnycubicBinarySensorEntityDescription(
         key="secondary_dry_status_is_drying",
         translation_key="secondary_dry_status_is_drying",
@@ -47,7 +47,7 @@ SECONDARY_MULTI_COLOR_BOX_SENSOR_TYPES = list([
     ),
 ])
 
-SENSOR_TYPES = list([
+SENSOR_TYPES: list[AnycubicBinarySensorEntityDescription] = list([
     AnycubicBinarySensorEntityDescription(
         key="job_in_progress",
         translation_key="job_in_progress",
@@ -91,7 +91,7 @@ SENSOR_TYPES = list([
     ),
 ])
 
-GLOBAL_SENSOR_TYPES = list([
+GLOBAL_SENSOR_TYPES: list[AnycubicBinarySensorEntityDescription] = list([
 ])
 
 
@@ -107,7 +107,7 @@ async def async_setup_entry(
         async_add_entities=async_add_entities,
         entity_constructor=AnycubicBinarySensor,
         platform=Platform.BINARY_SENSOR,
-        available_descriptors=(
+        available_descriptors=list(
             SENSOR_TYPES
             + PRIMARY_MULTI_COLOR_BOX_SENSOR_TYPES
             + SECONDARY_MULTI_COLOR_BOX_SENSOR_TYPES
@@ -129,7 +129,7 @@ class AnycubicBinarySensor(AnycubicCloudEntity, BinarySensorEntity):
         entity_description: AnycubicBinarySensorEntityDescription,
     ) -> None:
         """Initiate Anycubic Binary Sensor."""
-        super().__init__(coordinator, printer_id, entity_description)
+        super().__init__(hass, coordinator, printer_id, entity_description)
 
     @property
     def is_on(self) -> bool:

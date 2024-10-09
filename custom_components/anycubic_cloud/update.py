@@ -22,7 +22,7 @@ from .const import (
     DOMAIN,
     PrinterEntityType,
 )
-from .entity import AnycubicCloudEntity
+from .entity import AnycubicCloudEntity, AnycubicCloudEntityDescription
 from .helpers import printer_attributes_for_key, printer_state_for_key
 
 if TYPE_CHECKING:
@@ -30,13 +30,13 @@ if TYPE_CHECKING:
 
 
 @dataclass(frozen=True)
-class AnycubicUpdateEntityDescription(UpdateEntityDescription):
+class AnycubicUpdateEntityDescription(
+    UpdateEntityDescription, AnycubicCloudEntityDescription
+):
     """Describes Anycubic Cloud update entity."""
 
-    printer_entity_type: PrinterEntityType | None = None
 
-
-PRIMARY_MULTI_COLOR_BOX_UPDATE_TYPES = list([
+PRIMARY_MULTI_COLOR_BOX_UPDATE_TYPES: list[AnycubicUpdateEntityDescription] = list([
     AnycubicUpdateEntityDescription(
         key="multi_color_box_fw_version",
         translation_key="multi_color_box_fw_version",
@@ -46,7 +46,7 @@ PRIMARY_MULTI_COLOR_BOX_UPDATE_TYPES = list([
     ),
 ])
 
-SECONDARY_MULTI_COLOR_BOX_UPDATE_TYPES = list([
+SECONDARY_MULTI_COLOR_BOX_UPDATE_TYPES: list[AnycubicUpdateEntityDescription] = list([
     AnycubicUpdateEntityDescription(
         key="secondary_multi_color_box_fw_version",
         translation_key="secondary_multi_color_box_fw_version",
@@ -56,7 +56,7 @@ SECONDARY_MULTI_COLOR_BOX_UPDATE_TYPES = list([
     ),
 ])
 
-UPDATE_TYPES = list([
+UPDATE_TYPES: list[AnycubicUpdateEntityDescription] = list([
     AnycubicUpdateEntityDescription(
         key="fw_version",
         translation_key="fw_version",
@@ -66,7 +66,7 @@ UPDATE_TYPES = list([
     ),
 ])
 
-GLOBAL_UPDATE_TYPES = list([
+GLOBAL_UPDATE_TYPES: list[AnycubicUpdateEntityDescription] = list([
 ])
 
 
@@ -82,7 +82,7 @@ async def async_setup_entry(
         async_add_entities=async_add_entities,
         entity_constructor=AnycubicUpdateEntity,
         platform=Platform.UPDATE,
-        available_descriptors=(
+        available_descriptors=list(
             UPDATE_TYPES
             + PRIMARY_MULTI_COLOR_BOX_UPDATE_TYPES
             + SECONDARY_MULTI_COLOR_BOX_UPDATE_TYPES
@@ -107,24 +107,24 @@ class AnycubicUpdateEntity(AnycubicCloudEntity, UpdateEntity):
         entity_description: AnycubicUpdateEntityDescription,
     ) -> None:
         """Initiate Anycubic Sensor."""
-        super().__init__(coordinator, printer_id, entity_description)
+        super().__init__(hass, coordinator, printer_id, entity_description)
 
     @property
     def installed_version(self) -> str:
         """Version currently in use."""
-        return printer_state_for_key(self.coordinator, self._printer_id, self.entity_description.key)
+        return str(printer_state_for_key(self.coordinator, self._printer_id, self.entity_description.key))
 
     @property
     def latest_version(self) -> str:
         """Latest version available for install."""
         fw_attr = printer_attributes_for_key(self.coordinator, self._printer_id, self.entity_description.key)
-        return fw_attr['latest_version']
+        return str(fw_attr['latest_version']) if fw_attr else "error"
 
     @property
     def in_progress(self) -> bool:
         """Update installation in progress."""
         fw_attr = printer_attributes_for_key(self.coordinator, self._printer_id, self.entity_description.key)
-        return fw_attr['in_progress']
+        return bool(fw_attr['in_progress']) if fw_attr else False
 
     async def async_install(
         self, version: str | None, backup: bool, **kwargs: Any

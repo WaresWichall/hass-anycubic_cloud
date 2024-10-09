@@ -21,7 +21,7 @@ from .const import (
     DOMAIN,
     PrinterEntityType,
 )
-from .entity import AnycubicCloudEntity
+from .entity import AnycubicCloudEntity, AnycubicCloudEntityDescription
 from .helpers import printer_state_for_key
 
 if TYPE_CHECKING:
@@ -29,13 +29,13 @@ if TYPE_CHECKING:
 
 
 @dataclass(frozen=True)
-class AnycubicImageEntityDescription(ImageEntityDescription):
+class AnycubicImageEntityDescription(
+    ImageEntityDescription, AnycubicCloudEntityDescription
+):
     """Describes Anycubic Cloud image entity."""
 
-    printer_entity_type: PrinterEntityType | None = None
 
-
-IMAGE_TYPES = list([
+IMAGE_TYPES: list[AnycubicImageEntityDescription] = list([
     AnycubicImageEntityDescription(
         key="job_image_url",
         translation_key="job_image_url",
@@ -43,7 +43,7 @@ IMAGE_TYPES = list([
     ),
 ])
 
-GLOBAL_IMAGE_TYPES = list([
+GLOBAL_IMAGE_TYPES: list[AnycubicImageEntityDescription] = list([
 ])
 
 
@@ -62,7 +62,7 @@ async def async_setup_entry(
         async_add_entities=async_add_entities,
         entity_constructor=AnycubicCloudImage,
         platform=Platform.IMAGE,
-        available_descriptors=(
+        available_descriptors=list(
             IMAGE_TYPES
             + GLOBAL_IMAGE_TYPES
         ),
@@ -82,15 +82,15 @@ class AnycubicCloudImage(AnycubicCloudEntity, ImageEntity):
         entity_description: AnycubicImageEntityDescription,
     ) -> None:
         """Initialize."""
-        super().__init__(coordinator, printer_id, entity_description)
+        super().__init__(hass, coordinator, printer_id, entity_description)
         ImageEntity.__init__(self, hass)
         self._known_image_url = None
 
-    def _reset_cached_image(self):
+    def _reset_cached_image(self) -> None:
         self._cached_image = None
         self._attr_image_last_updated = dt_util.utcnow()
 
-    def _check_image_url(self):
+    def _check_image_url(self) -> None:
         image_url = printer_state_for_key(self.coordinator, self._printer_id, self.entity_description.key)
         if self._known_image_url != image_url:
             self._reset_cached_image()
@@ -104,12 +104,6 @@ class AnycubicCloudImage(AnycubicCloudEntity, ImageEntity):
     @property
     def image_last_updated(self) -> datetime | None:
         return self._attr_image_last_updated
-
-    @property
-    def state(self) -> str | None:
-        if self.image_last_updated is None:
-            return None
-        return self.image_last_updated.isoformat()
 
     async def _async_load_image_from_url(self, url: str) -> Image | None:
         """Load an image by url."""

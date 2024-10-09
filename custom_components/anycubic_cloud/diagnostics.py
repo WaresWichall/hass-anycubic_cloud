@@ -32,6 +32,7 @@ PRINTER_TO_REDACT = {
     "machine_mac",
 }
 PROJECT_TO_REDACT = {
+    "model",
 }
 
 TO_TAGGED_REDACT = {
@@ -45,10 +46,13 @@ TO_TAGGED_REDACT = {
 
 
 class TaggedRedacter:
-    def __init__(self):
-        self.redacted_values = dict()
+    def __init__(self) -> None:
+        self.redacted_values: dict[str, str] = dict()
 
-    def _get_redacted_name(self, value):
+    def _get_redacted_name(
+        self,
+        value: Any,
+    ) -> str:
         if value not in self.redacted_values:
             num = len(self.redacted_values) + 1
             self.redacted_values[value] = f"**REDACTED_{num}**"
@@ -57,9 +61,9 @@ class TaggedRedacter:
 
     def redact_data(
         self,
-        data,
-        to_redact,
-    ):
+        data: Any,
+        to_redact: set[str],
+    ) -> Any:
         if not isinstance(data, (dict, list)):
             return data
 
@@ -94,9 +98,9 @@ async def async_get_config_entry_diagnostics(
     tRedacter = TaggedRedacter()
 
     assert coordinator.anycubic_api
-    user_info = await coordinator.anycubic_api.get_user_info(raw_data=True)
-    printer_info = await coordinator.anycubic_api.list_my_printers(raw_data=True)
-    projects_info = await coordinator.anycubic_api.list_all_projects(raw_data=True)
+    user_info: dict[str, Any] = await coordinator.anycubic_api.get_user_info(raw_data=True)
+    printer_info: dict[str, Any] = await coordinator.anycubic_api.list_my_printers(raw_data=True)
+    projects_info: dict[str, Any] = await coordinator.anycubic_api.list_all_projects(raw_data=True)
     latest_project_info = {}
 
     if projects_info['data'] and len(projects_info['data']) > 0:

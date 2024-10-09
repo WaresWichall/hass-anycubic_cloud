@@ -27,7 +27,7 @@ from .const import (
     PrinterEntityType,
     UNIT_LAYERS,
 )
-from .entity import AnycubicCloudEntity
+from .entity import AnycubicCloudEntity, AnycubicCloudEntityDescription
 from .helpers import printer_attributes_for_key, printer_state_for_key
 
 if TYPE_CHECKING:
@@ -35,13 +35,14 @@ if TYPE_CHECKING:
 
 
 @dataclass(frozen=True)
-class AnycubicSensorEntityDescription(SensorEntityDescription):
+class AnycubicSensorEntityDescription(
+    SensorEntityDescription, AnycubicCloudEntityDescription
+):
     """Describes Anycubic Cloud sensor entity."""
     not_measured: bool = False
-    printer_entity_type: PrinterEntityType | None = None
 
 
-PRIMARY_MULTI_COLOR_BOX_SENSOR_TYPES = list([
+PRIMARY_MULTI_COLOR_BOX_SENSOR_TYPES: list[AnycubicSensorEntityDescription] = list([
     AnycubicSensorEntityDescription(
         key="ace_current_temperature",
         translation_key="ace_current_temperature",
@@ -73,7 +74,7 @@ PRIMARY_MULTI_COLOR_BOX_SENSOR_TYPES = list([
 ])
 
 
-SECONDARY_MULTI_COLOR_BOX_SENSOR_TYPES = list([
+SECONDARY_MULTI_COLOR_BOX_SENSOR_TYPES: list[AnycubicSensorEntityDescription] = list([
     AnycubicSensorEntityDescription(
         key="secondary_ace_current_temperature",
         translation_key="secondary_ace_current_temperature",
@@ -104,7 +105,7 @@ SECONDARY_MULTI_COLOR_BOX_SENSOR_TYPES = list([
     ),
 ])
 
-FDM_SENSOR_TYPES = list([
+FDM_SENSOR_TYPES: list[AnycubicSensorEntityDescription] = list([
     AnycubicSensorEntityDescription(
         key="job_speed_mode",
         translation_key="job_speed_mode",
@@ -147,7 +148,7 @@ FDM_SENSOR_TYPES = list([
     ),
 ])
 
-LCD_SENSOR_TYPES = list([
+LCD_SENSOR_TYPES: list[AnycubicSensorEntityDescription] = list([
     AnycubicSensorEntityDescription(
         key="job_on_time",
         translation_key="job_on_time",
@@ -201,7 +202,7 @@ LCD_SENSOR_TYPES = list([
     ),
 ])
 
-SENSOR_TYPES = list([
+SENSOR_TYPES: list[AnycubicSensorEntityDescription] = list([
     AnycubicSensorEntityDescription(
         key="current_status",
         translation_key="current_status",
@@ -282,7 +283,7 @@ SENSOR_TYPES = list([
     ),
 ])
 
-GLOBAL_SENSOR_TYPES = list([
+GLOBAL_SENSOR_TYPES: list[AnycubicSensorEntityDescription] = list([
 ])
 
 
@@ -299,7 +300,7 @@ async def async_setup_entry(
         async_add_entities=async_add_entities,
         entity_constructor=AnycubicSensor,
         platform=Platform.SENSOR,
-        available_descriptors=(
+        available_descriptors=list(
             SENSOR_TYPES
             + LCD_SENSOR_TYPES
             + FDM_SENSOR_TYPES
@@ -323,7 +324,7 @@ class AnycubicSensor(AnycubicCloudEntity, SensorEntity):
         entity_description: AnycubicSensorEntityDescription,
     ) -> None:
         """Initiate Anycubic Sensor."""
-        super().__init__(coordinator, printer_id, entity_description)
+        super().__init__(hass, coordinator, printer_id, entity_description)
 
         if self.entity_description.native_unit_of_measurement == UnitOfTemperature.CELSIUS:
             self._attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS

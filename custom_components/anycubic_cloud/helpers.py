@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Any, TYPE_CHECKING
+from types import MappingProxyType
 from enum import IntEnum
 import re
 
@@ -18,8 +19,8 @@ from .const import (
 )
 
 if TYPE_CHECKING:
-    from homeassistant.helpers.entity import EntityDescription
     from .coordinator import AnycubicCloudDataUpdateCoordinator
+    from .entity import AnycubicCloudEntityDescription
 
 
 class AnycubicMQTTConnectMode(IntEnum):
@@ -48,9 +49,9 @@ def build_printer_device_info(
 
 
 def get_drying_preset_from_entry_options(
-    entry_options: dict[str, Any],
-    preset_number: int,
-):
+    entry_options: MappingProxyType[str, Any],
+    preset_number: int | str,
+) -> tuple[int | None, int | None]:
     preset_duration = entry_options.get(f"{CONF_DRYING_PRESET_DURATION_}{preset_number}")
     preset_temperature = entry_options.get(f"{CONF_DRYING_PRESET_TEMPERATURE_}{preset_number}")
 
@@ -64,7 +65,7 @@ def printer_state_for_key(
     coordinator: AnycubicCloudDataUpdateCoordinator,
     printer_id: int,
     state_key: str,
-):
+) -> Any:
     return coordinator.data['printers'][printer_id]['states'][state_key]
 
 
@@ -72,36 +73,41 @@ def printer_attributes_for_key(
     coordinator: AnycubicCloudDataUpdateCoordinator,
     printer_id: int,
     attribute_key: str,
-):
-    return coordinator.data['printers'][printer_id]['attributes'].get(attribute_key)
+) -> dict[str, Any] | None:
+    attr: dict[str, Any] | None = coordinator.data['printers'][printer_id]['attributes'].get(attribute_key)
+    return attr
 
 
 def printer_state_connected_ace_units(
     coordinator: AnycubicCloudDataUpdateCoordinator,
     printer_id: int,
-):
-    return printer_state_for_key(
-        coordinator,
-        printer_id,
-        'connected_ace_units',
+) -> int:
+    return int(
+        printer_state_for_key(
+            coordinator,
+            printer_id,
+            'connected_ace_units',
+        )
     )
 
 
 def printer_state_supports_ace(
     coordinator: AnycubicCloudDataUpdateCoordinator,
     printer_id: int,
-):
-    return printer_state_for_key(
-        coordinator,
-        printer_id,
-        'supports_function_multi_color_box',
+) -> bool:
+    return bool(
+        printer_state_for_key(
+            coordinator,
+            printer_id,
+            'supports_function_multi_color_box',
+        )
     )
 
 
 def check_descriptor_status_not_lcd(
-    description: EntityDescription,
+    description: AnycubicCloudEntityDescription,
     material_type: AnycubicPrinterMaterialType,
-):
+) -> bool:
     return (
         description.printer_entity_type == PrinterEntityType.LCD
         and material_type != AnycubicPrinterMaterialType.RESIN
@@ -109,9 +115,9 @@ def check_descriptor_status_not_lcd(
 
 
 def check_descriptor_status_not_fdm(
-    description: EntityDescription,
+    description: AnycubicCloudEntityDescription,
     material_type: AnycubicPrinterMaterialType,
-):
+) -> bool:
     return (
         description.printer_entity_type == PrinterEntityType.FDM
         and material_type != AnycubicPrinterMaterialType.FILAMENT
@@ -119,9 +125,9 @@ def check_descriptor_status_not_fdm(
 
 
 def check_descriptor_state_ace_not_supported(
-    description: EntityDescription,
+    description: AnycubicCloudEntityDescription,
     supports_ace: bool,
-):
+) -> bool:
     return (
         description.printer_entity_type in [
             PrinterEntityType.ACE_PRIMARY,
@@ -134,10 +140,10 @@ def check_descriptor_state_ace_not_supported(
 
 
 def check_descriptor_state_ace_primary_unavailable(
-    description: EntityDescription,
+    description: AnycubicCloudEntityDescription,
     supports_ace: bool,
     connected_ace_units: int,
-):
+) -> bool:
     return (
         description.printer_entity_type in [
             PrinterEntityType.ACE_PRIMARY,
@@ -149,10 +155,10 @@ def check_descriptor_state_ace_primary_unavailable(
 
 
 def check_descriptor_state_ace_secondary_unavailable(
-    description: EntityDescription,
+    description: AnycubicCloudEntityDescription,
     supports_ace: bool,
     connected_ace_units: int,
-):
+) -> bool:
     return (
         description.printer_entity_type in [
             PrinterEntityType.ACE_SECONDARY,
@@ -164,10 +170,10 @@ def check_descriptor_state_ace_secondary_unavailable(
 
 
 def check_descriptor_state_drying_available(
-    description: EntityDescription,
+    description: AnycubicCloudEntityDescription,
     supports_ace: bool,
     connected_ace_units: int,
-):
+) -> bool:
     return (
         supports_ace
         and (
@@ -181,11 +187,11 @@ def check_descriptor_state_drying_available(
 
 
 def check_descriptor_state_drying_unavailable(
-    description: EntityDescription,
+    description: AnycubicCloudEntityDescription,
     supports_ace: bool,
     connected_ace_units: int,
-    entry_options,
-):
+    entry_options: MappingProxyType[str, Any],
+) -> bool:
     drying_available = check_descriptor_state_drying_available(
         description,
         supports_ace,
@@ -212,15 +218,15 @@ def printer_entity_unique_id(
     coordinator: AnycubicCloudDataUpdateCoordinator,
     printer_id: int,
     entity_suffix: str,
-):
+) -> str:
     return f"{printer_state_for_key(coordinator, printer_id, 'machine_mac')}-{entity_suffix}"
 
 
-def state_string_active(state):
+def state_string_active(state: Any) -> str:
     return "active" if state is not None else "inactive"
 
 
-def state_string_loaded(state):
+def state_string_loaded(state: Any) -> str:
     return "loaded" if state is not None else "not loaded"
 
 
@@ -241,10 +247,10 @@ def state_string_loaded(state):
 REGEX_NOQUOTE_STRING = re.compile(r"^['\"]?([^'\"]+)['\"]?$")
 
 
-def remove_quotes_from_string(input_string):
+def remove_quotes_from_string(input_string: str) -> str:
     matches = REGEX_NOQUOTE_STRING.findall(input_string)
 
     if len(matches) == 1:
-        return matches[0]
+        return str(matches[0])
 
     raise TypeError("Unexpected quotes in string.")
