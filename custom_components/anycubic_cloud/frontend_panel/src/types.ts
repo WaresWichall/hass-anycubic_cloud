@@ -29,6 +29,8 @@ export interface HassDevice {
   config_entries: string[];
   primary_config_entry: string;
   manufacturer: string | null;
+  serial_number: string | undefined;
+  connections: string[][];
 }
 
 export interface HassDeviceList {
@@ -151,20 +153,31 @@ export enum TemperatureUnit {
   C = "C",
 }
 
-export enum TextStatType {
+export enum StatTypeGeneral {
   Status = "Status",
-  HotendCurrent = "Hotend",
-  BedCurrent = "Bed",
-  HotendTarget = "T Hotend",
-  BedTarget = "T Bed",
   PrinterOnline = "Online",
   Availability = "Availability",
   ProjectName = "Project",
   CurrentLayer = "Layer",
+}
+
+export enum StatTypeFDM {
+  HotendCurrent = "Hotend",
+  BedCurrent = "Bed",
+  HotendTarget = "T Hotend",
+  BedTarget = "T Bed",
   DryingStatus = "Dry Status",
   DryingTime = "Dry Time",
   SpeedMode = "Speed Mode",
   FanSpeed = "Fan Speed",
+}
+
+export enum StatTypeACE {
+  DryingStatus = "Dry Status",
+  DryingTime = "Dry Time",
+}
+
+export enum StatTypeLCD {
   OnTime = "On Time",
   OffTime = "Off Time",
   BottomTime = "Bottom Time",
@@ -175,7 +188,13 @@ export enum TextStatType {
   ZDownSpeed = "Z Down Speed",
 }
 
-export const PrinterCardStatType = { ...CalculatedTimeType, ...TextStatType };
+export const PrinterCardStatType = {
+  ...CalculatedTimeType,
+  ...StatTypeGeneral,
+  ...StatTypeFDM,
+  ...StatTypeACE,
+  ...StatTypeLCD,
+};
 export type PrinterCardStatType = typeof PrinterCardStatType;
 
 export interface AnimatedPrinterBasicDimension {
@@ -269,6 +288,7 @@ export interface AnycubicCardConfig {
   scaleFactor?: number;
   slotColors?: string[];
   showSettingsButton?: boolean;
+  alwaysShow?: boolean;
 }
 
 export enum AnycubicMaterialType {
@@ -284,7 +304,11 @@ export enum AnycubicMaterialType {
 }
 
 export enum AnycubicPrintOptionConfirmationType {
-  PAUSE = "Pause",
-  RESUME = "Resume",
-  CANCEL = "Cancel",
+  PAUSE = "pause",
+  RESUME = "resume",
+  CANCEL = "cancel",
+}
+
+export interface TranslationDict {
+  [id: string]: string;
 }

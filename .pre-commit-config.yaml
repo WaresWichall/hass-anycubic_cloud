@@ -14,6 +14,21 @@ repos:
     - id: flake8
       types: ['file']
       files: \.(py|pyx|pxd)$
+-   repo: https://github.com/pre-commit/mirrors-mypy
+    rev: 'v1.11.2'
+    hooks:
+    - id: mypy
+      exclude: ^custom_components/anycubic_cloud/test_api/
+      exclude: ^custom_components/anycubic_cloud/scripts/
+      args:
+        - "--strict"
+        - "--config-file=mypy.ini"
+      additional_dependencies:
+        - "homeassistant==2024.9.3"
+        - "pydantic==2.9.2"
+        - "aiofiles==24.1.0"
+        - "types-aiofiles==24.1.0.20240626"
+        - "types-paho-mqtt==1.6.0.20240321"
 # -   repo: https://github.com/pycqa/isort
 #     rev: 5.10.1
 #     hooks:

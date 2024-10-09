@@ -1,4 +1,5 @@
 """Anycubic Cloud integration constants."""
+from enum import IntEnum
 import logging
 
 from homeassistant.const import (
@@ -22,6 +23,7 @@ PANEL_TITLE = "Anycubic Cloud"
 PANEL_ICON = "mdi:printer-3d"
 
 ATTR_CONFIG_ENTRY = "config_entry"
+ATTR_ANYCUBIC_EVENT = "anycubic_cloud"
 
 ENTITY_ID_DRYING_START_PRESET_ = "drying_start_preset_"
 
@@ -47,6 +49,8 @@ CONF_TEMPERATURE = "temperature"
 CONF_LAYERS = "layers"
 CONF_TIME = "time"
 
+AC_EVENT_PRINT_CLOUD_START = "print_cloud_start"
+
 UNIT_LAYERS = "Layers"
 
 STORAGE_KEY = DOMAIN
@@ -56,11 +60,24 @@ DEFAULT_SCAN_INTERVAL = 60
 MQTT_SCAN_INTERVAL = 15
 FAILED_UPDATE_DELAY = DEFAULT_SCAN_INTERVAL * 4
 MAX_FAILED_UPDATES = 3
-MQTT_IDLE_DISCONNECT_SECONDS = 60 * 20
+MQTT_IDLE_DISCONNECT_SECONDS = 60 * 15
 MQTT_ACTION_RESPONSE_ALIVE_SECONDS = 60 * 5
 MQTT_REFRESH_INTERVAL = 60 * 5
+MAX_FILE_UPLOAD_RETRIES = 3
 
 MAX_DRYING_PRESETS = 4
+
+
+class PrinterEntityType(IntEnum):
+    GLOBAL = 1
+    PRINTER = 2
+    FDM = 3
+    LCD = 4
+    ACE_PRIMARY = 5
+    ACE_SECONDARY = 6
+    DRY_PRESET_PRIMARY = 7
+    DRY_PRESET_SECONDARY = 8
+
 
 LOGGER = logging.getLogger(__package__)
 

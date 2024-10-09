@@ -23,7 +23,7 @@ from .const import (
 PANEL_URL = "/anycubic-cloud-panel-static"
 
 
-async def async_register_panel(hass: HomeAssistant):
+async def async_register_panel(hass: HomeAssistant) -> None:
     """Register the Anycubic Cloud frontend panel."""
     if DOMAIN not in hass.data.get("frontend_panels", {}):
         root_dir = os.path.join(hass.config.path(CUSTOM_COMPONENTS), INTEGRATION_FOLDER)
@@ -50,6 +50,6 @@ async def async_register_panel(hass: HomeAssistant):
         )
 
 
-def async_unregister_panel(hass):
+def async_unregister_panel(hass: HomeAssistant) -> None:
     frontend.async_remove_panel(hass, DOMAIN)
     LOGGER.debug("Removing panel")

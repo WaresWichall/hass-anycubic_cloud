@@ -41,12 +41,19 @@ export class AnycubicPrintercardEditor extends LitElement {
   @state()
   private printers?: HassDeviceList;
 
+  @state()
+  private language: string;
+
   async firstUpdated(): void {
     this.printers = await getPrinterDevices(this.hass);
   }
 
   protected willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
+
+    if (changedProperties.has("hass") && this.hass.language !== this.language) {
+      this.language = this.hass.language;
+    }
 
     if (changedProperties.has("config")) {
       this.config.vertical = undefinedDefault(
@@ -60,6 +67,10 @@ export class AnycubicPrintercardEditor extends LitElement {
       this.config.use_24hr = undefinedDefault(
         this.config.use_24hr,
         defaultConfig.use_24hr,
+      );
+      this.config.alwaysShow = undefinedDefault(
+        this.config.alwaysShow,
+        defaultConfig.alwaysShow,
       );
       this.config.showSettingsButton = undefinedDefault(
         this.config.showSettingsButton,
@@ -77,6 +88,10 @@ export class AnycubicPrintercardEditor extends LitElement {
         this.config.slotColors,
         defaultConfig.slotColors,
       );
+      this.config.scaleFactor = undefinedDefault(
+        this.config.scaleFactor,
+        defaultConfig.scaleFactor,
+      );
     }
   }
 
@@ -88,6 +103,7 @@ export class AnycubicPrintercardEditor extends LitElement {
     return html`
       <anycubic-printercard-configure
         .hass=${this.hass}
+        .language=${this.language}
         .printers=${this.printers}
         .cardConfig=${this.config}
       ></anycubic-printercard-configure>
@@ -107,6 +123,9 @@ export class AnycubicCard extends LitElement {
   private printers?: HassDeviceList;
 
   @state()
+  private language: string;
+
+  @state()
   private selectedPrinterID: string | undefined;
 
   @state()
@@ -123,6 +142,9 @@ export class AnycubicCard extends LitElement {
 
   @state({ type: Boolean })
   private showSettingsButton?: boolean;
+
+  @state({ type: Boolean })
+  private alwaysShow?: boolean;
 
   @state({ type: String })
   private temperatureUnit: TemperatureUnit | undefined;
@@ -153,6 +175,10 @@ export class AnycubicCard extends LitElement {
   protected willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
 
+    if (changedProperties.has("hass") && this.hass.language !== this.language) {
+      this.language = this.hass.language;
+    }
+
     if (changedProperties.has("config") || changedProperties.has("printers")) {
       this.vertical = undefinedDefault(
         this.config.vertical,
@@ -162,6 +188,10 @@ export class AnycubicCard extends LitElement {
       this.use_24hr = undefinedDefault(
         this.config.use_24hr,
         defaultConfig.use_24hr,
+      );
+      this.alwaysShow = undefinedDefault(
+        this.config.alwaysShow,
+        defaultConfig.alwaysShow,
       );
       this.showSettingsButton = undefinedDefault(
         this.config.showSettingsButton,
@@ -195,6 +225,7 @@ export class AnycubicCard extends LitElement {
     return html`
       <anycubic-printercard-card
         .hass=${this.hass}
+        .language=${this.language}
         .monitoredStats=${this.config.monitoredStats}
         .selectedPrinterID=${this.selectedPrinterID}
         .selectedPrinterDevice=${this.selectedPrinterDevice}
@@ -202,6 +233,7 @@ export class AnycubicCard extends LitElement {
         .round=${this.round}
         .use_24hr=${this.use_24hr}
         .showSettingsButton=${this.showSettingsButton}
+        .alwaysShow=${this.alwaysShow}
         .temperatureUnit=${this.temperatureUnit}
         .lightEntityId=${this.lightEntityId}
         .powerEntityId=${this.powerEntityId}

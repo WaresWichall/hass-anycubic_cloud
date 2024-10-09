@@ -1,14 +1,18 @@
+from __future__ import annotations
+from typing import Any
+
+
 class AnycubicPrintSpeedMode:
     def __init__(
         self,
-        title,
-        mode,
-    ):
+        title: str,
+        mode: int,
+    ) -> None:
         self._title = str(title)
         self._mode = int(mode)
 
     @classmethod
-    def from_json(cls, data):
+    def from_json(cls, data: dict[str, Any] | None) -> AnycubicPrintSpeedMode | None:
         if data is None:
             return None
 
@@ -18,33 +22,33 @@ class AnycubicPrintSpeedMode:
         )
 
     @property
-    def title(self):
+    def title(self) -> str:
         return self._title
 
     @property
-    def mode(self):
+    def mode(self) -> int:
         return self._mode
 
     @property
-    def data_object(self):
+    def data_object(self) -> dict[str, str | int]:
         return {
             "description": self._title,
             "mode": self._mode,
         }
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"AnycubicPrintSpeedMode("
             f"title={self._title}, "
             f"mode={self._mode})"
         )
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         if isinstance(other, AnycubicPrintSpeedMode):
             return self.mode == other.mode
         else:
             try:
-                return self.mode == int(other)
+                return bool(self.mode == int(other))  # type: ignore[call-overload]
             except Exception:
                 pass
 
