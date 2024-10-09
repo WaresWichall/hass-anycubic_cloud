@@ -37,7 +37,7 @@ if TYPE_CHECKING:
 @dataclass(frozen=True)
 class AnycubicSensorEntityDescription(SensorEntityDescription):
     """Describes Anycubic Cloud sensor entity."""
-
+    not_measured: bool = False
     printer_entity_type: PrinterEntityType | None = None
 
 
@@ -52,6 +52,7 @@ PRIMARY_MULTI_COLOR_BOX_SENSOR_TYPES = list([
         key="ace_spools",
         translation_key="ace_spools",
         printer_entity_type=PrinterEntityType.ACE_PRIMARY,
+        not_measured=True,
     ),
     AnycubicSensorEntityDescription(
         key="dry_status_target_temperature",
@@ -83,6 +84,7 @@ SECONDARY_MULTI_COLOR_BOX_SENSOR_TYPES = list([
         key="secondary_ace_spools",
         translation_key="secondary_ace_spools",
         printer_entity_type=PrinterEntityType.ACE_SECONDARY,
+        not_measured=True,
     ),
     AnycubicSensorEntityDescription(
         key="secondary_dry_status_target_temperature",
@@ -107,6 +109,7 @@ FDM_SENSOR_TYPES = list([
         key="job_speed_mode",
         translation_key="job_speed_mode",
         printer_entity_type=PrinterEntityType.FDM,
+        not_measured=True,
     ),
     AnycubicSensorEntityDescription(
         key="print_speed_pct",
@@ -203,26 +206,31 @@ SENSOR_TYPES = list([
         key="current_status",
         translation_key="current_status",
         printer_entity_type=PrinterEntityType.PRINTER,
+        not_measured=True,
     ),
     AnycubicSensorEntityDescription(
         key="file_list_local",
         translation_key="file_list_local",
         printer_entity_type=PrinterEntityType.PRINTER,
+        not_measured=True,
     ),
     AnycubicSensorEntityDescription(
         key="file_list_udisk",
         translation_key="file_list_udisk",
         printer_entity_type=PrinterEntityType.PRINTER,
+        not_measured=True,
     ),
     AnycubicSensorEntityDescription(
         key="file_list_cloud",
         translation_key="file_list_cloud",
         printer_entity_type=PrinterEntityType.PRINTER,
+        not_measured=True,
     ),
     AnycubicSensorEntityDescription(
         key="job_name",
         translation_key="job_name",
         printer_entity_type=PrinterEntityType.PRINTER,
+        not_measured=True,
     ),
     AnycubicSensorEntityDescription(
         key="job_progress",
@@ -246,12 +254,14 @@ SENSOR_TYPES = list([
         key="job_state",
         translation_key="job_state",
         printer_entity_type=PrinterEntityType.PRINTER,
+        not_measured=True,
     ),
     AnycubicSensorEntityDescription(
         key="job_eta",
         translation_key="job_eta",
         device_class=SensorDeviceClass.TIMESTAMP,
         printer_entity_type=PrinterEntityType.PRINTER,
+        not_measured=True,
     ),
     AnycubicSensorEntityDescription(
         key="job_current_layer",
@@ -304,7 +314,6 @@ class AnycubicSensor(AnycubicCloudEntity, SensorEntity):
     """Representation of a Anycubic Cloud sensor."""
 
     entity_description: AnycubicSensorEntityDescription
-    _attr_state_class = SensorStateClass.MEASUREMENT
 
     def __init__(
         self,
@@ -319,6 +328,11 @@ class AnycubicSensor(AnycubicCloudEntity, SensorEntity):
         if self.entity_description.native_unit_of_measurement == UnitOfTemperature.CELSIUS:
             self._attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
 
+        if self.entity_description.not_measured:
+            self._attr_state_class = None
+        else:
+            self._attr_state_class = SensorStateClass.MEASUREMENT
+
     @property
     def available(self) -> bool:
         return printer_state_for_key(
@@ -328,7 +342,7 @@ class AnycubicSensor(AnycubicCloudEntity, SensorEntity):
         ) is not None
 
     @property
-    def state(self) -> Any:
+    def native_value(self) -> Any:
         """Return the ...."""
         state = printer_state_for_key(self.coordinator, self._printer_id, self.entity_description.key)
 
@@ -336,7 +350,7 @@ class AnycubicSensor(AnycubicCloudEntity, SensorEntity):
             return None
 
         if self.entity_description.device_class == SensorDeviceClass.TIMESTAMP:
-            return dt_util.utc_from_timestamp(state).isoformat(timespec="seconds")
+            return dt_util.utc_from_timestamp(state)
 
         elif (
             isinstance(state, float)
@@ -354,10 +368,10 @@ class AnycubicSensor(AnycubicCloudEntity, SensorEntity):
         return str(state)
 
     @property
-    def state_attributes(self) -> dict[str, Any] | None:
-        """Return state attributes."""
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        """Return extra state attributes."""
         attrib = printer_attributes_for_key(self.coordinator, self._printer_id, self.entity_description.key)
         if attrib is not None:
             return attrib
         else:
-            return super().state_attributes
+            return None

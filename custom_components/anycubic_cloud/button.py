@@ -158,10 +158,10 @@ class AnycubicCloudButton(AnycubicCloudEntity, ButtonEntity):
         await self.coordinator.button_press_event(self._printer_id, self.entity_description.key)
 
     @property
-    def state_attributes(self) -> dict[str, Any] | None:
-        """Return state attributes."""
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        """Return extra state attributes."""
         attrib = printer_attributes_for_key(self.coordinator, self._printer_id, self.entity_description.key)
         if attrib is not None:
             return attrib
         else:
-            return super().state_attributes
+            return None
