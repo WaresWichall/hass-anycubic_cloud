@@ -1,26 +1,34 @@
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from .anycubic_data_model_printer_properties import AnycubicMaterialMapping
+
+
 class AnycubicPrintResponse:
     def __init__(
         self,
-        order_msg_id=None,
-        printer_id=None,
-        saved_in_cloud=False,
-        file_name=None,
-        cloud_file_id=None,
-        gcode_id=None,
-        material_list=None,
-        ams_box_mapping=None,
-    ):
-        self._order_msg_id = order_msg_id
-        self._printer_id = printer_id
-        self._saved_in_cloud = bool(saved_in_cloud)
-        self._file_name = file_name
-        self._cloud_file_id = cloud_file_id
-        self._gcode_id = gcode_id
-        self._material_list = material_list
-        self._ams_box_mapping = ams_box_mapping
+        order_msg_id: str | None = None,
+        printer_id: int | None = None,
+        saved_in_cloud: bool = False,
+        file_name: str | None = None,
+        cloud_file_id: int | None = None,
+        gcode_id: int | None = None,
+        material_list: list[dict[str, Any]] | None = None,
+        ams_box_mapping: list[AnycubicMaterialMapping] | None = None,
+    ) -> None:
+        self._order_msg_id: str | None = order_msg_id
+        self._printer_id: int | None = printer_id
+        self._saved_in_cloud: bool = bool(saved_in_cloud)
+        self._file_name: str | None = file_name
+        self._cloud_file_id: int | None = cloud_file_id
+        self._gcode_id: int | None = gcode_id
+        self._material_list: list[dict[str, Any]] | None = material_list
+        self._ams_box_mapping: list[AnycubicMaterialMapping] | None = ams_box_mapping
 
     @property
-    def event_dict(self):
+    def event_dict(self) -> dict[str, Any]:
         ams_box_mapping = None
 
         if self._ams_box_mapping:
@@ -38,7 +46,7 @@ class AnycubicPrintResponse:
             'ams_box_mapping': ams_box_mapping,
         }
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"AnycubicPrintResponse("
             f"order_msg_id={self._order_msg_id}, "

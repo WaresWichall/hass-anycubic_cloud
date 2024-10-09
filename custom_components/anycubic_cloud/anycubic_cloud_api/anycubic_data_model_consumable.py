@@ -1,29 +1,35 @@
+from __future__ import annotations
+from typing import Any
 from collections import UserDict
 
 
-class AnycubicConsumableData(UserDict):
-    def __init__(self, *args, **kwargs):
+class AnycubicConsumableData(UserDict[Any, Any]):
+    def __init__(
+        self,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
         super().__init__(*args, **kwargs)
-        self.data = self._encode_items()
-        self._consumed_data = dict()
+        self.data: dict[Any, Any] = self._encode_items()
+        self._consumed_data: dict[Any, Any] = dict()
 
     @property
-    def is_empty(self):
+    def is_empty(self) -> bool:
         return len(self.data) == 0
 
     @property
-    def remaining_data(self):
+    def remaining_data(self) -> dict[Any, Any]:
         return self.data
 
-    def force_empty(self):
+    def force_empty(self) -> None:
         for key in list(self.data.keys()):
             self._consumed_data[key] = self.data.pop(key)
 
     def _encode_list(
         self,
-        data,
-    ):
-        new_data = list()
+        data: list[Any],
+    ) -> list[None | str | int | float | bool | AnycubicConsumableData | list[Any]]:
+        new_data: list[Any] = list()
         for v in data:
             if isinstance(v, AnycubicConsumableData):
                 new_data.append(v)
@@ -48,8 +54,8 @@ class AnycubicConsumableData(UserDict):
 
     def _encode_items(
         self,
-    ):
-        new_data = dict()
+    ) -> dict[Any, None | str | int | float | bool | AnycubicConsumableData | list[Any]]:
+        new_data: dict[Any, Any] = dict()
         for k, v in self.data.items():
             if isinstance(v, AnycubicConsumableData):
                 new_data[k] = v
@@ -74,8 +80,8 @@ class AnycubicConsumableData(UserDict):
 
     def __getitem__(
         self,
-        key,
-    ):
+        key: Any,
+    ) -> Any:
         try:
             return self._consumed_data[key]
         except KeyError:
@@ -95,9 +101,9 @@ class AnycubicConsumableData(UserDict):
 
     def get(
         self,
-        key,
-        default=None,
-    ):
+        key: Any,
+        default: Any = None,
+    ) -> Any:
         try:
             return self[key]
         except KeyError:

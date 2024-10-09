@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from typing import Any, Literal, overload
+
 import aiohttp
 import asyncio
 import hashlib
@@ -58,11 +62,13 @@ from .anycubic_model_base import (
 from .anycubic_api_base import (
     HTTP_METHODS,
     API_ENDPOINT,
+    ac_api_endpoint,
 )
 
 from .anycubic_exceptions import (
     AnycubicAPIError,
     AnycubicAPIParsingError,
+    AnycubicDataParsingError,
     AnycubicErrorMessage,
     AnycubicFileNotFoundError,
     APIAuthTokensExpired,
@@ -109,82 +115,82 @@ from .anycubic_helpers import (
 class AnycubicAPI:
     def __init__(
         self,
-        session,
-        cookie_jar,
-        debug_logger=None,
-        auth_as_app=False,
-        auth_sig_token=None,
-    ):
+        session: aiohttp.ClientSession,
+        cookie_jar: aiohttp.CookieJar,
+        debug_logger: Any = None,
+        auth_as_app: bool = False,
+        auth_sig_token: str | None = None,
+    ) -> None:
         # Cache
-        self._cache_key_path = None
-        self._cache_tokens_path = None
-        self._cache_sig_token_path = None
+        self._cache_key_path: str | None = None
+        self._cache_tokens_path: str | None = None
+        self._cache_sig_token_path: str | None = None
         # API
         self.base_url = f"https://{BASE_DOMAIN}/"
         self._public_api_root = f"{self.base_url}{PUBLIC_API_ENDPOINT}"
         # Internal
-        self._api_username = None
-        self._api_password = None
-        self._api_user_id = None
-        self._api_user_email = None
+        self._api_username: str | None = None
+        self._api_password: str | None = None
+        self._api_user_id: int | None = None
+        self._api_user_email: str | None = None
         self._session: aiohttp.ClientSession = session
-        self._sessionjar = cookie_jar
+        self._sessionjar: aiohttp.CookieJar = cookie_jar
         self._cookie_state = generate_cookie_state()
-        self._debug_logger = debug_logger
-        self._tokens_changed = False
-        self._auth_as_app = auth_as_app
-        self._redirect_uri = self.base_url if not self._auth_as_app else APP_REDIRECT_URI
+        self._debug_logger: Any = debug_logger
+        self._tokens_changed: bool = False
+        self._auth_as_app: bool = auth_as_app
+        self._redirect_uri: str = self.base_url if not self._auth_as_app else APP_REDIRECT_URI
         # ANYCUBIC APP VARS
-        self._client_id = None
-        self._app_id = None
-        self._app_version = None
-        self._app_secret = None
-        self._device_id = None
+        self._client_id: str | None = None
+        self._app_id: str | None = None
+        self._app_version: str | None = None
+        self._app_secret: str | None = None
+        self._device_id: str | None = None
         # ANYCUBIC AUTH VARS
-        self._login_auth_code = None
-        self._auth_access_token = None
-        self._auth_sig_token = auth_sig_token
-        self._auth_referer = None
+        self._login_auth_code: str | None = None
+        self._auth_access_token: str | None = None
+        self._auth_sig_token: str | None = auth_sig_token
+        self._auth_referer: str | None = None
 
     def set_username_password(
         self,
-        api_username,
-        api_password,
-    ):
+        api_username: str,
+        api_password: str,
+    ) -> None:
         self._api_username = api_username
         self._api_password = api_password
 
     def set_auth_sig_token(
         self,
-        auth_sig_token,
-    ):
+        auth_sig_token: str,
+    ) -> None:
         self._auth_sig_token = auth_sig_token
 
     @property
-    def tokens_changed(self):
+    def tokens_changed(self) -> bool:
         return self._tokens_changed
 
     @property
-    def api_user_id(self):
+    def api_user_id(self) -> int | None:
         return self._api_user_id
 
     @property
-    def api_user_email(self):
+    def api_user_email(self) -> str | None:
         return self._api_user_email
 
     @property
-    def api_user_identifier(self):
-        return self._api_user_email or self._api_user_id
+    def api_user_identifier(self) -> str:
+        return self._api_user_email or str(self._api_user_id)
 
-    def _log_to_debug(self, msg):
+    def _log_to_debug(self, msg: str) -> None:
         if self._debug_logger:
             self._debug_logger.debug(msg)
 
-    def _log_to_warn(self, msg):
+    def _log_to_warn(self, msg: str) -> None:
         if self._debug_logger:
             self._debug_logger.warning(msg)
 
-    def _log_to_error(self, msg):
+    def _log_to_error(self, msg: str) -> None:
         if self._debug_logger:
             self._debug_logger.error(msg)
 
@@ -193,7 +199,7 @@ class AnycubicAPI:
     # API Functions
     # ------------------------------------------
 
-    def _web_headers(self, with_origin=AUTH_DOMAIN):
+    def _web_headers(self, with_origin: str | None = AUTH_DOMAIN) -> dict[str, Any]:
         header_dict = {
             'User-Agent': DEFAULT_USER_AGENT
         }
@@ -201,27 +207,53 @@ class AnycubicAPI:
             header_dict['Origin'] = f'https://{with_origin}'
         return header_dict
 
-    def _build_api_url(self, endpoint):
+    def _build_api_url(self, endpoint: ac_api_endpoint) -> str:
         return f"{self._public_api_root}{endpoint.endpoint}"
 
-    def _build_auth_url(self, endpoint):
+    def _build_auth_url(self, endpoint: str) -> str:
         return f"https://{AUTH_DOMAIN}{endpoint}"
 
-    def _build_public_root_url(self, endpoint):
+    def _build_public_root_url(self, endpoint: str) -> str:
         return f"{self.base_url}{endpoint}"
+
+    @overload
+    async def _fetch_ext_resp(
+        self,
+        method: HTTP_METHODS,
+        base_url: str,
+        query: dict[str, Any] | None = None,
+        params: dict[str, Any] = {},
+        extra_headers: dict[str, Any] = {},
+        with_origin: str | None = AUTH_DOMAIN,
+        put_data: bytes | None = None,
+    ) -> dict[Any, Any]: ...
+
+    @overload
+    async def _fetch_ext_resp(
+        self,
+        method: HTTP_METHODS,
+        base_url: str,
+        query: dict[str, Any] | None = None,
+        params: dict[str, Any] = {},
+        extra_headers: dict[str, Any] = {},
+        with_origin: str | None = AUTH_DOMAIN,
+        put_data: bytes | None = None,
+        is_json: bool = True,
+        return_url: bool = False,
+    ) -> dict[Any, Any] | str: ...
 
     async def _fetch_ext_resp(
         self,
-        method,
-        base_url,
-        query=None,
-        params={},
-        is_json=True,
-        extra_headers={},
-        with_origin=AUTH_DOMAIN,
-        with_response=False,
-        put_data=None,
-    ):
+        method: HTTP_METHODS,
+        base_url: str,
+        query: dict[str, Any] | None = None,
+        params: dict[str, Any] | list[Any] | str | None = {},
+        extra_headers: dict[str, Any] = {},
+        with_origin: str | None = AUTH_DOMAIN,
+        put_data: bytes | None = None,
+        is_json: bool = True,
+        return_url: bool = False,
+    ) -> dict[Any, Any] | str:
         url = base_url
         headers = {**self._web_headers(with_origin=with_origin), **extra_headers}
         if method == HTTP_METHODS.POST:
@@ -237,83 +269,99 @@ class AnycubicAPI:
         else:
             h_coro = self._session.get(url, params=query, headers=headers)
 
+        response_url = None
+
         try:
             async with h_coro as resp:
                 if is_json:
-                    resp_data = await resp.json()
+                    resp_data: dict[str, Any] | str = await resp.json()
                 else:
                     resp_data = await resp.text()
+
+                response_url = resp.url
         except Exception:
             raise AnycubicAPIParsingError('Unexpected error parsing Anycubic response, server maintenance?')
 
-        if with_response:
-            return resp_data, resp
+        if return_url:
+            return str(response_url)
         return resp_data
 
-    async def _fetch_pub_get_resp(self, endpoint, is_json=True):
+    async def _fetch_pub_get_resp(
+        self,
+        endpoint: str,
+        is_json: bool = True,
+    ) -> dict[Any, Any] | str:
         return await self._fetch_ext_resp(
             method=HTTP_METHODS.GET,
             base_url=self._build_public_root_url(endpoint),
             is_json=is_json,
         )
 
-    async def _fetch_aws_put_resp(self, final_url, put_data):
-        return await self._fetch_ext_resp(
+    async def _fetch_aws_put_resp(self, final_url: str, put_data: bytes) -> dict[Any, Any] | str:
+        resp = await self._fetch_ext_resp(
             method=HTTP_METHODS.PUT,
             base_url=final_url,
             is_json=False,
             put_data=put_data,
         )
+        if isinstance(resp, str):
+            raise AnycubicAPIParsingError(f"Unexpected error parsing AWS response: {resp}")
+
+        return resp
 
     async def _fetch_api_resp(
         self,
-        endpoint,
-        query=None,
-        params={},
-        is_json=True,
-        extra_headers={},
-        with_origin=BASE_DOMAIN,
-        with_token=True,
-    ):
-        return await self._fetch_ext_resp(
+        endpoint: ac_api_endpoint,
+        query: dict[str, Any] | None = None,
+        params: dict[str, Any] = {},
+        extra_headers: dict[str, Any] = {},
+        with_origin: str | None = AUTH_DOMAIN,
+        with_token: bool = True,
+    ) -> dict[Any, Any]:
+        resp = await self._fetch_ext_resp(
             method=endpoint.method,
             base_url=self._build_api_url(endpoint),
             query=query,
             params=params,
-            is_json=is_json,
             extra_headers=self._build_auth_headers(with_token=with_token),
             with_origin=with_origin,
         )
+        return resp
 
     #
     #
     # Login Functions
     # ------------------------------------------
 
-    async def _fetch_js_body(self):
+    async def _fetch_js_body(self) -> str:
         body = await self._fetch_pub_get_resp("ai", is_json=False)
+        if not isinstance(body, str):
+            raise AnycubicAPIParsingError(f"Unexpected error parsing html body: {body}")
         js_files = REX_JS_FILE.search(body)
         if js_files is None:
             raise Exception("Could not find js file in source.")
         js_file = js_files.group(1)
-        return await self._fetch_pub_get_resp(js_file[1:], is_json=False)
+        js_body = await self._fetch_pub_get_resp(js_file[1:], is_json=False)
+        if not isinstance(js_body, str):
+            raise AnycubicAPIParsingError(f"Unexpected error parsing js body: {js_body}")
+        return js_body
 
-    def _generate_device_id(self):
+    def _generate_device_id(self) -> None:
         self._device_id = generate_fake_device_id()
 
-    def _get_known_var_cid(self):
+    def _get_known_var_cid(self) -> str:
         return AC_KNOWN_CID_WEB if not self._auth_as_app else AC_KNOWN_CID_APP
 
-    def _get_known_var_vid(self):
+    def _get_known_var_vid(self) -> str:
         return AC_KNOWN_VID_WEB if not self._auth_as_app else AC_KNOWN_VID_APP
 
-    def _set_known_app_vars(self):
+    def _set_known_app_vars(self) -> None:
         self._client_id = self._get_known_var_cid()
         self._app_id = AC_KNOWN_AID
         self._app_version = self._get_known_var_vid()
         self._app_secret = AC_KNOWN_SEC
 
-    async def _extract_current_app_vars(self):
+    async def _extract_current_app_vars(self) -> str | None:
         js_body = await self._fetch_js_body()
 
         basic_app_id_found = False
@@ -356,7 +404,7 @@ class AnycubicAPI:
 
         return self._client_id
 
-    async def _init_oauth_session(self):
+    async def _init_oauth_session(self) -> None:
         query = {
             'clientId': self._client_id,
             'responseType': 'code',
@@ -371,7 +419,7 @@ class AnycubicAPI:
             is_json=False
         )
 
-    async def _password_logon(self):
+    async def _password_logon(self) -> None:
         query = {
             'clientId': self._client_id,
             'responseType': 'code',
@@ -405,21 +453,27 @@ class AnycubicAPI:
         self._login_auth_code = resp['data']
         self._log_to_debug("Successfully logged in.")
 
-    async def _fetch_ac_code_state(self):
+    async def _fetch_ac_code_state(self) -> None:
         query = {
             'code': self._login_auth_code,
             'state': self._cookie_state,
         }
-        _, resp = await self._fetch_ext_resp(
+        resp_url = await self._fetch_ext_resp(
             method=HTTP_METHODS.GET,
             base_url=self.base_url,
             query=query,
             is_json=False,
-            with_response=True,
+            return_url=True,
         )
-        self._auth_referer = resp.url
+        if not isinstance(resp_url, str):
+            raise AnycubicAPIParsingError(f"Unexpected referrer response: {resp_url}")
 
-    def _build_auth_headers(self, with_token=False):
+        self._auth_referer = resp_url
+
+    def _build_auth_headers(
+        self,
+        with_token: bool = False,
+    ) -> dict[str, Any]:
         auth_nonce = generate_app_nonce() if self._auth_as_app else generate_web_nonce()
         timestamp = int(time.time() * 1e3)
         sig_input = f"{self._app_id}{timestamp}{self._app_version}{self._app_secret}{auth_nonce}{self._app_id}"
@@ -442,7 +496,7 @@ class AnycubicAPI:
             auth_headers['XX-LANGUAGE'] = 'US'
         return auth_headers
 
-    async def _get_oauth_token(self):
+    async def _get_oauth_token(self) -> None:
         query = {
             'code': self._login_auth_code,
         }
@@ -450,7 +504,7 @@ class AnycubicAPI:
         self._auth_access_token = resp['data']['access_token']
         self._log_to_debug("Successfully got auth token.")
 
-    async def _get_sig_token(self):
+    async def _get_sig_token(self) -> None:
         params = {
             'access_token': self._auth_access_token,
             'device_type': 'web' if not self._auth_as_app else 'android',
@@ -461,8 +515,8 @@ class AnycubicAPI:
 
     async def _login_retrieve_tokens(
         self,
-        use_known=True,
-    ):
+        use_known: bool = True,
+    ) -> None:
         if use_known:
             self._set_known_app_vars()
         else:
@@ -474,7 +528,7 @@ class AnycubicAPI:
         await self._get_oauth_token()
         await self._get_sig_token()
 
-    def build_token_dict(self):
+    def build_token_dict(self) -> dict[str, Any]:
         self._tokens_changed = False
 
         return {
@@ -487,7 +541,7 @@ class AnycubicAPI:
             'device_id': self._device_id,
         }
 
-    def load_tokens_from_dict(self, data):
+    def load_tokens_from_dict(self, data: dict[str, Any]) -> None:
         self._client_id = data['client_id']
         self._app_id = data['app_id']
         self._app_version = data['app_version']
@@ -499,7 +553,7 @@ class AnycubicAPI:
         else:
             self._generate_device_id()
 
-    def clear_all_tokens(self):
+    def clear_all_tokens(self) -> None:
         self._client_id = None
         self._app_id = None
         self._app_version = None
@@ -508,7 +562,7 @@ class AnycubicAPI:
         self._auth_sig_token = None
         self._device_id = None
 
-    async def _save_main_tokens(self):
+    async def _save_main_tokens(self) -> bool:
         self._tokens_changed = True
         if self._cache_key_path is None:
             return False
@@ -516,7 +570,9 @@ class AnycubicAPI:
         async with aio_file_open(self._cache_key_path, mode='w') as wo:
             await wo.write(json.dumps(self.build_token_dict()))
 
-    async def _load_cached_sig_token(self):
+        return True
+
+    async def _load_cached_sig_token(self) -> None:
         if self._cache_sig_token_path is not None and (await aio_path.exists(self._cache_sig_token_path)):
 
             try:
@@ -526,7 +582,7 @@ class AnycubicAPI:
             except Exception:
                 pass
 
-    async def _load_main_tokens(self):
+    async def _load_main_tokens(self) -> bool:
         tokens_loaded = False
         if self._cache_tokens_path is not None and (await aio_path.exists(self._cache_tokens_path)):
 
@@ -561,7 +617,7 @@ class AnycubicAPI:
         self._log_to_debug("No cached tokens found.")
         return False
 
-    def _api_tokens_loaded(self):
+    def _api_tokens_loaded(self) -> bool:
         all_tokens = [
             self._client_id,
             self._app_id,
@@ -573,8 +629,8 @@ class AnycubicAPI:
 
     async def _check_can_access_api(
         self,
-        use_known=True,
-    ):
+        use_known: bool = True,
+    ) -> bool:
         self._set_known_app_vars()
         await self._load_cached_sig_token()
         try:
@@ -586,7 +642,7 @@ class AnycubicAPI:
 
     # async def _check_can_access_api(
     #     self,
-    #     use_known=True,
+    #     use_known: bool = True,
     # ):
     #     if not self._api_tokens_loaded():
     #         cached_tokens = await self._load_main_tokens()
@@ -613,7 +669,7 @@ class AnycubicAPI:
     #         return False
     #     return True
 
-    async def check_api_tokens(self):
+    async def check_api_tokens(self) -> bool:
         if not await self._check_can_access_api(True):
             return False
 
@@ -634,11 +690,11 @@ class AnycubicAPI:
 
     async def _lock_storage_space(
         self,
-        file_size,
-        file_name,
-        is_temp_file=0,
-        raw_data=False,
-    ):
+        file_size: int,
+        file_name: str | None,
+        is_temp_file: int | bool = 0,
+        raw_data: bool = False,
+    ) -> dict[str, Any]:
         params = {
             'size': file_size,
             'name': file_name,
@@ -648,16 +704,16 @@ class AnycubicAPI:
         if raw_data:
             return resp
 
-        data = resp['data']
+        data: dict[str, Any] = resp['data']
 
         return data
 
     async def _unlock_storage_space(
         self,
-        file_id,
-        is_delete_cos=0,
-        raw_data=False,
-    ):
+        file_id: int,
+        is_delete_cos: int | bool = 0,
+        raw_data: bool = False,
+    ) -> dict[str, Any] | str:
         params = {
             'id': file_id,
             'is_delete_cos': int(is_delete_cos),
@@ -666,15 +722,28 @@ class AnycubicAPI:
         if raw_data:
             return resp
 
-        data = resp['data']
+        data: dict[str, Any] = resp['data']
 
         return data
 
+    @overload
     async def _claim_file_upload_from_aws(
         self,
-        file_id,
-        raw_data=False,
-    ):
+        file_id: int,
+    ) -> int: ...
+
+    @overload
+    async def _claim_file_upload_from_aws(
+        self,
+        file_id: int,
+        raw_data: Literal[True] = ...,
+    ) -> dict[str, Any]: ...
+
+    async def _claim_file_upload_from_aws(
+        self,
+        file_id: int,
+        raw_data: bool = False,
+    ) -> dict[str, Any] | int:
         params = {
             'user_lock_space_id': file_id,
         }
@@ -684,14 +753,14 @@ class AnycubicAPI:
 
         data = resp['data']
 
-        return data['id']
+        return int(data['id'])
 
     async def _set_printer_name(
         self,
-        printer_id,
-        new_name,
-        raw_data=False,
-    ):
+        printer_id: int,
+        new_name: str,
+        raw_data: bool = False,
+    ) -> dict[str, Any]:
         params = {
             'id': str(printer_id),
             'name': str(new_name),
@@ -703,16 +772,16 @@ class AnycubicAPI:
         if raw_data:
             return resp
 
-        data = resp['data']
+        data: dict[str, Any] = resp['data']
 
         return data
 
     async def _update_printer_firmware(
         self,
-        printer_id,
-        current_fw_version,
-        raw_data=False,
-    ):
+        printer_id: int,
+        current_fw_version: str,
+        raw_data: bool = False,
+    ) -> dict[str, Any]:
         query = {
             'id': str(printer_id),
             'target_version': str(current_fw_version),
@@ -724,16 +793,16 @@ class AnycubicAPI:
         if raw_data:
             return resp
 
-        data = resp['data']
+        data: dict[str, Any] = resp['data']
 
         return data
 
     async def _update_muli_color_box_firmware(
         self,
-        printer_id,
-        box_id,
-        raw_data=False,
-    ):
+        printer_id: int,
+        box_id: int,
+        raw_data: bool = False,
+    ) -> dict[str, Any]:
         params = {
             'id': int(printer_id),
             'box_id': int(box_id),
@@ -745,19 +814,19 @@ class AnycubicAPI:
         if raw_data:
             return resp
 
-        data = resp['data']
+        data: dict[str, Any] = resp['data']
 
         return data
 
     async def get_user_info(
         self,
-        raw_data=False,
-    ):
+        raw_data: bool = False,
+    ) -> dict[str, Any]:
         resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.user_info)
         if raw_data:
             return resp
 
-        data = resp['data']
+        data: dict[str, Any] | None = resp['data']
         if data is None:
             raise APIAuthTokensExpired('Invalid credentials.')
 
@@ -766,10 +835,21 @@ class AnycubicAPI:
 
         return data
 
+    @overload
     async def get_user_cloud_store(
         self,
-        raw_data=False,
-    ):
+    ) -> AnycubicCloudStore | None: ...
+
+    @overload
+    async def get_user_cloud_store(
+        self,
+        raw_data: Literal[True] = ...,
+    ) -> dict[str, Any]: ...
+
+    async def get_user_cloud_store(
+        self,
+        raw_data: bool = False,
+    ) -> AnycubicCloudStore | None | dict[str, Any]:
         resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.user_store)
         if raw_data:
             return resp
@@ -778,14 +858,33 @@ class AnycubicAPI:
 
         return AnycubicCloudStore.from_json(data)
 
+    @overload
     async def get_user_cloud_files(
         self,
-        printable=None,
-        machine_type=None,
-        page=1,
-        limit=10,
-        raw_data=False,
-    ):
+        printable: int | None = None,
+        machine_type: int | None = None,
+        page: int = 1,
+        limit: int = 10,
+    ) -> list[AnycubicCloudFile] | None: ...
+
+    @overload
+    async def get_user_cloud_files(
+        self,
+        printable: int | None = None,
+        machine_type: int | None = None,
+        page: int = 1,
+        limit: int = 10,
+        raw_data: Literal[True] = ...,
+    ) -> dict[str, Any]: ...
+
+    async def get_user_cloud_files(
+        self,
+        printable: int | None = None,
+        machine_type: int | None = None,
+        page: int = 1,
+        limit: int = 10,
+        raw_data: bool = False,
+    ) -> list[AnycubicCloudFile] | None | dict[str, Any]:
         params = {
             'page': page,
             'limit': limit,
@@ -804,37 +903,59 @@ class AnycubicAPI:
         if not data:
             return list()
 
-        file_list = list([AnycubicCloudFile.from_json(x) for x in data])
+        file_list = list()
+
+        for x in data:
+            file = AnycubicCloudFile.from_json(x)
+            if file:
+                file_list.append(file)
+            else:
+                raise AnycubicDataParsingError(
+                    f"Error parsing user_cloud_files: {data}"
+                )
 
         return file_list
 
     async def get_user_cloud_files_data_object(
         self,
-        printable=None,
-        machine_type=None,
-        page=1,
-        limit=10,
-    ):
-        file_list = await self.get_user_cloud_files(
+        printable: int | None = None,
+        machine_type: int | None = None,
+        page: int = 1,
+        limit: int = 10,
+    ) -> list[dict[str, Any]] | None:
+        user_files = await self.get_user_cloud_files(
             printable=printable,
             machine_type=machine_type,
             page=page,
             limit=limit,
         )
 
-        if not file_list or len(file_list) < 1:
+        if not user_files or len(user_files) < 1:
             return None
 
         file_list = list([
-            file.data_object for file in file_list
+            file.data_object for file in user_files
         ])
         return file_list
 
+    @overload
     async def fetch_project_gcode_info_fdm(
         self,
-        project_id,
-        raw_data=False,
-    ):
+        project_id: int,
+    ) -> AnycubicProject | None: ...
+
+    @overload
+    async def fetch_project_gcode_info_fdm(
+        self,
+        project_id: int,
+        raw_data: Literal[True] = ...,
+    ) -> dict[str, Any]: ...
+
+    async def fetch_project_gcode_info_fdm(
+        self,
+        project_id: int,
+        raw_data: bool = False,
+    ) -> AnycubicProject | None | dict[str, Any]:
         query = {
             'id': str(project_id),
         }
@@ -849,11 +970,24 @@ class AnycubicAPI:
 
         return AnycubicProject.from_gcode_json(self, data)
 
+    @overload
     async def delete_file_from_cloud(
         self,
-        file_id,
-        raw_data=False,
-    ):
+        file_id: int,
+    ) -> bool: ...
+
+    @overload
+    async def delete_file_from_cloud(
+        self,
+        file_id: int,
+        raw_data: Literal[True] = ...,
+    ) -> dict[str, Any]: ...
+
+    async def delete_file_from_cloud(
+        self,
+        file_id: int,
+        raw_data: bool = False,
+    ) -> bool | dict[str, Any]:
         params = {
             'idArr': [file_id],
         }
@@ -870,11 +1004,11 @@ class AnycubicAPI:
     # WIP Unused API Calls
     # ------------------------------------------
 
-    async def _get_print_history(self):
+    async def _get_print_history(self) -> None:
         resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.print_history)
         self._log_to_debug(f"print_history output:\n{json.dumps(resp)}")
 
-    async def _get_project_monitor(self, project_id):
+    async def _get_project_monitor(self, project_id: int) -> None:
         query = {
             'id': str(project_id)
         }
@@ -886,11 +1020,31 @@ class AnycubicAPI:
     # ORDER Functions
     # ------------------------------------------
 
+    @overload
     async def _send_anycubic_order(
         self,
-        order_request,
-        raw_data=False,
-    ):
+        order_request: AnycubicBaseOrderRequest,
+    ) -> str | None: ...
+
+    @overload
+    async def _send_anycubic_order(
+        self,
+        order_request: AnycubicBaseOrderRequest,
+        raw_data: Literal[True] = ...
+    ) -> dict[str, Any]: ...
+
+    @overload
+    async def _send_anycubic_order(
+        self,
+        order_request: AnycubicBaseOrderRequest,
+        raw_data: bool = False,
+    ) -> str | None | dict[str, Any]: ...
+
+    async def _send_anycubic_order(
+        self,
+        order_request: AnycubicBaseOrderRequest,
+        raw_data: bool = False,
+    ) -> str | None | dict[str, Any]:
         params = order_request.order_request_data
 
         resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.send_order, params=params)
@@ -907,7 +1061,7 @@ class AnycubicAPI:
                     f"Error sending order to Anycubic Cloud, is the printer online? Message: {error_message}"
                 )
 
-        data = resp['data'].get('msgid')
+        data: str | None = resp['data'].get('msgid')
 
         if data is None:
             self._log_to_error(f"Empty reply when sending order to Anycubic Cloud, message: {error_message}")
@@ -920,10 +1074,10 @@ class AnycubicAPI:
         slot_index: int,
         slot_color: AnycubicMaterialColor,
         slot_material_type: str,
-        box_id=0,
-    ):
+        box_id: int = 0,
+    ) -> str | None:
         if not printer:
-            return
+            return None
 
         slot_params = {
             'color': slot_color.data,
@@ -958,13 +1112,13 @@ class AnycubicAPI:
         printer: AnycubicPrinter,
         slot_index: int,
         feed_type: int,
-        box_id=0,
-    ):
+        box_id: int = 0,
+    ) -> str | None:
         if not printer:
-            return
+            return None
 
         if feed_type == AnycubicFeedType.Feed and slot_index < 0:
-            return
+            return None
 
         if feed_type == AnycubicFeedType.Retract:
             slot_index = -1
@@ -996,11 +1150,11 @@ class AnycubicAPI:
 
     async def _send_order_multi_color_box_dry(
         self,
-        printer,
-        order_params,
-    ):
+        printer: AnycubicPrinter,
+        order_params: dict[str, Any] | list[dict[str, Any]],
+    ) -> str | None:
         if not printer:
-            return
+            return None
 
         if not isinstance(order_params, list):
             order_params = [order_params]
@@ -1033,12 +1187,12 @@ class AnycubicAPI:
 
     async def _send_order_multi_color_auto_feed(
         self,
-        printer,
+        printer: AnycubicPrinter,
         enabled: bool,
-        box_id=0,
-    ):
+        box_id: int = 0,
+    ) -> str | None:
         if not printer:
-            return
+            return None
 
         box_list = list([
             {
@@ -1062,12 +1216,12 @@ class AnycubicAPI:
 
     async def _send_order_start_print(
         self,
-        printer,
+        printer: AnycubicPrinter,
         print_request: AnycubicBaseStartPrintRequest,
-        ams_box_mapping: AnycubicMaterialMapping | None = None,
-    ):
+        ams_box_mapping: list[AnycubicMaterialMapping] | None = None,
+    ) -> str | None:
         if not printer:
-            return
+            return None
 
         return await self._send_anycubic_order(
             order_request=AnycubicProjectCtrlOrderRequest(
@@ -1082,14 +1236,14 @@ class AnycubicAPI:
 
     async def _send_order_pause_print(
         self,
-        printer,
-        project,
-    ):
+        printer: AnycubicPrinter,
+        project: AnycubicProject,
+    ) -> str | None:
         if not printer:
-            return
+            return None
 
         if not project:
-            return
+            return None
 
         return await self._send_anycubic_order(
             order_request=AnycubicProjectCtrlOrderRequest(
@@ -1104,14 +1258,14 @@ class AnycubicAPI:
 
     async def _send_order_resume_print(
         self,
-        printer,
-        project,
-    ):
+        printer: AnycubicPrinter,
+        project: AnycubicProject,
+    ) -> str | None:
         if not printer:
-            return
+            return None
 
         if not project:
-            return
+            return None
 
         return await self._send_anycubic_order(
             order_request=AnycubicProjectCtrlOrderRequest(
@@ -1126,14 +1280,14 @@ class AnycubicAPI:
 
     async def _send_order_stop_print(
         self,
-        printer,
-        project,
-    ):
+        printer: AnycubicPrinter,
+        project: AnycubicProject,
+    ) -> str | None:
         if not printer:
-            return
+            return None
 
         if not project:
-            return
+            return None
 
         return await self._send_anycubic_order(
             order_request=AnycubicProjectCtrlOrderRequest(
@@ -1148,18 +1302,20 @@ class AnycubicAPI:
 
     async def _send_order_change_print_settings(
         self,
-        printer,
+        printer: AnycubicPrinter,
         print_settings: AnycubicPrintingSettings,
-        project=None,
-    ):
+        project: AnycubicProject | None = None,
+    ) -> str | None:
         if not printer:
-            return
+            return None
 
         if not project and not printer.latest_project:
-            return
+            return None
 
         if not project:
             project = printer.latest_project
+
+        assert project
 
         project.validate_new_print_settings(print_settings)
 
@@ -1178,11 +1334,11 @@ class AnycubicAPI:
 
     async def _send_order_list_local_files(
         self,
-        printer,
-    ):
+        printer: AnycubicPrinter,
+    ) -> str | None:
         """ Response sent via MQTT """
         if not printer:
-            return
+            return None
 
         return await self._send_anycubic_order(
             order_request=AnycubicProjectOrderRequest(
@@ -1194,11 +1350,11 @@ class AnycubicAPI:
 
     async def _send_order_list_udisk_files(
         self,
-        printer,
-    ):
+        printer: AnycubicPrinter,
+    ) -> str | None:
         """ Response sent via MQTT """
         if not printer:
-            return
+            return None
 
         return await self._send_anycubic_order(
             order_request=AnycubicProjectOrderRequest(
@@ -1210,12 +1366,12 @@ class AnycubicAPI:
 
     async def _send_order_delete_local_file(
         self,
-        printer,
+        printer: AnycubicPrinter,
         file_name: str,
-    ):
+    ) -> str | None:
         """ Response sent via MQTT """
         if not printer:
-            return
+            return None
 
         order_data = {
             'filename': file_name,
@@ -1234,12 +1390,12 @@ class AnycubicAPI:
 
     async def _send_order_delete_udisk_file(
         self,
-        printer,
+        printer: AnycubicPrinter,
         file_name: str,
-    ):
+    ) -> str | None:
         """ Response sent via MQTT """
         if not printer:
-            return
+            return None
 
         order_data = {
             'filename': file_name,
@@ -1258,13 +1414,13 @@ class AnycubicAPI:
 
     async def _send_order_query_peripherals(
         self,
-        printer,
-    ):
+        printer: AnycubicPrinter,
+    ) -> str | None:
         """
         Response is sent over MQTT.
         """
         if not printer:
-            return
+            return None
 
         return await self._send_anycubic_order(
             order_request=AnycubicBaseProjectOrderRequest(
@@ -1276,17 +1432,17 @@ class AnycubicAPI:
 
     async def _send_order_get_light_status(
         self,
-        printer,
-        project,
-    ):
+        printer: AnycubicPrinter,
+        project: AnycubicProject,
+    ) -> str | None:
         """
         Response is sent over MQTT.
         """
         if not printer:
-            return
+            return None
 
         if not project:
-            return
+            return None
 
         return await self._send_anycubic_order(
             order_request=AnycubicBaseProjectOrderRequest(
@@ -1303,11 +1459,11 @@ class AnycubicAPI:
 
     async def _send_anycubic_camera_open_order(
         self,
-        printer,
-        raw_data=False,
-    ):
+        printer: AnycubicPrinter,
+        raw_data: bool = False,
+    ) -> AnycubicCameraToken | None | dict[str, Any]:
         if not printer:
-            return
+            return None
 
         order_request = AnycubicBaseOrderRequest(
             order_id=int(AnycubicOrderID.CAMERA_OPEN),
@@ -1333,13 +1489,13 @@ class AnycubicAPI:
 
     async def _send_order_multi_color_box_get_info(
         self,
-        printer,
-    ):
+        printer: AnycubicPrinter,
+    ) -> str | None:
         """
         Response is sent over MQTT.
         """
         if not printer:
-            return
+            return None
 
         return await self._send_anycubic_order(
             order_request=AnycubicBaseProjectOrderRequest(
@@ -1351,16 +1507,16 @@ class AnycubicAPI:
 
     async def _send_order_set_light_status(
         self,
-        printer,
-        project,
+        printer: AnycubicPrinter,
+        project: AnycubicProject,
         light_on: bool,
         light_type: int = 1,
-    ):
+    ) -> str | None:
         if not printer:
-            return
+            return None
 
         if not project:
-            return
+            return None
 
         order_data = {
             'type': light_type,
@@ -1379,12 +1535,12 @@ class AnycubicAPI:
 
     async def _send_order_print_local_file(
         self,
-        printer,
+        printer: AnycubicPrinter,
         file_name: str,
         file_path: str = "",
-    ):
+    ) -> str | None:
         if not printer:
-            return
+            return None
 
         print_request = AnycubicStartPrintRequestLocal(
             filename=file_name,
@@ -1403,9 +1559,9 @@ class AnycubicAPI:
 
     async def set_printer_name(
         self,
-        printer,
-        new_name,
-    ):
+        printer: AnycubicPrinter,
+        new_name: str,
+    ) -> str | None:
         if not printer:
             return None
 
@@ -1432,8 +1588,8 @@ class AnycubicAPI:
 
     async def update_printer_firmware(
         self,
-        printer,
-    ):
+        printer: AnycubicPrinter,
+    ) -> str | None:
         if not printer:
             return None
 
@@ -1457,9 +1613,9 @@ class AnycubicAPI:
 
     async def update_printer_multi_color_box_firmware(
         self,
-        printer,
-        box_id=-1,
-    ):
+        printer: AnycubicPrinter,
+        box_id: int = -1,
+    ) -> str | None:
         if not printer:
             return None
 
@@ -1496,8 +1652,8 @@ class AnycubicAPI:
 
     async def update_printer_all_multi_color_box_firmware(
         self,
-        printer,
-    ):
+        printer: AnycubicPrinter,
+    ) -> list[str | None] | None:
         if (
             not printer.multi_color_box_fw_version or
             len(printer.multi_color_box_fw_version) < 0
@@ -1516,28 +1672,30 @@ class AnycubicAPI:
         return updated_versions
 
     async def get_latest_cloud_file(
-        self
-    ):
+        self,
+    ) -> AnycubicCloudFile | None:
         cloud_files = await self.get_user_cloud_files(
             printable=True,
             machine_type=0,
         )
 
-        return cloud_files[0]
+        return cloud_files[0] if cloud_files and len(cloud_files) > 0 else None
 
     async def pause_print(
         self,
-        printer,
-        project=None,
-    ):
+        printer: AnycubicPrinter,
+        project: AnycubicProject | None = None,
+    ) -> str | None:
         if not printer:
-            return
+            return None
 
         if not project and not printer.latest_project:
-            return
+            return None
 
         if not project:
             project = printer.latest_project
+
+        assert project
 
         resp = await self._send_order_pause_print(
             printer,
@@ -1548,17 +1706,19 @@ class AnycubicAPI:
 
     async def resume_print(
         self,
-        printer,
-        project=None,
-    ):
+        printer: AnycubicPrinter,
+        project: AnycubicProject | None = None,
+    ) -> str | None:
         if not printer:
-            return
+            return None
 
         if not project and not printer.latest_project:
-            return
+            return None
 
         if not project:
             project = printer.latest_project
+
+        assert project
 
         resp = await self._send_order_resume_print(
             printer,
@@ -1569,17 +1729,19 @@ class AnycubicAPI:
 
     async def cancel_print(
         self,
-        printer,
-        project=None,
-    ):
+        printer: AnycubicPrinter,
+        project: AnycubicProject | None = None,
+    ) -> str | None:
         if not printer:
-            return
+            return None
 
         if not project and not printer.latest_project:
-            return
+            return None
 
         if not project:
             project = printer.latest_project
+
+        assert project
 
         resp = await self._send_order_stop_print(
             printer,
@@ -1590,19 +1752,19 @@ class AnycubicAPI:
 
     async def multi_color_box_feed_filament(
         self,
-        printer,
+        printer: AnycubicPrinter,
         slot_index: int,
-        box_id=-1,
-        finish=False,
-    ):
+        box_id: int = -1,
+        finish: bool = False,
+    ) -> str | None:
         """
         Must send a finish command when done.
         """
         if not printer:
-            return
+            return None
 
         if not printer.primary_multi_color_box:
-            return
+            return None
 
         if box_id < 0:
             box_id = 0
@@ -1622,14 +1784,14 @@ class AnycubicAPI:
 
     async def multi_color_box_retract_filament(
         self,
-        printer,
-        box_id=-1,
-    ):
+        printer: AnycubicPrinter,
+        box_id: int = -1,
+    ) -> str | None:
         if not printer:
-            return
+            return None
 
         if not printer.primary_multi_color_box:
-            return
+            return None
 
         if box_id < 0:
             box_id = 0
@@ -1645,15 +1807,15 @@ class AnycubicAPI:
 
     async def multi_color_box_set_auto_feed(
         self,
-        printer,
+        printer: AnycubicPrinter,
         enabled: bool,
-        box_id=-1,
-    ):
+        box_id: int = -1,
+    ) -> str | None:
         if not printer:
-            return
+            return None
 
         if not printer.primary_multi_color_box:
-            return
+            return None
 
         if box_id < 0:
             box_id = 0
@@ -1668,17 +1830,19 @@ class AnycubicAPI:
 
     async def multi_color_box_toggle_auto_feed(
         self,
-        printer,
-        box_id=-1,
-    ):
+        printer: AnycubicPrinter,
+        box_id: int = -1,
+    ) -> str | None:
         if not printer:
-            return
+            return None
 
         if not printer.primary_multi_color_box:
-            return
+            return None
 
         if box_id < 0:
             box_id = 0
+
+        assert printer.multi_color_box
 
         current_auto_feed = bool(printer.multi_color_box[box_id].auto_feed)
 
@@ -1694,22 +1858,24 @@ class AnycubicAPI:
 
     async def multi_color_box_switch_on_auto_feed(
         self,
-        printer,
-        box_id=-1,
-    ):
+        printer: AnycubicPrinter,
+        box_id: int = -1,
+    ) -> str | None:
         if not printer:
-            return
+            return None
 
         if not printer.primary_multi_color_box:
-            return
+            return None
 
         if box_id < 0:
             box_id = 0
 
+        assert printer.multi_color_box
+
         current_auto_feed = bool(printer.multi_color_box[box_id].auto_feed)
 
         if current_auto_feed:
-            return
+            return None
 
         printer.multi_color_box[box_id].set_auto_feed(True)
 
@@ -1723,22 +1889,24 @@ class AnycubicAPI:
 
     async def multi_color_box_switch_off_auto_feed(
         self,
-        printer,
-        box_id=-1,
-    ):
+        printer: AnycubicPrinter,
+        box_id: int = -1,
+    ) -> str | None:
         if not printer:
-            return
+            return None
 
         if not printer.primary_multi_color_box:
-            return
+            return None
 
         if box_id < 0:
             box_id = 0
 
+        assert printer.multi_color_box
+
         current_auto_feed = bool(printer.multi_color_box[box_id].auto_feed)
 
         if not current_auto_feed:
-            return
+            return None
 
         printer.multi_color_box[box_id].set_auto_feed(False)
 
@@ -1759,8 +1927,8 @@ class AnycubicAPI:
         slot_color_red: int | None = None,
         slot_color_green: int | None = None,
         slot_color_blue: int | None = None,
-        box_id=0,
-    ):
+        box_id: int = 0,
+    ) -> str | None:
         if (
             slot_color is None and
             any([x is None for x in [
@@ -1775,6 +1943,9 @@ class AnycubicAPI:
             )
 
         if slot_color is None:
+            assert slot_color_red
+            assert slot_color_green
+            assert slot_color_blue
             slot_color = AnycubicMaterialColor(
                 slot_color_red,
                 slot_color_green,
@@ -1794,8 +1965,8 @@ class AnycubicAPI:
         printer: AnycubicPrinter,
         slot_index: int,
         slot_color: AnycubicMaterialColor,
-        box_id=0,
-    ):
+        box_id: int = 0,
+    ) -> str | None:
 
         return await self._send_order_multi_color_box_set_slot(
             printer=printer,
@@ -1810,8 +1981,8 @@ class AnycubicAPI:
         printer: AnycubicPrinter,
         slot_index: int,
         slot_color: AnycubicMaterialColor,
-        box_id=0,
-    ):
+        box_id: int = 0,
+    ) -> str | None:
 
         return await self._send_order_multi_color_box_set_slot(
             printer=printer,
@@ -1826,8 +1997,8 @@ class AnycubicAPI:
         printer: AnycubicPrinter,
         slot_index: int,
         slot_color: AnycubicMaterialColor,
-        box_id=0,
-    ):
+        box_id: int = 0,
+    ) -> str | None:
 
         return await self._send_order_multi_color_box_set_slot(
             printer=printer,
@@ -1842,8 +2013,8 @@ class AnycubicAPI:
         printer: AnycubicPrinter,
         slot_index: int,
         slot_color: AnycubicMaterialColor,
-        box_id=0,
-    ):
+        box_id: int = 0,
+    ) -> str | None:
 
         return await self._send_order_multi_color_box_set_slot(
             printer=printer,
@@ -1858,8 +2029,8 @@ class AnycubicAPI:
         printer: AnycubicPrinter,
         slot_index: int,
         slot_color: AnycubicMaterialColor,
-        box_id=0,
-    ):
+        box_id: int = 0,
+    ) -> str | None:
 
         return await self._send_order_multi_color_box_set_slot(
             printer=printer,
@@ -1874,8 +2045,8 @@ class AnycubicAPI:
         printer: AnycubicPrinter,
         slot_index: int,
         slot_color: AnycubicMaterialColor,
-        box_id=0,
-    ):
+        box_id: int = 0,
+    ) -> str | None:
 
         return await self._send_order_multi_color_box_set_slot(
             printer=printer,
@@ -1890,8 +2061,8 @@ class AnycubicAPI:
         printer: AnycubicPrinter,
         slot_index: int,
         slot_color: AnycubicMaterialColor,
-        box_id=0,
-    ):
+        box_id: int = 0,
+    ) -> str | None:
 
         return await self._send_order_multi_color_box_set_slot(
             printer=printer,
@@ -1906,8 +2077,8 @@ class AnycubicAPI:
         printer: AnycubicPrinter,
         slot_index: int,
         slot_color: AnycubicMaterialColor,
-        box_id=0,
-    ):
+        box_id: int = 0,
+    ) -> str | None:
 
         return await self._send_order_multi_color_box_set_slot(
             printer=printer,
@@ -1922,8 +2093,8 @@ class AnycubicAPI:
         printer: AnycubicPrinter,
         slot_index: int,
         slot_color: AnycubicMaterialColor,
-        box_id=0,
-    ):
+        box_id: int = 0,
+    ) -> str | None:
 
         return await self._send_order_multi_color_box_set_slot(
             printer=printer,
@@ -1935,16 +2106,16 @@ class AnycubicAPI:
 
     async def multi_color_box_drying_start(
         self,
-        printer,
-        duration,
-        target_temp,
-        box_id=-1,
-    ):
+        printer: AnycubicPrinter,
+        duration: int,
+        target_temp: int,
+        box_id: int = -1,
+    ) -> str | None:
         if not printer:
-            return
+            return None
 
         if not printer.primary_multi_color_box:
-            return
+            return None
 
         order_params = {
             'duration': duration,
@@ -1963,17 +2134,17 @@ class AnycubicAPI:
 
     async def multi_color_box_drying_stop(
         self,
-        printer,
-        box_id=-1,
-    ):
+        printer: AnycubicPrinter,
+        box_id: int = -1,
+    ) -> str | None:
         if not printer:
-            return
+            return None
 
         if not printer.primary_multi_color_box:
-            return
+            return None
 
         if box_id >= 0:
-            order_params = {
+            order_params: list[dict[str, Any]] | dict[str, Any] = {
                 'status': 0,
             }
         else:
@@ -1990,21 +2161,38 @@ class AnycubicAPI:
 
         return resp
 
-    async def anycubic_full_available_printer_list(self):
+    async def anycubic_full_available_printer_list(
+        self,
+    ) -> list[AnycubicPrinter]:
         resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.printer_all)
         data = list([AnycubicPrinter.from_basic_json(self, x) for x in resp['data']['printer_type']])
         return data
 
-    async def list_printers_status(self):
+    async def list_printers_status(
+        self,
+    ) -> list[AnycubicPrinter]:
         resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.printers_status)
         data = list([AnycubicPrinter.from_status_json(self, x) for x in resp['data']])
         return data
 
+    @overload
     async def list_my_printers(
         self,
-        ignore_init_errors=False,
-        raw_data=False,
-    ):
+        ignore_init_errors: bool = False,
+    ) -> list[AnycubicPrinter]: ...
+
+    @overload
+    async def list_my_printers(
+        self,
+        ignore_init_errors: bool = False,
+        raw_data: Literal[True] = ...
+    ) -> dict[str, Any]: ...
+
+    async def list_my_printers(
+        self,
+        ignore_init_errors: bool = False,
+        raw_data: bool = False,
+    ) -> list[AnycubicPrinter] | dict[str, Any]:
         resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.printer_get_printers)
         if raw_data:
             return resp
@@ -2026,7 +2214,10 @@ class AnycubicAPI:
 
         return data
 
-    async def printer_status_for_id(self, printer_id):
+    async def printer_status_for_id(
+        self,
+        printer_id: int,
+    ) -> None:
         query = {
             'id': str(printer_id)
         }
@@ -2034,13 +2225,30 @@ class AnycubicAPI:
         data = resp['data']
         self._log_to_debug(f"printer_status output:\n{json.dumps(data)}")
 
+    @overload
     async def printer_info_for_id(
         self,
-        printer_id,
-        update_object=None,
-        ignore_init_errors=False,
-        raw_data=False,
-    ):
+        printer_id: int,
+        update_object: AnycubicPrinter | None = None,
+        ignore_init_errors: bool = False,
+    ) -> AnycubicPrinter | None: ...
+
+    @overload
+    async def printer_info_for_id(
+        self,
+        printer_id: int,
+        update_object: AnycubicPrinter | None = None,
+        ignore_init_errors: bool = False,
+        raw_data: Literal[True] = ...
+    ) -> dict[str, Any]: ...
+
+    async def printer_info_for_id(
+        self,
+        printer_id: int,
+        update_object: AnycubicPrinter | None = None,
+        ignore_init_errors: bool = False,
+        raw_data: bool = False,
+    ) -> AnycubicPrinter | None | dict[str, Any]:
         query = {
             'id': str(printer_id)
         }
@@ -2071,12 +2279,27 @@ class AnycubicAPI:
 
         return data
 
+    @overload
     async def list_all_projects(
         self,
-        page=1,
+        page: int = 1,
         print_status: AnycubicPrintStatus | None = None,
-        raw_data=False
-    ):
+    ) -> list[AnycubicProject]: ...
+
+    @overload
+    async def list_all_projects(
+        self,
+        page: int = 1,
+        print_status: AnycubicPrintStatus | None = None,
+        raw_data: Literal[True] = ...
+    ) -> dict[str, Any]: ...
+
+    async def list_all_projects(
+        self,
+        page: int = 1,
+        print_status: AnycubicPrintStatus | None = None,
+        raw_data: bool = False
+    ) -> list[AnycubicProject] | dict[str, Any]:
         query = {
             'page': str(int(page)),
             'limit': MAX_PROJECT_LIST_RESULTS,
@@ -2091,24 +2314,34 @@ class AnycubicAPI:
         if resp is None or resp.get('data') is None:
             return list()
 
-        data = list([AnycubicProject.from_list_json(self, x) for x in resp['data']])
-        return data
+        proj_list = list()
+        for x in resp['data']:
+            proj = AnycubicProject.from_list_json(self, x)
+            if proj:
+                proj_list.append(proj)
+            else:
+                raise AnycubicDataParsingError(
+                    f"Error parsing projects: {resp['data']}"
+                )
+
+        return proj_list
 
     async def project_info_for_id(
         self,
-        project_id,
-    ):
+        project_id: int,
+    ) -> dict[str, Any]:
         query = {
             'id': str(project_id)
         }
         resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.project_info, query=query)
-        return resp['data']
+        data: dict[str, Any] = resp['data']
+        return data
 
     async def get_latest_project(
         self,
-        printer_id=None,
-        project_to_update=None,
-    ):
+        printer_id: int | None = None,
+        project_to_update: AnycubicProject | None = None,
+    ) -> AnycubicProject | None:
         projects = await self.list_all_projects()
 
         latest_project = None
@@ -2147,10 +2380,10 @@ class AnycubicAPI:
 
     async def read_gcode_file(
         self,
-        full_file_path=None,
-        file_name=None,
-        file_bytes=None,
-    ):
+        full_file_path: str | None = None,
+        file_name: str | None = None,
+        file_bytes: bytes | None = None,
+    ) -> AnycubicGcodeFile:
         if (not full_file_path or len(full_file_path) <= 0) and file_bytes is None:
             raise AnycubicAPIError(
                 "Cannot parse an empty file path."
@@ -2172,11 +2405,11 @@ class AnycubicAPI:
 
     async def upload_file_to_cloud(
         self,
-        full_file_path=None,
-        file_name=None,
-        file_bytes=None,
-        temp_file=False,
-    ):
+        full_file_path: str | None = None,
+        file_name: str | None = None,
+        file_bytes: bytes | None = None,
+        temp_file: bool = False,
+    ) -> int:
         file_upload = AnycubicCloudUpload(
             api_parent=self,
             full_file_path=full_file_path,
@@ -2189,11 +2422,11 @@ class AnycubicAPI:
 
     async def print_with_cloud_file_id(
         self,
-        printer,
-        cloud_file_id,
-        ams_box_mapping=None,
-        temp_file=False,
-    ):
+        printer: AnycubicPrinter,
+        cloud_file_id: int,
+        ams_box_mapping: list[AnycubicMaterialMapping] | None = None,
+        temp_file: bool = False,
+    ) -> str | None:
         if printer is None:
             raise AnycubicErrorMessage.no_printer_to_print
 
@@ -2227,11 +2460,11 @@ class AnycubicAPI:
 
     async def print_with_cloud_gcode_id(
         self,
-        printer,
-        gcode_id,
-        slot_index_list=None,
-        file_name=None,
-    ):
+        printer: AnycubicPrinter,
+        gcode_id: int,
+        slot_index_list: list[int] | None = None,
+        file_name: str | None = None,
+    ) -> AnycubicPrintResponse:
         if printer is None:
             raise AnycubicErrorMessage.no_printer_to_print
 
@@ -2242,6 +2475,9 @@ class AnycubicAPI:
             raise AnycubicErrorMessage.no_slot_list_for_multi_color_box
 
         proj = await self.fetch_project_gcode_info_fdm(gcode_id)
+
+        if not proj:
+            raise AnycubicAPIError('Failed to fetch project gcode data.')
 
         if slot_index_list is not None:
 
@@ -2282,12 +2518,12 @@ class AnycubicAPI:
 
     async def print_and_upload_save_in_cloud(
         self,
-        printer,
-        full_file_path=None,
-        file_name=None,
-        file_bytes=None,
-        slot_index_list=None,
-    ):
+        printer: AnycubicPrinter,
+        full_file_path: str | None = None,
+        file_name: str | None = None,
+        file_bytes: bytes | None = None,
+        slot_index_list: list[int] | None = None,
+    ) -> AnycubicPrintResponse:
         if printer is None:
             raise AnycubicErrorMessage.no_printer_to_print
 
@@ -2304,8 +2540,11 @@ class AnycubicAPI:
         )
         latest_cloud_file = await self.get_latest_cloud_file()
 
-        if latest_cloud_file.id != cloud_file_id:
+        if not latest_cloud_file or latest_cloud_file.id != cloud_file_id:
             raise AnycubicAPIError('File upload mis-match, cannot print.')
+
+        if latest_cloud_file.gcode_id is None:
+            raise AnycubicAPIError('Cloud file data error, missing gcodeid.')
 
         return await self.print_with_cloud_gcode_id(
             printer=printer,
@@ -2316,12 +2555,12 @@ class AnycubicAPI:
 
     async def print_and_upload_no_cloud_save(
         self,
-        printer,
-        full_file_path=None,
-        file_name=None,
-        file_bytes=None,
-        slot_index_list=None,
-    ):
+        printer: AnycubicPrinter,
+        full_file_path: str | None = None,
+        file_name: str | None = None,
+        file_bytes: bytes | None = None,
+        slot_index_list: list[int] | None = None,
+    ) -> AnycubicPrintResponse:
         if printer is None:
             raise AnycubicErrorMessage.no_printer_to_print
 
@@ -2382,23 +2621,25 @@ class AnycubicAPI:
 
     async def query_printer_options(
         self,
-        printer,
-        project=None,
-    ):
+        printer: AnycubicPrinter,
+        project: AnycubicProject | None = None,
+    ) -> None:
         """ Responses are sent via MQTT """
 
         if not printer:
-            return
+            return None
 
         await self._send_order_query_peripherals(
             printer=printer,
         )
 
         if not project and not printer.latest_project:
-            return
+            return None
 
         if not project:
             project = printer.latest_project
+
+        assert project
 
         await self._send_order_get_light_status(
             printer=printer,

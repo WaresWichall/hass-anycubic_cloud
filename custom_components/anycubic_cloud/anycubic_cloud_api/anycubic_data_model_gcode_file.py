@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from typing import Any
+
 from collections import UserDict
 
 from aiofiles import (
@@ -11,10 +15,14 @@ from .anycubic_helpers import (
 )
 
 
-class AnycubicGcodeFile(UserDict):
-    def __init__(self, *args, **kwargs):
+class AnycubicGcodeFile(UserDict[str, Any]):
+    def __init__(
+        self,
+        *args: Any,
+        **kwargs: Any,
+    ) -> None:
         super().__init__(*args, **kwargs)
-        self._material_list = None
+        self._material_list: list[dict[str, Any]] | None = None
 
         try:
             self.material_list
@@ -24,9 +32,9 @@ class AnycubicGcodeFile(UserDict):
     @classmethod
     async def async_read_from_file(
         cls,
-        full_file_path=None,
-        file_bytes=None,
-    ):
+        full_file_path: str | None = None,
+        file_bytes: bytes | None = None,
+    ) -> AnycubicGcodeFile:
         data_found = False
         file_lines = list()
         slicer_data = dict()
@@ -58,7 +66,7 @@ class AnycubicGcodeFile(UserDict):
         return cls(slicer_data)
 
     @property
-    def material_list(self):
+    def material_list(self) -> list[dict[str, Any]]:
         if self._material_list is not None:
             return self._material_list
 
