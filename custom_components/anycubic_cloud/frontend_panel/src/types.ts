@@ -94,10 +94,6 @@ export type HassEntityInfos = {
   [entity_id: string]: HassEntityInfo;
 };
 
-export interface HassPanel {
-  config: object;
-}
-
 export interface HassRoute {
   prefix: string;
   path: string;
@@ -311,4 +307,8 @@ export enum AnycubicPrintOptionConfirmationType {
 
 export interface TranslationDict {
   [id: string]: string;
+}
+
+export interface HassPanel {
+  config: AnycubicCardConfig;
 }

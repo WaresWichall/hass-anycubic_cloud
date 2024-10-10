@@ -310,11 +310,19 @@ export class AnycubicViewMain extends LitElement {
           .language=${this.language}
           .selectedPrinterID=${this.selectedPrinterID}
           .selectedPrinterDevice=${this.selectedPrinterDevice}
-          .vertical=${false}
-          .round=${false}
-          .use_24hr=${true}
-          .showSettingsButton=${true}
-          .monitoredStats=${this.monitoredStats}
+          .vertical=${this.panel.config.vertical ?? false}
+          .round=${this.panel.config.round ?? false}
+          .use_24hr=${this.panel.config.use_24hr ?? true}
+          .temperatureUnit=${this.panel.config.temperatureUnit}
+          .lightEntityId=${this.panel.config.lightEntityId}
+          .powerEntityId=${this.panel.config.powerEntityId}
+          .cameraEntityId=${this.panel.config.cameraEntityId}
+          .monitoredStats=${this.panel.config.monitoredStats ??
+          this.monitoredStats}
+          .scaleFactor=${this.panel.config.scaleFactor}
+          .slotColors=${this.panel.config.slotColors}
+          .showSettingsButton=${this.panel.config.showSettingsButton ?? true}
+          .alwaysShow=${this.panel.config.alwaysShow}
         ></anycubic-printercard-card>
         <div class="ac-extra-printer-info">
           ${this._renderInfoRow(

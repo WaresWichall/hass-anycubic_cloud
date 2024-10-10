@@ -254,3 +254,75 @@ def remove_quotes_from_string(input_string: str) -> str:
         return str(matches[0])
 
     raise TypeError("Unexpected quotes in string.")
+
+
+def validate_value_is_type[_T: Any](
+    value: Any,
+    value_type: type[_T],
+    allow_lists: bool = False,
+) -> _T | list[_T] | None:
+    if allow_lists and isinstance(value, list):
+        for v in value:
+            if not isinstance(v, value_type):
+                return None
+        return value
+    elif isinstance(value, value_type):
+        return value
+
+    return None
+
+
+def get_value_from_dict_if_type[_T: Any](
+    input_dict: dict[str, Any],
+    key: str,
+    value_type: type[_T],
+    allow_lists: bool = False,
+) -> _T | list[_T] | None:
+    if (
+        key in input_dict
+        and (
+            val := validate_value_is_type(
+                input_dict[key],
+                value_type,
+                allow_lists,
+            )
+        )
+    ):
+        return val
+
+    return None
+
+
+def update_dict_and_validate(
+    output_dict: dict[str, Any],
+    input_dict: dict[str, Any],
+    key: str,
+    value_type: Any,
+    allow_lists: bool = False,
+) -> None:
+    if val := get_value_from_dict_if_type(input_dict, key, value_type, allow_lists):
+        output_dict[key] = val
+
+
+def extract_panel_card_config(
+    input_conf: dict[str, Any],
+) -> dict[str, Any]:
+    card_conf: dict[str, Any] = {}
+
+    if len(input_conf) == 0:
+        return card_conf
+
+    update_dict_and_validate(card_conf, input_conf, 'vertical', bool)
+    update_dict_and_validate(card_conf, input_conf, 'round', bool)
+    update_dict_and_validate(card_conf, input_conf, 'use_24hr', bool)
+    update_dict_and_validate(card_conf, input_conf, 'temperatureUnit', str)
+    update_dict_and_validate(card_conf, input_conf, 'lightEntityId', str)
+    update_dict_and_validate(card_conf, input_conf, 'powerEntityId', str)
+    update_dict_and_validate(card_conf, input_conf, 'cameraEntityId', str)
+    update_dict_and_validate(card_conf, input_conf, 'monitoredStats', str, allow_lists=True)
+    update_dict_and_validate(card_conf, input_conf, 'scaleFactor', float)
+    update_dict_and_validate(card_conf, input_conf, 'slotColors', str, allow_lists=True)
+    update_dict_and_validate(card_conf, input_conf, 'showSettingsButton', bool)
+    update_dict_and_validate(card_conf, input_conf, 'alwaysShow', bool)
+
+    return card_conf

@@ -1,4 +1,6 @@
 """Anycubic Cloud frontend panel."""
+from __future__ import annotations
+from typing import Any
 
 import os
 
@@ -18,12 +20,27 @@ from .const import (
     PANEL_TITLE,
     PANEL_ICON,
 )
+from .helpers import (
+    extract_panel_card_config,
+)
 
 
 PANEL_URL = "/anycubic-cloud-panel-static"
 
 
-async def async_register_panel(hass: HomeAssistant) -> None:
+def process_card_config(
+    conf_object: Any,
+) -> dict[str, Any]:
+    if isinstance(conf_object, dict):
+        return extract_panel_card_config(conf_object)
+    else:
+        return {}
+
+
+async def async_register_panel(
+    hass: HomeAssistant,
+    conf_object: Any,
+) -> None:
     """Register the Anycubic Cloud frontend panel."""
     if DOMAIN not in hass.data.get("frontend_panels", {}):
         root_dir = os.path.join(hass.config.path(CUSTOM_COMPONENTS), INTEGRATION_FOLDER)
@@ -38,6 +55,10 @@ async def async_register_panel(hass: HomeAssistant) -> None:
             if "already registered" not in str(e):
                 raise e
 
+        conf = process_card_config(conf_object)
+
+        LOGGER.debug(f"Processed panel config: {conf}")
+
         await panel_custom.async_register_panel(
             hass,
             webcomponent_name=PANEL_NAME,
@@ -46,7 +67,7 @@ async def async_register_panel(hass: HomeAssistant) -> None:
             sidebar_title=PANEL_TITLE,
             sidebar_icon=PANEL_ICON,
             require_admin=False,
-            config={},
+            config=conf,
         )
 
 

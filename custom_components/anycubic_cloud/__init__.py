@@ -4,7 +4,12 @@ from __future__ import annotations
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
-from .const import COORDINATOR, DOMAIN, PLATFORMS
+from .const import (
+    CONF_CARD_CONFIG,
+    COORDINATOR,
+    DOMAIN,
+    PLATFORMS,
+)
 from .coordinator import AnycubicCloudDataUpdateCoordinator
 from .panel import (
     async_register_panel,
@@ -37,7 +42,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             )
 
     # register panel
-    await async_register_panel(hass)
+    await async_register_panel(
+        hass,
+        entry.options.get(CONF_CARD_CONFIG)
+    )
 
     return True
 

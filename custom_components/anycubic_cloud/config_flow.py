@@ -15,12 +15,17 @@ from homeassistant.config_entries import (
 )
 from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
+from homeassistant.helpers.selector import (
+    BooleanSelector,
+    ObjectSelector,
+)
 from homeassistant.helpers.storage import Store
 import homeassistant.helpers.config_validation as cv
 
 from .anycubic_cloud_api.anycubic_api_mqtt import AnycubicMQTTAPI as AnycubicAPI
 
 from .const import (
+    CONF_CARD_CONFIG,
     CONF_DEBUG,
     CONF_DRYING_PRESET_DURATION_,
     CONF_DRYING_PRESET_TEMPERATURE_,
@@ -36,6 +41,7 @@ from .const import (
 
 from .helpers import (
     AnycubicMQTTConnectMode,
+    extract_panel_card_config,
     remove_quotes_from_string,
 )
 
@@ -331,9 +337,14 @@ class AnycubicCloudOptionsFlowHandler(OptionsFlow):
                 )] = cv.positive_int
 
         schema[vol.Optional(
+            CONF_CARD_CONFIG,
+            default=self.entry.options.get(CONF_CARD_CONFIG, None)
+        )] = ObjectSelector()
+
+        schema[vol.Optional(
             CONF_DEBUG,
             default=self.entry.options.get(CONF_DEBUG, False)
-        )] = cv.boolean
+        )] = BooleanSelector()
 
         return vol.Schema(schema)
 
@@ -369,6 +380,11 @@ class AnycubicCloudOptionsFlowHandler(OptionsFlow):
         errors: dict[str, Any] = {}
 
         if user_input:
+            if CONF_CARD_CONFIG in user_input:
+                if isinstance(user_input[CONF_CARD_CONFIG], dict):
+                    user_input[CONF_CARD_CONFIG] = extract_panel_card_config(
+                        user_input[CONF_CARD_CONFIG]
+                    )
             return self.async_create_entry(data=user_input)
 
         await self._async_check_printer_options()
