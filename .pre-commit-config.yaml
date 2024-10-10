@@ -19,7 +19,7 @@ repos:
     hooks:
     - id: mypy
       exclude: ^custom_components/anycubic_cloud/test_api/
-      exclude: ^custom_components/anycubic_cloud/scripts/
+      files: custom_components/
       args:
         - "--strict"
         - "--config-file=mypy.ini"
@@ -29,9 +29,9 @@ repos:
         - "aiofiles==24.1.0"
         - "types-aiofiles==24.1.0.20240626"
         - "types-paho-mqtt==1.6.0.20240321"
-# -   repo: https://github.com/pycqa/isort
-#     rev: 5.10.1
-#     hooks:
-#       - id: isort
-#         files: "\\.(py)$"
-#         args: [--settings-path=pyproject.toml]
+-   repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        files: "\\.(py)$"
+        args: [--settings-path=pyproject.toml]
