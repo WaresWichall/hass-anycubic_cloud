@@ -26,6 +26,8 @@ from .anycubic_cloud_api.anycubic_exceptions import AnycubicAPIError, AnycubicAP
 from .anycubic_cloud_api.anycubic_api_mqtt import AnycubicMQTTAPI as AnycubicAPI
 
 from .const import (
+    API_SETUP_RETRIES,
+    API_SETUP_RETRY_INTERVAL_SECONDS,
     CONF_DEBUG,
     CONF_MQTT_CONNECT_MODE,
     CONF_PRINTER_ID_LIST,
@@ -705,6 +707,9 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         except ConfigEntryAuthFailed:
             raise
 
+        except AnycubicAPIParsingError:
+            raise
+
         except Exception as error:
             raise ConfigEntryAuthFailed(f"Authentication failed with unknown Error. Check credentials {error}")
 
@@ -756,8 +761,20 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             )
 
     async def _async_setup(self) -> None:
-        await self._setup_anycubic_api_connection()
-        await self._setup_anycubic_printer_objects()
+        setup_retries = 0
+        while setup_retries < API_SETUP_RETRIES + 1:
+            try:
+                await self._setup_anycubic_api_connection()
+                await self._setup_anycubic_printer_objects()
+                return
+            except AnycubicAPIParsingError as error:
+                if setup_retries >= API_SETUP_RETRIES:
+                    raise ConfigEntryError(error) from error
+                setup_retries += 1
+                LOGGER.warning(
+                    f"Error during Anycubic Cloud setup, retrying in {API_SETUP_RETRY_INTERVAL_SECONDS} seconds."
+                )
+                await asyncio.sleep(API_SETUP_RETRY_INTERVAL_SECONDS)
 
     async def get_anycubic_updates(self) -> bool:
         """Fetch data from AnycubicCloud."""

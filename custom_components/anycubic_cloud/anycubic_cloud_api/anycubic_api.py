@@ -446,9 +446,8 @@ class AnycubicAPI:
         )
 
         if resp is None or not isinstance(resp['data'], str):
-            err_msg = "Unexpected response for login, rate limited?"
-            self._log_to_warn(err_msg)
-            raise AnycubicAPIParsingError(err_msg)
+            self._log_to_warn(str(AnycubicErrorMessage.api_error_rate_limited))
+            raise AnycubicErrorMessage.api_error_rate_limited
 
         self._login_auth_code = resp['data']
         self._log_to_debug("Successfully logged in.")
@@ -2274,6 +2273,12 @@ class AnycubicAPI:
                         f"Failed to load data for printer list from response: {resp}"
                     )
         except Exception as e:
+            if resp and (
+                resp_msg := resp.get('msg')
+            ):
+                if resp_msg == 'request error':
+                    raise AnycubicErrorMessage.api_error_rate_limited
+
             self._log_to_error(f"Failed to load printer from anycubic response: {resp}")
             raise e
 

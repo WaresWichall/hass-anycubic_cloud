@@ -70,3 +70,4 @@ class AnycubicErrorMessage:
     no_map_for_multi_color_box = AnycubicAPIError('Must supply box mapping when using multi color box.')
     no_multi_color_box_for_slot_list = AnycubicAPIError('No multi color box found for slot list.')
     no_slot_list_for_multi_color_box = AnycubicAPIError('Must supply a slot list when using multi color box.')
+    api_error_rate_limited = AnycubicAPIParsingError('Unexpected response for login, rate limited?')
