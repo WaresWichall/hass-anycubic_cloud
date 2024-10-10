@@ -6,7 +6,6 @@ import asyncio
 import bcrypt
 import hashlib
 import json
-# import logging
 import ssl
 import traceback
 from os import path
@@ -42,11 +41,6 @@ from .anycubic_helpers import (
 
 if TYPE_CHECKING:
     from .anycubic_data_model_printer import AnycubicPrinter
-
-# DEBUG
-# logging.basicConfig(level=logging.DEBUG)
-# logger = logging.getLogger(__name__)
-# DEBUG
 
 
 class AnycubicMQTTAPI(AnycubicAPI):
@@ -360,10 +354,6 @@ class AnycubicMQTTAPI(AnycubicAPI):
         self._mqtt_client.on_disconnect = self._mqtt_on_disconnect
         self._mqtt_client.on_message = self._mqtt_on_message
         self._mqtt_client.on_subscribe = self._mqtt_on_subscribe
-
-        # DEBUG
-        # self._mqtt_client.enable_logger(logger)
-        # DEBUG
 
         self._set_mqtt_username_password()
 
