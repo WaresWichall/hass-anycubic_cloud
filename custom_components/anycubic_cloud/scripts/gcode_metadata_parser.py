@@ -1,7 +1,10 @@
+from __future__ import annotations
+
 import argparse
 import asyncio
 import json
 from os import path
+from typing import Any
 
 from aiofiles import open as aio_file_open
 
@@ -9,7 +12,7 @@ from ..anycubic_cloud_api.anycubic_data_model_gcode_file import AnycubicGcodeFil
 from . import script_base
 
 
-def get_sys_args():
+def get_sys_args() -> dict[str, Any]:
     parser = argparse.ArgumentParser(description='Anycubic GCode metadata parser')
     parser.add_argument(
         '--filepath',
@@ -22,7 +25,7 @@ def get_sys_args():
 
 class anycubic_api_with_script(script_base.anycubic_api_with_script):
 
-    async def script_runner(self):
+    async def script_runner(self) -> None:
         if not self._args['filepath'] or len(self._args['filepath']) < 1:
             raise Exception('Invalid file path.')
 
@@ -50,7 +53,7 @@ class anycubic_api_with_script(script_base.anycubic_api_with_script):
         )
 
 
-def main():
+def main() -> None:
     sys_args = get_sys_args()
     asyncio.run(script_base.main_mqtt_async(anycubic_api_with_script, sys_args))
 

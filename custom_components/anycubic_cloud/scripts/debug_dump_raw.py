@@ -1,14 +1,17 @@
+from __future__ import annotations
+
 import argparse
 import asyncio
 import json
 from os import path
+from typing import Any
 
 from aiofiles import open as aio_file_open
 
 from . import script_base
 
 
-def get_sys_args():
+def get_sys_args() -> dict[str, Any]:
     parser = argparse.ArgumentParser(description='Anycubic Debug Dump')
     parser.add_argument(
         '--dump-file',
@@ -21,7 +24,7 @@ def get_sys_args():
 
 class anycubic_api_with_script(script_base.anycubic_api_with_script):
 
-    async def script_runner(self):
+    async def script_runner(self) -> None:
         await self.check_api_tokens()
 
         if not self._args['dump_file'] or len(self._args['dump_file']) < 1:
@@ -58,7 +61,7 @@ class anycubic_api_with_script(script_base.anycubic_api_with_script):
         self._log_to_debug(f"Dumped to {output_file}")
 
 
-def main():
+def main() -> None:
     sys_args = get_sys_args()
     asyncio.run(script_base.main_mqtt_async(anycubic_api_with_script, sys_args))
 
