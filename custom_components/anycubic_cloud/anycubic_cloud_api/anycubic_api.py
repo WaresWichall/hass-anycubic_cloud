@@ -75,27 +75,29 @@ from .anycubic_exceptions import (
 )
 
 from .anycubic_const import (
-    BASE_DOMAIN,
+    AC_KNOWN_AID,
+    AC_KNOWN_CID_APP,
+    AC_KNOWN_CID_WEB,
+    AC_KNOWN_SEC,
+    AC_KNOWN_VID_APP,
+    AC_KNOWN_VID_WEB,
+    AnycubicServerMessage,
     APP_REDIRECT_URI,
     AUTH_DOMAIN,
+    BASE_DOMAIN,
+    DEFAULT_USER_AGENT,
+    MAX_API_FETCH_TIME_WARN,
     MAX_PROJECT_IMAGE_SEARCH_COUNT,
     MAX_PROJECT_LIST_RESULTS,
     PUBLIC_API_ENDPOINT,
-    REX_JS_FILE,
-    REX_CLIENT_ID,
     REX_APP_ID_BASIC,
     REX_APP_ID_OBF,
-    REX_APP_VERSION,
     REX_APP_SECRET_BASIC,
     REX_APP_SECRET_OBF,
-    DEFAULT_USER_AGENT,
-    AC_KNOWN_CID_APP,
-    AC_KNOWN_CID_WEB,
-    AC_KNOWN_AID,
-    AC_KNOWN_VID_APP,
-    AC_KNOWN_VID_WEB,
-    AC_KNOWN_SEC,
-    AnycubicServerMessage,
+    REX_APP_VERSION,
+    REX_CLIENT_ID,
+    REX_JS_FILE,
+    WARN_INTERVAL_API_DURATION,
 )
 
 from .anycubic_enums import (
@@ -140,6 +142,8 @@ class AnycubicAPI:
         self._tokens_changed: bool = False
         self._auth_as_app: bool = auth_as_app
         self._redirect_uri: str = self.base_url if not self._auth_as_app else APP_REDIRECT_URI
+        self._log_api_call_info: bool = False
+        self._last_warn_api_duration: int | None = None
         # ANYCUBIC APP VARS
         self._client_id: str | None = None
         self._app_id: str | None = None
@@ -165,6 +169,12 @@ class AnycubicAPI:
         auth_sig_token: str,
     ) -> None:
         self._auth_sig_token = auth_sig_token
+
+    def set_log_api_call_info(
+        self,
+        val: bool,
+    ) -> None:
+        self._log_api_call_info = bool(val)
 
     @property
     def tokens_changed(self) -> bool:
@@ -255,6 +265,7 @@ class AnycubicAPI:
         return_url: bool = False,
     ) -> dict[Any, Any] | str:
         url = base_url
+        time_start: float = time.time()
         headers = {**self._web_headers(with_origin=with_origin), **extra_headers}
         if method == HTTP_METHODS.POST:
             if params is not None and (isinstance(params, dict) or isinstance(params, list)):
@@ -281,6 +292,24 @@ class AnycubicAPI:
                 response_url = resp.url
         except Exception:
             raise AnycubicAPIParsingError('Unexpected error parsing Anycubic response, server maintenance?')
+
+        time_end: float = time.time()
+        time_diff: float = time_end - time_start
+        over_limit: bool = int(time_diff) > MAX_API_FETCH_TIME_WARN
+        if (
+            over_limit
+            and (
+                not self._last_warn_api_duration
+                or time_end > self._last_warn_api_duration + WARN_INTERVAL_API_DURATION
+            )
+        ):
+            self._log_to_warn(
+                f"Responses from server are taking over {MAX_API_FETCH_TIME_WARN}s (Took {int(time_diff)}s)"
+            )
+        if self._log_api_call_info:
+            self._log_to_debug(
+                f"Finished fetching {url} in {time_diff:.2f}s."
+            )
 
         if return_url:
             return str(response_url)

@@ -681,7 +681,10 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 mqtt_callback_subscribed=self._mqtt_callback_subscribed,
             )
 
-            self._anycubic_api.set_mqtt_log_all_messages(bool(self.entry.options.get(CONF_DEBUG)))
+            debug_mode: bool = bool(self.entry.options.get(CONF_DEBUG))
+
+            self._anycubic_api.set_mqtt_log_all_messages(debug_mode)
+            self._anycubic_api.set_log_api_call_info(debug_mode)
 
             # if config is not None:
             #     LOGGER.debug("Loading tokens from store.")
