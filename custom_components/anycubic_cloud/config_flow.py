@@ -2,11 +2,11 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-from aiohttp import CookieJar
+import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
-
+from aiohttp import CookieJar
 from homeassistant.config_entries import (
     ConfigEntry,
     ConfigFlow,
@@ -15,15 +15,10 @@ from homeassistant.config_entries import (
 )
 from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
-from homeassistant.helpers.selector import (
-    BooleanSelector,
-    ObjectSelector,
-)
+from homeassistant.helpers.selector import BooleanSelector, ObjectSelector
 from homeassistant.helpers.storage import Store
-import homeassistant.helpers.config_validation as cv
 
 from .anycubic_cloud_api.anycubic_api_mqtt import AnycubicMQTTAPI as AnycubicAPI
-
 from .const import (
     CONF_CARD_CONFIG,
     CONF_DEBUG,
@@ -38,7 +33,6 @@ from .const import (
     STORAGE_KEY,
     STORAGE_VERSION,
 )
-
 from .helpers import (
     AnycubicMQTTConnectMode,
     extract_panel_card_config,

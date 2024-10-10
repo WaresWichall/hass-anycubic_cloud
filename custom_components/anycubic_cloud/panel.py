@@ -1,11 +1,10 @@
 """Anycubic Cloud frontend panel."""
 from __future__ import annotations
-from typing import Any
 
 import os
+from typing import Any
 
-from homeassistant.components import frontend
-from homeassistant.components import panel_custom
+from homeassistant.components import frontend, panel_custom
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.core import HomeAssistant
 
@@ -14,16 +13,13 @@ from .const import (
     DOMAIN,
     INTEGRATION_FOLDER,
     LOGGER,
-    PANEL_FOLDER,
     PANEL_FILENAME,
+    PANEL_FOLDER,
+    PANEL_ICON,
     PANEL_NAME,
     PANEL_TITLE,
-    PANEL_ICON,
 )
-from .helpers import (
-    extract_panel_card_config,
-)
-
+from .helpers import extract_panel_card_config
 
 PANEL_URL = "/anycubic-cloud-panel-static"
 

@@ -11,10 +11,7 @@ from .const import (
     PLATFORMS,
 )
 from .coordinator import AnycubicCloudDataUpdateCoordinator
-from .panel import (
-    async_register_panel,
-    async_unregister_panel,
-)
+from .panel import async_register_panel, async_unregister_panel
 from .services import SERVICES
 
 

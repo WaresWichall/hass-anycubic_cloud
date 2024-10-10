@@ -1,10 +1,8 @@
 """Anycubic Cloud integration constants."""
-from enum import IntEnum
 import logging
+from enum import IntEnum
 
-from homeassistant.const import (
-    Platform,
-)
+from homeassistant.const import Platform
 
 DEFAULT_NAME = "Anycubic Cloud Printer"
 

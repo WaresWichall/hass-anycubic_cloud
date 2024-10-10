@@ -1,6 +1,7 @@
 from __future__ import annotations
-from typing import Any
+
 from collections import UserDict
+from typing import Any
 
 
 class AnycubicConsumableData(UserDict[Any, Any]):

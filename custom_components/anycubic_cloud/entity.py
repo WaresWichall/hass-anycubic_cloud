@@ -1,5 +1,6 @@
 """Base class for anycubic_cloud entity."""
 from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 

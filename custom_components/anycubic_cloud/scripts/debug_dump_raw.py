@@ -2,9 +2,8 @@ import argparse
 import asyncio
 import json
 from os import path
-from aiofiles import (
-    open as aio_file_open,
-)
+
+from aiofiles import open as aio_file_open
 
 from . import script_base
 

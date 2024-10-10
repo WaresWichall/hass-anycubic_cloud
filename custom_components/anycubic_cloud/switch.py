@@ -1,12 +1,10 @@
 """Switches for Anycubic Cloud."""
 from __future__ import annotations
-from dataclasses import dataclass
-from typing import Any, TYPE_CHECKING
 
-from homeassistant.components.switch import (
-    SwitchEntity,
-    SwitchEntityDescription,
-)
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any
+
+from homeassistant.components.switch import SwitchEntity, SwitchEntityDescription
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EntityCategory, Platform
 from homeassistant.core import HomeAssistant

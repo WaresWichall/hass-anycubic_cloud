@@ -1,17 +1,14 @@
 from __future__ import annotations
 
+from collections import UserDict
 from typing import Any
 
-from collections import UserDict
-
-from aiofiles import (
-    open as aio_file_open,
-)
+from aiofiles import open as aio_file_open
 
 from .anycubic_helpers import (
-    gcode_key_value_pair_to_dict,
     GCODE_STRING_FIRST_ATTR_LINE,
     REX_GCODE_DATA_KEY_VALUE,
+    gcode_key_value_pair_to_dict,
 )
 
 

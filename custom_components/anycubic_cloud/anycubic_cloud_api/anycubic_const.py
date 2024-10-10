@@ -1,6 +1,5 @@
 import re
 
-
 BASE_DOMAIN = "cloud-universe.anycubic.com"
 APP_REDIRECT_URI = "anycubic-i18n://cloud.anycubic.com:8088"
 AUTH_DOMAIN = "uc.makeronline.com"

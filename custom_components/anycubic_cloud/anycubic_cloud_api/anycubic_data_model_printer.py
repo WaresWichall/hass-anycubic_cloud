@@ -1,56 +1,37 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING, Any
 
-from .anycubic_data_model_consumable import (
-    AnycubicConsumableData,
-)
-
-from .anycubic_data_model_files import (
-    AnycubicFile,
-)
-
+from .anycubic_data_model_consumable import AnycubicConsumableData
+from .anycubic_data_model_files import AnycubicFile
 from .anycubic_data_model_printer_properties import (
-    AnycubicMaterialColor,
-    AnycubicMachineToolInfo,
-    AnycubicMachineExternalShelves,
-    AnycubicMultiColorBox,
-    AnycubicMachineData,
-    AnycubicMachineParameter,
-    AnycubicMachineFirmwareInfo,
     AnycubicMachineColorInfo,
+    AnycubicMachineData,
+    AnycubicMachineExternalShelves,
+    AnycubicMachineFirmwareInfo,
+    AnycubicMachineParameter,
+    AnycubicMachineToolInfo,
+    AnycubicMaterialColor,
+    AnycubicMultiColorBox,
 )
-
-from .anycubic_data_model_printing_settings import (
-    AnycubicPrintingSettings,
-)
-
-from .anycubic_data_model_project import (
-    AnycubicProject,
-)
-
+from .anycubic_data_model_printing_settings import AnycubicPrintingSettings
+from .anycubic_data_model_project import AnycubicProject
 from .anycubic_enums import (
     AnycubicFunctionID,
     AnycubicPrinterMaterialType,
     AnycubicPrintStatus,
 )
-
 from .anycubic_exceptions import (
     AnycubicAPIError,
     AnycubicDataParsingError,
     AnycubicMQTTUnhandledData,
 )
-
-from .anycubic_helpers import (
-    get_part_from_mqtt_topic,
-)
+from .anycubic_helpers import get_part_from_mqtt_topic
 
 if TYPE_CHECKING:
     from .anycubic_api import AnycubicAPI
-    from .anycubic_data_model_printer_properties import (
-        AnycubicDryingStatus,
-        AnycubicMaterialMapping,
-    )
     from .anycubic_data_model_print_response import AnycubicPrintResponse
+    from .anycubic_data_model_printer_properties import AnycubicDryingStatus, AnycubicMaterialMapping
 
 
 class AnycubicPrinter:

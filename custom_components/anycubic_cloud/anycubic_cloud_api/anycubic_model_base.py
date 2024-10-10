@@ -1,14 +1,12 @@
 from __future__ import annotations
 
+from os.path import basename as path_basename
 from typing import TYPE_CHECKING, Any
 
 from aiofiles import open as aio_file_open
 from aiofiles.os import path as aio_path
-from os.path import basename as path_basename
 
-from .anycubic_exceptions import (
-    AnycubicAPIError,
-)
+from .anycubic_exceptions import AnycubicAPIError
 
 if TYPE_CHECKING:
     from .anycubic_api import AnycubicAPI

@@ -1,10 +1,10 @@
 """Service calls related dependencies for Anycubic Cloud component."""
 from __future__ import annotations
-from typing import TYPE_CHECKING, Any
 
 import asyncio
-import voluptuous as vol
+from typing import TYPE_CHECKING, Any
 
+import voluptuous as vol
 from homeassistant.components.file_upload import process_uploaded_file
 from homeassistant.const import (
     ATTR_DEVICE_ID,
@@ -15,23 +15,11 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
-from homeassistant.helpers import (
-    config_validation as cv,
-    selector,
-)
+from homeassistant.helpers import config_validation as cv, selector
 
-from .anycubic_cloud_api.anycubic_data_model_printer_properties import (
-    AnycubicMaterialColor,
-)
-
-from .anycubic_cloud_api.anycubic_data_model_printer import (
-    AnycubicPrinter,
-)
-
-from .anycubic_cloud_api.anycubic_data_model_print_response import (
-    AnycubicPrintResponse,
-)
-
+from .anycubic_cloud_api.anycubic_data_model_print_response import AnycubicPrintResponse
+from .anycubic_cloud_api.anycubic_data_model_printer import AnycubicPrinter
+from .anycubic_cloud_api.anycubic_data_model_printer_properties import AnycubicMaterialColor
 from .const import (
     AC_EVENT_PRINT_CLOUD_START,
     ATTR_ANYCUBIC_EVENT,

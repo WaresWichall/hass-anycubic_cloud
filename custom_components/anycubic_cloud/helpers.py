@@ -1,15 +1,13 @@
 from __future__ import annotations
-from typing import Any, TYPE_CHECKING
-from types import MappingProxyType
-from enum import IntEnum
+
 import re
+from enum import IntEnum
+from types import MappingProxyType
+from typing import TYPE_CHECKING, Any
 
 from homeassistant.helpers.device_registry import CONNECTION_NETWORK_MAC, DeviceInfo
 
-from .anycubic_cloud_api.anycubic_enums import (
-    AnycubicPrinterMaterialType
-)
-
+from .anycubic_cloud_api.anycubic_enums import AnycubicPrinterMaterialType
 from .const import (
     CONF_DRYING_PRESET_DURATION_,
     CONF_DRYING_PRESET_TEMPERATURE_,

@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-from typing import Any
-
 import json
 import re
 import struct
 import uuid
-
+from typing import Any
 
 ALPHANUMERIC_CHARS: str = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 GCODE_STRING_FIRST_ATTR_LINE: str = '; filament used'

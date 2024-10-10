@@ -1,27 +1,16 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
-
 import json
 import time
+from typing import TYPE_CHECKING, Any
 
-from .anycubic_const import (
-    PROJECT_IMAGE_URL_BASE,
-    REX_GCODE_EXT,
-)
-
-from .anycubic_data_model_print_speed_mode import (
-    AnycubicPrintSpeedMode,
-)
-
+from .anycubic_const import PROJECT_IMAGE_URL_BASE, REX_GCODE_EXT
+from .anycubic_data_model_print_speed_mode import AnycubicPrintSpeedMode
+from .anycubic_enums import AnycubicPrintStatus
 from .anycubic_exceptions import (
     AnycubicDataParsingError,
     AnycubicInvalidValue,
     AnycubicPropertiesNotLoaded,
-)
-
-from .anycubic_enums import (
-    AnycubicPrintStatus,
 )
 
 if TYPE_CHECKING:

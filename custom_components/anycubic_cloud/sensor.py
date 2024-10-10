@@ -1,12 +1,13 @@
 """Sensors for Anycubic Cloud Printers."""
 from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
-    SensorEntityDescription,
     SensorEntity,
+    SensorEntityDescription,
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
@@ -24,8 +25,8 @@ from homeassistant.util import dt as dt_util
 from .const import (
     COORDINATOR,
     DOMAIN,
-    PrinterEntityType,
     UNIT_LAYERS,
+    PrinterEntityType,
 )
 from .entity import AnycubicCloudEntity, AnycubicCloudEntityDescription
 from .helpers import printer_attributes_for_key, printer_state_for_key
