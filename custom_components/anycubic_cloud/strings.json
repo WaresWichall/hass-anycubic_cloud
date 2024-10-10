@@ -36,6 +36,7 @@
       "init": {
         "data": {
           "mqtt_connect_mode": "MQTT Connection Mode",
+          "card_config": "Panel Card Config (YAML format)",
           "debug": "Debug Mode",
           "drying_preset_duration_1": "Dry Preset 1 Duration",
           "drying_preset_temperature_1": "Dry Preset 1 Temperature",

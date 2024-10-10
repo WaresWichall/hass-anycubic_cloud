@@ -1,21 +1,18 @@
+from __future__ import annotations
+
 import asyncio
-import bcrypt
 import hashlib
 import json
-# import logging
 import ssl
 import traceback
+from collections.abc import Callable
 from os import path
+from typing import TYPE_CHECKING, Any
+
+import bcrypt
 from paho.mqtt import client as mqtt_client
 
-from .anycubic_api import (
-    AnycubicAPI,
-)
-
-from .anycubic_exceptions import (
-    AnycubicAPIError,
-)
-
+from .anycubic_api import AnycubicAPI
 from .anycubic_const_mqtt import (
     MQTT_HOST,
     MQTT_PORT,
@@ -25,44 +22,43 @@ from .anycubic_const_mqtt import (
     MQTT_ROOT_TOPIC_SERVER,
     MQTT_TIMEOUT,
 )
+from .anycubic_data_model_consumable import AnycubicConsumableData
+from .anycubic_exceptions import AnycubicAPIError, AnycubicMQTTUnhandledData
+from .anycubic_helpers import get_part_from_mqtt_topic, redact_part_from_mqtt_topic
 
-from .anycubic_helpers import (
-    get_part_from_mqtt_topic,
-)
-
-# DEBUG
-# logging.basicConfig(level=logging.DEBUG)
-# logger = logging.getLogger(__name__)
-# DEBUG
+if TYPE_CHECKING:
+    from .anycubic_data_model_printer import AnycubicPrinter
 
 
 class AnycubicMQTTAPI(AnycubicAPI):
     def __init__(
         self,
-        *args,
-        mqtt_callback_printer_update=None,
-        mqtt_callback_printer_busy=None,
-        **kwargs,
-    ):
-        self._auth_sig_token = None
-        self._api_user_id = None
-        self._mqtt_client = None
-        self._mqtt_subscribed_printers = dict()
-        self._mqtt_log_all_messages = False
+        *args: Any,
+        mqtt_callback_printer_update: Callable[[], None] | None = None,
+        mqtt_callback_printer_busy: Callable[[], None] | None = None,
+        mqtt_callback_subscribed: Callable[[], None] | None = None,
+        **kwargs: Any,
+    ) -> None:
+        self._auth_sig_token: str | None = None
+        self._api_user_id: int | None = None
+        self._mqtt_client: mqtt_client.Client | None = None
+        self._mqtt_subscribed_printers: dict[str, AnycubicPrinter] = dict()
+        self._mqtt_log_all_messages: bool = False
         self._mqtt_connected: asyncio.Event | None = None
         self._mqtt_disconnected: asyncio.Event | None = None
-        self._mqtt_callback_printer_update = mqtt_callback_printer_update
-        self._mqtt_callback_printer_busy = mqtt_callback_printer_busy
+        self._mqtt_callback_printer_update: Callable[[], None] | None = mqtt_callback_printer_update
+        self._mqtt_callback_printer_busy: Callable[[], None] | None = mqtt_callback_printer_busy
+        self._mqtt_callback_subscribed: Callable[[], None] | None = mqtt_callback_subscribed
         super().__init__(*args, **kwargs)
 
     @property
-    def mqtt_is_started(self):
+    def mqtt_is_started(self) -> bool:
         return self._mqtt_client is not None
 
-    def set_mqtt_log_all_messages(self, val):
+    def set_mqtt_log_all_messages(self, val: bool) -> None:
         self._mqtt_log_all_messages = bool(val)
 
-    async def mqtt_wait_for_connect(self):
+    async def mqtt_wait_for_connect(self) -> bool:
         if self._mqtt_connected is None:
             return True
 
@@ -75,7 +71,7 @@ class AnycubicMQTTAPI(AnycubicAPI):
         except (asyncio.TimeoutError, asyncio.CancelledError):
             return False
 
-    async def mqtt_wait_for_disconnect(self):
+    async def mqtt_wait_for_disconnect(self) -> bool:
         if self._mqtt_disconnected is None:
             return True
 
@@ -87,31 +83,36 @@ class AnycubicMQTTAPI(AnycubicAPI):
         except (asyncio.TimeoutError, asyncio.CancelledError):
             return False
 
-    def _md5_hex_of_string(self, input_string):
+    def _md5_hex_of_string(self, input_string: str) -> str:
         return hashlib.md5(input_string.encode('utf-8')).hexdigest().lower()
 
-    def _build_mqtt_client_id(self):
-        username_md5 = self._md5_hex_of_string(self._api_user_email)
-        return username_md5
+    def _build_mqtt_client_id(self) -> str:
+        if not self._api_user_email:
+            raise AnycubicAPIError('Unable to build mqtt_client_id, missing user email.')
+        return self._md5_hex_of_string(self._api_user_email)
 
-    def _build_mqtt_login_info(self):
+    def _build_mqtt_login_info(self) -> tuple[str, str]:
+        if not self._auth_sig_token:
+            raise AnycubicAPIError('Unable to build mqtt_login_info, missing sig token.')
         token_md5 = self._md5_hex_of_string(self._auth_sig_token)
         token_bcrypt = bcrypt.hashpw(token_md5.encode('utf-8'), bcrypt.gensalt())
-        username_md5 = self._md5_hex_of_string(self._api_user_email)
+        username_md5 = self._build_mqtt_client_id()
         sig_md5 = self._md5_hex_of_string(f"{username_md5}{token_bcrypt.decode('utf-8')}{username_md5}")
         sig_str = f"user|app|{self._api_user_email}|{sig_md5}"
 
         return (sig_str, token_bcrypt.decode('utf-8'))
 
-    def _build_mqtt_printer_subscription(self, printer):
+    def _build_mqtt_printer_subscription(self, printer: AnycubicPrinter) -> list[str]:
         topic_printer = f"{MQTT_ROOT_TOPIC_PRINTER}{printer.machine_type}/{printer.key}/#"
         topic_plus = f"{MQTT_ROOT_TOPIC_PLUS}{printer.machine_type}/{printer.key}/#"
         return list([topic_printer, topic_plus])
 
-    def _build_mqtt_printer_publish_topic(self, printer, endpoint):
+    def _build_mqtt_printer_publish_topic(self, printer: AnycubicPrinter, endpoint: str) -> str:
         return f"{MQTT_ROOT_TOPIC_PUBLISH_PRINTER}{printer.machine_type}/{printer.key}/{endpoint}"
 
-    def _build_mqtt_user_subscription(self):
+    def _build_mqtt_user_subscription(self) -> list[str]:
+        if not self._api_user_id:
+            raise AnycubicAPIError('Unable to build mqtt_user_subscription, missing user id.')
         user_id_md5 = self._md5_hex_of_string(f"{self._api_user_id}")
         root = f"{MQTT_ROOT_TOPIC_SERVER}{self._api_user_id}/{user_id_md5}"
         topic_slice_report = f"{root}/slice/report"
@@ -119,19 +120,26 @@ class AnycubicMQTTAPI(AnycubicAPI):
 
         return list([topic_slice_report, topic_fdm_slice_report])
 
-    def _mqtt_topic_is_user_topic(self, topic):
+    def _mqtt_topic_is_user_topic(self, topic: str) -> bool:
         return get_part_from_mqtt_topic(topic, 3) == 'server'
 
-    def _mqtt_message_router(self, message):
+    def _mqtt_message_router(self, message: mqtt_client.MQTTMessage) -> None:
         try:
             topic = str(message.topic)
             payload = json.loads(message.payload.decode('utf-8'))
         except Exception as e:
-            self._log_to_error(f"Anycubic MQTT Message decode error: {e}\n  on MQTT topic: {message.topic}\n    {message.payload}")
+            self._log_to_error(
+                f"Anycubic MQTT Message decode error: {e}\n"
+                f"  on MQTT topic: {message.topic}\n"
+                f"    {message.payload!r}"
+            )
             return
 
         if self._mqtt_topic_is_user_topic(topic):
-            self._log_to_debug(f"Anycubic MQTT USER Msg Received on `{topic}`:\n    {payload}")
+            self._log_to_debug(
+                f"Anycubic MQTT USER Msg Received on `{topic}`:\n"
+                f"    {payload}"
+            )
 
         else:
             printer_key = get_part_from_mqtt_topic(topic, 6)
@@ -147,8 +155,30 @@ class AnycubicMQTTAPI(AnycubicAPI):
             printer_was_available = printer.is_available
 
             try:
-                printer.process_mqtt_update(topic, payload)
+                printer.process_mqtt_update(topic, AnycubicConsumableData(payload))
 
+            except AnycubicMQTTUnhandledData as e:
+                redacted_topic = redact_part_from_mqtt_topic(topic, 6)
+                self._log_to_warn(
+                    f"Anycubic MQTT Message unhandled data in: {e}\n"
+                    f"  on MQTT topic: {redacted_topic}\n"
+                    f"  with type: {e.unhandled_mqtt_type}, "
+                    f"action: {e.unhandled_mqtt_action}, "
+                    f"state: {e.unhandled_mqtt_state}\n"
+                    f"    unhandled data: {e.unhandled_mqtt_data}"
+                )
+
+            except Exception as e:
+                tb = traceback.format_exc()
+                redacted_topic = redact_part_from_mqtt_topic(topic, 6)
+                self._log_to_error(
+                    f"Anycubic MQTT Message error: {e}\n"
+                    f"  on MQTT topic: {redacted_topic}\n"
+                    f"    {payload}\n"
+                    f"{tb}"
+                )
+
+            try:
                 if self._mqtt_callback_printer_update:
                     self._mqtt_callback_printer_update()
 
@@ -160,12 +190,22 @@ class AnycubicMQTTAPI(AnycubicAPI):
 
             except Exception as e:
                 tb = traceback.format_exc()
-                self._log_to_error(f"Anycubic MQTT Message error: {e}\n  on MQTT topic: {topic}\n    {payload}\n{tb}")
+                self._log_to_error(
+                    f"Anycubic MQTT Callback error: {e}\n"
+                    f"{tb}"
+                )
 
             if self._mqtt_log_all_messages:
-                self._log_to_debug(f"Anycubic MQTT Message processed on topic: {topic}\n    {payload}")
+                self._log_to_debug(
+                    f"Anycubic MQTT Message processed on topic: {topic}\n"
+                    f"    {payload}"
+                )
 
-    def _mqtt_publish_on_topic(self, topic, payload):
+    def _mqtt_publish_on_topic(
+        self,
+        topic: str,
+        payload: dict[str, Any] | str,
+    ) -> None:
         if self._mqtt_client is None:
             return
 
@@ -173,11 +213,16 @@ class AnycubicMQTTAPI(AnycubicAPI):
 
         self._mqtt_client.publish(topic, payload=mqtt_payload)
 
-    def _mqtt_publish_to_printer(self, printer, endpoint, payload):
+    def _mqtt_publish_to_printer(
+        self,
+        printer: AnycubicPrinter,
+        endpoint: str,
+        payload: dict[str, Any] | str,
+    ) -> None:
         mqtt_topic = self._build_mqtt_printer_publish_topic(printer, endpoint)
         self._mqtt_publish_on_topic(mqtt_topic, payload=payload)
 
-    def _mqtt_build_ssl_context(self):
+    def _mqtt_build_ssl_context(self) -> ssl.SSLContext:
         ssl_root = path.dirname(__file__)
 
         if 'anycubic_cloud_api' not in ssl_root:
@@ -202,16 +247,22 @@ class AnycubicMQTTAPI(AnycubicAPI):
 
         return ssl_context
 
-    def _mqtt_on_subscribe(self, client, userdata, mid, granted_qos):
+    def _mqtt_on_subscribe(
+        self,
+        client: mqtt_client.Client,
+        userdata: Any,
+        mid: int,
+        granted_qos: tuple[int],
+    ) -> None:
         if self._mqtt_connected is not None:
             self._mqtt_connected.set()
 
     def _mqtt_on_message(
         self,
-        client,
-        userdata,
-        message,
-    ):
+        client: mqtt_client.Client,
+        userdata: Any,
+        message: mqtt_client.MQTTMessage,
+    ) -> None:
         try:
             self._mqtt_message_router(message)
         except Exception as e:
@@ -221,10 +272,10 @@ class AnycubicMQTTAPI(AnycubicAPI):
 
     def _mqtt_on_disconnect(
         self,
-        client,
-        userdata,
-        rc,
-    ):
+        client: mqtt_client.Client,
+        userdata: Any,
+        rc: int,
+    ) -> None:
         if rc == 0:
             self._mqtt_client = None
             self._log_to_debug("Anycubic MQTT Disconnected.")
@@ -236,16 +287,19 @@ class AnycubicMQTTAPI(AnycubicAPI):
 
     def _mqtt_on_connect(
         self,
-        client,
-        userdata,
-        flags,
-        rc,
-    ):
+        client: mqtt_client.Client,
+        userdata: Any,
+        flags: dict[str, Any],
+        rc: int,
+    ) -> None:
         if rc == 0:
             if self._mqtt_connected is None:
                 self._mqtt_connected = asyncio.Event()
 
             self._log_to_debug("Anycubic MQTT Connected.")
+
+            if not self._mqtt_client:
+                raise AnycubicAPIError('Unexpected error in mqtt_on_connect, missing client.')
 
             for sub in self._build_mqtt_user_subscription():
                 self._log_to_debug(f"Anycubic MQTT Subscribing to USER {sub}.")
@@ -255,10 +309,13 @@ class AnycubicMQTTAPI(AnycubicAPI):
                 self._mqtt_subscribe_printer_status(printer)
 
             self._log_to_debug("Anycubic MQTT Subscribed.")
+
+            if (self._mqtt_callback_subscribed):
+                self._mqtt_callback_subscribed()
         else:
             self._log_to_warn(f"Anycubic MQTT Failed to connect, return code {rc}")
 
-    def _set_mqtt_username_password(self):
+    def _set_mqtt_username_password(self) -> None:
         mqtt_username, mqtt_password = self._build_mqtt_login_info()
 
         if self._mqtt_client is None:
@@ -269,7 +326,7 @@ class AnycubicMQTTAPI(AnycubicAPI):
             password=mqtt_password,
         )
 
-    def connect_mqtt(self):
+    def connect_mqtt(self) -> None:
         self._mqtt_connected = asyncio.Event()
         self._mqtt_disconnected = asyncio.Event()
 
@@ -284,10 +341,6 @@ class AnycubicMQTTAPI(AnycubicAPI):
         self._mqtt_client.on_disconnect = self._mqtt_on_disconnect
         self._mqtt_client.on_message = self._mqtt_on_message
         self._mqtt_client.on_subscribe = self._mqtt_on_subscribe
-
-        # DEBUG
-        # self._mqtt_client.enable_logger(logger)
-        # DEBUG
 
         self._set_mqtt_username_password()
 
@@ -310,25 +363,30 @@ class AnycubicMQTTAPI(AnycubicAPI):
         self._mqtt_disconnected = None
         self._log_to_debug("Anycubic MQTT Client removed.")
 
-    def disconnect_mqtt(self):
+    def disconnect_mqtt(self) -> None:
         self._log_to_debug("Anycubic MQTT Disconnecting.")
         if self._mqtt_client is None:
             return
 
         self._mqtt_client.disconnect()
 
-    def _mqtt_subscribe_printer_status(self, printer):
+    def _mqtt_subscribe_printer_status(self, printer: AnycubicPrinter) -> None:
+        if not self._mqtt_client:
+            raise AnycubicAPIError('Unexpected error in mqtt_subscribe_printer_status, missing client.')
         for sub in self._build_mqtt_printer_subscription(printer):
             self._log_to_debug(f"Anycubic MQTT Subscribing to PRINTER {sub}.")
             self._mqtt_client.subscribe(sub)
 
-    def mqtt_add_subscribed_printer(self, printer):
+    def mqtt_add_subscribed_printer(self, printer: AnycubicPrinter) -> None:
+        if not printer.key:
+            raise AnycubicAPIError('Unexpected error in mqtt_add_subscribed_printer, missing printer key.')
+
         if printer.key in self._mqtt_subscribed_printers:
             return
 
         self._mqtt_subscribed_printers[printer.key] = printer
 
-    def mqtt_unsubscribe_printer_status(self, printer):
+    def mqtt_unsubscribe_printer_status(self, printer: AnycubicPrinter) -> None:
 
         if printer.key in self._mqtt_subscribed_printers:
             if self._mqtt_client is not None:

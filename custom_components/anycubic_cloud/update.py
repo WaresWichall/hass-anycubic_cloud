@@ -1,6 +1,8 @@
 """Platform for update integration."""
 from __future__ import annotations
-from typing import Any
+
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.update import (
     UpdateDeviceClass,
@@ -9,48 +11,61 @@ from homeassistant.components.update import (
     UpdateEntityFeature,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import (
-    EntityCategory,
-)
+from homeassistant.const import EntityCategory, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import (
-    CONF_PRINTER_ID_LIST,
     COORDINATOR,
     DOMAIN,
+    PrinterEntityType,
 )
-from .coordinator import AnycubicCloudDataUpdateCoordinator
-from .entity import AnycubicCloudEntity
+from .entity import AnycubicCloudEntity, AnycubicCloudEntityDescription
 from .helpers import printer_attributes_for_key, printer_state_for_key
 
+if TYPE_CHECKING:
+    from .coordinator import AnycubicCloudDataUpdateCoordinator
 
-PRIMARY_MULTI_COLOR_BOX_UPDATE_TYPES = (
-    UpdateEntityDescription(
+
+@dataclass(frozen=True)
+class AnycubicUpdateEntityDescription(
+    UpdateEntityDescription, AnycubicCloudEntityDescription
+):
+    """Describes Anycubic Cloud update entity."""
+
+
+PRIMARY_MULTI_COLOR_BOX_UPDATE_TYPES: list[AnycubicUpdateEntityDescription] = list([
+    AnycubicUpdateEntityDescription(
         key="multi_color_box_fw_version",
         translation_key="multi_color_box_fw_version",
         device_class=UpdateDeviceClass.FIRMWARE,
         entity_category=EntityCategory.CONFIG,
+        printer_entity_type=PrinterEntityType.ACE_PRIMARY,
     ),
-)
+])
 
-SECONDARY_MULTI_COLOR_BOX_UPDATE_TYPES = (
-    UpdateEntityDescription(
+SECONDARY_MULTI_COLOR_BOX_UPDATE_TYPES: list[AnycubicUpdateEntityDescription] = list([
+    AnycubicUpdateEntityDescription(
         key="secondary_multi_color_box_fw_version",
         translation_key="secondary_multi_color_box_fw_version",
         device_class=UpdateDeviceClass.FIRMWARE,
         entity_category=EntityCategory.CONFIG,
+        printer_entity_type=PrinterEntityType.ACE_SECONDARY,
     ),
-)
+])
 
-UPDATE_TYPES = (
-    UpdateEntityDescription(
+UPDATE_TYPES: list[AnycubicUpdateEntityDescription] = list([
+    AnycubicUpdateEntityDescription(
         key="fw_version",
         translation_key="fw_version",
         device_class=UpdateDeviceClass.FIRMWARE,
         entity_category=EntityCategory.CONFIG,
+        printer_entity_type=PrinterEntityType.PRINTER,
     ),
-)
+])
+
+GLOBAL_UPDATE_TYPES: list[AnycubicUpdateEntityDescription] = list([
+])
 
 
 async def async_setup_entry(
@@ -61,55 +76,53 @@ async def async_setup_entry(
     coordinator: AnycubicCloudDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id][
         COORDINATOR
     ]
-    update_entities: list[AnycubicUpdateEntity] = []
-
-    for printer_id in entry.data[CONF_PRINTER_ID_LIST]:
-        if printer_state_for_key(coordinator, printer_id, 'supports_function_multi_color_box'):
-            for description in PRIMARY_MULTI_COLOR_BOX_UPDATE_TYPES:
-                update_entities.append(AnycubicUpdateEntity(coordinator, printer_id, description))
-        if printer_state_for_key(coordinator, printer_id, 'connected_ace_units') > 1:
-            for description in SECONDARY_MULTI_COLOR_BOX_UPDATE_TYPES:
-                update_entities.append(AnycubicUpdateEntity(coordinator, printer_id, description))
-
-        for description in UPDATE_TYPES:
-            update_entities.append(AnycubicUpdateEntity(coordinator, printer_id, description))
-
-    async_add_entities(update_entities)
+    coordinator.add_entities_for_seen_printers(
+        async_add_entities=async_add_entities,
+        entity_constructor=AnycubicUpdateEntity,
+        platform=Platform.UPDATE,
+        available_descriptors=list(
+            UPDATE_TYPES
+            + PRIMARY_MULTI_COLOR_BOX_UPDATE_TYPES
+            + SECONDARY_MULTI_COLOR_BOX_UPDATE_TYPES
+            + GLOBAL_UPDATE_TYPES
+        ),
+    )
 
 
 class AnycubicUpdateEntity(AnycubicCloudEntity, UpdateEntity):
     """Representation of a Anycubic Cloud sensor."""
 
-    entity_description: UpdateEntityDescription
+    entity_description: AnycubicUpdateEntityDescription
     _attr_supported_features = (
         UpdateEntityFeature.INSTALL | UpdateEntityFeature.PROGRESS
     )
 
     def __init__(
         self,
+        hass: HomeAssistant,
         coordinator: AnycubicCloudDataUpdateCoordinator,
         printer_id: int,
-        entity_description: UpdateEntityDescription,
+        entity_description: AnycubicUpdateEntityDescription,
     ) -> None:
         """Initiate Anycubic Sensor."""
-        super().__init__(coordinator, printer_id, entity_description)
+        super().__init__(hass, coordinator, printer_id, entity_description)
 
     @property
     def installed_version(self) -> str:
         """Version currently in use."""
-        return printer_state_for_key(self.coordinator, self._printer_id, self.entity_description.key)
+        return str(printer_state_for_key(self.coordinator, self._printer_id, self.entity_description.key))
 
     @property
     def latest_version(self) -> str:
         """Latest version available for install."""
         fw_attr = printer_attributes_for_key(self.coordinator, self._printer_id, self.entity_description.key)
-        return fw_attr['latest_version']
+        return str(fw_attr['latest_version']) if fw_attr else "error"
 
     @property
     def in_progress(self) -> bool:
         """Update installation in progress."""
         fw_attr = printer_attributes_for_key(self.coordinator, self._printer_id, self.entity_description.key)
-        return fw_attr['in_progress']
+        return bool(fw_attr['in_progress']) if fw_attr else False
 
     async def async_install(
         self, version: str | None, backup: bool, **kwargs: Any
