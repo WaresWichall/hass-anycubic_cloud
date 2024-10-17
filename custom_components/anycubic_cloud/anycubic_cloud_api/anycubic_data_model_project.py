@@ -12,8 +12,15 @@ from .anycubic_exceptions import (
     AnycubicInvalidValue,
     AnycubicPropertiesNotLoaded,
 )
+from .anycubic_helpers import (
+    time_duration_string_to_delta,
+    timedelta_to_dhm_string,
+    timedelta_to_total_minutes,
+)
 
 if TYPE_CHECKING:
+    from datetime import timedelta
+
     from .anycubic_api import AnycubicAPI
     from .anycubic_data_model_consumable import AnycubicConsumableData
     from .anycubic_data_model_printing_settings import AnycubicPrintingSettings
@@ -312,6 +319,9 @@ class AnycubicProject:
 
     def _set_total_time(self, total_time: str | None) -> None:
         self._total_time = str(total_time) if total_time is not None else None
+        self._total_time_delta: timedelta = time_duration_string_to_delta(self._total_time)
+        self._total_time_minutes: int = int(timedelta_to_total_minutes(self._total_time_delta))
+        self._total_time_dhm_str: str = timedelta_to_dhm_string(self._total_time_delta)
 
     def _set_print_time(self, print_time: int | str | None) -> None:
         self._print_time = int(print_time) if print_time is not None else None
@@ -703,6 +713,18 @@ class AnycubicProject:
     @property
     def print_total_time(self) -> str | None:
         return self._total_time
+
+    @property
+    def print_total_time_delta(self) -> timedelta:
+        return self._total_time_delta
+
+    @property
+    def print_total_time_minutes(self) -> int:
+        return self._total_time_minutes
+
+    @property
+    def print_total_time_dhm_str(self) -> str:
+        return self._total_time_dhm_str
 
     @property
     def print_time_elapsed_minutes(self) -> int | None:

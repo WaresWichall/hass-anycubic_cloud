@@ -4,12 +4,101 @@ import json
 import re
 import struct
 import uuid
+from datetime import timedelta
 from typing import Any
 
 ALPHANUMERIC_CHARS: str = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 GCODE_STRING_FIRST_ATTR_LINE: str = '; filament used'
 
 REX_GCODE_DATA_KEY_VALUE: re.Pattern[Any] = re.compile(r'; ([a-zA-Z0-9_\[\] ]+) = (.*)$')
+
+REX_PRINT_TOTAL_TIME: re.Pattern[Any] = re.compile(r'^([\d]+)hour([\d]+)min$')
+
+
+def timedelta_to_total_minutes(
+    delta: timedelta,
+) -> float:
+    return delta.total_seconds() / 60.0
+
+
+def timedelta_to_total_hours(
+    delta: timedelta,
+) -> float:
+    return delta.total_seconds() / 3600.0
+
+
+def timedelta_to_dhm_string(
+    delta: timedelta,
+) -> str:
+    days = delta.days
+    hours, remain_sec = divmod(delta.seconds, 3600)
+    mins = int(remain_sec / 60)
+
+    return f"{days}:{hours}:{mins}"
+
+
+def hour_min_time_string_to_delta(
+    time_string: str,
+) -> timedelta:
+    match = REX_PRINT_TOTAL_TIME.match(time_string)
+
+    if match:
+        hours = int(match.group(1))
+        mins = int(match.group(2))
+
+        return timedelta(
+            minutes=mins,
+            hours=hours,
+        )
+
+    raise ValueError("No hour min regex match.")
+
+
+def int_seconds_string_to_delta(
+    time_string: str,
+) -> timedelta:
+    try:
+        total_seconds = int(time_string)
+        return timedelta(
+            seconds=total_seconds
+        )
+    except ValueError:
+        raise
+
+
+def float_minutes_string_to_delta(
+    time_string: str,
+) -> timedelta:
+    try:
+        minutes = float(time_string)
+        total_seconds = int(minutes * 60)
+        return timedelta(
+            seconds=total_seconds
+        )
+    except ValueError:
+        raise
+
+
+def time_duration_string_to_delta(
+    time_string: str | None,
+) -> timedelta:
+    if isinstance(time_string, str):
+        # try:
+        #     return int_seconds_string_to_delta(time_string)
+        # except ValueError:
+        #     pass
+
+        try:
+            return float_minutes_string_to_delta(time_string)
+        except ValueError:
+            pass
+
+        try:
+            return hour_min_time_string_to_delta(time_string)
+        except ValueError:
+            pass
+
+    return timedelta()
 
 
 def get_part_from_mqtt_topic(topic: str, part: int) -> str | None:

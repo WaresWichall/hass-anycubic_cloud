@@ -26,9 +26,16 @@ from .anycubic_exceptions import (
     AnycubicDataParsingError,
     AnycubicMQTTUnhandledData,
 )
-from .anycubic_helpers import get_part_from_mqtt_topic
+from .anycubic_helpers import (
+    get_part_from_mqtt_topic,
+    time_duration_string_to_delta,
+    timedelta_to_dhm_string,
+    timedelta_to_total_hours,
+)
 
 if TYPE_CHECKING:
+    from datetime import timedelta
+
     from .anycubic_api import AnycubicAPI
     from .anycubic_data_model_print_response import AnycubicPrintResponse
     from .anycubic_data_model_printer_properties import AnycubicDryingStatus, AnycubicMaterialMapping
@@ -105,7 +112,7 @@ class AnycubicPrinter:
         self._video_taskid = video_taskid
         self._msg = msg
         self._material_used = material_used
-        self._print_totaltime = print_totaltime
+        self._set_total_print_time(print_totaltime)
         self._print_count = print_count
         self._status = status
         self._machine_mac = machine_mac
@@ -138,6 +145,12 @@ class AnycubicPrinter:
         self._is_bound_to_user: bool = True
 
         self._ignore_init_errors = False
+
+    def _set_total_print_time(self, print_totaltime: str | None) -> None:
+        self._total_print_time: str | None = print_totaltime
+        self._total_print_time_delta: timedelta = time_duration_string_to_delta(print_totaltime)
+        self._total_print_time_hrs: int = int(timedelta_to_total_hours(self._total_print_time_delta))
+        self._total_print_time_dhm_str: str = timedelta_to_dhm_string(self._total_print_time_delta)
 
     def set_has_peripheral_camera(self, has_peripheral: bool) -> None:
         self._has_peripheral_camera = bool(has_peripheral)
@@ -458,7 +471,7 @@ class AnycubicPrinter:
         self._device_status = data['device_status']
         self._is_printing = data['is_printing']
         self._material_used = extra_data.get('material_used')
-        self._print_totaltime = extra_data.get('print_totaltime')
+        self._set_total_print_time(extra_data.get('print_totaltime'))
         self._print_count = extra_data.get('print_count')
         self._machine_mac = extra_data.get('machine_mac')
         self._create_time = extra_data.get('create_time')
@@ -1149,8 +1162,20 @@ class AnycubicPrinter:
         return self._material_used
 
     @property
-    def print_totaltime(self) -> str | None:
-        return self._print_totaltime
+    def total_print_time(self) -> str | None:
+        return self._total_print_time
+
+    @property
+    def total_print_time_delta(self) -> timedelta:
+        return self._total_print_time_delta
+
+    @property
+    def total_print_time_hrs(self) -> int:
+        return self._total_print_time_hrs
+
+    @property
+    def total_print_time_dhm_str(self) -> str:
+        return self._total_print_time_dhm_str
 
     @property
     def print_count(self) -> int | None:
@@ -1642,6 +1667,27 @@ class AnycubicPrinter:
     def latest_project_print_total_time(self) -> str | None:
         if self.latest_project:
             return self.latest_project.print_total_time
+
+        return None
+
+    @property
+    def latest_project_print_total_time_delta(self) -> timedelta | None:
+        if self.latest_project:
+            return self.latest_project.print_total_time_delta
+
+        return None
+
+    @property
+    def latest_project_print_total_time_minutes(self) -> int | None:
+        if self.latest_project:
+            return self.latest_project.print_total_time_minutes
+
+        return None
+
+    @property
+    def latest_project_print_total_time_dhm_str(self) -> str | None:
+        if self.latest_project:
+            return self.latest_project.print_total_time_dhm_str
 
         return None
 

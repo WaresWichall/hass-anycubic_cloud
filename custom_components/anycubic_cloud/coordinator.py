@@ -324,6 +324,8 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 "print_status_code": printer.latest_project_raw_print_status,
                 "peripherals": printer.connected_peripherals,
                 "total_material_used": printer.material_used,
+                "total_print_time_hrs": printer.total_print_time_hrs,
+                "total_print_time_dhm": printer.total_print_time_dhm_str,
             },
             "dry_status_is_drying": {
                 "dry_status_code": printer.primary_drying_status_raw_status_code,
@@ -335,6 +337,8 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 "created_timestamp": printer.latest_project_created_timestamp,
                 "finished_timestamp": printer.latest_project_finished_timestamp,
                 "print_total_time": printer.latest_project_print_total_time,
+                "print_total_time_minutes": printer.latest_project_print_total_time_minutes,
+                "print_total_time_dhm": printer.latest_project_print_total_time_dhm_str,
                 "print_supplies_usage": printer.latest_project_print_supplies_usage,
             },
             "fw_version": {
