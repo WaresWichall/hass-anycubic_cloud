@@ -109,50 +109,50 @@ class AnycubicMaterialColor:
         )
 
 
-class AnycubicMachineBaseInfo:
-    def __init__(
-        self,
-        print_count: int,
-        print_totaltime: str,
-        material_type: str,
-        material_used: str,
-        description: str,
-        create_time: int,
-        firmware_version: str,
-        machine_mac: str,
-    ) -> None:
-        self._print_count: int = int(print_count)
-        self._print_totaltime: str = str(print_totaltime)
-        self._material_type: str = str(material_type)
-        self._material_used: str = str(material_used)
-        self._description: str = str(description)
-        self._create_time: int = int(create_time)
-        self._firmware_version = str(firmware_version)
-        self._machine_mac: str = str(machine_mac)
+# class AnycubicMachineBaseInfo:
+#     def __init__(
+#         self,
+#         print_count: int,
+#         print_totaltime: str,
+#         material_type: str,
+#         material_used: str,
+#         description: str,
+#         create_time: int,
+#         firmware_version: str,
+#         machine_mac: str,
+#     ) -> None:
+#         self._print_count: int = int(print_count)
+#         self._print_totaltime: str = str(print_totaltime)
+#         self._material_type: str = str(material_type)
+#         self._material_used: str = str(material_used)
+#         self._description: str = str(description)
+#         self._create_time: int = int(create_time)
+#         self._firmware_version = str(firmware_version)
+#         self._machine_mac: str = str(machine_mac)
 
-    @classmethod
-    def from_json(cls, data: dict[str, Any] | None) -> AnycubicMachineBaseInfo | None:
-        if data is None:
-            return None
+#     @classmethod
+#     def from_json(cls, data: dict[str, Any] | None) -> AnycubicMachineBaseInfo | None:
+#         if data is None:
+#             return None
 
-        return cls(
-            print_count=data['print_count'],
-            print_totaltime=data['print_totaltime'],
-            material_type=data['material_type'],
-            material_used=data['material_used'],
-            description=data['description'],
-            create_time=data['create_time'],
-            firmware_version=data['firmware_version'],
-            machine_mac=data['machine_mac'],
-        )
+#         return cls(
+#             print_count=data['print_count'],
+#             print_totaltime=data['print_totaltime'],
+#             material_type=data['material_type'],
+#             material_used=data['material_used'],
+#             description=data['description'],
+#             create_time=data['create_time'],
+#             firmware_version=data['firmware_version'],
+#             machine_mac=data['machine_mac'],
+#         )
 
-    def __repr__(self) -> str:
-        return (
-            f"AnycubicMachineBaseInfo(print_count={self._print_count}, print_totaltime={self._print_totaltime}, "
-            f"material_type={self._material_type}, material_used={self._material_used},"
-            f"description={self._description}, create_time={self._create_time}, firmware_version={self._firmware_version}, "
-            f"machine_mac={self._machine_mac})"
-        )
+#     def __repr__(self) -> str:
+#         return (
+#             f"AnycubicMachineBaseInfo(print_count={self._print_count}, print_totaltime={self._print_totaltime}, "
+#             f"material_type={self._material_type}, material_used={self._material_used},"
+#             f"description={self._description}, create_time={self._create_time}, firmware_version={self._firmware_version}, "
+#             f"machine_mac={self._machine_mac})"
+#         )
 
 
 class AnycubicMachineToolInfo:
