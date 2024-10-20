@@ -551,6 +551,9 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     def _anycubic_mqtt_connection_should_start(self) -> bool:
 
+        if self._mqtt_connection_mode == AnycubicMQTTConnectMode.Never_Connect:
+            return False
+
         return (
             not self.anycubic_api.mqtt_is_started and
             not self.hass.is_stopping and

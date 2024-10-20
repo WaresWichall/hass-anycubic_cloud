@@ -26,6 +26,7 @@ class AnycubicMQTTConnectMode(IntEnum):
     Printing_Drying = 2
     Device_Online = 3
     Always = 4
+    Never_Connect = 5
 
 
 def build_printer_device_info(

@@ -53,6 +53,7 @@ MQTT_CONNECT_MODES = {
     AnycubicMQTTConnectMode.Printing_Drying: "Printing & Drying",
     AnycubicMQTTConnectMode.Device_Online: "Device Online",
     AnycubicMQTTConnectMode.Always: "Always",
+    AnycubicMQTTConnectMode.Never_Connect: "Never Connect",
 }
 
 
