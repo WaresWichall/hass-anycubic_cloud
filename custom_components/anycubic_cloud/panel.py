@@ -1,9 +1,10 @@
 """Anycubic Cloud frontend panel."""
+from __future__ import annotations
 
 import os
+from typing import Any
 
-from homeassistant.components import frontend
-from homeassistant.components import panel_custom
+from homeassistant.components import frontend, panel_custom
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.core import HomeAssistant
 
@@ -12,18 +13,30 @@ from .const import (
     DOMAIN,
     INTEGRATION_FOLDER,
     LOGGER,
-    PANEL_FOLDER,
     PANEL_FILENAME,
+    PANEL_FOLDER,
+    PANEL_ICON,
     PANEL_NAME,
     PANEL_TITLE,
-    PANEL_ICON,
 )
-
+from .helpers import extract_panel_card_config
 
 PANEL_URL = "/anycubic-cloud-panel-static"
 
 
-async def async_register_panel(hass: HomeAssistant):
+def process_card_config(
+    conf_object: Any,
+) -> dict[str, Any]:
+    if isinstance(conf_object, dict):
+        return extract_panel_card_config(conf_object)
+    else:
+        return {}
+
+
+async def async_register_panel(
+    hass: HomeAssistant,
+    conf_object: Any,
+) -> None:
     """Register the Anycubic Cloud frontend panel."""
     if DOMAIN not in hass.data.get("frontend_panels", {}):
         root_dir = os.path.join(hass.config.path(CUSTOM_COMPONENTS), INTEGRATION_FOLDER)
@@ -38,6 +51,10 @@ async def async_register_panel(hass: HomeAssistant):
             if "already registered" not in str(e):
                 raise e
 
+        conf = process_card_config(conf_object)
+
+        LOGGER.debug(f"Processed panel config: {conf}")
+
         await panel_custom.async_register_panel(
             hass,
             webcomponent_name=PANEL_NAME,
@@ -46,10 +63,10 @@ async def async_register_panel(hass: HomeAssistant):
             sidebar_title=PANEL_TITLE,
             sidebar_icon=PANEL_ICON,
             require_admin=False,
-            config={},
+            config=conf,
         )
 
 
-def async_unregister_panel(hass):
+def async_unregister_panel(hass: HomeAssistant) -> None:
     frontend.async_remove_panel(hass, DOMAIN)
     LOGGER.debug("Removing panel")

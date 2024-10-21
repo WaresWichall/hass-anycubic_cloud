@@ -1,3 +1,15 @@
+# ABANDONED
+
+Anycubic blocked MQTT access, see [here](https://github.com/WaresWichall/hass-anycubic_cloud/issues/33)
+
+I'm moving on to another printer brand and abandoning this project.
+
+Sorry to everyone using it but Anycubic won't respond to me so there's nothing else I can do.
+
+---
+
+---
+
 # Anycubic Cloud Home Assistant Integration
 
 ## WORK IN PROGRESS 

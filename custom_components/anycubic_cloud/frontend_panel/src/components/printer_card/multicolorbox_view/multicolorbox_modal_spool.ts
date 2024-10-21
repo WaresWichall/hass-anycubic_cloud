@@ -5,6 +5,8 @@ import { map } from "lit/directives/map.js";
 import { styleMap } from "lit-html/directives/style-map.js";
 import { animate } from "@lit-labs/motion";
 
+import { localize } from "../../../../localize/localize";
+
 import "../../../lib/colorpicker/ColorPicker.js";
 
 import { platform } from "../../../const";
@@ -39,6 +41,9 @@ export class AnycubicPrintercardMulticolorboxModalSpool extends LitElement {
   public hass!: HomeAssistant;
 
   @property()
+  public language!: string;
+
+  @property()
   public selectedPrinterDevice: HassDevice | undefined;
 
   @property()
@@ -61,6 +66,18 @@ export class AnycubicPrintercardMulticolorboxModalSpool extends LitElement {
 
   @state()
   private _isOpen: boolean = false;
+
+  @state()
+  private _heading: string;
+
+  @state()
+  private _labelSelectMaterial: string;
+
+  @state()
+  private _labelSelectColour: string;
+
+  @state()
+  private _buttonSave: string;
 
   async firstUpdated(): void {
     this.addEventListener("click", (e) => {
@@ -89,6 +106,18 @@ export class AnycubicPrintercardMulticolorboxModalSpool extends LitElement {
 
   protected willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
+    if (changedProperties.has("language")) {
+      this._heading = localize("card.spool_settings.heading", this.language);
+      this._labelSelectMaterial = localize(
+        "card.spool_settings.label_select_material",
+        this.language,
+      );
+      this._labelSelectColour = localize(
+        "card.spool_settings.label_select_colour",
+        this.language,
+      );
+      this._buttonSave = localize("common.actions.save", this.language);
+    }
   }
 
   protected update(changedProperties: PropertyValues<this>): void {
@@ -137,11 +166,11 @@ export class AnycubicPrintercardMulticolorboxModalSpool extends LitElement {
       ? html`
           <div>
             <div class="ac-slot-title">
-              Editing Slot: ${this.spool_index + 1}
+              ${this._heading}: ${this.spool_index + 1}
             </div>
             <div>
               <div>
-                <p class="ac-modal-label">Select Material:</p>
+                <p class="ac-modal-label">${this._labelSelectMaterial}:</p>
                 <anycubic-ui-select-dropdown
                   .availableOptions=${AnycubicMaterialType}
                   .placeholder=${AnycubicMaterialType.PLA}
@@ -150,7 +179,7 @@ export class AnycubicPrintercardMulticolorboxModalSpool extends LitElement {
               </div>
               ${this._renderPresets()}
               <div>
-                <p class="ac-modal-label">Manually select colour:</p>
+                <p class="ac-modal-label">${this._labelSelectColour}:</p>
                 <color-picker .value="${this.color}"></color-picker>
               </div>
             </div>
@@ -160,7 +189,7 @@ export class AnycubicPrintercardMulticolorboxModalSpool extends LitElement {
                   this._handleSaveButton();
                 }}"
               >
-                Save
+                ${this._buttonSave}
               </ha-control-button>
             </div>
           </div>

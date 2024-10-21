@@ -377,6 +377,36 @@ export function getPrinterUpdateEntityState(
   }
 }
 
+export function isFDMPrinter(
+  hass: HomeAssistant,
+  entities: HassEntityInfos,
+  printerEntityIdPart: string | undefined,
+): boolean {
+  return (
+    getPrinterSensorStateObj(
+      hass,
+      entities,
+      printerEntityIdPart,
+      "current_status",
+    ).attributes.material_type === "Filament"
+  );
+}
+
+export function isLCDPrinter(
+  hass: HomeAssistant,
+  entities: HassEntityInfos,
+  printerEntityIdPart: string | undefined,
+): boolean {
+  return (
+    getPrinterSensorStateObj(
+      hass,
+      entities,
+      printerEntityIdPart,
+      "current_status",
+    ).attributes.material_type === "Resin"
+  );
+}
+
 export function getFileListLocalFilesEntity(
   entities: HassEntityInfos,
 ): HassEntityInfo | undefined {
@@ -436,7 +466,7 @@ export function getPrinterMAC(printer: HassDevice | undefined): string | null {
 export function getPrinterID(
   printer: HassDevice | undefined,
 ): string | undefined {
-  return printer ? printer.hw_version.split("Printer ID: ")[1] : undefined;
+  return printer ? printer.serial_number : undefined;
 }
 
 export function getPage(route: HassRoute): string {
@@ -445,17 +475,25 @@ export function getPage(route: HassRoute): string {
 }
 
 export function isPrintStatePrinting(printStateString: string): boolean {
-  return ["printing", "preheating"].includes(printStateString);
+  return [
+    "printing",
+    "preheating",
+    "paused",
+    "downloading",
+    "checking",
+  ].includes(printStateString);
 }
 
 export function printStateStatusColor(printStateString: string): string {
-  return isPrintStatePrinting(printStateString)
-    ? "#4caf50"
-    : printStateString === "unknown"
-      ? "#f44336"
-      : printStateString === "operational" || printStateString === "finished"
-        ? "#00bcd4"
-        : "#ffc107";
+  return printStateString === "preheating"
+    ? "#ffc107"
+    : isPrintStatePrinting(printStateString)
+      ? "#4caf50"
+      : printStateString === "unknown"
+        ? "#f44336"
+        : printStateString === "operational" || printStateString === "finished"
+          ? "#00bcd4"
+          : "#f44336";
 }
 
 export const navigateToPrinter = (
@@ -504,7 +542,7 @@ export const formatDuration = (time: number, round: boolean): string => {
         const m = t.minutes();
         const s = t.seconds();
 
-        return `${d > 0 ? `${d}d` : ""}${h > 0 ? ` ${h}h` : ""}${m > 0 ? ` ${m}m` : ""}${s > 0 ? ` ${s}s` : ""}`;
+        return `${d > 0 ? `${d}d` : ""}${h > 0 ? ` ${h}h` : ""}${m > 0 ? ` ${m}m` : ""}${s > 0 ? ` ${s}s` : "0s"}`;
       })();
 };
 
@@ -661,6 +699,7 @@ export function getDefaultCardConfig(): AnycubicCardConfig {
     scaleFactor: 1,
     slotColors: [],
     showSettingsButton: false,
+    alwaysShow: false,
   };
 }
 

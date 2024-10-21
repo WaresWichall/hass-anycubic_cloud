@@ -1,14 +1,17 @@
 """Diagnostics support for Anycubic Cloud."""
 from __future__ import annotations
 
-from typing import Any
+import json
+from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.diagnostics import async_redact_data
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 from .const import COORDINATOR, DOMAIN
-from .coordinator import AnycubicCloudDataUpdateCoordinator
+
+if TYPE_CHECKING:
+    from .coordinator import AnycubicCloudDataUpdateCoordinator
 
 USER_TO_REDACT = {
     "birthday",
@@ -30,6 +33,7 @@ PRINTER_TO_REDACT = {
     "machine_mac",
 }
 PROJECT_TO_REDACT = {
+    "model",
 }
 
 TO_TAGGED_REDACT = {
@@ -43,10 +47,13 @@ TO_TAGGED_REDACT = {
 
 
 class TaggedRedacter:
-    def __init__(self):
-        self.redacted_values = dict()
+    def __init__(self) -> None:
+        self.redacted_values: dict[str, str] = dict()
 
-    def _get_redacted_name(self, value):
+    def _get_redacted_name(
+        self,
+        value: Any,
+    ) -> str:
         if value not in self.redacted_values:
             num = len(self.redacted_values) + 1
             self.redacted_values[value] = f"**REDACTED_{num}**"
@@ -55,9 +62,9 @@ class TaggedRedacter:
 
     def redact_data(
         self,
-        data,
-        to_redact,
-    ):
+        data: Any,
+        to_redact: set[str],
+    ) -> Any:
         if not isinstance(data, (dict, list)):
             return data
 
@@ -81,6 +88,44 @@ class TaggedRedacter:
         return redacted
 
 
+def json_dict_or_value(value: str) -> dict[Any, Any] | str:
+    try:
+        parsed_value: Any = json.loads(value)
+        if not isinstance(parsed_value, dict):
+            return value
+
+        parsed_value["__JSON_STRING_PARSED__"] = True
+        return parsed_value
+    except json.decoder.JSONDecodeError:
+        return value
+
+
+def parse_all_json_data(
+    input_data: Any
+) -> Any:
+    if isinstance(input_data, str):
+        return json_dict_or_value(input_data)
+
+    if not isinstance(input_data, (dict, list)):
+        return input_data
+
+    if isinstance(input_data, list):
+        return list([parse_all_json_data(item) for item in input_data])
+
+    output_dict: dict[Any, Any] = dict()
+    for key, value in input_data.items():
+        if isinstance(value, dict):
+            output_dict[key] = parse_all_json_data(value)
+        elif isinstance(value, list):
+            output_dict[key] = list([parse_all_json_data(item) for item in value])
+        elif isinstance(value, str):
+            output_dict[key] = json_dict_or_value(value)
+        else:
+            output_dict[key] = value
+
+    return output_dict
+
+
 async def async_get_config_entry_diagnostics(
     hass: HomeAssistant, entry: ConfigEntry
 ) -> dict[str, Any]:
@@ -92,9 +137,9 @@ async def async_get_config_entry_diagnostics(
     tRedacter = TaggedRedacter()
 
     assert coordinator.anycubic_api
-    user_info = await coordinator.anycubic_api.get_user_info(raw_data=True)
-    printer_info = await coordinator.anycubic_api.list_my_printers(raw_data=True)
-    projects_info = await coordinator.anycubic_api.list_all_projects(raw_data=True)
+    user_info: dict[str, Any] = await coordinator.anycubic_api.get_user_info(raw_data=True)
+    printer_info: dict[str, Any] = await coordinator.anycubic_api.list_my_printers(raw_data=True)
+    projects_info: dict[str, Any] = await coordinator.anycubic_api.list_all_projects(raw_data=True)
     latest_project_info = {}
 
     if projects_info['data'] and len(projects_info['data']) > 0:
@@ -114,13 +159,19 @@ async def async_get_config_entry_diagnostics(
             )
     return {
         "user_info": tRedacter.redact_data(
-            async_redact_data(user_info, USER_TO_REDACT),
+            async_redact_data(
+                parse_all_json_data(user_info),
+                USER_TO_REDACT,
+            ),
             TO_TAGGED_REDACT
         ),
         "printer_info": {
             **printer_info,
             'data': tRedacter.redact_data(
-                async_redact_data(printer_info['data'], PRINTER_TO_REDACT),
+                async_redact_data(
+                    parse_all_json_data(printer_info['data']),
+                    PRINTER_TO_REDACT,
+                ),
                 TO_TAGGED_REDACT
             ),
         },
@@ -128,17 +179,26 @@ async def async_get_config_entry_diagnostics(
             **projects_info,
             'data': [
                 tRedacter.redact_data(
-                    async_redact_data(x, PROJECT_TO_REDACT),
+                    async_redact_data(
+                        parse_all_json_data(x),
+                        PROJECT_TO_REDACT,
+                    ),
                     TO_TAGGED_REDACT
                 ) for x in projects_info['data']
             ],
         },
         "detailed_printer_info": tRedacter.redact_data(
-            async_redact_data(detailed_printer_info, PRINTER_TO_REDACT),
+            async_redact_data(
+                parse_all_json_data(detailed_printer_info),
+                PRINTER_TO_REDACT,
+            ),
             TO_TAGGED_REDACT
         ),
         "latest_project_info": tRedacter.redact_data(
-            async_redact_data(latest_project_info, PROJECT_TO_REDACT),
+            async_redact_data(
+                parse_all_json_data(latest_project_info),
+                PROJECT_TO_REDACT,
+            ),
             TO_TAGGED_REDACT
         ),
     }

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from enum import Enum
 
 
@@ -8,16 +10,20 @@ class HTTP_METHODS(Enum):
 
 
 class ac_api_endpoint:
-    def __init__(self, method, endpoint):
-        self._method = method
-        self._endpoint = endpoint
+    def __init__(
+        self,
+        method: HTTP_METHODS,
+        endpoint: str,
+    ) -> None:
+        self._method: HTTP_METHODS = method
+        self._endpoint: str = endpoint
 
     @property
-    def method(self):
+    def method(self) -> HTTP_METHODS:
         return self._method
 
     @property
-    def endpoint(self):
+    def endpoint(self) -> str:
         return self._endpoint
 
 

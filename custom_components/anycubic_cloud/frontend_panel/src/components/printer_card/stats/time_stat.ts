@@ -16,6 +16,9 @@ export class AnycubicPrintercardStatTime extends LitElement {
   @property()
   public timeType: CalculatedTimeType;
 
+  @property({ type: String })
+  public name: string;
+
   @property({ type: Number })
   public direction: number;
 
@@ -57,7 +60,7 @@ export class AnycubicPrintercardStatTime extends LitElement {
 
   render(): any {
     return html`<anycubic-printercard-stat-line
-      .name=${this.timeType}
+      .name=${this.name}
       .value=${calculateTimeStat(
         this.currentTime,
         this.timeType,

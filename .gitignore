@@ -4,6 +4,7 @@ custom_components/anycubic_cloud/frontend_panel/node_modules/
 custom_components/anycubic_cloud/frontend_panel/package-lock.json
 custom_components/anycubic_cloud/scripts/*.cache
 custom_components/anycubic_cloud/scripts/*.json
+custom_components/anycubic_cloud/scripts/*.token
 custom_components/anycubic_cloud/scripts/anycubic_credentials.py
 debug_dump.json
 test_api

@@ -16,6 +16,9 @@ export class AnycubicViewDebug extends LitElement {
   @property()
   public hass!: HomeAssistant;
 
+  @property()
+  public language!: string;
+
   @property({ type: Boolean, reflect: true })
   public narrow!: boolean;
 

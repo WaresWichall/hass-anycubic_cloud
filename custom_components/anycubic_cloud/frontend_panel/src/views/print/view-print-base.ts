@@ -14,6 +14,9 @@ import { commonPrintStyle } from "./styles";
 export class AnycubicViewPrintBase extends LitElement {
   @property({ attribute: false }) public hass!: HomeAssistant;
 
+  @property()
+  public language!: string;
+
   @property({ type: Boolean, reflect: true })
   public narrow!: boolean;
 
@@ -38,7 +41,10 @@ export class AnycubicViewPrintBase extends LitElement {
   private _serviceName: string = "";
 
   @state()
-  private language: string;
+  private _buttonPrint: string;
+
+  @state({ type: Boolean })
+  private _buttonProgress: boolean = false;
 
   async firstUpdated(): void {
     await loadHaServiceControl();
@@ -47,26 +53,24 @@ export class AnycubicViewPrintBase extends LitElement {
   protected override willUpdate(changedProperties: PropertyValues): void {
     super.willUpdate(changedProperties);
 
-    if (changedProperties.has("hass") && this.hass.language !== this.language) {
-      this.language = this.hass.language;
+    if (changedProperties.has("language")) {
+      this._buttonPrint = localize("common.actions.print", this.language);
     }
 
-    if (!changedProperties.has("selectedPrinterDevice")) {
-      return;
-    }
-
-    if (this.selectedPrinterDevice) {
-      const srvName = `${platform}.${this._serviceName}`;
-      this._scriptData = {
-        ...this._scriptData,
-        action: srvName,
-        service: srvName,
-        data: {
-          ...(this._scriptData.data || {}),
-          config_entry: this.selectedPrinterDevice.primary_config_entry,
-          device_id: this.selectedPrinterDevice.id,
-        },
-      };
+    if (changedProperties.has("selectedPrinterDevice")) {
+      if (this.selectedPrinterDevice) {
+        const srvName = `${platform}.${this._serviceName}`;
+        this._scriptData = {
+          ...this._scriptData,
+          action: srvName,
+          service: srvName,
+          data: {
+            ...(this._scriptData.data || {}),
+            config_entry: this.selectedPrinterDevice.primary_config_entry,
+            device_id: this.selectedPrinterDevice.id,
+          },
+        };
+      }
     }
   }
 
@@ -88,9 +92,10 @@ export class AnycubicViewPrintBase extends LitElement {
           class="print-button"
           raised
           @click=${this._runScript}
+          .progress=${this._buttonProgress}
         >
           <ha-svg-icon .path=${mdiPlay}></ha-svg-icon>
-          ${localize("common.actions.print", this.language)}
+          ${this._buttonPrint}
         </ha-progress-button>
       </ac-print-view>
     `;
@@ -101,19 +106,22 @@ export class AnycubicViewPrintBase extends LitElement {
     this._error = undefined;
   }
 
-  private async _runScript(ev: Event): void {
+  private async _runScript(ev: Event): Promise<void> {
     const button = ev.currentTarget as any;
     this._error = undefined;
     ev.stopPropagation();
+    this._buttonProgress = true;
     fireHaptic();
     this.hass
       .callService(platform, this._serviceName, this._scriptData.data)
       .then(() => {
         button.actionSuccess();
+        this._buttonProgress = false;
       })
       .catch((e) => {
         this._error = e.message;
         button.actionError();
+        this._buttonProgress = false;
       });
   }
 
