@@ -34,6 +34,8 @@ from .const import (
     CONF_DEBUG,
     CONF_MQTT_CONNECT_MODE,
     CONF_PRINTER_ID_LIST,
+    CONF_USER_AUTH_MODE,
+    CONF_USER_DEVICE_ID,
     CONF_USER_TOKEN,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
@@ -685,10 +687,14 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 session=websession,
                 cookie_jar=cookie_jar,
                 debug_logger=LOGGER,
-                auth_sig_token=self.entry.data[CONF_USER_TOKEN],
                 mqtt_callback_printer_update=self._mqtt_callback_data_updated,
                 mqtt_callback_printer_busy=self._mqtt_callback_print_job_started,
                 mqtt_callback_subscribed=self._mqtt_callback_subscribed,
+            )
+            self._anycubic_api.set_authentication(
+                auth_token=self.entry.data[CONF_USER_TOKEN],
+                auth_mode=self.entry.data.get(CONF_USER_AUTH_MODE),
+                device_id=self.entry.data.get(CONF_USER_DEVICE_ID),
             )
 
             debug_mode: bool = bool(self.entry.options.get(CONF_DEBUG))

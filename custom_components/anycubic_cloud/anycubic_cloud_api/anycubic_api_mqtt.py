@@ -39,7 +39,6 @@ class AnycubicMQTTAPI(AnycubicAPI):
         mqtt_callback_subscribed: Callable[[], None] | None = None,
         **kwargs: Any,
     ) -> None:
-        self._auth_sig_token: str | None = None
         self._api_user_id: int | None = None
         self._mqtt_client: mqtt_client.Client | None = None
         self._mqtt_subscribed_printers: dict[str, AnycubicPrinter] = dict()
@@ -92,9 +91,7 @@ class AnycubicMQTTAPI(AnycubicAPI):
         return self._md5_hex_of_string(self._api_user_email)
 
     def _build_mqtt_login_info(self) -> tuple[str, str]:
-        if not self._auth_sig_token:
-            raise AnycubicAPIError('Unable to build mqtt_login_info, missing sig token.')
-        token_md5 = self._md5_hex_of_string(self._auth_sig_token)
+        token_md5 = self._md5_hex_of_string(self.anycubic_auth.auth_token)
         token_bcrypt = bcrypt.hashpw(token_md5.encode('utf-8'), bcrypt.gensalt())
         username_md5 = self._build_mqtt_client_id()
         sig_md5 = self._md5_hex_of_string(f"{username_md5}{token_bcrypt.decode('utf-8')}{username_md5}")

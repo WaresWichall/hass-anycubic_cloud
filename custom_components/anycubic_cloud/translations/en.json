@@ -13,18 +13,23 @@
     },
     "step": {
       "user": {
+        "title": "Setup Anycubic Cloud Authentication",
         "data": {
           "user_token": "User Token",
-          "name": "Printer Name"
+          "user_auth_mode": "Auth Mode",
+          "user_device_id": "Device ID (Required for Android)"
         }
       },
       "reauth_confirm": {
+        "title": "Setup Anycubic Cloud Authentication",
         "data": {
           "user_token": "User Token",
-          "name": "Printer Name"
+          "user_auth_mode": "Auth Mode",
+          "user_device_id": "Device ID (Required for Android)"
         }
       },
       "printer": {
+        "title": "Choose your printers.",
         "data": {
           "printer_ids": "Monitored Printers"
         }

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import hashlib
 import json
 import time
 from typing import (
@@ -20,13 +19,6 @@ from .anycubic_api_base import (
     ac_api_endpoint,
 )
 from .anycubic_const import (
-    AC_KNOWN_AID,
-    AC_KNOWN_CID_APP,
-    AC_KNOWN_CID_WEB,
-    AC_KNOWN_SEC,
-    AC_KNOWN_VID_APP,
-    AC_KNOWN_VID_WEB,
-    APP_REDIRECT_URI,
     AUTH_DOMAIN,
     BASE_DOMAIN,
     DEFAULT_USER_AGENT,
@@ -67,11 +59,7 @@ from .anycubic_exceptions import (
     AnycubicFileNotFoundError,
     APIAuthTokensExpired,
 )
-from .anycubic_helpers import (
-    generate_app_nonce,
-    generate_fake_device_id,
-    generate_web_nonce,
-)
+from .anycubic_model_auth import AnycubicAuthentication, AnycubicAuthMode
 from .anycubic_model_base import AnycubicCloudUpload
 
 
@@ -81,8 +69,9 @@ class AnycubicAPI:
         session: aiohttp.ClientSession,
         cookie_jar: aiohttp.CookieJar,
         debug_logger: Any = None,
-        auth_as_app: bool = False,
-        auth_sig_token: str | None = None,
+        auth_token: str | None = None,
+        auth_mode: AnycubicAuthMode | None = None,
+        device_id: str | None = None,
     ) -> None:
         # Cache
         self._cache_key_path: str | None = None
@@ -98,31 +87,30 @@ class AnycubicAPI:
         self._sessionjar: aiohttp.CookieJar = cookie_jar
         self._debug_logger: Any = debug_logger
         self._tokens_changed: bool = False
-        self._auth_as_app: bool = auth_as_app
-        self._redirect_uri: str = self.base_url if not self._auth_as_app else APP_REDIRECT_URI
         self._log_api_call_info: bool = False
         self._last_warn_api_duration: int | None = None
-        # ANYCUBIC APP VARS
-        self._client_id: str | None = None
-        self._app_id: str | None = None
-        self._app_version: str | None = None
-        self._app_secret: str | None = None
-        self._device_id: str | None = None
-        # ANYCUBIC AUTH VARS
-        self._auth_access_token: str | None = None
-        self._auth_sig_token: str | None = auth_sig_token
+        self._anycubic_auth: AnycubicAuthentication | None = None
 
-    def set_auth_sig_token(
-        self,
-        auth_sig_token: str,
-    ) -> None:
-        self._auth_sig_token = auth_sig_token
+        if auth_token:
+            self.set_authentication(
+                auth_token=auth_token,
+                auth_mode=auth_mode,
+                device_id=device_id,
+            )
 
     def set_log_api_call_info(
         self,
         val: bool,
     ) -> None:
         self._log_api_call_info = bool(val)
+
+    @property
+    def anycubic_auth(self) -> AnycubicAuthentication:
+        if self._anycubic_auth is None:
+            raise AnycubicAPIError(
+                "anycubic_auth object is missing."
+            )
+        return self._anycubic_auth
 
     @property
     def tokens_changed(self) -> bool:
@@ -167,12 +155,6 @@ class AnycubicAPI:
 
     def _build_api_url(self, endpoint: ac_api_endpoint) -> str:
         return f"{self._public_api_root}{endpoint.endpoint}"
-
-    def _build_auth_url(self, endpoint: str) -> str:
-        return f"https://{AUTH_DOMAIN}{endpoint}"
-
-    def _build_public_root_url(self, endpoint: str) -> str:
-        return f"{self.base_url}{endpoint}"
 
     @overload
     async def _fetch_ext_resp(
@@ -289,7 +271,9 @@ class AnycubicAPI:
             base_url=self._build_api_url(endpoint),
             query=query,
             params=params,
-            extra_headers=self._build_auth_headers(with_token=with_token),
+            extra_headers=self.anycubic_auth.get_auth_headers(
+                with_token=with_token
+            ),
             with_origin=with_origin,
         )
         return resp
@@ -299,87 +283,46 @@ class AnycubicAPI:
     # Login Functions
     # ------------------------------------------
 
-    def _generate_device_id(self) -> None:
-        self._device_id = generate_fake_device_id()
-
-    def _get_known_var_cid(self) -> str:
-        return AC_KNOWN_CID_WEB if not self._auth_as_app else AC_KNOWN_CID_APP
-
-    def _get_known_var_vid(self) -> str:
-        return AC_KNOWN_VID_WEB if not self._auth_as_app else AC_KNOWN_VID_APP
-
-    def _set_known_app_vars(self) -> None:
-        self._client_id = self._get_known_var_cid()
-        self._app_id = AC_KNOWN_AID
-        self._app_version = self._get_known_var_vid()
-        self._app_secret = AC_KNOWN_SEC
-
-    def _build_auth_headers(
+    def set_authentication(
         self,
-        with_token: bool = False,
-    ) -> dict[str, Any]:
-        auth_nonce = generate_app_nonce() if self._auth_as_app else generate_web_nonce()
-        timestamp = int(time.time() * 1e3)
-        sig_input = f"{self._app_id}{timestamp}{self._app_version}{self._app_secret}{auth_nonce}{self._app_id}"
-        signature = hashlib.md5(sig_input.encode('utf-8'))
-        auth_headers = {
-            'Xx-Device-Type': 'web' if not self._auth_as_app else 'android',
-            'Xx-Is-Cn': '1' if not self._auth_as_app else '0',
-            'Xx-Nonce': auth_nonce,
-            'Xx-Signature': signature.hexdigest(),
-            'Xx-Timestamp': str(timestamp),
-            'Xx-Version': self._app_version,
-            'Content-Type': 'application/json',
-        }
-        if self._auth_as_app:
-            auth_headers['XX-Device-Id'] = self._device_id
-        if with_token:
-            if self._auth_sig_token is None:
-                raise Exception("No sig token.")
-            auth_headers['XX-Token'] = self._auth_sig_token
-            auth_headers['XX-LANGUAGE'] = 'US'
-        return auth_headers
+        auth_token: str,
+        auth_mode: AnycubicAuthMode | int | None = None,
+        device_id: str | None = None,
+    ) -> None:
+        if isinstance(auth_mode, int):
+            auth_mode = AnycubicAuthMode(auth_mode)
 
-    async def _get_sig_token(self) -> None:
-        params = {
-            'access_token': self._auth_access_token,
-            'device_type': 'web' if not self._auth_as_app else 'android',
-        }
+        self._anycubic_auth = AnycubicAuthentication(
+            auth_token=auth_token,
+            auth_mode=auth_mode,
+            device_id=device_id,
+        )
+
+    async def _get_user_token_with_access_token(self) -> None:
+        params = self.anycubic_auth.auth_access_token_payload
         resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.auth_sig_token, query=None, params=params, with_token=False)
-        self._auth_sig_token = resp['data']['token']
+        self.anycubic_auth.set_auth_token(
+            resp['data']['token']
+        )
         self._log_to_debug("Successfully got sig token.")
 
     def build_token_dict(self) -> dict[str, Any]:
         self._tokens_changed = False
 
-        return {
-            'client_id': self._client_id,
-            'app_id': self._app_id,
-            'app_version': self._app_version,
-            'app_secret': self._app_secret,
-            'auth_access_token': self._auth_access_token,
-            'auth_sig_token': self._auth_sig_token,
-            'device_id': self._device_id,
-        }
+        return self.anycubic_auth.build_token_dict()
 
     def load_tokens_from_dict(self, data: dict[str, Any]) -> None:
-        self._client_id = data['client_id']
-        self._app_id = data['app_id']
-        self._app_version = data['app_version']
-        self._app_secret = data['app_secret']
-        self._auth_access_token = data['auth_access_token']
-        self._auth_sig_token = data['auth_sig_token']
-        if 'device_id' in data:
-            self._device_id = data['device_id']
-        else:
-            self._generate_device_id()
+        self.anycubic_auth.load_vars_from_dict(data)
 
     async def _load_cached_sig_token(self) -> None:
         if self._cache_sig_token_path is not None and (await aio_path.exists(self._cache_sig_token_path)):
 
             try:
                 async with aio_file_open(self._cache_sig_token_path, mode='r') as wo:
-                    self._auth_sig_token = await wo.read()
+                    token = await wo.read()
+                self.set_authentication(
+                    auth_token=token,
+                )
 
             except Exception:
                 pass
@@ -423,7 +366,6 @@ class AnycubicAPI:
         self,
         use_known: bool = True,
     ) -> bool:
-        self._set_known_app_vars()
         await self._load_cached_sig_token()
         try:
             await self.get_user_info()
