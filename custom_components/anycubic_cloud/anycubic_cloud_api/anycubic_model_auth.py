@@ -185,6 +185,4 @@ class AnycubicAuthentication:
         else:
             params['device_type'] = 'web'
 
-        print(params)
-
         return params
