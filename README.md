@@ -1,10 +1,14 @@
-# ABANDONED
+# SEMI-ABANDONED
 
 Anycubic blocked MQTT access, see [here](https://github.com/WaresWichall/hass-anycubic_cloud/issues/33)
 
-I'm moving on to another printer brand and abandoning this project.
+I'm moving on to another printer brand and won't be active on this project much anymore.
 
 Sorry to everyone using it but Anycubic won't respond to me so there's nothing else I can do.
+
+Still kind of works as of 23/10/2024 - seeking help + more workarounds in above issue.
+
+
 
 ---
 
