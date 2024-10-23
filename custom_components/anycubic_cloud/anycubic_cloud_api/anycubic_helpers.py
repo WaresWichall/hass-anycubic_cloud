@@ -146,7 +146,7 @@ def get_msb_and_lsb_from_bytes(input_bytes: bytes) -> tuple[int, int]:
     return struct.unpack(">qq", input_bytes)
 
 
-def generate_app_nonce() -> str:
+def generate_android_app_nonce() -> str:
     nonce = uuid.uuid1()
     msb, lsb = get_msb_and_lsb_from_bytes(nonce.bytes)
     return base_62_encode_int(msb) + base_62_encode_int(lsb)

@@ -19,6 +19,7 @@ from homeassistant.helpers.selector import BooleanSelector, ObjectSelector
 from homeassistant.helpers.storage import Store
 
 from .anycubic_cloud_api.anycubic_api_mqtt import AnycubicMQTTAPI as AnycubicAPI
+from .anycubic_cloud_api.anycubic_model_auth import AnycubicAuthMode
 from .const import (
     CONF_CARD_CONFIG,
     CONF_DEBUG,
@@ -26,6 +27,8 @@ from .const import (
     CONF_DRYING_PRESET_TEMPERATURE_,
     CONF_MQTT_CONNECT_MODE,
     CONF_PRINTER_ID_LIST,
+    CONF_USER_AUTH_MODE,
+    CONF_USER_DEVICE_ID,
     CONF_USER_TOKEN,
     DOMAIN,
     LOGGER,
@@ -42,9 +45,17 @@ from .helpers import (
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
 
+AUTH_MODES = {
+    AnycubicAuthMode.WEB: "Web (No MQTT)",
+    AnycubicAuthMode.ANDROID: "Android",
+    # AnycubicAuthMode.SLICER: "Slicer",
+}
+
 DATA_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_USER_TOKEN): cv.string,
+        vol.Optional(CONF_USER_AUTH_MODE, default=int(AnycubicAuthMode.WEB)): vol.In(AUTH_MODES),
+        vol.Optional(CONF_USER_DEVICE_ID): cv.string,
     }
 )
 
@@ -59,19 +70,31 @@ MQTT_CONNECT_MODES = {
 
 def async_create_anycubic_api(
     hass: HomeAssistant,
-    auth_sig_token: str | None,
+    auth_token: str | None,
+    auth_mode: AnycubicAuthMode | int | None = None,
+    device_id: str | None = None,
 ) -> AnycubicAPI:
+    if not auth_token:
+        raise Exception("Missing auth token.")
+
     cookie_jar = CookieJar(unsafe=True)
     websession = async_create_clientsession(
         hass,
         cookie_jar=cookie_jar,
     )
-    return AnycubicAPI(
+    api = AnycubicAPI(
         session=websession,
         cookie_jar=cookie_jar,
         debug_logger=LOGGER,
-        auth_sig_token=auth_sig_token,
     )
+
+    api.set_authentication(
+        auth_token=auth_token,
+        auth_mode=auth_mode,
+        device_id=device_id,
+    )
+
+    return api
 
 
 async def async_load_tokens_from_store(
@@ -95,6 +118,8 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
     def __init__(self) -> None:
         """Initialize."""
         self._user_token: str | None = None
+        self._user_auth_mode: AnycubicAuthMode | int | None = None
+        self._user_device_id: str | None = None
         self._is_reconfigure: bool = False
         self._anycubic_api: AnycubicAPI | None = None
         self.entry: ConfigEntry | None = None
@@ -111,7 +136,12 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
         return await self.async_step_reauth_confirm()
 
     def _async_create_anycubic_api(self) -> AnycubicAPI:
-        return async_create_anycubic_api(self.hass, self._user_token)
+        return async_create_anycubic_api(
+            self.hass,
+            self._user_token,
+            self._user_auth_mode,
+            self._user_device_id,
+        )
 
     def _errors_unknown_authentication_failure(
         self,
@@ -151,6 +181,9 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
 
             self._user_token = user_input[CONF_USER_TOKEN]
 
+        self._user_auth_mode = user_input.get(CONF_USER_AUTH_MODE)
+        self._user_device_id = user_input.get(CONF_USER_DEVICE_ID)
+
         try:
             await self._async_check_anycubic_api_instance_exists()
             errors = await self._async_check_login_errors()
@@ -176,6 +209,8 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
                         data={
                             **self.entry.data,
                             CONF_USER_TOKEN: self._user_token,
+                            CONF_USER_AUTH_MODE: self._user_auth_mode,
+                            CONF_USER_DEVICE_ID: self._user_device_id,
                         },
                     )
                     return await self.async_step_printer()
@@ -209,6 +244,7 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
     ) -> ConfigFlowResult:
         """Handle the printer step."""
         errors = {}
+        printer_id_map = {}
 
         try:
             if self._is_reconfigure:
@@ -217,6 +253,8 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
                 assert self.entry
 
                 self._user_token = self.entry.data[CONF_USER_TOKEN]
+                self._user_auth_mode = self.entry.data.get(CONF_USER_AUTH_MODE)
+                self._user_device_id = self.entry.data.get(CONF_USER_DEVICE_ID)
 
             await self._async_check_anycubic_api_instance_exists()
             errors = await self._async_check_login_errors()
@@ -260,6 +298,8 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
                         data={
                             **self.entry.data,
                             CONF_USER_TOKEN: self._user_token,
+                            CONF_USER_AUTH_MODE: self._user_auth_mode,
+                            CONF_USER_DEVICE_ID: self._user_device_id,
                             CONF_PRINTER_ID_LIST: printer_id_list,
                         },
                     )
@@ -274,6 +314,8 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
                         title=self._anycubic_api.api_user_identifier,
                         data={
                             CONF_USER_TOKEN: self._user_token,
+                            CONF_USER_AUTH_MODE: self._user_auth_mode,
+                            CONF_USER_DEVICE_ID: self._user_device_id,
                             CONF_PRINTER_ID_LIST: printer_id_list,
                         },
                     )
@@ -348,6 +390,8 @@ class AnycubicCloudOptionsFlowHandler(OptionsFlow):
             self._anycubic_api = async_create_anycubic_api(
                 self.hass,
                 self.entry.data[CONF_USER_TOKEN],
+                self.entry.data.get(CONF_USER_AUTH_MODE),
+                self.entry.data.get(CONF_USER_DEVICE_ID),
             )
 
             # await async_load_tokens_from_store(
