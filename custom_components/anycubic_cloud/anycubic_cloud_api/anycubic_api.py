@@ -34,13 +34,6 @@ from .anycubic_const import (
     MAX_PROJECT_IMAGE_SEARCH_COUNT,
     MAX_PROJECT_LIST_RESULTS,
     PUBLIC_API_ENDPOINT,
-    REX_APP_ID_BASIC,
-    REX_APP_ID_OBF,
-    REX_APP_SECRET_BASIC,
-    REX_APP_SECRET_OBF,
-    REX_APP_VERSION,
-    REX_CLIENT_ID,
-    REX_JS_FILE,
     WARN_INTERVAL_API_DURATION,
     AnycubicServerMessage,
 )
@@ -76,7 +69,6 @@ from .anycubic_exceptions import (
 )
 from .anycubic_helpers import (
     generate_app_nonce,
-    generate_cookie_state,
     generate_fake_device_id,
     generate_web_nonce,
 )
@@ -100,13 +92,10 @@ class AnycubicAPI:
         self.base_url = f"https://{BASE_DOMAIN}/"
         self._public_api_root = f"{self.base_url}{PUBLIC_API_ENDPOINT}"
         # Internal
-        self._api_username: str | None = None
-        self._api_password: str | None = None
         self._api_user_id: int | None = None
         self._api_user_email: str | None = None
         self._session: aiohttp.ClientSession = session
         self._sessionjar: aiohttp.CookieJar = cookie_jar
-        self._cookie_state = generate_cookie_state()
         self._debug_logger: Any = debug_logger
         self._tokens_changed: bool = False
         self._auth_as_app: bool = auth_as_app
@@ -120,18 +109,8 @@ class AnycubicAPI:
         self._app_secret: str | None = None
         self._device_id: str | None = None
         # ANYCUBIC AUTH VARS
-        self._login_auth_code: str | None = None
         self._auth_access_token: str | None = None
         self._auth_sig_token: str | None = auth_sig_token
-        self._auth_referer: str | None = None
-
-    def set_username_password(
-        self,
-        api_username: str,
-        api_password: str,
-    ) -> None:
-        self._api_username = api_username
-        self._api_password = api_password
 
     def set_auth_sig_token(
         self,
@@ -284,17 +263,6 @@ class AnycubicAPI:
             return str(response_url)
         return resp_data
 
-    async def _fetch_pub_get_resp(
-        self,
-        endpoint: str,
-        is_json: bool = True,
-    ) -> dict[Any, Any] | str:
-        return await self._fetch_ext_resp(
-            method=HTTP_METHODS.GET,
-            base_url=self._build_public_root_url(endpoint),
-            is_json=is_json,
-        )
-
     async def _fetch_aws_put_resp(self, final_url: str, put_data: bytes) -> dict[Any, Any] | str:
         resp = await self._fetch_ext_resp(
             method=HTTP_METHODS.PUT,
@@ -331,19 +299,6 @@ class AnycubicAPI:
     # Login Functions
     # ------------------------------------------
 
-    async def _fetch_js_body(self) -> str:
-        body = await self._fetch_pub_get_resp("ai", is_json=False)
-        if not isinstance(body, str):
-            raise AnycubicAPIParsingError(f"Unexpected error parsing html body: {body}")
-        js_files = REX_JS_FILE.search(body)
-        if js_files is None:
-            raise Exception("Could not find js file in source.")
-        js_file = js_files.group(1)
-        js_body = await self._fetch_pub_get_resp(js_file[1:], is_json=False)
-        if not isinstance(js_body, str):
-            raise AnycubicAPIParsingError(f"Unexpected error parsing js body: {js_body}")
-        return js_body
-
     def _generate_device_id(self) -> None:
         self._device_id = generate_fake_device_id()
 
@@ -358,114 +313,6 @@ class AnycubicAPI:
         self._app_id = AC_KNOWN_AID
         self._app_version = self._get_known_var_vid()
         self._app_secret = AC_KNOWN_SEC
-
-    async def _extract_current_app_vars(self) -> str | None:
-        js_body = await self._fetch_js_body()
-
-        basic_app_id_found = False
-
-        client_matches = REX_CLIENT_ID.findall(js_body)
-        if len(client_matches) == 1:
-            self._client_id = client_matches[0]
-        else:
-            self._log_to_debug("Falling back to known Client ID.")
-            self._client_id = self._get_known_var_cid()
-
-        app_id_matches = REX_APP_ID_BASIC.findall(js_body)
-        if len(app_id_matches) == 1:
-            self._app_id = app_id_matches[0]
-            basic_app_id_found = True
-        else:
-            app_id_matches = REX_APP_ID_OBF.findall(js_body)
-            if len(app_id_matches) == 1:
-                self._app_id = app_id_matches[0]
-            else:
-                self._log_to_debug("Falling back to known App ID.")
-                self._app_id = AC_KNOWN_AID
-
-        app_version_matches = REX_APP_VERSION.findall(js_body)
-        if len(app_version_matches) == 1:
-            self._app_version = app_version_matches[0]
-        else:
-            self._log_to_debug("Falling back to known Version.")
-            self._app_version = self._get_known_var_vid()
-
-        if basic_app_id_found:
-            app_secret_matches = REX_APP_SECRET_OBF.findall(js_body)
-        else:
-            app_secret_matches = REX_APP_SECRET_BASIC.findall(js_body)
-        if len(app_secret_matches) == 1:
-            self._app_secret = app_secret_matches[0]
-        else:
-            self._log_to_debug("Falling back to known Secret.")
-            self._app_secret = AC_KNOWN_SEC
-
-        return self._client_id
-
-    async def _init_oauth_session(self) -> None:
-        query = {
-            'clientId': self._client_id,
-            'responseType': 'code',
-            'redirectUri': self._redirect_uri,
-            'scope': 'read',
-            'state': self._cookie_state,
-        }
-        await self._fetch_ext_resp(
-            method=HTTP_METHODS.GET,
-            base_url=self._build_auth_url("/login/oauth/authorize"),
-            query=query,
-            is_json=False
-        )
-
-    async def _password_logon(self) -> None:
-        query = {
-            'clientId': self._client_id,
-            'responseType': 'code',
-            'redirectUri': self._redirect_uri,
-            'type': 'code',
-            'scope': 'read',
-            'state': self._cookie_state,
-            'nonce': '',
-            'code_challenge_method': '',
-            'code_challenge': '',
-        }
-        params = {
-            'application': 'ac_web',
-            'organization': 'anycubic',
-            'password': self._api_password,
-            'type': 'code',
-            'username': self._api_username,
-        }
-        resp = await self._fetch_ext_resp(
-            method=HTTP_METHODS.POST,
-            base_url=self._build_auth_url("/api/login"),
-            query=query,
-            params=params
-        )
-
-        if resp is None or not isinstance(resp['data'], str):
-            self._log_to_warn(str(AnycubicErrorMessage.api_error_rate_limited))
-            raise AnycubicErrorMessage.api_error_rate_limited
-
-        self._login_auth_code = resp['data']
-        self._log_to_debug("Successfully logged in.")
-
-    async def _fetch_ac_code_state(self) -> None:
-        query = {
-            'code': self._login_auth_code,
-            'state': self._cookie_state,
-        }
-        resp_url = await self._fetch_ext_resp(
-            method=HTTP_METHODS.GET,
-            base_url=self.base_url,
-            query=query,
-            is_json=False,
-            return_url=True,
-        )
-        if not isinstance(resp_url, str):
-            raise AnycubicAPIParsingError(f"Unexpected referrer response: {resp_url}")
-
-        self._auth_referer = resp_url
 
     def _build_auth_headers(
         self,
@@ -493,14 +340,6 @@ class AnycubicAPI:
             auth_headers['XX-LANGUAGE'] = 'US'
         return auth_headers
 
-    async def _get_oauth_token(self) -> None:
-        query = {
-            'code': self._login_auth_code,
-        }
-        resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.oauth_token_url, query=query, with_token=False)
-        self._auth_access_token = resp['data']['access_token']
-        self._log_to_debug("Successfully got auth token.")
-
     async def _get_sig_token(self) -> None:
         params = {
             'access_token': self._auth_access_token,
@@ -509,21 +348,6 @@ class AnycubicAPI:
         resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.auth_sig_token, query=None, params=params, with_token=False)
         self._auth_sig_token = resp['data']['token']
         self._log_to_debug("Successfully got sig token.")
-
-    async def _login_retrieve_tokens(
-        self,
-        use_known: bool = True,
-    ) -> None:
-        if use_known:
-            self._set_known_app_vars()
-        else:
-            await self._extract_current_app_vars()
-        self._generate_device_id()
-        await self._init_oauth_session()
-        await self._password_logon()
-        await self._fetch_ac_code_state()
-        await self._get_oauth_token()
-        await self._get_sig_token()
 
     def build_token_dict(self) -> dict[str, Any]:
         self._tokens_changed = False
@@ -549,25 +373,6 @@ class AnycubicAPI:
             self._device_id = data['device_id']
         else:
             self._generate_device_id()
-
-    def clear_all_tokens(self) -> None:
-        self._client_id = None
-        self._app_id = None
-        self._app_version = None
-        self._app_secret = None
-        self._auth_access_token = None
-        self._auth_sig_token = None
-        self._device_id = None
-
-    async def _save_main_tokens(self) -> bool:
-        self._tokens_changed = True
-        if self._cache_key_path is None:
-            return False
-
-        async with aio_file_open(self._cache_key_path, mode='w') as wo:
-            await wo.write(json.dumps(self.build_token_dict()))
-
-        return True
 
     async def _load_cached_sig_token(self) -> None:
         if self._cache_sig_token_path is not None and (await aio_path.exists(self._cache_sig_token_path)):
@@ -614,16 +419,6 @@ class AnycubicAPI:
         self._log_to_debug("No cached tokens found.")
         return False
 
-    def _api_tokens_loaded(self) -> bool:
-        all_tokens = [
-            self._client_id,
-            self._app_id,
-            self._app_version,
-            self._app_secret,
-            self._auth_access_token,
-            self._auth_sig_token]
-        return all([x is not None for x in all_tokens])
-
     async def _check_can_access_api(
         self,
         use_known: bool = True,
@@ -637,46 +432,9 @@ class AnycubicAPI:
             self._log_to_debug("Tokens expired.")
             return False
 
-    # async def _check_can_access_api(
-    #     self,
-    #     use_known: bool = True,
-    # ):
-    #     if not self._api_tokens_loaded():
-    #         cached_tokens = await self._load_main_tokens()
-    #     else:
-    #         cached_tokens = True
-    #     if cached_tokens:
-    #         try:
-    #             await self.get_user_info()
-    #             return True
-    #         except APIAuthTokensExpired:
-    #             cached_tokens = None
-    #             self._log_to_debug("Tokens expired.")
-    #     if not cached_tokens:
-    #         try:
-    #             await self._login_retrieve_tokens(
-    #                 use_known=use_known
-    #             )
-    #             await self._save_main_tokens()
-    #         except Exception:
-    #             return False
-    #     try:
-    #         await self.get_user_info()
-    #     except Exception:
-    #         return False
-    #     return True
-
     async def check_api_tokens(self) -> bool:
         if not await self._check_can_access_api(True):
             return False
-
-            # if self._api_tokens_loaded() and not self._auth_as_app:
-            #     self._log_to_debug(
-            #         "Login failed, retrying with new variables..."
-            #     )
-            #     return await self._check_can_access_api(False)
-            # else:
-            #     return False
 
         return True
 

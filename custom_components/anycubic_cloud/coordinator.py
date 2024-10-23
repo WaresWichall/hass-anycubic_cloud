@@ -696,13 +696,6 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             self._anycubic_api.set_mqtt_log_all_messages(debug_mode)
             self._anycubic_api.set_log_api_call_info(debug_mode)
 
-            # if config is not None:
-            #     LOGGER.debug("Loading tokens from store.")
-            #     try:
-            #         self._anycubic_api.load_tokens_from_dict(config)
-            #     except Exception as e:
-            #         LOGGER.debug(f"Error loading tokens from store: {e}")
-
             success = await self._anycubic_api.check_api_tokens()
             if not success:
                 raise ConfigEntryAuthFailed("Authentication failed. Check credentials.")
@@ -813,7 +806,6 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             raise
 
         except AnycubicAPIParsingError as error:
-            # self._anycubic_api.clear_all_tokens()
             self._failed_updates += 1
             raise UpdateFailed(error) from error
 
