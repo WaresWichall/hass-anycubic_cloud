@@ -167,7 +167,8 @@ class AnycubicAuthentication:
             auth_headers['XX-Device-Id'] = self.device_id
         if with_token:
             auth_headers['XX-Token'] = self._auth_token
-            auth_headers['XX-LANGUAGE'] = 'US'
+
+        auth_headers['XX-LANGUAGE'] = 'US'
 
         return auth_headers
 
