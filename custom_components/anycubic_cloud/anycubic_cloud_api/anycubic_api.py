@@ -81,8 +81,6 @@ class AnycubicAPI:
         self.base_url = f"https://{BASE_DOMAIN}/"
         self._public_api_root = f"{self.base_url}{PUBLIC_API_ENDPOINT}"
         # Internal
-        self._api_user_id: int | None = None
-        self._api_user_email: str | None = None
         self._session: aiohttp.ClientSession = session
         self._sessionjar: aiohttp.CookieJar = cookie_jar
         self._debug_logger: Any = debug_logger
@@ -115,18 +113,6 @@ class AnycubicAPI:
     @property
     def tokens_changed(self) -> bool:
         return self._tokens_changed
-
-    @property
-    def api_user_id(self) -> int | None:
-        return self._api_user_id
-
-    @property
-    def api_user_email(self) -> str | None:
-        return self._api_user_email
-
-    @property
-    def api_user_identifier(self) -> str:
-        return self._api_user_email or str(self._api_user_id)
 
     def _log_to_debug(self, msg: str) -> None:
         if self._debug_logger:
@@ -285,10 +271,16 @@ class AnycubicAPI:
 
     def set_authentication(
         self,
-        auth_token: str,
+        auth_token: str | None,
         auth_mode: AnycubicAuthMode | int | None = None,
         device_id: str | None = None,
+        auth_access_token: str | None = None,
     ) -> None:
+        if not auth_token and not auth_access_token:
+            raise AnycubicAPIError(
+                "Must supply token or access_token"
+            )
+
         if isinstance(auth_mode, int):
             auth_mode = AnycubicAuthMode(auth_mode)
 
@@ -296,6 +288,7 @@ class AnycubicAPI:
             auth_token=auth_token,
             auth_mode=auth_mode,
             device_id=device_id,
+            auth_access_token=auth_access_token,
         )
 
     async def _get_user_token_with_access_token(self) -> None:
@@ -367,6 +360,8 @@ class AnycubicAPI:
         use_known: bool = True,
     ) -> bool:
         await self._load_cached_sig_token()
+        if self.anycubic_auth.requires_access_token:
+            await self._get_user_token_with_access_token()
         try:
             await self.get_user_info()
             return True
@@ -529,8 +524,8 @@ class AnycubicAPI:
         if data is None:
             raise APIAuthTokensExpired('Invalid credentials.')
 
-        self._api_user_id = data['id']
-        self._api_user_email = data['user_email']
+        self.anycubic_auth.set_api_user_id(data['id'])
+        self.anycubic_auth.set_api_user_email(data['user_email'])
 
         return data
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import struct
@@ -201,3 +202,9 @@ def gcode_key_value_pair_to_dict(
     return {
         key: value
     }
+
+
+def md5_hex_of_string(
+    input_string: str,
+) -> str:
+    return hashlib.md5(input_string.encode('utf-8')).hexdigest().lower()

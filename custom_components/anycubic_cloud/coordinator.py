@@ -380,7 +380,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         data_dict: dict[str, Any] = dict()
 
         data_dict['user_info'] = {
-            "id": self.anycubic_api.api_user_id
+            "id": self.anycubic_api.anycubic_auth.api_user_id
         }
 
         data_dict['printers'] = dict()

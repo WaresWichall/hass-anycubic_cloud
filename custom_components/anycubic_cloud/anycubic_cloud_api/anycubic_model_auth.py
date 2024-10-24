@@ -5,6 +5,8 @@ import time
 from enum import IntEnum
 from typing import Any
 
+import bcrypt
+
 from .anycubic_const import (
     AC_KNOWN_AID,
     AC_KNOWN_CID_APP,
@@ -19,6 +21,7 @@ from .anycubic_helpers import (
     generate_android_app_nonce,
     generate_fake_device_id,
     generate_web_nonce,
+    md5_hex_of_string,
 )
 
 
@@ -34,6 +37,7 @@ class AnycubicAuthentication:
         auth_token: str | None = None,
         auth_mode: AnycubicAuthMode | None = None,
         device_id: str | None = None,
+        auth_access_token: str | None = None,
     ) -> None:
         self._auth_token: str | None = auth_token
         self._auth_mode: AnycubicAuthMode = auth_mode or AnycubicAuthMode.WEB
@@ -44,7 +48,9 @@ class AnycubicAuthentication:
         self._device_id: str | None = device_id
         self._device_type: str | None = None
         self._auth_cn: str | None = None
-        self._auth_access_token: str | None = None
+        self._auth_access_token: str | None = auth_access_token
+        self._api_user_id: int | None = None
+        self._api_user_email: str | None = None
         self._set_app_id()
         self._set_app_secret()
         self._set_version()
@@ -64,6 +70,33 @@ class AnycubicAuthentication:
             self._generate_device_id()
         return self._device_id
 
+    @property
+    def api_user_id(self) -> int | None:
+        return self._api_user_id
+
+    @property
+    def api_user_email(self) -> str | None:
+        return self._api_user_email
+
+    @property
+    def api_user_identifier(self) -> str:
+        return self._api_user_email or str(self._api_user_id)
+
+    @property
+    def requires_access_token(self) -> bool:
+        return (
+            self._auth_mode == AnycubicAuthMode.SLICER
+            and self._auth_access_token is not None
+            and self._auth_token is None
+        )
+
+    @property
+    def mqtt_app_id(self) -> str:
+        if self._auth_mode == AnycubicAuthMode.SLICER:
+            return "pcf"
+        else:
+            return "app"
+
     def set_auth_token(
         self,
         auth_token: str,
@@ -75,6 +108,18 @@ class AnycubicAuthentication:
         access_token: str,
     ) -> None:
         self._auth_access_token = access_token
+
+    def set_api_user_id(
+        self,
+        api_user_id: int,
+    ) -> None:
+        self._api_user_id = int(api_user_id)
+
+    def set_api_user_email(
+        self,
+        api_user_email: str,
+    ) -> None:
+        self._api_user_email = api_user_email
 
     def _set_app_id(self) -> None:
         self._app_id = AC_KNOWN_AID
@@ -105,10 +150,12 @@ class AnycubicAuthentication:
             self._device_type = 'web'
 
     def _set_cn(self) -> None:
-        if self._auth_mode == AnycubicAuthMode.WEB:
-            self._auth_cn = '1'
-        else:
+        if self._auth_mode == AnycubicAuthMode.ANDROID:
             self._auth_cn = '0'
+        elif self._auth_mode == AnycubicAuthMode.SLICER:
+            self._auth_cn = '1'
+        elif self._auth_mode == AnycubicAuthMode.WEB:
+            self._auth_cn = '1'
 
     def _generate_device_id(self) -> None:
         if self._auth_mode == AnycubicAuthMode.ANDROID:
@@ -176,9 +223,7 @@ class AnycubicAuthentication:
     def auth_access_token_payload(
         self,
     ) -> dict[str, Any]:
-        params = {
-            'access_token': self._auth_access_token,
-        }
+        params: dict[str, Any] = {}
         if self._auth_mode == AnycubicAuthMode.ANDROID:
             params['device_type'] = 'android'
         elif self._auth_mode == AnycubicAuthMode.SLICER:
@@ -186,4 +231,48 @@ class AnycubicAuthentication:
         else:
             params['device_type'] = 'web'
 
+        params['access_token'] = self._auth_access_token
+
         return params
+
+    def get_user_id_md5_tuple(self) -> tuple[int, str]:
+        if not self.api_user_id:
+            raise AnycubicAPIError('Unable to build user_id_md5_tuple, missing user id.')
+        user_id_md5 = md5_hex_of_string(f"{self.api_user_id}")
+        return (
+            self.api_user_id,
+            user_id_md5,
+        )
+
+    def get_mqtt_client_id(self) -> str:
+        if not self.api_user_email:
+            raise AnycubicAPIError('Unable to build mqtt_client_id, missing user email.')
+        client_id_string = self.api_user_email
+        if self._auth_mode == AnycubicAuthMode.SLICER:
+            client_id_string += "pcf"
+        return md5_hex_of_string(client_id_string)
+
+    def get_mqtt_login_info(self) -> tuple[str, str]:
+        token_md5 = md5_hex_of_string(self.auth_token)
+        token_bcrypt = bcrypt.hashpw(
+            token_md5.encode('utf-8'),
+            bcrypt.gensalt(),
+        )
+        username_md5 = self.get_mqtt_client_id()
+        sig_md5 = md5_hex_of_string("{0}{1}{2}".format(
+            username_md5,
+            token_bcrypt.decode('utf-8'),
+            username_md5,
+        ))
+
+        sig_str = "{0}|{1}|{2}|{3}".format(
+            "user",
+            self.mqtt_app_id,
+            self.api_user_email,
+            sig_md5,
+        )
+
+        return (
+            sig_str,
+            token_bcrypt.decode('utf-8'),
+        )

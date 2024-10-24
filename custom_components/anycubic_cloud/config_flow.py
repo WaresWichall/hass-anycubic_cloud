@@ -291,7 +291,9 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
                     break
 
             if not errors:
-                existing_entry = await self.async_set_unique_id(f"{self._anycubic_api.api_user_id}")
+                existing_entry = await self.async_set_unique_id(
+                    f"{self._anycubic_api.anycubic_auth.api_user_id}"
+                )
                 if existing_entry and self.entry:
                     self.hass.config_entries.async_update_entry(
                         existing_entry,
@@ -311,7 +313,7 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
                         return self.async_abort(reason="reauth_successful")
                 else:
                     return self.async_create_entry(
-                        title=self._anycubic_api.api_user_identifier,
+                        title=self._anycubic_api.anycubic_auth.api_user_identifier,
                         data={
                             CONF_USER_TOKEN: self._user_token,
                             CONF_USER_AUTH_MODE: self._user_auth_mode,
