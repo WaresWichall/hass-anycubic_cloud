@@ -71,3 +71,5 @@ class AnycubicErrorMessage:
     no_multi_color_box_for_slot_list = AnycubicAPIError('No multi color box found for slot list.')
     no_slot_list_for_multi_color_box = AnycubicAPIError('Must supply a slot list when using multi color box.')
     api_error_rate_limited = AnycubicAPIParsingError('Unexpected response for login, rate limited?')
+    api_error_server_maintenance = AnycubicAPIParsingError('Unexpected error parsing Anycubic response, server maintenance?')
+    api_error_user_server_maintenance = AnycubicAPIParsingError('Unexpected error retrieving user info, server maintenance?')
