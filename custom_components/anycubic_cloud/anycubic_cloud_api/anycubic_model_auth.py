@@ -249,19 +249,34 @@ class AnycubicAuthentication:
             raise AnycubicAPIError('Unable to build mqtt_client_id, missing user email.')
         client_id_string = self.api_user_email
         if self._auth_mode == AnycubicAuthMode.SLICER:
+            # Slicer adds 'pcf' to the email before md5 hashing
             client_id_string += "pcf"
         return md5_hex_of_string(client_id_string)
 
-    def get_mqtt_login_info(self) -> tuple[str, str]:
+    def get_mqtt_token(self) -> str:
+        # if self._auth_mode == AnycubicAuthMode.SLICER:
+        #     # The slicer token string is a 344 character base64 encoded string
+        #     # string does not base64 decode to text data so must be further encrypted.
+        #     # 344 base64 characters = 256 bytes of base64 encoded data or 2048 bits
+        #     # RSA 2048 signature seems possible maybe
+        #     # Could be hashed from either self.auth_token or self._auth_access_token
+        #     return some_base64_string
         token_md5 = md5_hex_of_string(self.auth_token)
         token_bcrypt = bcrypt.hashpw(
             token_md5.encode('utf-8'),
             bcrypt.gensalt(),
         )
+
+        return token_bcrypt.decode('utf-8')
+
+    def get_mqtt_login_info(self) -> tuple[str, str]:
+        mqtt_token = self.get_mqtt_token()
         username_md5 = self.get_mqtt_client_id()
+
+        # Username-Token Sandwich
         sig_md5 = md5_hex_of_string("{0}{1}{2}".format(
             username_md5,
-            token_bcrypt.decode('utf-8'),
+            mqtt_token,
             username_md5,
         ))
 
@@ -274,5 +289,5 @@ class AnycubicAuthentication:
 
         return (
             sig_str,
-            token_bcrypt.decode('utf-8'),
+            mqtt_token,
         )

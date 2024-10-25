@@ -6,5 +6,6 @@ MQTT_ROOT_TOPIC_PRINTER = 'anycubic/anycubicCloud/v1/printer/app/'
 MQTT_ROOT_TOPIC_PUBLISH = 'anycubic/anycubicCloud/v1/app/'
 MQTT_ROOT_TOPIC_PUBLISH_PRINTER = 'anycubic/anycubicCloud/v1/printer/public/'
 MQTT_ROOT_TOPIC_SERVER = 'anycubic/anycubicCloud/v1/server/app/'
+# Slicer MQTT topics seem to use /pc/ instead of /app/
 
 MQTT_TIMEOUT = 60 * 20
