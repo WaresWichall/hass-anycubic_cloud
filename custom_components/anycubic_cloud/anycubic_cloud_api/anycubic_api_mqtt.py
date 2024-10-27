@@ -22,7 +22,14 @@ from .anycubic_const_mqtt import (
 )
 from .anycubic_data_model_consumable import AnycubicConsumableData
 from .anycubic_exceptions import AnycubicAPIError, AnycubicMQTTUnhandledData
-from .anycubic_helpers import get_part_from_mqtt_topic, redact_part_from_mqtt_topic
+from .anycubic_helpers import (
+    get_mqtt_ssl_path_ca,
+    get_mqtt_ssl_path_cert,
+    get_mqtt_ssl_path_key,
+    get_part_from_mqtt_topic,
+    get_ssl_cert_directory,
+    redact_part_from_mqtt_topic,
+)
 
 if TYPE_CHECKING:
     from .anycubic_data_model_printer import AnycubicPrinter
@@ -198,12 +205,9 @@ class AnycubicMQTTAPI(AnycubicAPI):
         self._mqtt_publish_on_topic(mqtt_topic, payload=payload)
 
     def _mqtt_build_ssl_context(self) -> ssl.SSLContext:
-        ssl_root = path.dirname(__file__)
+        ssl_root = get_ssl_cert_directory()
 
-        if 'anycubic_cloud_api' not in ssl_root:
-            ssl_root = path.join(ssl_root, 'anycubic_cloud_api')
-
-        crt_path = path.join(ssl_root, 'anycubic_mqqt_tls_client.crt')
+        crt_path = get_mqtt_ssl_path_cert(ssl_root)
 
         if not path.exists(crt_path):
             self._log_to_error(f"Anycubic MQTT unable to start, no certificate found in root: {ssl_root}.")
@@ -213,12 +217,12 @@ class AnycubicMQTTAPI(AnycubicAPI):
         ssl_context.set_ciphers(('ALL:@SECLEVEL=0'),)
         ssl_context.load_cert_chain(
             crt_path,
-            path.join(ssl_root, 'anycubic_mqqt_tls_client.key'),
+            get_mqtt_ssl_path_key(ssl_root),
             None,
         )
         ssl_context.check_hostname = False
         ssl_context.verify_mode = ssl.CERT_NONE
-        ssl_context.load_verify_locations(path.join(ssl_root, 'anycubic_mqqt_tls_ca.crt'))
+        ssl_context.load_verify_locations(get_mqtt_ssl_path_ca(ssl_root))
 
         return ssl_context
 
