@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+import base64
 import hashlib
 import time
 from enum import IntEnum
 from typing import Any
 
 import bcrypt
+from cryptography import x509
+from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
 
 from .anycubic_const import (
     AC_KNOWN_AID,
@@ -21,6 +25,8 @@ from .anycubic_helpers import (
     generate_android_app_nonce,
     generate_fake_device_id,
     generate_web_nonce,
+    get_mqtt_ssl_path_ca,
+    get_ssl_cert_directory,
     md5_hex_of_string,
 )
 
@@ -169,7 +175,32 @@ class AnycubicAuthentication:
         elif self._auth_mode == AnycubicAuthMode.ANDROID:
             return generate_android_app_nonce()
 
-    def load_vars_from_dict(self, data: dict[str, Any]) -> None:
+    def clear_cached_access_user_token(self) -> bool:
+        if (
+            self._auth_mode == AnycubicAuthMode.SLICER
+            and self._auth_access_token
+            and self._auth_token
+        ):
+            self._auth_token = None
+            return True
+
+        return False
+
+    def load_vars_from_dict(
+        self,
+        data: dict[str, Any],
+        minimal: bool = False,
+    ) -> None:
+        if 'auth_token' in data:
+            self._auth_token = data['auth_token']
+        if 'device_id' in data:
+            self._device_id = data['device_id']
+        if 'auth_access_token' in data:
+            self._auth_access_token = data['auth_access_token']
+
+        if minimal:
+            return
+
         if 'app_client_id' in data:
             self._app_client_id = data['app_client_id']
         if 'app_id' in data:
@@ -178,10 +209,8 @@ class AnycubicAuthentication:
             self._app_version = data['app_version']
         if 'app_secret' in data:
             self._app_secret = data['app_secret']
-        if 'auth_token' in data:
-            self._auth_token = data['auth_token']
-        if 'device_id' in data:
-            self._device_id = data['device_id']
+        if 'auth_mode' in data:
+            self._auth_mode = AnycubicAuthMode(data['auth_mode'])
 
     def build_token_dict(self) -> dict[str, Any]:
         return {
@@ -191,6 +220,8 @@ class AnycubicAuthentication:
             'app_secret': self._app_secret,
             'auth_token': self._auth_token,
             'device_id': self._device_id,
+            'auth_access_token': self._auth_access_token,
+            'auth_mode': self._auth_mode,
         }
 
     def get_auth_headers(
@@ -253,14 +284,34 @@ class AnycubicAuthentication:
             client_id_string += "pcf"
         return md5_hex_of_string(client_id_string)
 
-    def get_mqtt_token(self) -> str:
-        # if self._auth_mode == AnycubicAuthMode.SLICER:
-        #     # The slicer token string is a 344 character base64 encoded string
-        #     # string does not base64 decode to text data so must be further encrypted.
-        #     # 344 base64 characters = 256 bytes of base64 encoded data or 2048 bits
-        #     # RSA 2048 signature seems possible maybe
-        #     # Could be hashed from either self.auth_token or self._auth_access_token
-        #     return some_base64_string
+    def get_anycubic_ca_public_key(self) -> RSAPublicKey:
+        ssl_root = get_ssl_cert_directory()
+        ca_path = get_mqtt_ssl_path_ca(ssl_root)
+        with open(ca_path, "rb") as fp:
+            pem_data = fp.read()
+        cert: x509.Certificate = x509.load_pem_x509_certificate(pem_data)
+        public_key = cert.public_key()
+
+        if not isinstance(public_key, RSAPublicKey):
+            raise AnycubicAPIError('Invalid Anycubic public key for MQTT signing.')
+
+        return public_key
+
+    def get_mqtt_token_slicer(self) -> str:
+        """ Slicer token string is RSA encrypted with the CA certificate + base64 encoded. """
+
+        public_key = self.get_anycubic_ca_public_key()
+        token_bytes = self.auth_token.encode('utf-8')
+        encrypted_token = public_key.encrypt(
+            token_bytes,
+            padding.PKCS1v15(),
+        )
+        encrypted_token_b64 = base64.b64encode(encrypted_token)
+
+        return encrypted_token_b64.decode('utf-8')
+
+    def get_mqtt_token_android(self) -> str:
+        """ Android token string is MD5 hashed + Bcrypt hashed. """
         token_md5 = md5_hex_of_string(self.auth_token)
         token_bcrypt = bcrypt.hashpw(
             token_md5.encode('utf-8'),
@@ -269,16 +320,24 @@ class AnycubicAuthentication:
 
         return token_bcrypt.decode('utf-8')
 
+    def get_mqtt_token(self) -> str:
+        """ Return encrypted self.auth_token as required for MQTT logon. """
+        if self._auth_mode == AnycubicAuthMode.SLICER:
+            return self.get_mqtt_token_slicer()
+        else:
+            return self.get_mqtt_token_android()
+
     def get_mqtt_login_info(self) -> tuple[str, str]:
         mqtt_token = self.get_mqtt_token()
         username_md5 = self.get_mqtt_client_id()
 
         # Username-Token Sandwich
-        sig_md5 = md5_hex_of_string("{0}{1}{2}".format(
+        user_token_sandwich = "{0}{1}{2}".format(
             username_md5,
             mqtt_token,
             username_md5,
-        ))
+        )
+        sig_md5 = md5_hex_of_string(user_token_sandwich)
 
         sig_str = "{0}|{1}|{2}|{3}".format(
             "user",

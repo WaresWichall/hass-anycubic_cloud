@@ -15,7 +15,7 @@
       "user": {
         "title": "Setup Anycubic Cloud Authentication",
         "data": {
-          "user_token": "User Token",
+          "user_token": "User Token / Slicer Access Token",
           "user_auth_mode": "Auth Mode",
           "user_device_id": "Device ID (Required for Android)"
         }
@@ -23,7 +23,7 @@
       "reauth_confirm": {
         "title": "Setup Anycubic Cloud Authentication",
         "data": {
-          "user_token": "User Token",
+          "user_token": "User Token / Slicer Access Token",
           "user_auth_mode": "Auth Mode",
           "user_device_id": "Device ID (Required for Android)"
         }

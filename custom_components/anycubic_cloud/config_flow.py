@@ -47,8 +47,8 @@ if TYPE_CHECKING:
 
 AUTH_MODES = {
     AnycubicAuthMode.WEB: "Web (No MQTT)",
+    AnycubicAuthMode.SLICER: "Slicer",
     AnycubicAuthMode.ANDROID: "Android",
-    # AnycubicAuthMode.SLICER: "Slicer",
 }
 
 DATA_SCHEMA = vol.Schema(
@@ -105,7 +105,7 @@ async def async_load_tokens_from_store(
     config = await store.async_load()
 
     if config:
-        anycubic_api.load_tokens_from_dict(config)
+        anycubic_api.load_tokens_from_dict(config, minimal=True)
 
 
 class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -156,10 +156,10 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
 
         self._anycubic_api = self._async_create_anycubic_api()
 
-        # if not self.entry:
-        #     return
+        if not self.entry:
+            return
 
-        # await async_load_tokens_from_store(self.hass, self._anycubic_api)
+        await async_load_tokens_from_store(self.hass, self._anycubic_api)
 
     async def _async_check_login_errors(self) -> dict[str, str]:
         assert self._anycubic_api
@@ -396,10 +396,10 @@ class AnycubicCloudOptionsFlowHandler(OptionsFlow):
                 self.entry.data.get(CONF_USER_DEVICE_ID),
             )
 
-            # await async_load_tokens_from_store(
-            #     self.hass,
-            #     self._anycubic_api,
-            # )
+            await async_load_tokens_from_store(
+                self.hass,
+                self._anycubic_api,
+            )
             await self._anycubic_api.check_api_tokens()
 
             printer_list = await self._anycubic_api.list_my_printers()

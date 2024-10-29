@@ -275,6 +275,7 @@ class AnycubicAPI:
         auth_mode: AnycubicAuthMode | int | None = None,
         device_id: str | None = None,
         auth_access_token: str | None = None,
+        auto_pick_token: bool = True,
     ) -> None:
         if not auth_token and not auth_access_token:
             raise AnycubicAPIError(
@@ -283,6 +284,15 @@ class AnycubicAPI:
 
         if isinstance(auth_mode, int):
             auth_mode = AnycubicAuthMode(auth_mode)
+
+        if (
+            auto_pick_token and (
+                not auth_access_token
+                and auth_mode == AnycubicAuthMode.SLICER
+            )
+        ):
+            auth_access_token = f"{auth_token}"
+            auth_token = None
 
         self._anycubic_auth = AnycubicAuthentication(
             auth_token=auth_token,
@@ -297,15 +307,23 @@ class AnycubicAPI:
         self.anycubic_auth.set_auth_token(
             resp['data']['token']
         )
-        self._log_to_debug("Successfully got sig token.")
+        self._log_to_debug("Logged in and retrieved user token with access_token.")
 
     def build_token_dict(self) -> dict[str, Any]:
         self._tokens_changed = False
 
         return self.anycubic_auth.build_token_dict()
 
-    def load_tokens_from_dict(self, data: dict[str, Any]) -> None:
-        self.anycubic_auth.load_vars_from_dict(data)
+    def load_tokens_from_dict(
+        self,
+        data: dict[str, Any],
+        minimal: bool = False,
+    ) -> None:
+        self.anycubic_auth.load_vars_from_dict(
+            data,
+            minimal=minimal,
+        )
+        self._log_to_debug("Loaded auth tokens from dict.")
 
     async def _load_cached_sig_token(self) -> None:
         if self._cache_sig_token_path is not None and (await aio_path.exists(self._cache_sig_token_path)):
@@ -357,7 +375,6 @@ class AnycubicAPI:
 
     async def _check_can_access_api(
         self,
-        use_known: bool = True,
     ) -> bool:
         await self._load_cached_sig_token()
         if self.anycubic_auth.requires_access_token:
@@ -370,7 +387,11 @@ class AnycubicAPI:
             return False
 
     async def check_api_tokens(self) -> bool:
-        if not await self._check_can_access_api(True):
+        if not await self._check_can_access_api():
+            if self.anycubic_auth.clear_cached_access_user_token():
+                self._tokens_changed = True
+                self._log_to_debug("Cleared cached user token.")
+                return await self._check_can_access_api()
             return False
 
         return True
