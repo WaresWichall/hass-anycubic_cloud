@@ -553,7 +553,10 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     def _anycubic_mqtt_connection_should_start(self) -> bool:
 
-        if self._mqtt_connection_mode == AnycubicMQTTConnectMode.Never_Connect:
+        if (
+            self._mqtt_connection_mode == AnycubicMQTTConnectMode.Never_Connect
+            or not self.anycubic_api.anycubic_auth.supports_mqtt_login
+        ):
             return False
 
         return (

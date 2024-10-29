@@ -103,6 +103,13 @@ class AnycubicAuthentication:
         else:
             return "app"
 
+    @property
+    def supports_mqtt_login(self) -> bool:
+        return (
+            self._auth_mode == AnycubicAuthMode.SLICER
+            or self._auth_mode == AnycubicAuthMode.ANDROID
+        )
+
     def set_auth_token(
         self,
         auth_token: str,
