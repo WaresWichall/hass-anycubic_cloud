@@ -87,9 +87,14 @@ class AnycubicMQTTAPI(AnycubicAPI):
             return False
 
     def _build_mqtt_printer_subscription(self, printer: AnycubicPrinter) -> list[str]:
+        # topic_slicer = f"{MQTT_ROOT_TOPIC_SLICER}{printer.machine_type}/{printer.key}/#"
         topic_printer = f"{MQTT_ROOT_TOPIC_PRINTER}{printer.machine_type}/{printer.key}/#"
         topic_plus = f"{MQTT_ROOT_TOPIC_PLUS}{printer.machine_type}/{printer.key}/#"
-        return list([topic_printer, topic_plus])
+        return list([
+            # topic_slicer,
+            topic_printer,
+            topic_plus
+        ])
 
     def _build_mqtt_printer_publish_topic(self, printer: AnycubicPrinter, endpoint: str) -> str:
         return f"{MQTT_ROOT_TOPIC_PUBLISH_PRINTER}{printer.machine_type}/{printer.key}/{endpoint}"

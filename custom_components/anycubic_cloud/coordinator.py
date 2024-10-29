@@ -710,7 +710,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 raise ConfigEntryAuthFailed("Authentication failed. Check credentials.")
 
             # Create config
-            await store.async_save(self._anycubic_api.build_token_dict())
+            await store.async_save(self._anycubic_api.get_auth_config_dict())
 
             first_printer_id = self.entry.data[CONF_PRINTER_ID_LIST][0]
 
@@ -765,7 +765,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         if self.anycubic_api.tokens_changed:
             store = Store[dict[str, Any]](self.hass, STORAGE_VERSION, STORAGE_KEY)
-            await store.async_save(self.anycubic_api.build_token_dict())
+            await store.async_save(self.anycubic_api.get_auth_config_dict())
 
     async def _connect_mqtt_for_action_response(self) -> None:
         self._mqtt_last_action = int(time.time())

@@ -74,9 +74,7 @@ class AnycubicAPI:
         device_id: str | None = None,
     ) -> None:
         # Cache
-        self._cache_key_path: str | None = None
-        self._cache_tokens_path: str | None = None
-        self._cache_sig_token_path: str | None = None
+        self._cached_web_auth_token_path: str | None = None
         # API
         self.base_url = f"https://{BASE_DOMAIN}/"
         self._public_api_root = f"{self.base_url}{PUBLIC_API_ENDPOINT}"
@@ -303,33 +301,41 @@ class AnycubicAPI:
 
     async def _get_user_token_with_access_token(self) -> None:
         params = self.anycubic_auth.auth_access_token_payload
-        resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.auth_sig_token, query=None, params=params, with_token=False)
+        resp = await self._fetch_api_resp(
+            endpoint=API_ENDPOINT.auth_sig_token,
+            query=None,
+            params=params,
+            with_token=False,
+        )
         self.anycubic_auth.set_auth_token(
             resp['data']['token']
         )
         self._log_to_debug("Logged in and retrieved user token with access_token.")
 
-    def build_token_dict(self) -> dict[str, Any]:
+    def get_auth_config_dict(self) -> dict[str, Any]:
         self._tokens_changed = False
 
-        return self.anycubic_auth.build_token_dict()
+        return self.anycubic_auth.get_auth_config_dict()
 
-    def load_tokens_from_dict(
+    def load_auth_config_from_dict(
         self,
         data: dict[str, Any],
         minimal: bool = False,
     ) -> None:
-        self.anycubic_auth.load_vars_from_dict(
+        self.anycubic_auth.load_auth_config_from_dict(
             data,
             minimal=minimal,
         )
         self._log_to_debug("Loaded auth tokens from dict.")
 
-    async def _load_cached_sig_token(self) -> None:
-        if self._cache_sig_token_path is not None and (await aio_path.exists(self._cache_sig_token_path)):
+    async def _load_cached_web_auth_token(self) -> None:
+        if (
+            self._cached_web_auth_token_path is not None
+            and (await aio_path.exists(self._cached_web_auth_token_path))
+        ):
 
             try:
-                async with aio_file_open(self._cache_sig_token_path, mode='r') as wo:
+                async with aio_file_open(self._cached_web_auth_token_path, mode='r') as wo:
                     token = await wo.read()
                 self.set_authentication(
                     auth_token=token,
@@ -338,45 +344,10 @@ class AnycubicAPI:
             except Exception:
                 pass
 
-    async def _load_main_tokens(self) -> bool:
-        tokens_loaded = False
-        if self._cache_tokens_path is not None and (await aio_path.exists(self._cache_tokens_path)):
-
-            try:
-                async with aio_file_open(self._cache_tokens_path, mode='r') as wo:
-                    json_data = await wo.read()
-                    data = json.loads(json_data)
-                self.load_tokens_from_dict(data['data'])
-                tokens_loaded = True
-
-            except Exception:
-                pass
-
-        if tokens_loaded:
-            return True
-
-        if self._cache_key_path is not None and (await aio_path.exists(self._cache_key_path)):
-
-            try:
-                async with aio_file_open(self._cache_key_path, mode='r') as wo:
-                    json_data = await wo.read()
-                    data = json.loads(json_data)
-                self.load_tokens_from_dict(data)
-                tokens_loaded = True
-
-            except Exception:
-                pass
-
-        if tokens_loaded:
-            return True
-
-        self._log_to_debug("No cached tokens found.")
-        return False
-
     async def _check_can_access_api(
         self,
     ) -> bool:
-        await self._load_cached_sig_token()
+        await self._load_cached_web_auth_token()
         if self.anycubic_auth.requires_access_token:
             await self._get_user_token_with_access_token()
         try:

@@ -105,7 +105,7 @@ async def async_load_tokens_from_store(
     config = await store.async_load()
 
     if config:
-        anycubic_api.load_tokens_from_dict(config, minimal=True)
+        anycubic_api.load_auth_config_from_dict(config, minimal=True)
 
 
 class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):

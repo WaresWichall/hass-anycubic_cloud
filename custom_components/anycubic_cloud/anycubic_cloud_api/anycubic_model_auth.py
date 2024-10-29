@@ -193,7 +193,7 @@ class AnycubicAuthentication:
 
         return False
 
-    def load_vars_from_dict(
+    def load_auth_config_from_dict(
         self,
         data: dict[str, Any],
         minimal: bool = False,
@@ -219,7 +219,7 @@ class AnycubicAuthentication:
         if 'auth_mode' in data:
             self._auth_mode = AnycubicAuthMode(data['auth_mode'])
 
-    def build_token_dict(self) -> dict[str, Any]:
+    def get_auth_config_dict(self) -> dict[str, Any]:
         return {
             'app_client_id': self._app_client_id,
             'app_id': self._app_id,
