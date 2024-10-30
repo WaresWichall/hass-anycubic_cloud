@@ -13,11 +13,6 @@ import aiohttp
 from aiofiles import open as aio_file_open
 from aiofiles.os import path as aio_path
 
-from .anycubic_api_base import (
-    API_ENDPOINT,
-    HTTP_METHODS,
-    ac_api_endpoint,
-)
 from .anycubic_const import (
     AUTH_DOMAIN,
     BASE_DOMAIN,
@@ -29,6 +24,7 @@ from .anycubic_const import (
     WARN_INTERVAL_API_DURATION,
     AnycubicServerMessage,
 )
+from .anycubic_const_api_endpoints import API_ENDPOINT
 from .anycubic_data_model_files import AnycubicCloudFile, AnycubicCloudStore
 from .anycubic_data_model_gcode_file import AnycubicGcodeFile
 from .anycubic_data_model_orders import (
@@ -61,6 +57,7 @@ from .anycubic_exceptions import (
 )
 from .anycubic_model_auth import AnycubicAuthentication, AnycubicAuthMode
 from .anycubic_model_cloud_upload import AnycubicCloudUpload
+from .anycubic_model_http import HTTP_METHODS, AnycubicAPIEndpoint
 
 
 class AnycubicAPI:
@@ -139,7 +136,7 @@ class AnycubicAPI:
 
         return header_dict
 
-    def _build_api_url(self, endpoint: ac_api_endpoint) -> str:
+    def _build_api_url(self, endpoint: AnycubicAPIEndpoint) -> str:
         return f"{self._public_api_root}{endpoint.endpoint}"
 
     @overload
@@ -245,7 +242,7 @@ class AnycubicAPI:
 
     async def _fetch_api_resp(
         self,
-        endpoint: ac_api_endpoint,
+        endpoint: AnycubicAPIEndpoint,
         query: dict[str, Any] | None = None,
         params: dict[str, Any] = {},
         extra_headers: dict[str, Any] = {},
