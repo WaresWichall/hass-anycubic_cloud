@@ -46,11 +46,24 @@
   },
   "options": {
     "step": {
-      "init": {
+      "options_menu": {
+        "title": "Anycubic Cloud Options",
+        "menu_options": {
+          "mqtt": "MQTT Settings",
+          "drying": "Drying Presets",
+          "card_config": "Panel Card Config",
+          "debug": "Debug Settings"
+        }
+      },
+      "mqtt": {
+        "title": "MQTT Settings",
         "data": {
-          "mqtt_connect_mode": "MQTT Connection Mode",
-          "card_config": "Panel Card Config (YAML format)",
-          "debug": "Debug Mode",
+          "mqtt_connect_mode": "MQTT Connection Mode"
+        }
+      },
+      "drying": {
+        "title": "Drying Presets",
+        "data": {
           "drying_preset_duration_1": "Dry Preset 1 Duration",
           "drying_preset_temperature_1": "Dry Preset 1 Temperature",
           "drying_preset_duration_2": "Dry Preset 2 Duration",
@@ -59,6 +72,18 @@
           "drying_preset_temperature_3": "Dry Preset 3 Temperature",
           "drying_preset_duration_4": "Dry Preset 4 Duration",
           "drying_preset_temperature_4": "Dry Preset 4 Temperature"
+        }
+      },
+      "card_config": {
+        "title": "Panel Card Config",
+        "data": {
+          "card_config": "Panel Card Config (YAML format)"
+        }
+      },
+      "debug": {
+        "title": "Debug Settings",
+        "data": {
+          "debug": "Debug Mode"
         }
       }
     }
