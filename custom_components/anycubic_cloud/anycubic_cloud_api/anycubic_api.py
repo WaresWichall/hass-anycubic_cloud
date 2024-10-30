@@ -130,11 +130,13 @@ class AnycubicAPI:
     # ------------------------------------------
 
     def _web_headers(self, with_origin: str | None = AUTH_DOMAIN) -> dict[str, Any]:
-        header_dict = {
-            'User-Agent': DEFAULT_USER_AGENT
-        }
-        if with_origin:
-            header_dict['Origin'] = f'https://{with_origin}'
+        header_dict = {}
+        if self.anycubic_auth.requires_user_agent:
+            header_dict['User-Agent'] = DEFAULT_USER_AGENT
+
+            if with_origin:
+                header_dict['Origin'] = f'https://{with_origin}'
+
         return header_dict
 
     def _build_api_url(self, endpoint: ac_api_endpoint) -> str:

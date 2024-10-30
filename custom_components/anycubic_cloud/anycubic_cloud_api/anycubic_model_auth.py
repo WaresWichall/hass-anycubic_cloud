@@ -89,6 +89,12 @@ class AnycubicAuthentication:
         return self._api_user_email or str(self._api_user_id)
 
     @property
+    def requires_user_agent(self) -> bool:
+        return (
+            self._auth_mode == AnycubicAuthMode.WEB
+        )
+
+    @property
     def requires_access_token(self) -> bool:
         return (
             self._auth_mode == AnycubicAuthMode.SLICER
