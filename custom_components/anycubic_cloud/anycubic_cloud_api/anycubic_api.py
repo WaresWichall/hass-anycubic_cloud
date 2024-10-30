@@ -60,7 +60,7 @@ from .anycubic_exceptions import (
     APIAuthTokensExpired,
 )
 from .anycubic_model_auth import AnycubicAuthentication, AnycubicAuthMode
-from .anycubic_model_base import AnycubicCloudUpload
+from .anycubic_model_cloud_upload import AnycubicCloudUpload
 
 
 class AnycubicAPI:
