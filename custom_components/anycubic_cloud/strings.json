@@ -33,6 +33,14 @@
         "data": {
           "printer_ids": "Monitored Printers"
         }
+      },
+      "reauth_or_choose_printer": {
+        "title": "Re-Auth or Printer Select",
+        "description": "Are you re-authenticating or changing your monitored printer(s)?",
+        "menu_options": {
+          "reauth": "Re-Authenticate",
+          "printer": "Change Printer(s)"
+        }
       }
     }
   },

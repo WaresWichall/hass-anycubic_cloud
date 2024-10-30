@@ -338,7 +338,17 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
 
         self._is_reconfigure = True
 
-        return await self.async_step_printer()
+        return await self.async_step_reauth_or_choose_printer()
+
+    async def async_step_reauth_or_choose_printer(
+        self, _: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Re-authenticate or select printer menu.."""
+
+        return self.async_show_menu(
+            step_id="reauth_or_choose_printer",
+            menu_options=["reauth", "printer"],
+        )
 
 
 class AnycubicCloudOptionsFlowHandler(OptionsFlow):
