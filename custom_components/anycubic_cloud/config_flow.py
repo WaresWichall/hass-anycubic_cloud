@@ -22,7 +22,9 @@ from .anycubic_cloud_api.anycubic_api_mqtt import AnycubicMQTTAPI as AnycubicAPI
 from .anycubic_cloud_api.anycubic_model_auth import AnycubicAuthMode
 from .const import (
     CONF_CARD_CONFIG,
-    CONF_DEBUG,
+    CONF_DEBUG_API_CALLS,
+    CONF_DEBUG_DEPRECATED,
+    CONF_DEBUG_MQTT_MSG,
     CONF_DRYING_PRESET_DURATION_,
     CONF_DRYING_PRESET_TEMPERATURE_,
     CONF_MQTT_CONNECT_MODE,
@@ -514,17 +516,30 @@ class AnycubicCloudOptionsFlowHandler(OptionsFlow):
         if user_input:
             return self.async_create_entry_with_existing_options(user_input)
 
-        default_debug = self.entry.options.get(
-            CONF_DEBUG,
+        default_debug_all = self.entry.options.get(
+            CONF_DEBUG_DEPRECATED,
             False,
+        )
+
+        default_debug_api = self.entry.options.get(
+            CONF_DEBUG_API_CALLS,
+            default_debug_all,
+        )
+
+        default_debug_mqtt = self.entry.options.get(
+            CONF_DEBUG_MQTT_MSG,
+            default_debug_all,
         )
 
         return self.async_show_form(
             step_id="debug",
             data_schema=vol.Schema({
                 vol.Optional(
-                    CONF_DEBUG, default=default_debug
-                ): BooleanSelector()
+                    CONF_DEBUG_API_CALLS, default=default_debug_api
+                ): BooleanSelector(),
+                vol.Optional(
+                    CONF_DEBUG_MQTT_MSG, default=default_debug_mqtt
+                ): BooleanSelector(),
             }),
             errors={},
         )

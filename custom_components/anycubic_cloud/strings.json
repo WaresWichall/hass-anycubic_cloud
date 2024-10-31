@@ -83,7 +83,8 @@
       "debug": {
         "title": "Debug Settings",
         "data": {
-          "debug": "Debug Mode"
+          "debug_mqtt_msg": "Debug Log all MQTT messages",
+          "debug_api_calls": "Debug Log all API calls"
         }
       }
     }

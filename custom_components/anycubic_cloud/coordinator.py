@@ -31,7 +31,9 @@ from .anycubic_cloud_api.anycubic_exceptions import AnycubicAPIError, AnycubicAP
 from .const import (
     API_SETUP_RETRIES,
     API_SETUP_RETRY_INTERVAL_SECONDS,
-    CONF_DEBUG,
+    CONF_DEBUG_API_CALLS,
+    CONF_DEBUG_DEPRECATED,
+    CONF_DEBUG_MQTT_MSG,
     CONF_MQTT_CONNECT_MODE,
     CONF_PRINTER_ID_LIST,
     CONF_USER_AUTH_MODE,
@@ -700,10 +702,16 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 device_id=self.entry.data.get(CONF_USER_DEVICE_ID),
             )
 
-            debug_mode: bool = bool(self.entry.options.get(CONF_DEBUG))
+            debug_all: bool = bool(self.entry.options.get(CONF_DEBUG_DEPRECATED))
+            debug_mqtt_msg: bool = bool(
+                self.entry.options.get(CONF_DEBUG_MQTT_MSG, debug_all)
+            )
+            debug_api_calls: bool = bool(
+                self.entry.options.get(CONF_DEBUG_API_CALLS, debug_all)
+            )
 
-            self._anycubic_api.set_mqtt_log_all_messages(debug_mode)
-            self._anycubic_api.set_log_api_call_info(debug_mode)
+            self._anycubic_api.set_mqtt_log_all_messages(debug_mqtt_msg)
+            self._anycubic_api.set_log_api_call_info(debug_api_calls)
 
             success = await self._anycubic_api.check_api_tokens()
             if not success:
