@@ -37,10 +37,11 @@ from .anycubic_enums import (
     AnycubicOrderID,
     AnycubicPrintStatus,
 )
+from .anycubic_error_strings import ErrorsAPIParsing, ErrorsGeneral
 from .anycubic_exceptions import (
     AnycubicAPIError,
+    AnycubicAPIParsingError,
     AnycubicDataParsingError,
-    AnycubicErrorMessage,
     AnycubicFileNotFoundError,
 )
 from .anycubic_model_cloud_upload import AnycubicCloudUpload
@@ -1626,7 +1627,7 @@ class AnycubicAPI(AnycubicAPIBase):
                 resp_msg := resp.get('msg')
             ):
                 if resp_msg == 'request error':
-                    raise AnycubicErrorMessage.api_error_rate_limited
+                    raise AnycubicAPIParsingError(ErrorsAPIParsing.api_error_rate_limited)
 
             self._log_to_error(f"Failed to load printer from anycubic response: {resp}")
             raise e
@@ -1782,13 +1783,13 @@ class AnycubicAPI(AnycubicAPIBase):
         temp_file: bool = False,
     ) -> str | None:
         if printer is None:
-            raise AnycubicErrorMessage.no_printer_to_print
+            raise AnycubicAPIError(ErrorsGeneral.no_printer_to_print)
 
         if ams_box_mapping and not printer.primary_multi_color_box:
-            raise AnycubicErrorMessage.no_multi_color_box_for_map
+            raise AnycubicAPIError(ErrorsGeneral.no_multi_color_box_for_map)
 
         if ams_box_mapping is None and printer.primary_multi_color_box:
-            raise AnycubicErrorMessage.no_map_for_multi_color_box
+            raise AnycubicAPIError(ErrorsGeneral.no_map_for_multi_color_box)
 
         print_request = AnycubicStartPrintRequestCloud(
             file_id=cloud_file_id,
@@ -1820,13 +1821,13 @@ class AnycubicAPI(AnycubicAPIBase):
         file_name: str | None = None,
     ) -> AnycubicPrintResponse:
         if printer is None:
-            raise AnycubicErrorMessage.no_printer_to_print
+            raise AnycubicAPIError(ErrorsGeneral.no_printer_to_print)
 
         if slot_index_list is not None and not printer.primary_multi_color_box:
-            raise AnycubicErrorMessage.no_multi_color_box_for_slot_list
+            raise AnycubicAPIError(ErrorsGeneral.no_multi_color_box_for_slot_list)
 
         if slot_index_list is None and printer.primary_multi_color_box:
-            raise AnycubicErrorMessage.no_slot_list_for_multi_color_box
+            raise AnycubicAPIError(ErrorsGeneral.no_slot_list_for_multi_color_box)
 
         proj = await self.fetch_project_gcode_info_fdm(gcode_id)
 
@@ -1879,13 +1880,13 @@ class AnycubicAPI(AnycubicAPIBase):
         slot_index_list: list[int] | None = None,
     ) -> AnycubicPrintResponse:
         if printer is None:
-            raise AnycubicErrorMessage.no_printer_to_print
+            raise AnycubicAPIError(ErrorsGeneral.no_printer_to_print)
 
         if slot_index_list is not None and not printer.primary_multi_color_box:
-            raise AnycubicErrorMessage.no_multi_color_box_for_slot_list
+            raise AnycubicAPIError(ErrorsGeneral.no_multi_color_box_for_slot_list)
 
         if slot_index_list is None and printer.primary_multi_color_box:
-            raise AnycubicErrorMessage.no_slot_list_for_multi_color_box
+            raise AnycubicAPIError(ErrorsGeneral.no_slot_list_for_multi_color_box)
 
         cloud_file_id = await self.upload_file_to_cloud(
             full_file_path=full_file_path,
@@ -1916,13 +1917,13 @@ class AnycubicAPI(AnycubicAPIBase):
         slot_index_list: list[int] | None = None,
     ) -> AnycubicPrintResponse:
         if printer is None:
-            raise AnycubicErrorMessage.no_printer_to_print
+            raise AnycubicAPIError(ErrorsGeneral.no_printer_to_print)
 
         if slot_index_list is not None and not printer.primary_multi_color_box:
-            raise AnycubicErrorMessage.no_multi_color_box_for_slot_list
+            raise AnycubicAPIError(ErrorsGeneral.no_multi_color_box_for_slot_list)
 
         if slot_index_list is None and printer.primary_multi_color_box:
-            raise AnycubicErrorMessage.no_slot_list_for_multi_color_box
+            raise AnycubicAPIError(ErrorsGeneral.no_slot_list_for_multi_color_box)
 
         if slot_index_list is not None:
             gcode_file = await self.read_gcode_file(

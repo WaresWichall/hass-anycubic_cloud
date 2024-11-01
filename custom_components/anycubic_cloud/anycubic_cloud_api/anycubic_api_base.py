@@ -17,10 +17,10 @@ from .anycubic_const import (
     WARN_INTERVAL_API_DURATION,
 )
 from .anycubic_const_api_endpoints import API_ENDPOINT
+from .anycubic_error_strings import ErrorsAPIParsing
 from .anycubic_exceptions import (
     AnycubicAPIError,
     AnycubicAPIParsingError,
-    AnycubicErrorMessage,
     APIAuthTokensExpired,
 )
 from .anycubic_model_auth import AnycubicAuthentication, AnycubicAuthMode
@@ -171,7 +171,7 @@ class AnycubicAPIBase:
 
                 response_url = resp.url
         except Exception:
-            raise AnycubicErrorMessage.api_error_server_maintenance
+            raise AnycubicAPIParsingError(ErrorsAPIParsing.api_error_server_maintenance)
 
         time_end: float = time.time()
         time_diff: float = time_end - time_start
@@ -343,7 +343,7 @@ class AnycubicAPIBase:
 
         data: dict[str, Any] | None = resp['data']
         if resp and resp.get('msg') == 'request error':
-            raise AnycubicErrorMessage.api_error_user_server_maintenance
+            raise AnycubicAPIParsingError(ErrorsAPIParsing.api_error_user_server_maintenance)
         if data is None:
             raise APIAuthTokensExpired('Invalid credentials.')
 
