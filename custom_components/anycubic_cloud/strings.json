@@ -12,19 +12,25 @@
       "invalid_printer": "Invalid printer."
     },
     "step": {
-      "user": {
-        "title": "Setup Anycubic Cloud Authentication",
+      "auth_mode_web": {
+        "title": "Authentication Mode - Web",
+        "description": "Retrieve your token from https://cloud-universe.anycubic.com/file following the steps in the readme.",
         "data": {
-          "user_token": "User Token / Slicer Access Token",
-          "user_auth_mode": "Auth Mode",
-          "user_device_id": "Device ID (Required for Android)"
+          "user_token": "User Token"
         }
       },
-      "reauth_confirm": {
-        "title": "Setup Anycubic Cloud Authentication",
+      "auth_mode_slicer": {
+        "title": "Authentication Mode - Slicer Next",
+        "description": "Retrieve your token from %AppData%\\AnycubicSlicerNext\\AnycubicSlicerNext.conf following the steps in the readme.",
         "data": {
-          "user_token": "User Token / Slicer Access Token",
-          "user_auth_mode": "Auth Mode",
+          "user_token": "Slicer Access Token"
+        }
+      },
+      "auth_mode_android": {
+        "title": "Authentication Mode - Android App",
+        "description": "Requires both token and device_id.",
+        "data": {
+          "user_token": "User Token",
           "user_device_id": "Device ID (Required for Android)"
         }
       },
@@ -32,6 +38,15 @@
         "title": "Choose your printers.",
         "data": {
           "printer_ids": "Monitored Printers"
+        }
+      },
+      "auth_mode_pick": {
+        "title": "Authentication Mode",
+        "description": "Which authentication mode would you like to use?",
+        "menu_options": {
+          "auth_mode_web": "Web (No MQTT)",
+          "auth_mode_slicer": "Slicer Next (Win)",
+          "auth_mode_android": "Android"
         }
       },
       "reauth_or_choose_printer": {
@@ -667,7 +682,7 @@
     },
     "multi_color_box_filament_extrude": {
       "name": "ACE Filament Extrude",
-      "description": "Activate filament extrude on ACE ACE.",
+      "description": "Activate filament extrude on ACE.",
       "fields": {
         "config_entry": {
           "name": "Config Entry",
@@ -697,7 +712,7 @@
     },
     "multi_color_box_filament_retract": {
       "name": "ACE Filament Retract",
-      "description": "Activate filament retract on ACE ACE.",
+      "description": "Activate filament retract on ACE.",
       "fields": {
         "config_entry": {
           "name": "Config Entry",
@@ -739,7 +754,7 @@
         },
         "uploaded_gcode_file": {
           "name": "Gcode File",
-          "description": "Gcode File"
+          "description": "The sliced .gcode file."
         }
       }
     },
@@ -765,7 +780,7 @@
         },
         "uploaded_gcode_file": {
           "name": "Gcode File",
-          "description": "Gcode File"
+          "description": "The sliced .gcode file."
         }
       }
     },

@@ -53,11 +53,22 @@ AUTH_MODES = {
     AnycubicAuthMode.ANDROID: "Android",
 }
 
-DATA_SCHEMA = vol.Schema(
+DATA_SCHEMA_AUTH_WEB = vol.Schema(
     {
         vol.Required(CONF_USER_TOKEN): cv.string,
-        vol.Optional(CONF_USER_AUTH_MODE, default=int(AnycubicAuthMode.WEB)): vol.In(AUTH_MODES),
-        vol.Optional(CONF_USER_DEVICE_ID): cv.string,
+    }
+)
+
+DATA_SCHEMA_AUTH_SLICER = vol.Schema(
+    {
+        vol.Required(CONF_USER_TOKEN): cv.string,
+    }
+)
+
+DATA_SCHEMA_AUTH_ANDROID = vol.Schema(
+    {
+        vol.Required(CONF_USER_TOKEN): cv.string,
+        vol.Required(CONF_USER_DEVICE_ID): cv.string,
     }
 )
 
@@ -132,11 +143,6 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
         """Get the options flow for this handler."""
         return AnycubicCloudOptionsFlowHandler(config_entry)
 
-    async def async_step_reauth(self, entry_data: Mapping[str, Any]) -> ConfigFlowResult:
-        """Handle initiation of re-authentication with AnycubicCloud."""
-        self.entry = self.hass.config_entries.async_get_entry(self.context["entry_id"])
-        return await self.async_step_reauth_confirm()
-
     def _async_create_anycubic_api(self) -> AnycubicAPI:
         return async_create_anycubic_api(
             self.hass,
@@ -174,6 +180,7 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
 
     async def _async_check_authentication_with_user_input(
         self,
+        auth_mode: AnycubicAuthMode,
         user_input: dict[str, Any],
     ) -> dict[str, str]:
         try:
@@ -183,7 +190,7 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
 
             self._user_token = user_input[CONF_USER_TOKEN]
 
-        self._user_auth_mode = user_input.get(CONF_USER_AUTH_MODE)
+        self._user_auth_mode = auth_mode
         self._user_device_id = user_input.get(CONF_USER_DEVICE_ID)
 
         try:
@@ -195,14 +202,67 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
 
         return errors
 
-    async def async_step_reauth_confirm(
-        self, user_input: dict[str, Any] | None = None
+    async def async_step_auth_mode_pick(
+        self, _: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Dialog that informs the user that reauth is required."""
+        """Authentication mode selection."""
+
+        return self.async_show_menu(
+            step_id="auth_mode_pick",
+            menu_options=["auth_mode_web", "auth_mode_slicer", "auth_mode_android"],
+        )
+
+    async def async_step_auth_mode_web(
+        self,
+        user_input: dict[str, Any] | None = None,
+    ) -> ConfigFlowResult:
+        """Handle the auth_mode_web step."""
+        return await self._async_handle_auth_mode_step(
+            step_id="auth_mode_web",
+            auth_mode=AnycubicAuthMode.WEB,
+            auth_schema=DATA_SCHEMA_AUTH_WEB,
+            user_input=user_input,
+        )
+
+    async def async_step_auth_mode_slicer(
+        self,
+        user_input: dict[str, Any] | None = None,
+    ) -> ConfigFlowResult:
+        """Handle the auth_mode_slicer step."""
+        return await self._async_handle_auth_mode_step(
+            step_id="auth_mode_slicer",
+            auth_mode=AnycubicAuthMode.SLICER,
+            auth_schema=DATA_SCHEMA_AUTH_SLICER,
+            user_input=user_input,
+        )
+
+    async def async_step_auth_mode_android(
+        self,
+        user_input: dict[str, Any] | None = None,
+    ) -> ConfigFlowResult:
+        """Handle the auth_mode_android step."""
+        return await self._async_handle_auth_mode_step(
+            step_id="auth_mode_android",
+            auth_mode=AnycubicAuthMode.ANDROID,
+            auth_schema=DATA_SCHEMA_AUTH_ANDROID,
+            user_input=user_input,
+        )
+
+    async def _async_handle_auth_mode_step(
+        self,
+        step_id: str,
+        auth_mode: AnycubicAuthMode,
+        auth_schema: vol.Schema,
+        user_input: dict[str, Any] | None = None,
+    ) -> ConfigFlowResult:
+        """Handle authentication step."""
         errors = {}
 
         if user_input is not None:
-            errors = await self._async_check_authentication_with_user_input(user_input)
+            errors = await self._async_check_authentication_with_user_input(
+                auth_mode=auth_mode,
+                user_input=user_input,
+            )
 
             if not errors:
                 if self.entry:
@@ -217,27 +277,12 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
                     )
                     return await self.async_step_printer()
 
-        return self.async_show_form(
-            step_id="reauth_confirm",
-            data_schema=DATA_SCHEMA,
-            errors=errors,
-        )
-
-    async def async_step_user(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
-        """Handle the initial step."""
-        errors = {}
-
-        if user_input is not None:
-            errors = await self._async_check_authentication_with_user_input(user_input)
-
-            if not errors:
-                return await self.async_step_printer()
+                else:
+                    return await self.async_step_printer()
 
         return self.async_show_form(
-            step_id="user",
-            data_schema=DATA_SCHEMA,
+            step_id=step_id,
+            data_schema=auth_schema,
             errors=errors,
         )
 
@@ -332,6 +377,23 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
                 },
             ),
         )
+
+    async def async_step_user(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Handle the initial step."""
+        return await self.async_step_auth_mode_pick()
+
+    async def async_step_reauth(self, entry_data: Mapping[str, Any]) -> ConfigFlowResult:
+        """Handle initiation of re-authentication with AnycubicCloud."""
+        self.entry = self.hass.config_entries.async_get_entry(self.context["entry_id"])
+        return await self.async_step_reauth_confirm()
+
+    async def async_step_reauth_confirm(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Dialog that informs the user that reauth is required."""
+        return await self.async_step_auth_mode_pick()
 
     async def async_step_reconfigure(
         self, _: dict[str, Any] | None = None
