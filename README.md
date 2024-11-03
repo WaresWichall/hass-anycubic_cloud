@@ -1,22 +1,15 @@
-# SEMI-ABANDONED
-
-Anycubic blocked MQTT access, see [here](https://github.com/WaresWichall/hass-anycubic_cloud/issues/33)
-
-I'm moving on to another printer brand and won't be active on this project much anymore.
-
-Sorry to everyone using it but Anycubic won't respond to me so there's nothing else I can do.
-
-Still kind of works as of 23/10/2024 - seeking help + more workarounds in above issue.
-
-
-
----
+> [!NOTE]  
+> Anycubic have been attempting to block MQTT access, see [here](https://github.com/WaresWichall/hass-anycubic_cloud/issues/33)
+> 
+> I'm moving on to another printer brand and won't be active on this project as much but will still be fixing issues.
+> 
+> MQTT access is now available using Slicer Next (windows version) tokens.
+> 
+> Still works as of 03/11/2024.
 
 ---
 
 # Anycubic Cloud Home Assistant Integration
-
-## WORK IN PROGRESS 
 
 Component is working very well so far with:
 - Kobra 3 Combo
@@ -72,16 +65,49 @@ Current features:
 
 ## How to Install
 
+1. Pick a method of authentication and grab your logon token.
+2. Add this repository to HACS under ... (menu) > Custom Repositories as an **Integration**
+3. Restart Home Assistant
+4. Go to Settings > Integrations > Add New and search Anycubic
+5. Select your chosen authentication mode
+6. Paste your **token** into the `User Token` or `Slicer Access Token` box.
+7. Select your printer, then you're good to go!
+8. Optionally configure more options in the home assistant integration `configure` menus.
+
+
+### Slicer authentication
+
+> [!IMPORTANT]  
+> Only tested / supported with Slicer Next for Windows
+
+1. Make sure your installation of Slicer Next is logged in, then close it.
+2. Locate your `AnycubicSlicerNext` config directory.
+> [!NOTE]  
+> This is found in:
+> ```
+> %AppData%\AnycubicSlicerNext\AnycubicSlicerNext.conf
+> ```
+> or
+> ```
+> C:\Users\<USERNAME>\AppData\Roaming\AnycubicSlicerNext\AnycubicSlicerNext.conf
+> ```
+3. Copy/save the whole `access_token` string without the quotes, it should be a 344 character string.
+4. Ideally you should now clear your login config for the slicer to prevent it logging in at the same time as Home Assistant.
+    This can be done setting your `access_token` to an empty string in the config file, e.g. `"access_token": "",`
+
+<img width="400" alt="" src="https://raw.githubusercontent.com/WaresWichall/hass-anycubic_cloud/dev/screenshots/auth_slicer_token.png">
+
+
+### Web authentication
+
+> [!IMPORTANT]  
+> Unfortunately web authentication no longer supports MQTT updates.
+
 1. Go to the [Anycubic Cloud Website](https://cloud-universe.anycubic.com/file)
 2. Log in
 3. Open Developer Tools in your browser
 4. Paste `window.localStorage["XX-Token"]` into the **console**
-5. Copy/save the long string of numbers and letters without the `''` - this is your user token.
-6. Add this repository to HACS under ... > Custom Repositories as an **Integration**
-7. Restart Home Assistant
-8. Go to Settings > Integrations > Add New and search Anycubic
-9. Paste your **user token** into the `User Token` box.
-10. Select your printer, then you're good to go!
+5. Copy/save the long string of numbers and letters without the `''` - this is your token.
 
 <img width="400" alt="" src="https://raw.githubusercontent.com/WaresWichall/hass-anycubic_cloud/dev/screenshots/anycubic_api_token.png">
 
