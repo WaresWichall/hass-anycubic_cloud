@@ -1,20 +1,20 @@
-import { LitElement, html, css, nothing, PropertyValues } from "lit";
+import { CSSResult, LitElement, PropertyValues, css, html, nothing } from "lit";
 import { property, state } from "lit/decorators.js";
-import { styleMap } from "lit-html/directives/style-map.js";
+import { styleMap } from "lit/directives/style-map.js";
 
 import { customElementIfUndef } from "../../../internal/register-custom-element";
 import { buildCameraUrlFromEntity } from "../../../helpers";
-import { HassEntity } from "../../../types";
+import { HassEntity, LitTemplateResult } from "../../../types";
 
 @customElementIfUndef("anycubic-printercard-camera_view")
 export class AnycubicPrintercardCameraview extends LitElement {
-  @property()
+  @property({ attribute: "show-video" })
   public showVideo?: boolean | undefined;
 
-  @property()
+  @property({ attribute: "toggle-video" })
   public toggleVideo?: () => void;
 
-  @property()
+  @property({ attribute: "camera-entity" })
   public cameraEntity: HassEntity | undefined;
 
   @state()
@@ -34,7 +34,7 @@ export class AnycubicPrintercardCameraview extends LitElement {
     }
   }
 
-  render(): any {
+  render(): LitTemplateResult {
     const stylesView = {
       display: this.showVideo ? "block" : "none",
     };
@@ -42,16 +42,14 @@ export class AnycubicPrintercardCameraview extends LitElement {
       <div
         class="ac-printercard-cameraview"
         style=${styleMap(stylesView)}
-        @click="${(_e): void => {
-          this._handleToggleClick();
-        }}"
+        @click=${this._handleToggleClick}
       >
         ${this.showVideo ? this._renderInner() : nothing}
       </div>
     `;
   }
 
-  private _renderInner(): any {
+  private _renderInner(): LitTemplateResult {
     const stylesCamera = {
       "background-image": this.camImgString,
     };
@@ -62,13 +60,13 @@ export class AnycubicPrintercardCameraview extends LitElement {
     ></div>`;
   }
 
-  private _handleToggleClick(): void {
+  private _handleToggleClick = (): void => {
     if (this.toggleVideo) {
       this.toggleVideo();
     }
-  }
+  };
 
-  static get styles(): any {
+  static get styles(): CSSResult {
     return css`
       :host {
         box-sizing: border-box;

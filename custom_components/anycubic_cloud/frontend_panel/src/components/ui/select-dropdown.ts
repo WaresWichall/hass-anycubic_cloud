@@ -1,13 +1,14 @@
 import { mdiChevronDown } from "@mdi/js";
 
-import { LitElement, html, nothing, css } from "lit";
+import { CSSResult, LitElement, css, html, nothing } from "lit";
 import { property, state } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
-import { styleMap } from "lit-html/directives/style-map.js";
+import { styleMap } from "lit/directives/style-map.js";
 
 import { customElementIfUndef } from "../../internal/register-custom-element";
 
 import { fireEvent } from "../../fire_event";
+import { DomClickEvent, EvtTargItemKey, LitTemplateResult } from "../../types";
 
 @customElementIfUndef("anycubic-ui-select-dropdown-item")
 export class AnycubicUISelectDropdownItem extends LitElement {
@@ -17,7 +18,7 @@ export class AnycubicUISelectDropdownItem extends LitElement {
   @state()
   private _isActive: boolean = false;
 
-  render(): any {
+  render(): LitTemplateResult {
     const stylesOption = {
       filter: this._isActive ? "brightness(80%)" : "brightness(100%)",
     };
@@ -25,33 +26,25 @@ export class AnycubicUISelectDropdownItem extends LitElement {
       <button
         class="ac-ui-seld-select"
         style=${styleMap(stylesOption)}
-        @mouseenter="${(_e): void => {
-          this._setActive();
-        }}"
-        @mousedown="${(_e): void => {
-          this._setActive();
-        }}"
-        @mouseup="${(_e): void => {
-          this._setInactive();
-        }}"
-        @mouseleave="${(_e): void => {
-          this._setInactive();
-        }}"
+        @mouseenter=${this._setActive}
+        @mousedown=${this._setActive}
+        @mouseup=${this._setInactive}
+        @mouseleave=${this._setInactive}
       >
         ${this.item}
       </button>
     `;
   }
 
-  private _setActive(): void {
+  private _setActive = (): void => {
     this._isActive = true;
-  }
+  };
 
-  private _setInactive(): void {
+  private _setInactive = (): void => {
     this._isActive = false;
-  }
+  };
 
-  static get styles(): any {
+  static get styles(): CSSResult {
     return css`
       :host {
         box-sizing: border-box;
@@ -81,13 +74,13 @@ export class AnycubicUISelectDropdownItem extends LitElement {
 
 @customElementIfUndef("anycubic-ui-select-dropdown")
 export class AnycubicUISelectDropdown extends LitElement {
-  @property()
-  public availableOptions: any;
+  @property({ attribute: "available-options" })
+  public availableOptions?: object;
 
   @property()
   public placeholder: string;
 
-  @property()
+  @property({ attribute: "initial-item" })
   public initialItem: string | undefined;
 
   @state()
@@ -99,14 +92,15 @@ export class AnycubicUISelectDropdown extends LitElement {
   @state()
   private _hidden: boolean = false;
 
-  async firstUpdated(): void {
+  // eslint-disable-next-line @typescript-eslint/require-await
+  async firstUpdated(): Promise<void> {
     this._selectedItem = this.initialItem;
     this._hidden = true;
     this._active = false;
     this.requestUpdate();
   }
 
-  render(): any {
+  render(): LitTemplateResult {
     const stylesButton = {
       backgroundColor: this._active ? "rgba(0,0,0,0.3)" : "rgba(0,0,0,0.15)",
     };
@@ -119,15 +113,9 @@ export class AnycubicUISelectDropdown extends LitElement {
           <button
             class="ac-ui-select-button"
             style=${styleMap(stylesButton)}
-            @click="${(_e): void => {
-              this._showOptions();
-            }}"
-            @mouseenter="${(_e): void => {
-              this._setActive();
-            }}"
-            @mouseleave="${(_e): void => {
-              this._setInactive();
-            }}"
+            @click=${this._showOptions}
+            @mouseenter=${this._setActive}
+            @mouseleave=${this._setInactive}
           >
             ${this._selectedItem ? this._selectedItem : this.placeholder}
             <ha-svg-icon .path=${mdiChevronDown}></ha-svg-icon>
@@ -139,45 +127,51 @@ export class AnycubicUISelectDropdown extends LitElement {
       : nothing;
   }
 
-  private _renderOptions(): HTMLElement {
-    return map(Object.keys(this.availableOptions), (key, _index) => {
-      return html`
-        <anycubic-ui-select-dropdown-item
-          .item=${this.availableOptions[key]}
-          @click="${(_e): void => {
-            this._selectItem(key);
-          }}"
-        ></anycubic-ui-select-dropdown-item>
-      `;
-    });
+  private _renderOptions(): Generator<unknown, void, LitTemplateResult> {
+    return map(
+      Object.keys(this.availableOptions as object),
+      (key: string | number, _index: number): LitTemplateResult => {
+        return html`
+          <anycubic-ui-select-dropdown-item
+            .item=${(this.availableOptions as object)[key]}
+            .item_key=${key}
+            @click=${this._selectItem}
+          ></anycubic-ui-select-dropdown-item>
+        `;
+      },
+    );
   }
 
-  private _showOptions(): void {
+  private _showOptions = (): void => {
     this._hidden = false;
-  }
+  };
 
-  private _hideOptions(): void {
+  private _hideOptions = (): void => {
     this._hidden = true;
-  }
+  };
 
-  private _setActive(): void {
+  private _setActive = (): void => {
     this._active = true;
-  }
+  };
 
-  private _setInactive(): void {
+  private _setInactive = (): void => {
     this._active = false;
-  }
+  };
 
-  private _selectItem(key): void {
-    this._selectedItem = this.availableOptions[key];
+  private _selectItem = (ev: DomClickEvent<EvtTargItemKey>): void => {
+    if (!this.availableOptions) {
+      return;
+    }
+    const key = ev.currentTarget.item_key;
+    this._selectedItem = this.availableOptions[key] as string | undefined;
     fireEvent(this, "ac-select-dropdown", {
       key: key,
-      value: this.availableOptions[key],
+      value: this.availableOptions[key] as string | undefined,
     });
     this._hidden = true;
-  }
+  };
 
-  static get styles(): any {
+  static get styles(): CSSResult {
     return css`
       :host {
         box-sizing: border-box;

@@ -1,6 +1,6 @@
-import { css } from "lit";
+import { CSSResult, css } from "lit";
 
-export const commonModalStyle: any = css`
+export const commonModalStyle: CSSResult = css`
   :host {
     display: none;
     position: fixed;

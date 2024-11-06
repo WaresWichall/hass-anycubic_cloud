@@ -1,5 +1,5 @@
-import { LitElement, html, css, PropertyValues, nothing } from "lit";
-import { property, customElement, state } from "lit/decorators.js";
+import { CSSResult, LitElement, PropertyValues, css, html, nothing } from "lit";
+import { customElement, property, state } from "lit/decorators.js";
 
 import { localize } from "../../../../localize/localize";
 
@@ -9,7 +9,7 @@ import {
   SWITCH_ENTITY_DOMAINS,
 } from "../../../const";
 
-import { fireEvent } from "../../../fire_event";
+import { HASSDomEvent, fireEvent } from "../../../fire_event";
 
 import {
   getDefaultCardConfig,
@@ -22,14 +22,17 @@ import {
 import {
   AnycubicCardConfig,
   CalculatedTimeType,
+  FormChangeDetail,
+  HaFormBaseSchema,
   HassDeviceList,
   HassEntityInfos,
-  HaFormBaseSchema,
   HomeAssistant,
+  LitTemplateResult,
+  PageChangeDetail,
   PrinterCardStatType,
-  StatTypeGeneral,
-  StatTypeFDM,
   StatTypeACE,
+  StatTypeFDM,
+  StatTypeGeneral,
   StatTypeLCD,
   TemperatureUnit,
 } from "../../../types";
@@ -46,7 +49,7 @@ export class AnycubicPrintercardConfigure extends LitElement {
   @property()
   public language!: string;
 
-  @property()
+  @property({ attribute: "card-config" })
   public cardConfig!: AnycubicCardConfig;
 
   @property()
@@ -56,7 +59,7 @@ export class AnycubicPrintercardConfigure extends LitElement {
   private configPage: string = "main";
 
   @state()
-  private availableStats: PrinterCardStatType[] = [];
+  private availableStats: object = {};
 
   @state()
   private formSchemaMain: HaFormBaseSchema[] = [];
@@ -70,10 +73,10 @@ export class AnycubicPrintercardConfigure extends LitElement {
   @state()
   private printerEntityIdPart: string | undefined;
 
-  @state({ type: Boolean })
+  @state()
   private hasColorbox: boolean = false;
 
-  @state({ type: Boolean })
+  @state()
   private isLCD: boolean = false;
 
   @state()
@@ -228,7 +231,7 @@ export class AnycubicPrintercardConfigure extends LitElement {
     }
   }
 
-  render(): any {
+  render(): LitTemplateResult {
     return html`
       <div class="ac-printer-card-configure-cont">
         ${this._renderMenu()} ${this._renderConfMain()}
@@ -237,7 +240,7 @@ export class AnycubicPrintercardConfigure extends LitElement {
     `;
   }
 
-  private _renderConfMain(): any {
+  private _renderConfMain(): LitTemplateResult {
     return this.configPage === "main"
       ? html`
           <div class="ac-printer-card-configure-conf">
@@ -253,7 +256,7 @@ export class AnycubicPrintercardConfigure extends LitElement {
       : nothing;
   }
 
-  private _renderConfStats(): any {
+  private _renderConfStats(): LitTemplateResult {
     return this.configPage === "stats"
       ? html`
           <div class="ac-printer-card-configure-conf">
@@ -261,14 +264,14 @@ export class AnycubicPrintercardConfigure extends LitElement {
             <anycubic-ui-multi-select-reorder
               .availableOptions=${this.availableStats}
               .initialItems=${this.cardConfig.monitoredStats}
-              .onChange=${(sel: any[]): void => this._selectedStatsChanged(sel)}
+              .onChange=${this._selectedStatsChanged}
             ></anycubic-ui-multi-select-reorder>
           </div>
         `
       : nothing;
   }
 
-  private _renderConfColours(): any {
+  private _renderConfColours(): LitTemplateResult {
     return this.configPage === "colours"
       ? html`
           <div class="ac-printer-card-configure-conf">
@@ -284,7 +287,7 @@ export class AnycubicPrintercardConfigure extends LitElement {
       : nothing;
   }
 
-  private _renderMenu(): HTMLElement {
+  private _renderMenu(): LitTemplateResult {
     return html`
       <div class="header">
         <ha-tabs
@@ -305,32 +308,32 @@ export class AnycubicPrintercardConfigure extends LitElement {
     `;
   }
 
-  private _handlePageSelected = (ev): void => {
-    const newPage = ev.detail.item.getAttribute("page-name");
+  private _handlePageSelected = (ev: HASSDomEvent<PageChangeDetail>): void => {
+    const newPage = ev.detail.item.getAttribute("page-name") as string;
     if (newPage !== this.configPage) {
       this.configPage = newPage;
     }
   };
 
-  private _selectedStatsChanged(selected: any[]): void {
+  private _selectedStatsChanged = (selected: PrinterCardStatType[]): void => {
     this.cardConfig.monitoredStats = selected;
     this._configChanged(this.cardConfig);
-  }
+  };
 
   private _configChanged(newConfig: AnycubicCardConfig): void {
     const filteredConfig = Object.keys(newConfig)
       .filter((key) => newConfig[key] !== defaultConfig[key])
-      .reduce((fConf, key) => {
-        fConf[key] = newConfig[key];
+      .reduce((fConf: AnycubicCardConfig, key: string) => {
+        fConf[key] = newConfig[key as keyof AnycubicCardConfig];
         return fConf;
       }, {});
     fireEvent(this, "config-changed", { config: filteredConfig });
   }
 
-  private _formValueChanged(ev: Event): void {
+  private _formValueChanged = (ev: HASSDomEvent<FormChangeDetail>): void => {
     this.cardConfig = ev.detail.value;
     this._configChanged(this.cardConfig);
-  }
+  };
 
   private _computeLabel = (schema: HaFormBaseSchema): string => {
     switch (schema.name) {
@@ -364,6 +367,7 @@ export class AnycubicPrintercardConfigure extends LitElement {
   };
 
   private _computeSchemaMain(): HaFormBaseSchema[] {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!this.printers) {
       return [];
     }
@@ -462,11 +466,11 @@ export class AnycubicPrintercardConfigure extends LitElement {
   }
 
   private _computeSchemaColours(): HaFormBaseSchema[] {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     return this.printers
       ? [
           {
             name: "slotColors",
-            description: this._labelSlotColors,
             selector: {
               text: {
                 multiple: true,
@@ -477,7 +481,7 @@ export class AnycubicPrintercardConfigure extends LitElement {
       : [];
   }
 
-  static get styles(): any {
+  static get styles(): CSSResult {
     return css`
       :host {
         display: block;

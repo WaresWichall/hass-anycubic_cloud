@@ -1,22 +1,28 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { mdiCheck, mdiChevronDown, mdiChevronUp } from "@mdi/js";
 
-import { LitElement, html, nothing, css, PropertyValues } from "lit";
+import { CSSResult, LitElement, PropertyValues, css, html, nothing } from "lit";
 import { property, state } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
 import { classMap } from "lit/directives/class-map.js";
-import { styleMap } from "lit-html/directives/style-map.js";
+import { styleMap } from "lit/directives/style-map.js";
 
 import { customElementIfUndef } from "../../internal/register-custom-element";
+import {
+  DomClickEvent,
+  EvtTargDirection,
+  LitTemplateResult,
+} from "../../types";
 
 @customElementIfUndef("anycubic-ui-multi-select-reorder-item")
 export class AnycubicUIMultiSelectReorderItem extends LitElement {
   @property()
   public item: any;
 
-  @property()
+  @property({ attribute: "selected-items" })
   public selectedItems: any[];
 
-  @property()
+  @property({ attribute: "unused-items" })
   public unusedItems: any[];
 
   @property()
@@ -39,7 +45,7 @@ export class AnycubicUIMultiSelectReorderItem extends LitElement {
     }
   }
 
-  protected update(changedProperties: PropertyValues<this>): void {
+  protected update(changedProperties: PropertyValues): void {
     super.update(changedProperties);
     if (
       changedProperties.has("_isActive") ||
@@ -58,17 +64,12 @@ export class AnycubicUIMultiSelectReorderItem extends LitElement {
     }
   }
 
-  render(): any {
+  render(): LitTemplateResult {
     const classesItemText = {
-      "ac-ui-deselected": !this._isActive ? true : false,
+      "ac-ui-deselected": !this._isActive,
     };
     return html`
-      <button
-        class="ac-ui-msr-select"
-        @click="${(_e): void => {
-          this.toggle(this.item);
-        }}"
-      >
+      <button class="ac-ui-msr-select" @click=${this._toggle_item}>
         ${this._isActive
           ? html`<ha-svg-icon .path=${mdiCheck}></ha-svg-icon>`
           : nothing}
@@ -79,17 +80,15 @@ export class AnycubicUIMultiSelectReorderItem extends LitElement {
       <div>
         <button
           class="ac-ui-msr-position"
-          @click="${(_e): void => {
-            this.reorder(this.item, 1);
-          }}"
+          .direction=${1}
+          @click=${this._reorder_item}
         >
           <ha-svg-icon .path=${mdiChevronDown}></ha-svg-icon>
         </button>
         <button
           class="ac-ui-msr-position"
-          @click="${(_e): void => {
-            this.reorder(this.item, -1);
-          }}"
+          .direction=${-1}
+          @click=${this._reorder_item}
         >
           <ha-svg-icon .path=${mdiChevronUp}></ha-svg-icon>
         </button>
@@ -97,7 +96,17 @@ export class AnycubicUIMultiSelectReorderItem extends LitElement {
     `;
   }
 
-  static get styles(): any {
+  private _toggle_item = (): void => {
+    this.toggle(this.item);
+  };
+
+  private _reorder_item = (ev: DomClickEvent<EvtTargDirection>): void => {
+    if (this._isActive) {
+      this.reorder(this.item, ev.currentTarget.direction);
+    }
+  };
+
+  static get styles(): CSSResult {
     return css`
       :host {
         box-sizing: border-box;
@@ -152,28 +161,34 @@ export class AnycubicUIMultiSelectReorderItem extends LitElement {
 
 @customElementIfUndef("anycubic-ui-multi-select-reorder")
 export class AnycubicUIMultiSelectReorder extends LitElement {
-  @property()
-  public availableOptions: any;
+  @property({ attribute: "available-options" })
+  public availableOptions: object;
 
-  @property()
-  public initialItems: any[];
+  @property({ attribute: "initial-items" })
+  public initialItems: (string | number)[];
 
-  @property()
-  public onChange: (sel: any[]) => void;
-
-  @state()
-  private _allOptions: any[];
+  @property({ attribute: "on-change" })
+  public onChange: (sel: (string | number)[]) => void;
 
   @state()
-  private _selectedItems: any[];
+  private _allOptions: (string | number)[];
 
   @state()
-  private _unusedItems: any[];
+  private _selectedItems: (string | number)[];
 
-  async firstUpdated(): void {
-    this._allOptions = Object.values(this.availableOptions);
-    this._selectedItems = [...this.initialItems].filter((item) =>
-      this._allOptions.includes(item),
+  @state()
+  private _unusedItems: (string | number)[];
+
+  // eslint-disable-next-line @typescript-eslint/require-await
+  async firstUpdated(): Promise<void> {
+    this._allOptions = Object.values(this.availableOptions) as (
+      | string
+      | number
+    )[];
+    this._setSelectedItems(
+      [...this.initialItems].filter((item: string | number) =>
+        this._allOptions.includes(item),
+      ),
     );
     this._unusedItems = this._allOptions.filter(
       (item) => !this.initialItems.includes(item),
@@ -183,18 +198,16 @@ export class AnycubicUIMultiSelectReorder extends LitElement {
 
   protected willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
-
-    if (changedProperties.has("_selectedItems")) {
-      this.onChange(this._selectedItems);
-    }
   }
 
-  render(): any {
+  render(): LitTemplateResult {
     const stylesCont = {
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       height: this._allOptions
         ? String(this._allOptions.length * 56) + "px"
         : "0px",
     };
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     return this._allOptions
       ? html`
           <div style=${styleMap(stylesCont)}>
@@ -204,8 +217,8 @@ export class AnycubicUIMultiSelectReorder extends LitElement {
                   .item=${item}
                   .selectedItems=${this._selectedItems}
                   .unusedItems=${this._unusedItems}
-                  .reorder=${(item, mod): void => this._reorder(item, mod)}
-                  .toggle=${(item): void => this._toggle(item)}
+                  .reorder=${this._reorder}
+                  .toggle=${this._toggle}
                 ></anycubic-ui-multi-select-reorder-item>
               `;
             })}
@@ -214,7 +227,12 @@ export class AnycubicUIMultiSelectReorder extends LitElement {
       : nothing;
   }
 
-  private _reorder(item, mod): void {
+  private _setSelectedItems(selectedItems: (string | number)[]): void {
+    this._selectedItems = selectedItems;
+    this.onChange(this._selectedItems);
+  }
+
+  private _reorder = (item: string | number, mod: number): void => {
     const ind = this._selectedItems.indexOf(item);
     const newPos = ind + mod;
 
@@ -227,17 +245,17 @@ export class AnycubicUIMultiSelectReorder extends LitElement {
     clone[newPos] = item;
     clone[ind] = tmp;
 
-    this._selectedItems = clone;
-  }
+    this._setSelectedItems(clone);
+  };
 
-  private _toggle(item): void {
+  private _toggle = (item: string | number): void => {
     if (this._selectedItems.includes(item)) {
       const i = this._selectedItems.indexOf(item);
 
-      this._selectedItems = [
+      this._setSelectedItems([
         ...this._selectedItems.slice(0, i),
         ...this._selectedItems.slice(i + 1),
-      ];
+      ]);
 
       this._unusedItems = [item, ...this._unusedItems];
     } else {
@@ -248,11 +266,11 @@ export class AnycubicUIMultiSelectReorder extends LitElement {
         ...this._unusedItems.slice(i + 1),
       ];
 
-      this._selectedItems = [...this._selectedItems, item];
+      this._setSelectedItems([...this._selectedItems, item]);
     }
-  }
+  };
 
-  static get styles(): any {
+  static get styles(): CSSResult {
     return css`
       :host {
         box-sizing: border-box;

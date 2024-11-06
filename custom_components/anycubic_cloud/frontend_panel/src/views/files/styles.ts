@@ -1,6 +1,6 @@
-import { css } from "lit";
+import { CSSResult, css } from "lit";
 
-export const commonFilesStyle: any = css`
+export const commonFilesStyle: CSSResult = css`
   :host {
     padding: 16px;
     display: block;

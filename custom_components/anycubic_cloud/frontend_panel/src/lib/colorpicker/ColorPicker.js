@@ -26,6 +26,7 @@ export class ColorPicker extends LitElement {
     isHsl: { type: Boolean, state: true, attribute: false },
     copied: { type: String },
     debounceMode: { type: Boolean },
+    buttonDisabled: { attribute: "button-disabled", type: Boolean },
   };
 
   static styles = root;
@@ -36,6 +37,7 @@ export class ColorPicker extends LitElement {
     super();
     this._color = Color.parse(namedColors.slateblue);
     this.isHsl = true;
+    this.buttonDisabled = false;
   }
 
   firstUpdated(props) {
@@ -275,7 +277,10 @@ export class ColorPicker extends LitElement {
             @color-update="${this.updateColor}"
           ></hsl-canvas>
           <div class="ok">
-            <a class="button" @click="${this.okColor}"
+            <a
+              class="button"
+              .disabled=${this.buttonDisabled}
+              @click="${this.okColor}"
               >OK
               <span class="swatch">
                 <span style="${styleMap(swatchBg)}"></span>

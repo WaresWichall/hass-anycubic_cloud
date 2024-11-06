@@ -1,5 +1,5 @@
-import { LitElement, html, css, PropertyValues, nothing } from "lit";
-import { property, customElement, state } from "lit/decorators.js";
+import { CSSResult, LitElement, PropertyValues, css, html, nothing } from "lit";
+import { customElement, property, state } from "lit/decorators.js";
 
 import { localize } from "../../../localize/localize";
 
@@ -7,22 +7,23 @@ import {
   getPanelACEMonitoredStats,
   getPanelBasicMonitoredStats,
   getPanelFDMMonitoredStats,
+  getPrinterBinarySensorState,
   getPrinterEntities,
   getPrinterEntityIdPart,
   getPrinterID,
   getPrinterMAC,
   getPrinterSensorStateFloat,
   getPrinterSensorStateString,
-  getPrinterBinarySensorState,
   getPrinterUpdateEntityState,
   isFDMPrinter,
 } from "../../helpers";
 import {
-  HomeAssistant,
   HassDevice,
   HassEntityInfos,
   HassPanel,
   HassRoute,
+  HomeAssistant,
+  LitTemplateResult,
   PrinterCardStatType,
   TranslationDict,
 } from "../../types";
@@ -72,10 +73,10 @@ export class AnycubicViewMain extends LitElement {
   @property()
   public panel!: HassPanel;
 
-  @property()
+  @property({ attribute: "selected-printer-id" })
   public selectedPrinterID: string | undefined;
 
-  @property()
+  @property({ attribute: "selected-printer-device" })
   public selectedPrinterDevice: HassDevice | undefined;
 
   @state()
@@ -287,7 +288,10 @@ export class AnycubicViewMain extends LitElement {
     }
   }
 
-  private _renderInfoRow(fieldKey, rowData): HTMLElement {
+  private _renderInfoRow(
+    fieldKey: string,
+    rowData: string | number | boolean | undefined | null,
+  ): LitTemplateResult {
     return html`
       <div class="info-row">
         <span class="info-heading"> ${this._statTranslations[fieldKey]}:</span>
@@ -296,13 +300,16 @@ export class AnycubicViewMain extends LitElement {
     `;
   }
 
-  private _renderOptionalInfoRow(fieldKey, rowData): HTMLElement | null {
+  private _renderOptionalInfoRow(
+    fieldKey: string,
+    rowData: string | number | boolean | undefined | null,
+  ): LitTemplateResult | null {
     return typeof rowData !== "undefined"
       ? this._renderInfoRow(fieldKey, rowData)
       : null;
   }
 
-  render(): any {
+  render(): LitTemplateResult {
     return html`
       <printer-card elevation="2">
         <anycubic-printercard-card
@@ -391,7 +398,7 @@ export class AnycubicViewMain extends LitElement {
     `;
   }
 
-  static get styles(): any {
+  static get styles(): CSSResult {
     return css`
       :host {
         padding: 16px;

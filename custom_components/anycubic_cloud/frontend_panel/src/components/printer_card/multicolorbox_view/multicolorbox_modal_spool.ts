@@ -1,29 +1,38 @@
-import { LitElement, html, css, PropertyValues, nothing } from "lit";
+import { CSSResult, LitElement, PropertyValues, css, html, nothing } from "lit";
 import { property, state } from "lit/decorators.js";
 import { query } from "lit/decorators/query.js";
 import { map } from "lit/directives/map.js";
-import { styleMap } from "lit-html/directives/style-map.js";
-import { animate } from "@lit-labs/motion";
+import { styleMap } from "lit/directives/style-map.js";
+import { animate, Options as motionOptions } from "@lit-labs/motion";
 
 import { localize } from "../../../../localize/localize";
 
 import "../../../lib/colorpicker/ColorPicker.js";
 
 import { platform } from "../../../const";
+import { HASSDomEvent } from "../../../fire_event";
 import { customElementIfUndef } from "../../../internal/register-custom-element";
 
+import { materialTypeFromString } from "../../../helpers";
 import {
   AnycubicMaterialType,
   AnycubicSpoolInfo,
-  HomeAssistant,
+  ColorPicker,
+  ColourPickEvent,
+  DomClickEvent,
+  DropdownEvent,
+  EvtTargColourPreset,
   HassDevice,
+  HomeAssistant,
+  LitTemplateResult,
+  ModalEventSpool,
 } from "../../../types";
 
 import { commonModalStyle } from "../../ui/modal-styles";
 
 import "../../ui/select-dropdown.ts";
 
-const animOptionsCard = {
+const animOptionsCard: motionOptions = {
   keyframeOptions: {
     duration: 250,
     direction: "alternate",
@@ -35,7 +44,7 @@ const animOptionsCard = {
 @customElementIfUndef("anycubic-printercard-multicolorbox_modal_spool")
 export class AnycubicPrintercardMulticolorboxModalSpool extends LitElement {
   @query("color-picker")
-  private _elColorPicker;
+  private _elColorPicker: ColorPicker | undefined;
 
   @property()
   public hass!: HomeAssistant;
@@ -43,10 +52,10 @@ export class AnycubicPrintercardMulticolorboxModalSpool extends LitElement {
   @property()
   public language!: string;
 
-  @property()
+  @property({ attribute: "selected-printer-device" })
   public selectedPrinterDevice: HassDevice | undefined;
 
-  @property()
+  @property({ attribute: "slot-colors" })
   public slotColors?: string[];
 
   @state()
@@ -62,7 +71,7 @@ export class AnycubicPrintercardMulticolorboxModalSpool extends LitElement {
   private material_type: AnycubicMaterialType | undefined;
 
   @state()
-  private color: number[] | undefined;
+  private color: number[] | string | undefined;
 
   @state()
   private _isOpen: boolean = false;
@@ -79,7 +88,11 @@ export class AnycubicPrintercardMulticolorboxModalSpool extends LitElement {
   @state()
   private _buttonSave: string;
 
-  async firstUpdated(): void {
+  @state()
+  private _changingSlot: boolean = false;
+
+  // eslint-disable-next-line @typescript-eslint/require-await
+  async firstUpdated(): Promise<void> {
     this.addEventListener("click", (e) => {
       this._closeModal(e);
     });
@@ -129,11 +142,11 @@ export class AnycubicPrintercardMulticolorboxModalSpool extends LitElement {
     }
   }
 
-  render(): any {
+  render(): LitTemplateResult {
     const stylesMain = {
-      height: this.isHidden ? "1px" : "auto",
-      opacity: this.isHidden ? 0.0 : 1.0,
-      scale: this.isHidden ? 0.0 : 1.0,
+      height: "auto",
+      opacity: 1.0,
+      scale: 1.0,
     };
 
     return html`
@@ -142,26 +155,15 @@ export class AnycubicPrintercardMulticolorboxModalSpool extends LitElement {
         style=${styleMap(stylesMain)}
         ${animate({ ...animOptionsCard })}
       >
-        <span
-          class="ac-modal-close"
-          @click="${(e): void => {
-            this._closeModal(e);
-          }}"
-          >&times;</span
-        >
-        <div
-          class="ac-modal-card"
-          @click="${(e): void => {
-            this._cardClick(e);
-          }}"
-        >
+        <span class="ac-modal-close" @click=${this._closeModal}>&times;</span>
+        <div class="ac-modal-card" @click=${this._cardClick}>
           ${this.color ? this._renderCard() : nothing}
         </div>
       </div>
     `;
   }
 
-  _renderCard(): any {
+  _renderCard(): LitTemplateResult {
     return this.spool_index >= 0
       ? html`
           <div>
@@ -180,14 +182,13 @@ export class AnycubicPrintercardMulticolorboxModalSpool extends LitElement {
               ${this._renderPresets()}
               <div>
                 <p class="ac-modal-label">${this._labelSelectColour}:</p>
-                <color-picker .value="${this.color}"></color-picker>
+                <color-picker .value=${this.color}></color-picker>
               </div>
             </div>
             <div class="ac-save-settings">
               <ha-control-button
-                @click="${(_e): void => {
-                  this._handleSaveButton();
-                }}"
+                .disabled=${this._changingSlot}
+                @click=${this._handleSaveButton}
               >
                 ${this._buttonSave}
               </ha-control-button>
@@ -197,7 +198,7 @@ export class AnycubicPrintercardMulticolorboxModalSpool extends LitElement {
       : nothing;
   }
 
-  private _renderPresets(): HTMLElement {
+  private _renderPresets(): LitTemplateResult {
     return html`
       <div>
         <p class="ac-modal-label">Choose Preset Colour:</p>
@@ -211,9 +212,8 @@ export class AnycubicPrintercardMulticolorboxModalSpool extends LitElement {
                   <div
                     class="ac-mcb-preset-color"
                     style=${styleMap(presetStyle)}
-                    @click="${(_e): void => {
-                      this._colourPresetChange(preset);
-                    }}"
+                    .preset=${preset}
+                    @click=${this._colourPresetChange}
                   >
                     &nbsp;
                   </div>
@@ -225,34 +225,37 @@ export class AnycubicPrintercardMulticolorboxModalSpool extends LitElement {
     `;
   }
 
-  private _colourPresetChange(newPreset: string): void {
-    this.color = newPreset;
+  private _colourPresetChange = (
+    ev: DomClickEvent<EvtTargColourPreset>,
+  ): void => {
+    this.color = ev.currentTarget.preset;
     if (this._elColorPicker) {
       this._elColorPicker.color = this.color;
     }
-  }
+  };
 
-  private _handleModalEvent = (e: Event): void => {
+  private _handleModalEvent = (evt: Event): void => {
+    const e = evt as HASSDomEvent<ModalEventSpool>;
     e.stopPropagation();
     if (e.detail.modalOpen) {
       this._isOpen = true;
       this.box_id = Number(e.detail.box_id);
       this.spool_index = Number(e.detail.spool_index);
-      this.material_type = e.detail.material_type
-        ? AnycubicMaterialType[e.detail.material_type.toUpperCase()]
-        : undefined;
+      this.material_type = materialTypeFromString(e.detail.material_type);
       this.color = e.detail.color;
     }
   };
 
-  private _handleDropdownEvent = (e: Event): void => {
+  private _handleDropdownEvent = (evt: Event): void => {
+    const e = evt as HASSDomEvent<DropdownEvent<string, string>>;
     e.stopPropagation();
     if (e.detail.value) {
-      this.material_type = AnycubicMaterialType[e.detail.value];
+      this.material_type = materialTypeFromString(e.detail.value);
     }
   };
 
-  private _handleColourEvent = (e: Event): void => {
+  private _handleColourEvent = (evt: Event): void => {
+    const e = evt as HASSDomEvent<ColourPickEvent>;
     e.stopPropagation();
     if (e.detail.color) {
       this.color = e.detail.color.rgb;
@@ -261,12 +264,14 @@ export class AnycubicPrintercardMulticolorboxModalSpool extends LitElement {
 
   private _handleColourPickEvent = (e: Event): void => {
     this._handleColourEvent(e);
-    this._submitSlotChanges();
+    if (!this._changingSlot) {
+      this._submitSlotChanges();
+    }
   };
 
-  private _handleSaveButton(): void {
+  private _handleSaveButton = (): void => {
     this._submitSlotChanges();
-  }
+  };
 
   private _submitSlotChanges(): void {
     if (
@@ -277,20 +282,28 @@ export class AnycubicPrintercardMulticolorboxModalSpool extends LitElement {
       this.color.length >= 3
     ) {
       const serv = `multi_color_box_set_slot_${this.material_type.toLowerCase()}`;
-      this.hass.callService(platform, serv, {
-        config_entry: this.selectedPrinterDevice.primary_config_entry,
-        device_id: this.selectedPrinterDevice.id,
-        box_id: this.box_id,
-        slot_number: this.spool_index + 1,
-        slot_color_red: this.color[0],
-        slot_color_green: this.color[1],
-        slot_color_blue: this.color[2],
-      });
+      this._changingSlot = true;
+      this.hass
+        .callService(platform, serv, {
+          config_entry: this.selectedPrinterDevice.primary_config_entry,
+          device_id: this.selectedPrinterDevice.id,
+          box_id: this.box_id,
+          slot_number: this.spool_index + 1,
+          slot_color_red: this.color[0],
+          slot_color_green: this.color[1],
+          slot_color_blue: this.color[2],
+        })
+        .then(() => {
+          this._changingSlot = false;
+        })
+        .catch((_e: unknown) => {
+          this._changingSlot = false;
+        });
       this._closeModal();
     }
   }
 
-  private _closeModal(e?: Event | undefined): void {
+  private _closeModal = (e?: Event | undefined): void => {
     if (e) {
       e.stopPropagation();
     }
@@ -299,13 +312,13 @@ export class AnycubicPrintercardMulticolorboxModalSpool extends LitElement {
     this.material_type = undefined;
     this.color = undefined;
     this.box_id = 0;
-  }
+  };
 
-  private _cardClick(e: Event): void {
+  private _cardClick = (e: Event): void => {
     e.stopPropagation();
-  }
+  };
 
-  static get styles(): any {
+  static get styles(): CSSResult {
     return css`
       ${commonModalStyle}
 

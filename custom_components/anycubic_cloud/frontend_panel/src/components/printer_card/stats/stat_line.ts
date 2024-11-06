@@ -1,7 +1,8 @@
-import { LitElement, html, css } from "lit";
+import { CSSResult, LitElement, css, html } from "lit";
 import { property } from "lit/decorators.js";
 
 import { customElementIfUndef } from "../../../internal/register-custom-element";
+import { LitTemplateResult } from "../../../types";
 
 @customElementIfUndef("anycubic-printercard-stat-line")
 export class AnycubicPrintercardStatLine extends LitElement {
@@ -14,7 +15,7 @@ export class AnycubicPrintercardStatLine extends LitElement {
   @property({ type: String })
   public unit?: string = "";
 
-  render(): any {
+  render(): LitTemplateResult {
     return html`
       <div class="ac-stat-line">
         <p class="ac-stat-text ac-stat-heading">${this.name}</p>
@@ -23,7 +24,7 @@ export class AnycubicPrintercardStatLine extends LitElement {
     `;
   }
 
-  static get styles(): any {
+  static get styles(): CSSResult {
     return css`
       :host {
         box-sizing: border-box;
