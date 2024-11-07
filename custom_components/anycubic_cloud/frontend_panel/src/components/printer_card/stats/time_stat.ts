@@ -36,7 +36,7 @@ export class AnycubicPrintercardStatTime extends LitElement {
   public isSeconds?: boolean;
 
   @state()
-  private currentTime: number = 0;
+  private currentTime: number | string | undefined = 0;
 
   @state()
   private lastIntervalId: number = -1;
@@ -59,9 +59,21 @@ export class AnycubicPrintercardStatTime extends LitElement {
     }, 1000);
   }
 
+  public connectedCallback(): void {
+    super.connectedCallback();
+    if (this.lastIntervalId === -1) {
+      this.lastIntervalId = setInterval(() => {
+        this._incTime();
+      }, 1000);
+    }
+  }
+
   public disconnectedCallback(): void {
     super.disconnectedCallback();
-    clearInterval(this.lastIntervalId);
+    if (this.lastIntervalId !== -1) {
+      clearInterval(this.lastIntervalId);
+      this.lastIntervalId = -1;
+    }
   }
 
   render(): LitTemplateResult {
@@ -77,7 +89,12 @@ export class AnycubicPrintercardStatTime extends LitElement {
   }
 
   private _incTime(): void {
-    this.currentTime += this.direction;
+    if (
+      this.currentTime === 0 ||
+      (this.currentTime && !isNaN(this.currentTime as number))
+    ) {
+      this.currentTime = Number(this.currentTime) + this.direction;
+    }
   }
 
   static get styles(): CSSResult {

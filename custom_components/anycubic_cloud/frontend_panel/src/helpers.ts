@@ -1,4 +1,9 @@
-import moment, { duration as momentDuration } from "moment";
+import { utc as dfnsUtc } from "@date-fns/utc";
+import {
+  Duration as dfnsDuration,
+  format as dfnsFormat,
+  intervalToDuration as dfnsIntervalToDuration,
+} from "date-fns";
 
 import { fireEvent } from "./fire_event";
 import {
@@ -583,23 +588,60 @@ export const navigateToPage = (
   });
 };
 
-export const formatDuration = (time: number, round: boolean): string => {
-  return round
-    ? momentDuration(time, "seconds").humanize()
-    : ((): string => {
-        const t = momentDuration(time, "seconds");
+export function milliSecondsToDuration(milliSeconds: number): dfnsDuration {
+  const epoch = new Date(0);
+  const secondsAfterEpoch = new Date(milliSeconds);
+  return dfnsIntervalToDuration({
+    start: epoch,
+    end: secondsAfterEpoch,
+  });
+}
 
-        const d = t.days();
-        const h = t.hours();
-        const m = t.minutes();
-        const s = t.seconds();
+export function secondsToDuration(seconds: number): dfnsDuration {
+  return milliSecondsToDuration(seconds * 1e3);
+}
 
-        return `${d > 0 ? `${d}d` : ""}${h > 0 ? ` ${h}h` : ""}${m > 0 ? ` ${m}m` : ""}${s > 0 ? ` ${s}s` : "0s"}`;
-      })();
+export const formatDuration = (
+  time: number | string | undefined,
+  round: boolean,
+): string => {
+  if (time !== 0 && (!time || isNaN(time as number))) {
+    return "invalid duration";
+  }
+  const dur: dfnsDuration = secondsToDuration(
+    round ? Math.ceil(Number(time) / 60) * 60 : Number(time),
+  );
+
+  const days: string = dur.days && dur.days > 0 ? `${dur.days}d` : "";
+  const hours: string = dur.hours && dur.hours > 0 ? `${dur.hours}h` : "";
+  const minutes: string =
+    dur.minutes && dur.minutes > 0 ? `${dur.minutes}m` : "";
+  const seconds: string =
+    dur.seconds && dur.seconds > 0 ? `${dur.seconds}s` : round ? "" : "0s";
+
+  return `${days}${hours}${minutes}${seconds}`;
+};
+
+export const formatFutureTime = (
+  futureSeconds: number | string | undefined,
+  round: boolean,
+  use_24hr: boolean,
+): string => {
+  if (
+    futureSeconds !== 0 &&
+    (!futureSeconds || isNaN(futureSeconds as number))
+  ) {
+    return "invalid time";
+  }
+  const fmtSeconds = round ? "" : ":ss";
+  const fmtString = use_24hr ? `HH:mm${fmtSeconds}` : `h:mm${fmtSeconds} a`;
+  const newDate = new Date();
+  newDate.setSeconds(newDate.getSeconds() + Number(futureSeconds));
+  return dfnsFormat(newDate, fmtString, { in: dfnsUtc });
 };
 
 export const calculateTimeStat = (
-  time: number,
+  time: number | string | undefined,
   timeType: CalculatedTimeType,
   round: boolean = false,
   use_24hr: boolean = false,
@@ -608,9 +650,7 @@ export const calculateTimeStat = (
     case CalculatedTimeType.Remaining:
       return formatDuration(time, round);
     case CalculatedTimeType.ETA:
-      return moment()
-        .add(time, "seconds")
-        .format(use_24hr ? "HH:mm" : "h:mm a");
+      return formatFutureTime(time, round, use_24hr);
     case CalculatedTimeType.Elapsed:
       return formatDuration(time, round);
     default:
