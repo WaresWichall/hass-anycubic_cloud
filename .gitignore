@@ -1,7 +1,6 @@
 .DS_Store
 __pycache__
 custom_components/anycubic_cloud/frontend_panel/node_modules/
-custom_components/anycubic_cloud/frontend_panel/package-lock.json
 custom_components/anycubic_cloud/scripts/*.cache
 custom_components/anycubic_cloud/scripts/*.json
 custom_components/anycubic_cloud/scripts/*.token
