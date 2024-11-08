@@ -5,7 +5,7 @@
 > 
 > MQTT access is now available using Slicer Next (windows version) tokens.
 > 
-> Still works as of 03/11/2024.
+> Still works as of 09/11/2024.
 
 ---
 
@@ -56,7 +56,7 @@ This integration couples with my [Anycubic card for Home Assistant](https://gith
 
 ## Panel
 
-It also comes with a WORK IN PROGRESS frontend panel which will be added to your sidebar.
+It also comes with a frontend panel which will be added to your sidebar.
 Current features:
 - Basic printer info (+ the printer card above)
 - File manager (requires MQTT connection to be active)
@@ -114,6 +114,11 @@ Current features:
 ### Re-Authentication
 
 If you log yourself out or your token expires you'll get a re-authentication warning in Home Assistant, just grab a new token as above.
+
+
+## Donations
+
+<a href="https://www.buymeacoffee.com/wareswichall"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=wareswichall&button_colour=28303f&font_colour=ffffff&font_family=Lato&outline_colour=ffffff&coffee_colour=FFDD00" /></a>
 
 
 ## Thanks
