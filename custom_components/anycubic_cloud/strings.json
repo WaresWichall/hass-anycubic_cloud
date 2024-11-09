@@ -12,19 +12,25 @@
       "invalid_printer": "Invalid printer."
     },
     "step": {
-      "user": {
-        "title": "Setup Anycubic Cloud Authentication",
+      "auth_mode_web": {
+        "title": "Authentication Mode - Web",
+        "description": "Retrieve your token from https://cloud-universe.anycubic.com/file following the steps in the readme.",
         "data": {
-          "user_token": "User Token",
-          "user_auth_mode": "Auth Mode",
-          "user_device_id": "Device ID (Required for Android)"
+          "user_token": "User Token"
         }
       },
-      "reauth_confirm": {
-        "title": "Setup Anycubic Cloud Authentication",
+      "auth_mode_slicer": {
+        "title": "Authentication Mode - Slicer Next",
+        "description": "Retrieve your token from %AppData%\\AnycubicSlicerNext\\AnycubicSlicerNext.conf following the steps in the readme.",
+        "data": {
+          "user_token": "Slicer Access Token"
+        }
+      },
+      "auth_mode_android": {
+        "title": "Authentication Mode - Android App",
+        "description": "Requires both token and device_id.",
         "data": {
           "user_token": "User Token",
-          "user_auth_mode": "Auth Mode",
           "user_device_id": "Device ID (Required for Android)"
         }
       },
@@ -33,16 +39,46 @@
         "data": {
           "printer_ids": "Monitored Printers"
         }
+      },
+      "auth_mode_pick": {
+        "title": "Authentication Mode",
+        "description": "Which authentication mode would you like to use?",
+        "menu_options": {
+          "auth_mode_web": "Web (No MQTT)",
+          "auth_mode_slicer": "Slicer Next (Win)",
+          "auth_mode_android": "Android"
+        }
+      },
+      "reauth_or_choose_printer": {
+        "title": "Re-Auth or Printer Select",
+        "description": "Are you re-authenticating or changing your monitored printer(s)?",
+        "menu_options": {
+          "reauth": "Re-Authenticate",
+          "printer": "Change Printer(s)"
+        }
       }
     }
   },
   "options": {
     "step": {
-      "init": {
+      "options_menu": {
+        "title": "Anycubic Cloud Options",
+        "menu_options": {
+          "mqtt": "MQTT Settings",
+          "drying": "Drying Presets",
+          "card_config": "Panel Card Config",
+          "debug": "Debug Settings"
+        }
+      },
+      "mqtt": {
+        "title": "MQTT Settings",
         "data": {
-          "mqtt_connect_mode": "MQTT Connection Mode",
-          "card_config": "Panel Card Config (YAML format)",
-          "debug": "Debug Mode",
+          "mqtt_connect_mode": "MQTT Connection Mode"
+        }
+      },
+      "drying": {
+        "title": "Drying Presets",
+        "data": {
           "drying_preset_duration_1": "Dry Preset 1 Duration",
           "drying_preset_temperature_1": "Dry Preset 1 Temperature",
           "drying_preset_duration_2": "Dry Preset 2 Duration",
@@ -51,6 +87,19 @@
           "drying_preset_temperature_3": "Dry Preset 3 Temperature",
           "drying_preset_duration_4": "Dry Preset 4 Duration",
           "drying_preset_temperature_4": "Dry Preset 4 Temperature"
+        }
+      },
+      "card_config": {
+        "title": "Panel Card Config",
+        "data": {
+          "card_config": "Panel Card Config (YAML format)"
+        }
+      },
+      "debug": {
+        "title": "Debug Settings",
+        "data": {
+          "debug_mqtt_msg": "Debug Log all MQTT messages",
+          "debug_api_calls": "Debug Log all API calls"
         }
       }
     }
@@ -633,7 +682,7 @@
     },
     "multi_color_box_filament_extrude": {
       "name": "ACE Filament Extrude",
-      "description": "Activate filament extrude on ACE ACE.",
+      "description": "Activate filament extrude on ACE.",
       "fields": {
         "config_entry": {
           "name": "Config Entry",
@@ -663,7 +712,7 @@
     },
     "multi_color_box_filament_retract": {
       "name": "ACE Filament Retract",
-      "description": "Activate filament retract on ACE ACE.",
+      "description": "Activate filament retract on ACE.",
       "fields": {
         "config_entry": {
           "name": "Config Entry",
@@ -705,7 +754,7 @@
         },
         "uploaded_gcode_file": {
           "name": "Gcode File",
-          "description": "Gcode File"
+          "description": "The sliced .gcode file."
         }
       }
     },
@@ -731,7 +780,7 @@
         },
         "uploaded_gcode_file": {
           "name": "Gcode File",
-          "description": "Gcode File"
+          "description": "The sliced .gcode file."
         }
       }
     },

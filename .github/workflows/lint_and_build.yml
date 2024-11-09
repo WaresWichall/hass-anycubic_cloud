@@ -1,0 +1,33 @@
+name: "Lint and Build"
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  lint-python:
+    runs-on: ubuntu-latest
+    name: "Lint: Python"
+    steps:
+      - name: Check out source repository
+        uses: actions/checkout@v3
+      - name: Set up Python environment
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+      - name: flake8 Lint
+        uses: py-actions/flake8@v2
+        with:
+          path: "custom_components"
+      - name: Run mypy
+        uses: jpetrucciani/mypy-check@master
+        with:
+          path: './custom_components'
+          mypy_flags: '--config-file=mypy.ini'
+          requirements_file: requirements.txt
+          python_version: "3.12"
+      - name: Run mypy
+        uses: isort/isort-action@v1
+        with:
+          configuration: "--settings-path=pyproject.toml"

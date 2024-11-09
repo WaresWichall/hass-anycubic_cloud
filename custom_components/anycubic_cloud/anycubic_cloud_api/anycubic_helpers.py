@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import struct
 import uuid
 from datetime import timedelta
+from os import path
 from typing import Any
 
 ALPHANUMERIC_CHARS: str = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -201,3 +203,36 @@ def gcode_key_value_pair_to_dict(
     return {
         key: value
     }
+
+
+def md5_hex_of_string(
+    input_string: str,
+) -> str:
+    return hashlib.md5(input_string.encode('utf-8')).hexdigest().lower()
+
+
+def get_ssl_cert_directory() -> str:
+    ssl_root = path.dirname(__file__)
+
+    if 'anycubic_cloud_api' not in ssl_root:
+        ssl_root = path.join(ssl_root, 'anycubic_cloud_api')
+
+    return ssl_root
+
+
+def get_mqtt_ssl_path_ca(
+    ssl_root: str,
+) -> str:
+    return path.join(ssl_root, 'anycubic_mqqt_tls_ca.crt')
+
+
+def get_mqtt_ssl_path_cert(
+    ssl_root: str,
+) -> str:
+    return path.join(ssl_root, 'anycubic_mqqt_tls_client.crt')
+
+
+def get_mqtt_ssl_path_key(
+    ssl_root: str,
+) -> str:
+    return path.join(ssl_root, 'anycubic_mqqt_tls_client.key')

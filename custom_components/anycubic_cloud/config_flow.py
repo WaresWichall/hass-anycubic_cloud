@@ -22,7 +22,9 @@ from .anycubic_cloud_api.anycubic_api_mqtt import AnycubicMQTTAPI as AnycubicAPI
 from .anycubic_cloud_api.anycubic_model_auth import AnycubicAuthMode
 from .const import (
     CONF_CARD_CONFIG,
-    CONF_DEBUG,
+    CONF_DEBUG_API_CALLS,
+    CONF_DEBUG_DEPRECATED,
+    CONF_DEBUG_MQTT_MSG,
     CONF_DRYING_PRESET_DURATION_,
     CONF_DRYING_PRESET_TEMPERATURE_,
     CONF_MQTT_CONNECT_MODE,
@@ -47,15 +49,26 @@ if TYPE_CHECKING:
 
 AUTH_MODES = {
     AnycubicAuthMode.WEB: "Web (No MQTT)",
+    AnycubicAuthMode.SLICER: "Slicer",
     AnycubicAuthMode.ANDROID: "Android",
-    # AnycubicAuthMode.SLICER: "Slicer",
 }
 
-DATA_SCHEMA = vol.Schema(
+DATA_SCHEMA_AUTH_WEB = vol.Schema(
     {
         vol.Required(CONF_USER_TOKEN): cv.string,
-        vol.Optional(CONF_USER_AUTH_MODE, default=int(AnycubicAuthMode.WEB)): vol.In(AUTH_MODES),
-        vol.Optional(CONF_USER_DEVICE_ID): cv.string,
+    }
+)
+
+DATA_SCHEMA_AUTH_SLICER = vol.Schema(
+    {
+        vol.Required(CONF_USER_TOKEN): cv.string,
+    }
+)
+
+DATA_SCHEMA_AUTH_ANDROID = vol.Schema(
+    {
+        vol.Required(CONF_USER_TOKEN): cv.string,
+        vol.Required(CONF_USER_DEVICE_ID): cv.string,
     }
 )
 
@@ -105,7 +118,7 @@ async def async_load_tokens_from_store(
     config = await store.async_load()
 
     if config:
-        anycubic_api.load_tokens_from_dict(config)
+        anycubic_api.load_auth_config_from_dict(config, minimal=True)
 
 
 class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -130,11 +143,6 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
         """Get the options flow for this handler."""
         return AnycubicCloudOptionsFlowHandler(config_entry)
 
-    async def async_step_reauth(self, entry_data: Mapping[str, Any]) -> ConfigFlowResult:
-        """Handle initiation of re-authentication with AnycubicCloud."""
-        self.entry = self.hass.config_entries.async_get_entry(self.context["entry_id"])
-        return await self.async_step_reauth_confirm()
-
     def _async_create_anycubic_api(self) -> AnycubicAPI:
         return async_create_anycubic_api(
             self.hass,
@@ -156,10 +164,10 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
 
         self._anycubic_api = self._async_create_anycubic_api()
 
-        # if not self.entry:
-        #     return
+        if not self.entry:
+            return
 
-        # await async_load_tokens_from_store(self.hass, self._anycubic_api)
+        await async_load_tokens_from_store(self.hass, self._anycubic_api)
 
     async def _async_check_login_errors(self) -> dict[str, str]:
         assert self._anycubic_api
@@ -172,6 +180,7 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
 
     async def _async_check_authentication_with_user_input(
         self,
+        auth_mode: AnycubicAuthMode,
         user_input: dict[str, Any],
     ) -> dict[str, str]:
         try:
@@ -181,7 +190,7 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
 
             self._user_token = user_input[CONF_USER_TOKEN]
 
-        self._user_auth_mode = user_input.get(CONF_USER_AUTH_MODE)
+        self._user_auth_mode = auth_mode
         self._user_device_id = user_input.get(CONF_USER_DEVICE_ID)
 
         try:
@@ -193,14 +202,67 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
 
         return errors
 
-    async def async_step_reauth_confirm(
-        self, user_input: dict[str, Any] | None = None
+    async def async_step_auth_mode_pick(
+        self, _: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Dialog that informs the user that reauth is required."""
+        """Authentication mode selection."""
+
+        return self.async_show_menu(
+            step_id="auth_mode_pick",
+            menu_options=["auth_mode_web", "auth_mode_slicer", "auth_mode_android"],
+        )
+
+    async def async_step_auth_mode_web(
+        self,
+        user_input: dict[str, Any] | None = None,
+    ) -> ConfigFlowResult:
+        """Handle the auth_mode_web step."""
+        return await self._async_handle_auth_mode_step(
+            step_id="auth_mode_web",
+            auth_mode=AnycubicAuthMode.WEB,
+            auth_schema=DATA_SCHEMA_AUTH_WEB,
+            user_input=user_input,
+        )
+
+    async def async_step_auth_mode_slicer(
+        self,
+        user_input: dict[str, Any] | None = None,
+    ) -> ConfigFlowResult:
+        """Handle the auth_mode_slicer step."""
+        return await self._async_handle_auth_mode_step(
+            step_id="auth_mode_slicer",
+            auth_mode=AnycubicAuthMode.SLICER,
+            auth_schema=DATA_SCHEMA_AUTH_SLICER,
+            user_input=user_input,
+        )
+
+    async def async_step_auth_mode_android(
+        self,
+        user_input: dict[str, Any] | None = None,
+    ) -> ConfigFlowResult:
+        """Handle the auth_mode_android step."""
+        return await self._async_handle_auth_mode_step(
+            step_id="auth_mode_android",
+            auth_mode=AnycubicAuthMode.ANDROID,
+            auth_schema=DATA_SCHEMA_AUTH_ANDROID,
+            user_input=user_input,
+        )
+
+    async def _async_handle_auth_mode_step(
+        self,
+        step_id: str,
+        auth_mode: AnycubicAuthMode,
+        auth_schema: vol.Schema,
+        user_input: dict[str, Any] | None = None,
+    ) -> ConfigFlowResult:
+        """Handle authentication step."""
         errors = {}
 
         if user_input is not None:
-            errors = await self._async_check_authentication_with_user_input(user_input)
+            errors = await self._async_check_authentication_with_user_input(
+                auth_mode=auth_mode,
+                user_input=user_input,
+            )
 
             if not errors:
                 if self.entry:
@@ -215,27 +277,12 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
                     )
                     return await self.async_step_printer()
 
-        return self.async_show_form(
-            step_id="reauth_confirm",
-            data_schema=DATA_SCHEMA,
-            errors=errors,
-        )
-
-    async def async_step_user(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
-        """Handle the initial step."""
-        errors = {}
-
-        if user_input is not None:
-            errors = await self._async_check_authentication_with_user_input(user_input)
-
-            if not errors:
-                return await self.async_step_printer()
+                else:
+                    return await self.async_step_printer()
 
         return self.async_show_form(
-            step_id="user",
-            data_schema=DATA_SCHEMA,
+            step_id=step_id,
+            data_schema=auth_schema,
             errors=errors,
         )
 
@@ -291,7 +338,9 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
                     break
 
             if not errors:
-                existing_entry = await self.async_set_unique_id(f"{self._anycubic_api.api_user_id}")
+                existing_entry = await self.async_set_unique_id(
+                    f"{self._anycubic_api.anycubic_auth.api_user_id}"
+                )
                 if existing_entry and self.entry:
                     self.hass.config_entries.async_update_entry(
                         existing_entry,
@@ -311,7 +360,7 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
                         return self.async_abort(reason="reauth_successful")
                 else:
                     return self.async_create_entry(
-                        title=self._anycubic_api.api_user_identifier,
+                        title=self._anycubic_api.anycubic_auth.api_user_identifier,
                         data={
                             CONF_USER_TOKEN: self._user_token,
                             CONF_USER_AUTH_MODE: self._user_auth_mode,
@@ -329,6 +378,23 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
             ),
         )
 
+    async def async_step_user(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Handle the initial step."""
+        return await self.async_step_auth_mode_pick()
+
+    async def async_step_reauth(self, entry_data: Mapping[str, Any]) -> ConfigFlowResult:
+        """Handle initiation of re-authentication with AnycubicCloud."""
+        self.entry = self.hass.config_entries.async_get_entry(self.context["entry_id"])
+        return await self.async_step_reauth_confirm()
+
+    async def async_step_reauth_confirm(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Dialog that informs the user that reauth is required."""
+        return await self.async_step_auth_mode_pick()
+
     async def async_step_reconfigure(
         self, _: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
@@ -336,7 +402,17 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
 
         self._is_reconfigure = True
 
-        return await self.async_step_printer()
+        return await self.async_step_reauth_or_choose_printer()
+
+    async def async_step_reauth_or_choose_printer(
+        self, _: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Re-authenticate or select printer menu.."""
+
+        return self.async_show_menu(
+            step_id="reauth_or_choose_printer",
+            menu_options=["reauth", "printer"],
+        )
 
 
 class AnycubicCloudOptionsFlowHandler(OptionsFlow):
@@ -348,40 +424,23 @@ class AnycubicCloudOptionsFlowHandler(OptionsFlow):
         self._anycubic_api: AnycubicAPI | None = None
         self._supports_drying = False
 
-    def _build_options_schema(self) -> vol.Schema:
+    def _build_drying_options_schema(self) -> vol.Schema:
         schema: dict[Any, Any] = dict()
 
-        schema[vol.Optional(
-            CONF_MQTT_CONNECT_MODE,
-            default=self.entry.options.get(CONF_MQTT_CONNECT_MODE, AnycubicMQTTConnectMode.Printing_Only)
-        )] = vol.In(MQTT_CONNECT_MODES)
+        for x in range(MAX_DRYING_PRESETS):
+            num = x + 1
 
-        if self._supports_drying:
+            dur_key = f"{CONF_DRYING_PRESET_DURATION_}{num}"
+            schema[vol.Optional(
+                dur_key,
+                default=self.entry.options.get(dur_key, vol.UNDEFINED)
+            )] = cv.positive_int
 
-            for x in range(MAX_DRYING_PRESETS):
-                num = x + 1
-
-                dur_key = f"{CONF_DRYING_PRESET_DURATION_}{num}"
-                schema[vol.Optional(
-                    dur_key,
-                    default=self.entry.options.get(dur_key, vol.UNDEFINED)
-                )] = cv.positive_int
-
-                temp_key = f"{CONF_DRYING_PRESET_TEMPERATURE_}{num}"
-                schema[vol.Optional(
-                    temp_key,
-                    default=self.entry.options.get(temp_key, vol.UNDEFINED)
-                )] = cv.positive_int
-
-        schema[vol.Optional(
-            CONF_CARD_CONFIG,
-            default=self.entry.options.get(CONF_CARD_CONFIG, None)
-        )] = ObjectSelector()
-
-        schema[vol.Optional(
-            CONF_DEBUG,
-            default=self.entry.options.get(CONF_DEBUG, False)
-        )] = BooleanSelector()
+            temp_key = f"{CONF_DRYING_PRESET_TEMPERATURE_}{num}"
+            schema[vol.Optional(
+                temp_key,
+                default=self.entry.options.get(temp_key, vol.UNDEFINED)
+            )] = cv.positive_int
 
         return vol.Schema(schema)
 
@@ -394,10 +453,10 @@ class AnycubicCloudOptionsFlowHandler(OptionsFlow):
                 self.entry.data.get(CONF_USER_DEVICE_ID),
             )
 
-            # await async_load_tokens_from_store(
-            #     self.hass,
-            #     self._anycubic_api,
-            # )
+            await async_load_tokens_from_store(
+                self.hass,
+                self._anycubic_api,
+            )
             await self._anycubic_api.check_api_tokens()
 
             printer_list = await self._anycubic_api.list_my_printers()
@@ -416,20 +475,133 @@ class AnycubicCloudOptionsFlowHandler(OptionsFlow):
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         """Manage Anycubic Cloud options."""
-        errors: dict[str, Any] = {}
+        return await self.async_step_options_menu()
 
-        if user_input:
-            if CONF_CARD_CONFIG in user_input:
-                if isinstance(user_input[CONF_CARD_CONFIG], dict):
-                    user_input[CONF_CARD_CONFIG] = extract_panel_card_config(
-                        user_input[CONF_CARD_CONFIG]
-                    )
-            return self.async_create_entry(data=user_input)
+    async def async_step_options_menu(
+        self, _: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Options menu."""
 
         await self._async_check_printer_options()
 
+        menu_options = list([
+            "mqtt",
+            "card_config",
+            "debug",
+        ])
+
+        if self._supports_drying:
+            menu_options.insert(1, "drying")
+
+        return self.async_show_menu(
+            step_id="options_menu",
+            menu_options=menu_options,
+        )
+
+    @callback
+    def async_create_entry_with_existing_options(
+        self,
+        user_input: Mapping[str, Any],
+    ) -> ConfigFlowResult:
+        return self.async_create_entry(
+            data={
+                **self.entry.options,
+                **user_input,
+            }
+        )
+
+    async def async_step_mqtt(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Manage Anycubic Cloud MQTT options."""
+        if user_input:
+            return self.async_create_entry_with_existing_options(user_input)
+
+        default_mqtt_connect_mode = self.entry.options.get(
+            CONF_MQTT_CONNECT_MODE,
+            AnycubicMQTTConnectMode.Printing_Only,
+        )
+
         return self.async_show_form(
-            step_id="init",
-            data_schema=self._build_options_schema(),
-            errors=errors,
+            step_id="mqtt",
+            data_schema=vol.Schema({
+                vol.Optional(
+                    CONF_MQTT_CONNECT_MODE, default=default_mqtt_connect_mode
+                ): vol.In(MQTT_CONNECT_MODES)
+            }),
+            errors={},
+        )
+
+    async def async_step_drying(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Manage Anycubic Cloud drying options."""
+        if user_input:
+            return self.async_create_entry_with_existing_options(user_input)
+
+        return self.async_show_form(
+            step_id="drying",
+            data_schema=self._build_drying_options_schema(),
+            errors={},
+        )
+
+    async def async_step_card_config(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Manage Anycubic Cloud card_config options."""
+        if user_input:
+            if isinstance(user_input[CONF_CARD_CONFIG], dict):
+                user_input[CONF_CARD_CONFIG] = extract_panel_card_config(
+                    user_input[CONF_CARD_CONFIG]
+                )
+            return self.async_create_entry_with_existing_options(user_input)
+
+        default_card_config = self.entry.options.get(
+            CONF_CARD_CONFIG,
+            None,
+        )
+
+        return self.async_show_form(
+            step_id="card_config",
+            data_schema=vol.Schema({
+                vol.Optional(
+                    CONF_CARD_CONFIG, default=default_card_config
+                ): ObjectSelector()
+            }),
+            errors={},
+        )
+
+    async def async_step_debug(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Manage Anycubic Cloud debug options."""
+        if user_input:
+            return self.async_create_entry_with_existing_options(user_input)
+
+        default_debug_all = self.entry.options.get(
+            CONF_DEBUG_DEPRECATED,
+            False,
+        )
+
+        default_debug_api = self.entry.options.get(
+            CONF_DEBUG_API_CALLS,
+            default_debug_all,
+        )
+
+        default_debug_mqtt = self.entry.options.get(
+            CONF_DEBUG_MQTT_MSG,
+            default_debug_all,
+        )
+
+        return self.async_show_form(
+            step_id="debug",
+            data_schema=vol.Schema({
+                vol.Optional(
+                    CONF_DEBUG_API_CALLS, default=default_debug_api
+                ): BooleanSelector(),
+                vol.Optional(
+                    CONF_DEBUG_MQTT_MSG, default=default_debug_mqtt
+                ): BooleanSelector(),
+            }),
+            errors={},
         )

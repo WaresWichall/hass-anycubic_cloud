@@ -31,7 +31,9 @@ from .anycubic_cloud_api.anycubic_exceptions import AnycubicAPIError, AnycubicAP
 from .const import (
     API_SETUP_RETRIES,
     API_SETUP_RETRY_INTERVAL_SECONDS,
-    CONF_DEBUG,
+    CONF_DEBUG_API_CALLS,
+    CONF_DEBUG_DEPRECATED,
+    CONF_DEBUG_MQTT_MSG,
     CONF_MQTT_CONNECT_MODE,
     CONF_PRINTER_ID_LIST,
     CONF_USER_AUTH_MODE,
@@ -380,7 +382,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         data_dict: dict[str, Any] = dict()
 
         data_dict['user_info'] = {
-            "id": self.anycubic_api.api_user_id
+            "id": self.anycubic_api.anycubic_auth.api_user_id
         }
 
         data_dict['printers'] = dict()
@@ -553,7 +555,10 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
     def _anycubic_mqtt_connection_should_start(self) -> bool:
 
-        if self._mqtt_connection_mode == AnycubicMQTTConnectMode.Never_Connect:
+        if (
+            self._mqtt_connection_mode == AnycubicMQTTConnectMode.Never_Connect
+            or not self.anycubic_api.anycubic_auth.supports_mqtt_login
+        ):
             return False
 
         return (
@@ -697,17 +702,23 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 device_id=self.entry.data.get(CONF_USER_DEVICE_ID),
             )
 
-            debug_mode: bool = bool(self.entry.options.get(CONF_DEBUG))
+            debug_all: bool = bool(self.entry.options.get(CONF_DEBUG_DEPRECATED))
+            debug_mqtt_msg: bool = bool(
+                self.entry.options.get(CONF_DEBUG_MQTT_MSG, debug_all)
+            )
+            debug_api_calls: bool = bool(
+                self.entry.options.get(CONF_DEBUG_API_CALLS, debug_all)
+            )
 
-            self._anycubic_api.set_mqtt_log_all_messages(debug_mode)
-            self._anycubic_api.set_log_api_call_info(debug_mode)
+            self._anycubic_api.set_mqtt_log_all_messages(debug_mqtt_msg)
+            self._anycubic_api.set_log_api_call_info(debug_api_calls)
 
             success = await self._anycubic_api.check_api_tokens()
             if not success:
                 raise ConfigEntryAuthFailed("Authentication failed. Check credentials.")
 
             # Create config
-            await store.async_save(self._anycubic_api.build_token_dict())
+            await store.async_save(self._anycubic_api.get_auth_config_dict())
 
             first_printer_id = self.entry.data[CONF_PRINTER_ID_LIST][0]
 
@@ -762,7 +773,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
 
         if self.anycubic_api.tokens_changed:
             store = Store[dict[str, Any]](self.hass, STORAGE_VERSION, STORAGE_KEY)
-            await store.async_save(self.anycubic_api.build_token_dict())
+            await store.async_save(self.anycubic_api.get_auth_config_dict())
 
     async def _connect_mqtt_for_action_response(self) -> None:
         self._mqtt_last_action = int(time.time())

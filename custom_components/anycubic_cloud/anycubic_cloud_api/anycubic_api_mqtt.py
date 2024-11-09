@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import hashlib
 import json
 import ssl
 import traceback
@@ -9,7 +8,6 @@ from collections.abc import Callable
 from os import path
 from typing import TYPE_CHECKING, Any
 
-import bcrypt
 from paho.mqtt import client as mqtt_client
 
 from .anycubic_api import AnycubicAPI
@@ -24,7 +22,14 @@ from .anycubic_const_mqtt import (
 )
 from .anycubic_data_model_consumable import AnycubicConsumableData
 from .anycubic_exceptions import AnycubicAPIError, AnycubicMQTTUnhandledData
-from .anycubic_helpers import get_part_from_mqtt_topic, redact_part_from_mqtt_topic
+from .anycubic_helpers import (
+    get_mqtt_ssl_path_ca,
+    get_mqtt_ssl_path_cert,
+    get_mqtt_ssl_path_key,
+    get_part_from_mqtt_topic,
+    get_ssl_cert_directory,
+    redact_part_from_mqtt_topic,
+)
 
 if TYPE_CHECKING:
     from .anycubic_data_model_printer import AnycubicPrinter
@@ -39,7 +44,6 @@ class AnycubicMQTTAPI(AnycubicAPI):
         mqtt_callback_subscribed: Callable[[], None] | None = None,
         **kwargs: Any,
     ) -> None:
-        self._api_user_id: int | None = None
         self._mqtt_client: mqtt_client.Client | None = None
         self._mqtt_subscribed_printers: dict[str, AnycubicPrinter] = dict()
         self._mqtt_log_all_messages: bool = False
@@ -82,36 +86,22 @@ class AnycubicMQTTAPI(AnycubicAPI):
         except (asyncio.TimeoutError, asyncio.CancelledError):
             return False
 
-    def _md5_hex_of_string(self, input_string: str) -> str:
-        return hashlib.md5(input_string.encode('utf-8')).hexdigest().lower()
-
-    def _build_mqtt_client_id(self) -> str:
-        if not self._api_user_email:
-            raise AnycubicAPIError('Unable to build mqtt_client_id, missing user email.')
-        return self._md5_hex_of_string(self._api_user_email)
-
-    def _build_mqtt_login_info(self) -> tuple[str, str]:
-        token_md5 = self._md5_hex_of_string(self.anycubic_auth.auth_token)
-        token_bcrypt = bcrypt.hashpw(token_md5.encode('utf-8'), bcrypt.gensalt())
-        username_md5 = self._build_mqtt_client_id()
-        sig_md5 = self._md5_hex_of_string(f"{username_md5}{token_bcrypt.decode('utf-8')}{username_md5}")
-        sig_str = f"user|app|{self._api_user_email}|{sig_md5}"
-
-        return (sig_str, token_bcrypt.decode('utf-8'))
-
     def _build_mqtt_printer_subscription(self, printer: AnycubicPrinter) -> list[str]:
+        # topic_slicer = f"{MQTT_ROOT_TOPIC_SLICER}{printer.machine_type}/{printer.key}/#"
         topic_printer = f"{MQTT_ROOT_TOPIC_PRINTER}{printer.machine_type}/{printer.key}/#"
         topic_plus = f"{MQTT_ROOT_TOPIC_PLUS}{printer.machine_type}/{printer.key}/#"
-        return list([topic_printer, topic_plus])
+        return list([
+            # topic_slicer,
+            topic_printer,
+            topic_plus
+        ])
 
     def _build_mqtt_printer_publish_topic(self, printer: AnycubicPrinter, endpoint: str) -> str:
         return f"{MQTT_ROOT_TOPIC_PUBLISH_PRINTER}{printer.machine_type}/{printer.key}/{endpoint}"
 
     def _build_mqtt_user_subscription(self) -> list[str]:
-        if not self._api_user_id:
-            raise AnycubicAPIError('Unable to build mqtt_user_subscription, missing user id.')
-        user_id_md5 = self._md5_hex_of_string(f"{self._api_user_id}")
-        root = f"{MQTT_ROOT_TOPIC_SERVER}{self._api_user_id}/{user_id_md5}"
+        user_id, user_id_md5 = self.anycubic_auth.get_user_id_md5_tuple()
+        root = f"{MQTT_ROOT_TOPIC_SERVER}{user_id}/{user_id_md5}"
         topic_slice_report = f"{root}/slice/report"
         topic_fdm_slice_report = f"{root}/fdmslice/report"
 
@@ -220,12 +210,9 @@ class AnycubicMQTTAPI(AnycubicAPI):
         self._mqtt_publish_on_topic(mqtt_topic, payload=payload)
 
     def _mqtt_build_ssl_context(self) -> ssl.SSLContext:
-        ssl_root = path.dirname(__file__)
+        ssl_root = get_ssl_cert_directory()
 
-        if 'anycubic_cloud_api' not in ssl_root:
-            ssl_root = path.join(ssl_root, 'anycubic_cloud_api')
-
-        crt_path = path.join(ssl_root, 'anycubic_mqqt_tls_client.crt')
+        crt_path = get_mqtt_ssl_path_cert(ssl_root)
 
         if not path.exists(crt_path):
             self._log_to_error(f"Anycubic MQTT unable to start, no certificate found in root: {ssl_root}.")
@@ -235,12 +222,12 @@ class AnycubicMQTTAPI(AnycubicAPI):
         ssl_context.set_ciphers(('ALL:@SECLEVEL=0'),)
         ssl_context.load_cert_chain(
             crt_path,
-            path.join(ssl_root, 'anycubic_mqqt_tls_client.key'),
+            get_mqtt_ssl_path_key(ssl_root),
             None,
         )
         ssl_context.check_hostname = False
         ssl_context.verify_mode = ssl.CERT_NONE
-        ssl_context.load_verify_locations(path.join(ssl_root, 'anycubic_mqqt_tls_ca.crt'))
+        ssl_context.load_verify_locations(get_mqtt_ssl_path_ca(ssl_root))
 
         return ssl_context
 
@@ -313,7 +300,7 @@ class AnycubicMQTTAPI(AnycubicAPI):
             self._log_to_warn(f"Anycubic MQTT Failed to connect, return code {rc}")
 
     def _set_mqtt_username_password(self) -> None:
-        mqtt_username, mqtt_password = self._build_mqtt_login_info()
+        mqtt_username, mqtt_password = self.anycubic_auth.get_mqtt_login_info()
 
         if self._mqtt_client is None:
             return
@@ -330,7 +317,7 @@ class AnycubicMQTTAPI(AnycubicAPI):
         self._log_to_debug("Anycubic MQTT Connecting.")
 
         self._mqtt_client = mqtt_client.Client(
-            client_id=self._build_mqtt_client_id(),
+            client_id=self.anycubic_auth.get_mqtt_client_id(),
             clean_session=True,
         )
 

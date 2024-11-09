@@ -709,10 +709,11 @@ class AnycubicPrinter:
         if action == 'auto' and state == 'done':
             data = payload['data']
 
-            self.parameter.update_current_temps(
-                data['curr_hotbed_temp'],
-                data['curr_nozzle_temp'],
-            )
+            if self.parameter:
+                self.parameter.update_current_temps(
+                    data['curr_hotbed_temp'],
+                    data['curr_nozzle_temp'],
+                )
             if self._latest_project:
                 self._latest_project.update_target_temps(
                     data['target_hotbed_temp'],
@@ -824,10 +825,11 @@ class AnycubicPrinter:
             return
         elif action in ['start', 'update'] and state == 'updated':
             data = payload['data']
-            self.parameter.update_current_temps(
-                data['curr_hotbed_temp'],
-                data['curr_nozzle_temp'],
-            )
+            if self.parameter:
+                self.parameter.update_current_temps(
+                    data['curr_hotbed_temp'],
+                    data['curr_nozzle_temp'],
+                )
             self._fan_speed = int(data['settings']['fan_speed_pct'])
             self._print_speed_pct = int(data['settings']['print_speed_pct'])
             self._print_speed_mode = int(data['settings']['print_speed_mode'])
@@ -1343,9 +1345,9 @@ class AnycubicPrinter:
         return self._material_type
 
     @property
-    def parameter(self) -> AnycubicMachineParameter:
+    def parameter(self) -> AnycubicMachineParameter | None:
         if not self._parameter:
-            raise TypeError("Missing parameter property.")
+            return None
 
         return self._parameter
 

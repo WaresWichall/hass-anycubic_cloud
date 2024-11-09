@@ -2,33 +2,19 @@ from __future__ import annotations
 
 import asyncio
 import json
-import time
 from typing import (
     Any,
     Literal,
     overload,
 )
 
-import aiohttp
-from aiofiles import open as aio_file_open
-from aiofiles.os import path as aio_path
-
-from .anycubic_api_base import (
-    API_ENDPOINT,
-    HTTP_METHODS,
-    ac_api_endpoint,
-)
+from .anycubic_api_base import AnycubicAPIBase
 from .anycubic_const import (
-    AUTH_DOMAIN,
-    BASE_DOMAIN,
-    DEFAULT_USER_AGENT,
-    MAX_API_FETCH_TIME_WARN,
     MAX_PROJECT_IMAGE_SEARCH_COUNT,
     MAX_PROJECT_LIST_RESULTS,
-    PUBLIC_API_ENDPOINT,
-    WARN_INTERVAL_API_DURATION,
     AnycubicServerMessage,
 )
+from .anycubic_const_api_endpoints import API_ENDPOINT
 from .anycubic_data_model_files import AnycubicCloudFile, AnycubicCloudStore
 from .anycubic_data_model_gcode_file import AnycubicGcodeFile
 from .anycubic_data_model_orders import (
@@ -51,334 +37,17 @@ from .anycubic_enums import (
     AnycubicOrderID,
     AnycubicPrintStatus,
 )
+from .anycubic_error_strings import ErrorsAPIParsing, ErrorsGeneral
 from .anycubic_exceptions import (
     AnycubicAPIError,
     AnycubicAPIParsingError,
     AnycubicDataParsingError,
-    AnycubicErrorMessage,
     AnycubicFileNotFoundError,
-    APIAuthTokensExpired,
 )
-from .anycubic_model_auth import AnycubicAuthentication, AnycubicAuthMode
-from .anycubic_model_base import AnycubicCloudUpload
+from .anycubic_model_cloud_upload import AnycubicCloudUpload
 
 
-class AnycubicAPI:
-    def __init__(
-        self,
-        session: aiohttp.ClientSession,
-        cookie_jar: aiohttp.CookieJar,
-        debug_logger: Any = None,
-        auth_token: str | None = None,
-        auth_mode: AnycubicAuthMode | None = None,
-        device_id: str | None = None,
-    ) -> None:
-        # Cache
-        self._cache_key_path: str | None = None
-        self._cache_tokens_path: str | None = None
-        self._cache_sig_token_path: str | None = None
-        # API
-        self.base_url = f"https://{BASE_DOMAIN}/"
-        self._public_api_root = f"{self.base_url}{PUBLIC_API_ENDPOINT}"
-        # Internal
-        self._api_user_id: int | None = None
-        self._api_user_email: str | None = None
-        self._session: aiohttp.ClientSession = session
-        self._sessionjar: aiohttp.CookieJar = cookie_jar
-        self._debug_logger: Any = debug_logger
-        self._tokens_changed: bool = False
-        self._log_api_call_info: bool = False
-        self._last_warn_api_duration: int | None = None
-        self._anycubic_auth: AnycubicAuthentication | None = None
-
-        if auth_token:
-            self.set_authentication(
-                auth_token=auth_token,
-                auth_mode=auth_mode,
-                device_id=device_id,
-            )
-
-    def set_log_api_call_info(
-        self,
-        val: bool,
-    ) -> None:
-        self._log_api_call_info = bool(val)
-
-    @property
-    def anycubic_auth(self) -> AnycubicAuthentication:
-        if self._anycubic_auth is None:
-            raise AnycubicAPIError(
-                "anycubic_auth object is missing."
-            )
-        return self._anycubic_auth
-
-    @property
-    def tokens_changed(self) -> bool:
-        return self._tokens_changed
-
-    @property
-    def api_user_id(self) -> int | None:
-        return self._api_user_id
-
-    @property
-    def api_user_email(self) -> str | None:
-        return self._api_user_email
-
-    @property
-    def api_user_identifier(self) -> str:
-        return self._api_user_email or str(self._api_user_id)
-
-    def _log_to_debug(self, msg: str) -> None:
-        if self._debug_logger:
-            self._debug_logger.debug(msg)
-
-    def _log_to_warn(self, msg: str) -> None:
-        if self._debug_logger:
-            self._debug_logger.warning(msg)
-
-    def _log_to_error(self, msg: str) -> None:
-        if self._debug_logger:
-            self._debug_logger.error(msg)
-
-    #
-    #
-    # API Functions
-    # ------------------------------------------
-
-    def _web_headers(self, with_origin: str | None = AUTH_DOMAIN) -> dict[str, Any]:
-        header_dict = {
-            'User-Agent': DEFAULT_USER_AGENT
-        }
-        if with_origin:
-            header_dict['Origin'] = f'https://{with_origin}'
-        return header_dict
-
-    def _build_api_url(self, endpoint: ac_api_endpoint) -> str:
-        return f"{self._public_api_root}{endpoint.endpoint}"
-
-    @overload
-    async def _fetch_ext_resp(
-        self,
-        method: HTTP_METHODS,
-        base_url: str,
-        query: dict[str, Any] | None = None,
-        params: dict[str, Any] = {},
-        extra_headers: dict[str, Any] = {},
-        with_origin: str | None = AUTH_DOMAIN,
-        put_data: bytes | None = None,
-    ) -> dict[Any, Any]: ...
-
-    @overload
-    async def _fetch_ext_resp(
-        self,
-        method: HTTP_METHODS,
-        base_url: str,
-        query: dict[str, Any] | None = None,
-        params: dict[str, Any] = {},
-        extra_headers: dict[str, Any] = {},
-        with_origin: str | None = AUTH_DOMAIN,
-        put_data: bytes | None = None,
-        is_json: bool = True,
-        return_url: bool = False,
-    ) -> dict[Any, Any] | str: ...
-
-    async def _fetch_ext_resp(
-        self,
-        method: HTTP_METHODS,
-        base_url: str,
-        query: dict[str, Any] | None = None,
-        params: dict[str, Any] | list[Any] | str | None = {},
-        extra_headers: dict[str, Any] = {},
-        with_origin: str | None = AUTH_DOMAIN,
-        put_data: bytes | None = None,
-        is_json: bool = True,
-        return_url: bool = False,
-    ) -> dict[Any, Any] | str:
-        url = base_url
-        time_start: float = time.time()
-        headers = {**self._web_headers(with_origin=with_origin), **extra_headers}
-        if method == HTTP_METHODS.POST:
-            if params is not None and (isinstance(params, dict) or isinstance(params, list)):
-                data = json.dumps(params)
-            elif params is not None:
-                data = str(params)
-            else:
-                data = None
-            h_coro = self._session.post(url, params=query, data=data, headers=headers)
-        elif method == HTTP_METHODS.PUT:
-            h_coro = self._session.put(url, params=query, data=put_data, headers=headers)
-        else:
-            h_coro = self._session.get(url, params=query, headers=headers)
-
-        response_url = None
-
-        try:
-            async with h_coro as resp:
-                if is_json:
-                    resp_data: dict[str, Any] | str = await resp.json()
-                else:
-                    resp_data = await resp.text()
-
-                response_url = resp.url
-        except Exception:
-            raise AnycubicAPIParsingError('Unexpected error parsing Anycubic response, server maintenance?')
-
-        time_end: float = time.time()
-        time_diff: float = time_end - time_start
-        over_limit: bool = int(time_diff) > MAX_API_FETCH_TIME_WARN
-        if (
-            over_limit
-            and (
-                not self._last_warn_api_duration
-                or time_end > self._last_warn_api_duration + WARN_INTERVAL_API_DURATION
-            )
-        ):
-            self._log_to_warn(
-                f"Responses from server are taking over {MAX_API_FETCH_TIME_WARN}s (Took {int(time_diff)}s)"
-            )
-        if self._log_api_call_info:
-            self._log_to_debug(
-                f"Finished fetching {url} in {time_diff:.2f}s."
-            )
-
-        if return_url:
-            return str(response_url)
-        return resp_data
-
-    async def _fetch_aws_put_resp(self, final_url: str, put_data: bytes) -> dict[Any, Any] | str:
-        resp = await self._fetch_ext_resp(
-            method=HTTP_METHODS.PUT,
-            base_url=final_url,
-            is_json=False,
-            put_data=put_data,
-        )
-        if isinstance(resp, str):
-            raise AnycubicAPIParsingError(f"Unexpected error parsing AWS response: {resp}")
-
-        return resp
-
-    async def _fetch_api_resp(
-        self,
-        endpoint: ac_api_endpoint,
-        query: dict[str, Any] | None = None,
-        params: dict[str, Any] = {},
-        extra_headers: dict[str, Any] = {},
-        with_origin: str | None = AUTH_DOMAIN,
-        with_token: bool = True,
-    ) -> dict[Any, Any]:
-        resp = await self._fetch_ext_resp(
-            method=endpoint.method,
-            base_url=self._build_api_url(endpoint),
-            query=query,
-            params=params,
-            extra_headers=self.anycubic_auth.get_auth_headers(
-                with_token=with_token
-            ),
-            with_origin=with_origin,
-        )
-        return resp
-
-    #
-    #
-    # Login Functions
-    # ------------------------------------------
-
-    def set_authentication(
-        self,
-        auth_token: str,
-        auth_mode: AnycubicAuthMode | int | None = None,
-        device_id: str | None = None,
-    ) -> None:
-        if isinstance(auth_mode, int):
-            auth_mode = AnycubicAuthMode(auth_mode)
-
-        self._anycubic_auth = AnycubicAuthentication(
-            auth_token=auth_token,
-            auth_mode=auth_mode,
-            device_id=device_id,
-        )
-
-    async def _get_user_token_with_access_token(self) -> None:
-        params = self.anycubic_auth.auth_access_token_payload
-        resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.auth_sig_token, query=None, params=params, with_token=False)
-        self.anycubic_auth.set_auth_token(
-            resp['data']['token']
-        )
-        self._log_to_debug("Successfully got sig token.")
-
-    def build_token_dict(self) -> dict[str, Any]:
-        self._tokens_changed = False
-
-        return self.anycubic_auth.build_token_dict()
-
-    def load_tokens_from_dict(self, data: dict[str, Any]) -> None:
-        self.anycubic_auth.load_vars_from_dict(data)
-
-    async def _load_cached_sig_token(self) -> None:
-        if self._cache_sig_token_path is not None and (await aio_path.exists(self._cache_sig_token_path)):
-
-            try:
-                async with aio_file_open(self._cache_sig_token_path, mode='r') as wo:
-                    token = await wo.read()
-                self.set_authentication(
-                    auth_token=token,
-                )
-
-            except Exception:
-                pass
-
-    async def _load_main_tokens(self) -> bool:
-        tokens_loaded = False
-        if self._cache_tokens_path is not None and (await aio_path.exists(self._cache_tokens_path)):
-
-            try:
-                async with aio_file_open(self._cache_tokens_path, mode='r') as wo:
-                    json_data = await wo.read()
-                    data = json.loads(json_data)
-                self.load_tokens_from_dict(data['data'])
-                tokens_loaded = True
-
-            except Exception:
-                pass
-
-        if tokens_loaded:
-            return True
-
-        if self._cache_key_path is not None and (await aio_path.exists(self._cache_key_path)):
-
-            try:
-                async with aio_file_open(self._cache_key_path, mode='r') as wo:
-                    json_data = await wo.read()
-                    data = json.loads(json_data)
-                self.load_tokens_from_dict(data)
-                tokens_loaded = True
-
-            except Exception:
-                pass
-
-        if tokens_loaded:
-            return True
-
-        self._log_to_debug("No cached tokens found.")
-        return False
-
-    async def _check_can_access_api(
-        self,
-        use_known: bool = True,
-    ) -> bool:
-        await self._load_cached_sig_token()
-        try:
-            await self.get_user_info()
-            return True
-        except APIAuthTokensExpired:
-            self._log_to_debug("Tokens expired.")
-            return False
-
-    async def check_api_tokens(self) -> bool:
-        if not await self._check_can_access_api(True):
-            return False
-
-        return True
+class AnycubicAPI(AnycubicAPIBase):
 
     #
     #
@@ -512,23 +181,6 @@ class AnycubicAPI:
             return resp
 
         data: dict[str, Any] = resp['data']
-
-        return data
-
-    async def get_user_info(
-        self,
-        raw_data: bool = False,
-    ) -> dict[str, Any]:
-        resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.user_info)
-        if raw_data:
-            return resp
-
-        data: dict[str, Any] | None = resp['data']
-        if data is None:
-            raise APIAuthTokensExpired('Invalid credentials.')
-
-        self._api_user_id = data['id']
-        self._api_user_email = data['user_email']
 
         return data
 
@@ -1975,7 +1627,7 @@ class AnycubicAPI:
                 resp_msg := resp.get('msg')
             ):
                 if resp_msg == 'request error':
-                    raise AnycubicErrorMessage.api_error_rate_limited
+                    raise AnycubicAPIParsingError(ErrorsAPIParsing.api_error_rate_limited)
 
             self._log_to_error(f"Failed to load printer from anycubic response: {resp}")
             raise e
@@ -2131,13 +1783,13 @@ class AnycubicAPI:
         temp_file: bool = False,
     ) -> str | None:
         if printer is None:
-            raise AnycubicErrorMessage.no_printer_to_print
+            raise AnycubicAPIError(ErrorsGeneral.no_printer_to_print)
 
         if ams_box_mapping and not printer.primary_multi_color_box:
-            raise AnycubicErrorMessage.no_multi_color_box_for_map
+            raise AnycubicAPIError(ErrorsGeneral.no_multi_color_box_for_map)
 
         if ams_box_mapping is None and printer.primary_multi_color_box:
-            raise AnycubicErrorMessage.no_map_for_multi_color_box
+            raise AnycubicAPIError(ErrorsGeneral.no_map_for_multi_color_box)
 
         print_request = AnycubicStartPrintRequestCloud(
             file_id=cloud_file_id,
@@ -2169,13 +1821,13 @@ class AnycubicAPI:
         file_name: str | None = None,
     ) -> AnycubicPrintResponse:
         if printer is None:
-            raise AnycubicErrorMessage.no_printer_to_print
+            raise AnycubicAPIError(ErrorsGeneral.no_printer_to_print)
 
         if slot_index_list is not None and not printer.primary_multi_color_box:
-            raise AnycubicErrorMessage.no_multi_color_box_for_slot_list
+            raise AnycubicAPIError(ErrorsGeneral.no_multi_color_box_for_slot_list)
 
         if slot_index_list is None and printer.primary_multi_color_box:
-            raise AnycubicErrorMessage.no_slot_list_for_multi_color_box
+            raise AnycubicAPIError(ErrorsGeneral.no_slot_list_for_multi_color_box)
 
         proj = await self.fetch_project_gcode_info_fdm(gcode_id)
 
@@ -2228,13 +1880,13 @@ class AnycubicAPI:
         slot_index_list: list[int] | None = None,
     ) -> AnycubicPrintResponse:
         if printer is None:
-            raise AnycubicErrorMessage.no_printer_to_print
+            raise AnycubicAPIError(ErrorsGeneral.no_printer_to_print)
 
         if slot_index_list is not None and not printer.primary_multi_color_box:
-            raise AnycubicErrorMessage.no_multi_color_box_for_slot_list
+            raise AnycubicAPIError(ErrorsGeneral.no_multi_color_box_for_slot_list)
 
         if slot_index_list is None and printer.primary_multi_color_box:
-            raise AnycubicErrorMessage.no_slot_list_for_multi_color_box
+            raise AnycubicAPIError(ErrorsGeneral.no_slot_list_for_multi_color_box)
 
         cloud_file_id = await self.upload_file_to_cloud(
             full_file_path=full_file_path,
@@ -2265,13 +1917,13 @@ class AnycubicAPI:
         slot_index_list: list[int] | None = None,
     ) -> AnycubicPrintResponse:
         if printer is None:
-            raise AnycubicErrorMessage.no_printer_to_print
+            raise AnycubicAPIError(ErrorsGeneral.no_printer_to_print)
 
         if slot_index_list is not None and not printer.primary_multi_color_box:
-            raise AnycubicErrorMessage.no_multi_color_box_for_slot_list
+            raise AnycubicAPIError(ErrorsGeneral.no_multi_color_box_for_slot_list)
 
         if slot_index_list is None and printer.primary_multi_color_box:
-            raise AnycubicErrorMessage.no_slot_list_for_multi_color_box
+            raise AnycubicAPIError(ErrorsGeneral.no_slot_list_for_multi_color_box)
 
         if slot_index_list is not None:
             gcode_file = await self.read_gcode_file(

@@ -91,7 +91,7 @@ export class AnycubicCloudPanel extends LitElement {
   @state()
   private _selectPrinter: string;
 
-  async firstUpdated(): void {
+  async firstUpdated(): Promise<void> {
     this.printers = await getPrinterDevices(this.hass);
     this.requestUpdate();
   }
