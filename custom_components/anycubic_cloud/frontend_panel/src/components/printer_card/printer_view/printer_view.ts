@@ -1,11 +1,14 @@
-import { LitElement, html, css } from "lit";
+import { CSSResult, LitElement, css, html } from "lit";
 import { property } from "lit/decorators.js";
 
+import { printerConfigAnycubic } from "./utils";
 import { customElementIfUndef } from "../../../internal/register-custom-element";
 
-import { HassEntityInfos, HomeAssistant } from "../../../types";
-
-import { printerConfigAnycubic } from "./utils";
+import {
+  HassEntityInfos,
+  HomeAssistant,
+  LitTemplateResult,
+} from "../../../types";
 
 import "./animated_printer.ts";
 
@@ -14,26 +17,21 @@ export class AnycubicPrintercardPrinterview extends LitElement {
   @property()
   public hass!: HomeAssistant;
 
-  @property({ type: Function })
+  @property({ attribute: "toggle-video", type: Function })
   public toggleVideo?: () => void;
 
-  @property()
+  @property({ attribute: "printer-entities" })
   public printerEntities: HassEntityInfos;
 
-  @property()
+  @property({ attribute: "printer-entity-id-part" })
   public printerEntityIdPart: string | undefined;
 
-  @property()
+  @property({ attribute: "scale-factor" })
   public scaleFactor?: number;
 
-  render(): any {
+  render(): LitTemplateResult {
     return html`
-      <div
-        class="ac-printercard-printerview"
-        @click="${(_e): void => {
-          this._viewClick();
-        }}"
-      >
+      <div class="ac-printercard-printerview" @click=${this._viewClick}>
         <anycubic-printercard-animated_printer
           .hass=${this.hass}
           .scaleFactor=${this.scaleFactor}
@@ -45,13 +43,13 @@ export class AnycubicPrintercardPrinterview extends LitElement {
     `;
   }
 
-  private _viewClick(): void {
+  private _viewClick = (): void => {
     if (this.toggleVideo) {
       this.toggleVideo();
     }
-  }
+  };
 
-  static get styles(): any {
+  static get styles(): CSSResult {
     return css`
       :host {
         box-sizing: border-box;

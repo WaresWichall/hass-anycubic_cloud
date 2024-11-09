@@ -14,6 +14,7 @@ const fireHaptic = (
   const event: HapticEvent = new Event("haptic") as HapticEvent;
   event.detail = hapticStrength;
 
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   if (window) {
     window.dispatchEvent(event);
   }

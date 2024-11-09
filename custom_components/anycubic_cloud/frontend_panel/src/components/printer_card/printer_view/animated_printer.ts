@@ -1,10 +1,11 @@
-import { LitElement, html, css, PropertyValues, nothing } from "lit";
+import { CSSResult, LitElement, PropertyValues, css, html, nothing } from "lit";
 import { property, state } from "lit/decorators.js";
-import { styleMap } from "lit-html/directives/style-map.js";
+import { styleMap } from "lit/directives/style-map.js";
 import { query } from "lit/decorators/query.js";
 import { ResizeController } from "@lit-labs/observers/resize-controller.js";
-import { animate } from "@lit-labs/motion";
+import { animate, Options as motionOptions } from "@lit-labs/motion";
 
+import { getDimensions } from "./utils";
 import { customElementIfUndef } from "../../../internal/register-custom-element";
 
 import {
@@ -19,11 +20,10 @@ import {
   AnimatedPrinterDimensions,
   HassEntityInfos,
   HomeAssistant,
+  LitTemplateResult,
 } from "../../../types";
 
-import { getDimensions } from "./utils";
-
-const animOptionsGantry = {
+const animOptionsGantry: motionOptions = {
   keyframeOptions: {
     duration: 2000,
     direction: "alternate",
@@ -32,7 +32,7 @@ const animOptionsGantry = {
   properties: ["left"],
 };
 
-const animOptionsAxis = {
+const animOptionsAxis: motionOptions = {
   keyframeOptions: {
     duration: 100,
     composite: "add",
@@ -43,48 +43,48 @@ const animOptionsAxis = {
 @customElementIfUndef("anycubic-printercard-animated_printer")
 export class AnycubicPrintercardAnimatedPrinter extends LitElement {
   @query(".ac-printercard-animatedprinter")
-  private _rootElement;
+  private _rootElement: HTMLElement | undefined;
 
   @query(".ac-apr-scalable")
-  private _elAcAPr_scalable;
+  private _elAcAPr_scalable: HTMLElement | undefined;
 
   @query(".ac-apr-frame")
-  private _elAcAPr_frame;
+  private _elAcAPr_frame: HTMLElement | undefined;
 
   @query(".ac-apr-hole")
-  private _elAcAPr_hole;
+  private _elAcAPr_hole: HTMLElement | undefined;
 
   @query(".ac-apr-buildarea")
-  private _elAcAPr_buildarea;
+  private _elAcAPr_buildarea: HTMLElement | undefined;
 
   @query(".ac-apr-animprint")
-  private _elAcAPr_animprint;
+  private _elAcAPr_animprint: HTMLElement | undefined;
 
   @query(".ac-apr-buildplate")
-  private _elAcAPr_buildplate;
+  private _elAcAPr_buildplate: HTMLElement | undefined;
 
   @query(".ac-apr-xaxis")
-  private _elAcAPr_xaxis;
+  private _elAcAPr_xaxis: HTMLElement | undefined;
 
   @query(".ac-apr-gantry")
-  private _elAcAPr_gantry;
+  private _elAcAPr_gantry: HTMLElement | undefined;
 
   @query(".ac-apr-nozzle")
-  private _elAcAPr_nozzle;
+  private _elAcAPr_nozzle: HTMLElement | undefined;
 
   @property()
   public hass!: HomeAssistant;
 
-  @property()
+  @property({ attribute: "scale-factor" })
   public scaleFactor?: number;
 
-  @property()
+  @property({ attribute: "printer-config" })
   public printerConfig: AnimatedPrinterConfig;
 
-  @property()
+  @property({ attribute: "printer-entities" })
   public printerEntities: HassEntityInfos;
 
-  @property()
+  @property({ attribute: "printer-entity-id-part" })
   public printerEntityIdPart: string | undefined;
 
   @state()
@@ -96,10 +96,10 @@ export class AnycubicPrintercardAnimatedPrinter extends LitElement {
   @state()
   private _progressNum: number = 0;
 
-  @state({ type: Number })
+  @state()
   private animKeyframeGantry: number = 0;
 
-  @state({ type: Boolean })
+  @state()
   private _isPrinting: boolean = false;
 
   @state()
@@ -149,13 +149,15 @@ export class AnycubicPrintercardAnimatedPrinter extends LitElement {
           : undefined;
       }
       this._progressNum =
-        getPrinterSensorStateObj(
-          this.hass,
-          this.printerEntities,
-          this.printerEntityIdPart,
-          "job_progress",
-          0,
-        ).state / 100;
+        Number(
+          getPrinterSensorStateObj(
+            this.hass,
+            this.printerEntities,
+            this.printerEntityIdPart,
+            "job_progress",
+            0,
+          ).state,
+        ) / 100;
       const printingState = getPrinterSensorStateObj(
         this.hass,
         this.printerEntities,
@@ -173,7 +175,7 @@ export class AnycubicPrintercardAnimatedPrinter extends LitElement {
     }
   }
 
-  protected update(changedProperties: PropertyValues<this>): void {
+  protected update(changedProperties: PropertyValues): void {
     super.update(changedProperties);
 
     if (
@@ -199,6 +201,7 @@ export class AnycubicPrintercardAnimatedPrinter extends LitElement {
         height: `${this._progressNum * 100}%`,
       });
 
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (changedProperties.has("dimensions") && this.dimensions) {
         updateElementStyleWithObject(this._elAcAPr_scalable, {
           ...this.dimensions.Scalable,
@@ -222,7 +225,7 @@ export class AnycubicPrintercardAnimatedPrinter extends LitElement {
     }
   }
 
-  render(): any {
+  render(): LitTemplateResult {
     const stylesPreview = {
       "background-image": this.imagePreviewBgUrl,
     };
@@ -264,7 +267,7 @@ export class AnycubicPrintercardAnimatedPrinter extends LitElement {
     `;
   }
 
-  private _gantryAnimOptions = (): void => {
+  private _gantryAnimOptions = (): motionOptions => {
     return {
       ...animOptionsGantry,
       onComplete: this._moveGantry,
@@ -274,8 +277,8 @@ export class AnycubicPrintercardAnimatedPrinter extends LitElement {
 
   private _onResizeEvent = (): void => {
     if (this._rootElement) {
-      const height = this._rootElement.clientHeight;
-      const width = this._rootElement.clientWidth;
+      const height: number = this._rootElement.clientHeight;
+      const width: number = this._rootElement.clientWidth;
       this._setDimensions(width, height);
     }
   };
@@ -294,7 +297,7 @@ export class AnycubicPrintercardAnimatedPrinter extends LitElement {
       : 0;
   };
 
-  static get styles(): any {
+  static get styles(): CSSResult {
     return css`
       :host {
         display: block;

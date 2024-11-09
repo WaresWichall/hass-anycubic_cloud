@@ -1,5 +1,5 @@
-import { LitElement, html, css, PropertyValues } from "lit";
-import { property, customElement, state } from "lit/decorators.js";
+import { CSSResult, LitElement, PropertyValues, css, html } from "lit";
+import { customElement, property, state } from "lit/decorators.js";
 
 import "./views/debug/view-debug.ts";
 import "./views/main/view-main.ts";
@@ -9,10 +9,8 @@ import "./views/files/view-files_udisk.ts";
 import "./views/print/view-print-no_cloud_save.ts";
 import "./views/print/view-print-save_in_cloud.ts";
 
-import { localize } from "../localize/localize";
-
-import * as pkgjson from "../package.json";
 import { DEBUG } from "./const";
+import { HASSDomEvent } from "./fire_event";
 import {
   getPage,
   getPrinterDevID,
@@ -22,12 +20,18 @@ import {
   navigateToPrinter,
 } from "./helpers";
 import {
-  HomeAssistant,
+  DomClickEvent,
+  EvtTargPrinterDevId,
   HassDevice,
   HassDeviceList,
   HassPanel,
   HassRoute,
+  HomeAssistant,
+  LitTemplateResult,
+  PageChangeDetail,
 } from "./types";
+import * as pkgjson from "../package.json";
+import { localize } from "../localize/localize";
 
 window.console.info(
   `%c ANYCUBIC-PANEL %c v${pkgjson.version} `,
@@ -91,11 +95,6 @@ export class AnycubicCloudPanel extends LitElement {
   @state()
   private _selectPrinter: string;
 
-  async firstUpdated(): Promise<void> {
-    this.printers = await getPrinterDevices(this.hass);
-    this.requestUpdate();
-  }
-
   public connectedCallback(): void {
     super.connectedCallback();
     window.addEventListener("location-changed", this._handleLocationChange);
@@ -138,23 +137,22 @@ export class AnycubicCloudPanel extends LitElement {
       );
     }
 
-    if (!changedProperties.has("route") && !changedProperties.has("printers")) {
-      return;
+    if (changedProperties.has("route")) {
+      this.printers = getPrinterDevices(this.hass);
+      this.selectedPage = getPage(this.route);
+      this.selectedPrinterID = getPrinterDevID(this.route);
+      this.selectedPrinterDevice = getSelectedPrinter(
+        this.printers,
+        this.selectedPrinterID,
+      );
     }
-
-    this.selectedPage = getPage(this.route);
-    this.selectedPrinterID = getPrinterDevID(this.route);
-    this.selectedPrinterDevice = getSelectedPrinter(
-      this.printers,
-      this.selectedPrinterID,
-    );
   }
 
-  render(): any {
+  render(): LitTemplateResult {
     return this.getInitialView();
   }
 
-  renderPrinterPage(): HTMLElement {
+  renderPrinterPage(): LitTemplateResult {
     return html`
       <div class="header">
         ${this.renderToolbar()}
@@ -180,7 +178,7 @@ export class AnycubicCloudPanel extends LitElement {
           <paper-tab page-name="print-save_in_cloud">
             ${this._tabPrintSave}
           </paper-tab>
-          ${DEBUG
+          ${DEBUG // eslint-disable-line @typescript-eslint/no-unnecessary-condition
             ? html`
                 <paper-tab page-name="debug"> ${this._tabDebug} </paper-tab>
               `
@@ -191,7 +189,7 @@ export class AnycubicCloudPanel extends LitElement {
     `;
   }
 
-  renderToolbar(): HTMLElement {
+  renderToolbar(): LitTemplateResult {
     return html`
       <div class="toolbar">
         <ha-menu-button
@@ -204,7 +202,7 @@ export class AnycubicCloudPanel extends LitElement {
     `;
   }
 
-  getInitialView(): HTMLElement {
+  getInitialView(): LitTemplateResult {
     if (this.selectedPrinterID) {
       return this.renderPrinterPage();
     } else {
@@ -218,11 +216,10 @@ export class AnycubicCloudPanel extends LitElement {
                   (printerID) =>
                     html`<li
                       class="printer-select-box"
-                      @click="${(_e): void => {
-                        this._handlePrinterClick(printerID);
-                      }}"
+                      .printer_id=${printerID}
+                      @click=${this._handlePrinterClick}
                     >
-                      ${this.printers[printerID].name}
+                      ${this.printers ? this.printers[printerID].name : ""}
                     </li>`,
                 )
               : null}
@@ -232,7 +229,7 @@ export class AnycubicCloudPanel extends LitElement {
     }
   }
 
-  getView(route: HassRoute): HTMLElement {
+  getView(route: HassRoute): LitTemplateResult {
     switch (this.selectedPage) {
       case "local-files":
         return html`
@@ -336,22 +333,22 @@ export class AnycubicCloudPanel extends LitElement {
     }
   }
 
-  _handlePrinterClick(printer_id): void {
-    navigateToPrinter(this, printer_id);
+  _handlePrinterClick = (ev: DomClickEvent<EvtTargPrinterDevId>): void => {
+    navigateToPrinter(this, ev.currentTarget.printer_id);
     this.requestUpdate();
-  }
+  };
 
-  handlePageSelected(ev): void {
-    const newPage = ev.detail.item.getAttribute("page-name");
+  handlePageSelected = (ev: HASSDomEvent<PageChangeDetail>): void => {
+    const newPage = ev.detail.item.getAttribute("page-name") as string;
     if (newPage !== getPage(this.route)) {
       navigateToPage(this, newPage);
       this.requestUpdate();
     } else {
       scrollTo(0, 0);
     }
-  }
+  };
 
-  static get styles(): any {
+  static get styles(): CSSResult {
     return css`
       :host {
         padding: 16px;

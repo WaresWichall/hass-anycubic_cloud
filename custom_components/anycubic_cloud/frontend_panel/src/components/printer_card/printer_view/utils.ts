@@ -5,9 +5,9 @@ import {
 } from "../../../types";
 
 class Scale {
-  scale_factor;
+  scale_factor: number;
 
-  constructor(scale_factor) {
+  constructor(scale_factor: number) {
     this.scale_factor = scale_factor;
   }
 

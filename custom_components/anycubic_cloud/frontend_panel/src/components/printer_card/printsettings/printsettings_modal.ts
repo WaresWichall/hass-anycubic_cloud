@@ -1,13 +1,14 @@
-import { LitElement, html, css, PropertyValues, nothing } from "lit";
+import { CSSResult, LitElement, PropertyValues, css, html, nothing } from "lit";
 import { property, state } from "lit/decorators.js";
-import { styleMap } from "lit-html/directives/style-map.js";
-import { animate } from "@lit-labs/motion";
+import { styleMap } from "lit/directives/style-map.js";
+import { animate, Options as motionOptions } from "@lit-labs/motion";
 
 import { localize } from "../../../../localize/localize";
 
 import { customElementIfUndef } from "../../../internal/register-custom-element";
 
 import { platform } from "../../../const";
+import { HASSDomEvent } from "../../../fire_event";
 
 import {
   getPrinterEntityId,
@@ -18,17 +19,25 @@ import {
 
 import {
   AnycubicPrintOptionConfirmationType,
-  HomeAssistant,
-  HassEntityInfos,
+  AnycubicSpeedModeEntity,
+  AnycubicTargetTempEntity,
+  DomClickEvent,
+  DropdownEvent,
+  EvtTargConfirmationMode,
   HassDevice,
+  HassEntityInfos,
+  HomeAssistant,
+  LitTemplateResult,
+  ModalEventBase,
   SelectDropdownProps,
+  TextfieldChangeDetail,
 } from "../../../types";
 
 import { commonModalStyle } from "../../ui/modal-styles";
 
 import "../../ui/select-dropdown.ts";
 
-const animOptionsCard = {
+const animOptionsCard: motionOptions = {
   keyframeOptions: {
     duration: 250,
     direction: "alternate",
@@ -45,17 +54,17 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
   @property()
   public language!: string;
 
-  @property()
+  @property({ attribute: "selected-printer-device" })
   public selectedPrinterDevice: HassDevice | undefined;
 
-  @property()
+  @property({ attribute: "printer-entities" })
   public printerEntities: HassEntityInfos;
 
-  @property()
+  @property({ attribute: "printer-entity-id-part" })
   public printerEntityIdPart: string | undefined;
 
   @state()
-  private availableSpeedModes: SelectDropdownProps[] = [];
+  private availableSpeedModes: SelectDropdownProps = {};
 
   @state()
   private isFDM: boolean = false;
@@ -168,7 +177,11 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
   @state()
   private _buttonSaveBoxFanSpeed: string;
 
-  async firstUpdated(): void {
+  @state()
+  private _changingSettings: boolean = false;
+
+  // eslint-disable-next-line @typescript-eslint/require-await
+  async firstUpdated(): Promise<void> {
     this.addEventListener("ac-select-dropdown", this._handleDropdownEvent);
     this.addEventListener("click", (e) => {
       this._closeModal(e);
@@ -266,39 +279,47 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
         this.printerEntityIdPart,
       );
       if (!this._userEditFanSpeed) {
-        this.currentFanSpeed = getPrinterSensorStateObj(
-          this.hass,
-          this.printerEntities,
-          this.printerEntityIdPart,
-          "fan_speed",
-          0,
-        ).state;
+        this.currentFanSpeed = Number(
+          getPrinterSensorStateObj(
+            this.hass,
+            this.printerEntities,
+            this.printerEntityIdPart,
+            "fan_speed",
+            0,
+          ).state,
+        );
       }
       if (!this._userEditTargetTempNozzle) {
-        const currentTargetTempNozzleState = getPrinterSensorStateObj(
-          this.hass,
-          this.printerEntities,
-          this.printerEntityIdPart,
-          "target_nozzle_temperature",
-          0,
-          { limit_min: 0, limit_max: 0 },
+        const currentTargetTempNozzleState: AnycubicTargetTempEntity =
+          getPrinterSensorStateObj(
+            this.hass,
+            this.printerEntities,
+            this.printerEntityIdPart,
+            "target_nozzle_temperature",
+            0,
+            { limit_min: 0, limit_max: 0 },
+          ) as AnycubicTargetTempEntity;
+        this.currentTargetTempNozzle = Number(
+          currentTargetTempNozzleState.state,
         );
-        this.currentTargetTempNozzle = currentTargetTempNozzleState.state;
         this.minTargetTempNozzle =
           currentTargetTempNozzleState.attributes.limit_min;
         this.maxTargetTempNozzle =
           currentTargetTempNozzleState.attributes.limit_max;
       }
       if (!this._userEditTargetTempHotbed) {
-        const currentTargetTempHotbedState = getPrinterSensorStateObj(
-          this.hass,
-          this.printerEntities,
-          this.printerEntityIdPart,
-          "target_hotbed_temperature",
-          0,
-          { limit_min: 0, limit_max: 0 },
+        const currentTargetTempHotbedState: AnycubicTargetTempEntity =
+          getPrinterSensorStateObj(
+            this.hass,
+            this.printerEntities,
+            this.printerEntityIdPart,
+            "target_hotbed_temperature",
+            0,
+            { limit_min: 0, limit_max: 0 },
+          ) as AnycubicTargetTempEntity;
+        this.currentTargetTempHotbed = Number(
+          currentTargetTempHotbedState.state,
         );
-        this.currentTargetTempHotbed = currentTargetTempHotbedState.state;
         this.minTargetTempHotbed =
           currentTargetTempHotbedState.attributes.limit_min;
         this.maxTargetTempHotbed =
@@ -306,15 +327,18 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
       }
 
       if (!this._userEditSpeedMode) {
-        const speedModeState = getPrinterSensorStateObj(
-          this.hass,
-          this.printerEntities,
-          this.printerEntityIdPart,
-          "job_speed_mode",
-          "",
-          { available_modes: [], job_speed_mode_code: -1 },
-        );
-        this.availableSpeedModes = speedModesFromStateObj(speedModeState);
+        const speedModeState: AnycubicSpeedModeEntity =
+          getPrinterSensorStateObj(
+            this.hass,
+            this.printerEntities,
+            this.printerEntityIdPart,
+            "job_speed_mode",
+            "",
+            { available_modes: [], job_speed_mode_code: -1 },
+          ) as AnycubicSpeedModeEntity;
+        this.availableSpeedModes = speedModesFromStateObj(
+          speedModeState,
+        ) as SelectDropdownProps;
         this.currentSpeedModeKey =
           speedModeState.attributes.print_speed_mode_code;
         this.currentSpeedModeDescr =
@@ -335,11 +359,11 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
     }
   }
 
-  render(): any {
+  render(): LitTemplateResult {
     const stylesMain = {
-      height: this.isHidden ? "1px" : "auto",
-      opacity: this.isHidden ? 0.0 : 1.0,
-      scale: this.isHidden ? 0.0 : 1.0,
+      height: "auto",
+      opacity: 1.0,
+      scale: 1.0,
     };
 
     return html`
@@ -348,32 +372,21 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
         style=${styleMap(stylesMain)}
         ${animate({ ...animOptionsCard })}
       >
-        <span
-          class="ac-modal-close"
-          @click="${(e): void => {
-            this._closeModal(e);
-          }}"
-          >&times;</span
-        >
-        <div
-          class="ac-modal-card"
-          @click="${(e): void => {
-            this._cardClick(e);
-          }}"
-        >
+        <span class="ac-modal-close" @click=${this._closeModal}>&times;</span>
+        <div class="ac-modal-card" @click=${this._cardClick}>
           ${this._renderCard()}
         </div>
       </div>
     `;
   }
 
-  _renderCard(): any {
+  _renderCard(): LitTemplateResult {
     return this._confirmationType
       ? this._renderConfirm()
       : this._renderSettings();
   }
 
-  _renderConfirm(): any {
+  _renderConfirm(): LitTemplateResult {
     return html`
       <div>
         <div class="ac-settings-header">Confirm Action</div>
@@ -381,17 +394,12 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
           <div class="ac-confirm-description">${this._confirmMessage}</div>
           <div class="ac-confirm-buttons">
             <ha-control-button
-              @click="${(_e): void => {
-                this._handleConfirmApprove();
-              }}"
+              @click=${this._handleConfirmApprove}
+              .disabled=${this._changingSettings}
             >
               ${this._buttonYes}
             </ha-control-button>
-            <ha-control-button
-              @click="${(_e): void => {
-                this._handleConfirmCancel();
-              }}"
-            >
+            <ha-control-button @click=${this._handleConfirmCancel}>
               ${this._buttonNo}
             </ha-control-button>
           </div>
@@ -400,40 +408,31 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
     `;
   }
 
-  _renderSettings(): any {
+  _renderSettings(): LitTemplateResult {
     return html`
       <div>
         <div class="ac-settings-header">Print Settings</div>
         <div>
           <div class="ac-settings-row ac-settings-buttonrow">
             <ha-control-button
-              @click="${(_e): void => {
-                this._setConfirmationMode(
-                  AnycubicPrintOptionConfirmationType.PAUSE,
-                );
-              }}"
+              .confirmation_type=${AnycubicPrintOptionConfirmationType.PAUSE}
+              @click=${this._setConfirmationMode}
             >
               ${this._buttonPrintPause}
             </ha-control-button>
           </div>
           <div class="ac-settings-row ac-settings-buttonrow">
             <ha-control-button
-              @click="${(_e): void => {
-                this._setConfirmationMode(
-                  AnycubicPrintOptionConfirmationType.RESUME,
-                );
-              }}"
+              .confirmation_type=${AnycubicPrintOptionConfirmationType.RESUME}
+              @click=${this._setConfirmationMode}
             >
               ${this._buttonPrintResume}
             </ha-control-button>
           </div>
           <div class="ac-settings-row ac-settings-buttonrow">
             <ha-control-button
-              @click="${(_e): void => {
-                this._setConfirmationMode(
-                  AnycubicPrintOptionConfirmationType.CANCEL,
-                );
-              }}"
+              .confirmation_type=${AnycubicPrintOptionConfirmationType.CANCEL}
+              @click=${this._setConfirmationMode}
             >
               ${this._buttonPrintCancel}
             </ha-control-button>
@@ -447,9 +446,8 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
                     .initialItem=${this.currentSpeedModeDescr}
                   ></anycubic-ui-select-dropdown>
                   <ha-control-button
-                    @click="${(_e): void => {
-                      this._handleSaveSpeedModeButton();
-                    }}"
+                    .disabled=${this._changingSettings}
+                    @click=${this._handleSaveSpeedModeButton}
                   >
                     ${this._buttonSaveSpeedMode}
                   </ha-control-button>
@@ -466,9 +464,8 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
                     @keydown=${this._handleTargetTempNozzleKeyDown}
                   ></ha-textfield>
                   <ha-control-button
-                    @click="${(_e): void => {
-                      this._handleSaveTargetTempNozzleButton();
-                    }}"
+                    .disabled=${this._changingSettings}
+                    @click=${this._handleSaveTargetTempNozzleButton}
                   >
                     ${this._buttonSaveTargetNozzle}
                   </ha-control-button>
@@ -485,9 +482,8 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
                     @keydown=${this._handleTargetTempHotbedKeyDown}
                   ></ha-textfield>
                   <ha-control-button
-                    @click="${(_e): void => {
-                      this._handleSaveTargetTempHotbedButton();
-                    }}"
+                    .disabled=${this._changingSettings}
+                    @click=${this._handleSaveTargetTempHotbedButton}
                   >
                     ${this._buttonSaveTargetHotbed}
                   </ha-control-button>
@@ -504,9 +500,8 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
                     @keydown=${this._handleFanSpeedKeyDown}
                   ></ha-textfield>
                   <ha-control-button
-                    @click="${(_e): void => {
-                      this._handleSaveFanSpeedButton();
-                    }}"
+                    .disabled=${this._changingSettings}
+                    @click=${this._handleSaveFanSpeedButton}
                   >
                     ${this._buttonSaveFanSpeed}
                   </ha-control-button>
@@ -523,9 +518,8 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
                     @keydown=${this._handleAuxFanSpeedKeyDown}
                   ></ha-textfield>
                   <ha-control-button
-                    @click="${(_e): void => {
-                      this._handleSaveAuxFanSpeedButton();
-                    }}"
+                    .disabled=${this._changingSettings}
+                    @click=${this._handleSaveAuxFanSpeedButton}
                   >
                     ${this._buttonSaveAuxFanSpeed}
                   </ha-control-button>
@@ -542,9 +536,8 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
                     @keydown=${this._handleBoxFanSpeedKeyDown}
                   ></ha-textfield>
                   <ha-control-button
-                    @click="${(_e): void => {
-                      this._handleSaveBoxFanSpeedButton();
-                    }}"
+                    .disabled=${this._changingSettings}
+                    @click=${this._handleSaveBoxFanSpeedButton}
                   >
                     ${this._buttonSaveBoxFanSpeed}
                   </ha-control-button>
@@ -556,23 +549,40 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
     `;
   }
 
-  private _setConfirmationMode(confirmationType): void {
-    this._confirmationType = confirmationType;
+  private _setConfirmationMode = (
+    ev: DomClickEvent<EvtTargConfirmationMode>,
+  ): void => {
+    this._confirmationType = ev.currentTarget.confirmation_type;
     this._confirmMessage = localize(
       "card.print_settings.confirm_message",
       this.language,
       "action",
-      localize("common.actions." + this._confirmationType, this.language),
+      localize(
+        "common.actions." + (this._confirmationType as string),
+        this.language,
+      ),
     );
-  }
+  };
 
   private _pressHassButton(suffix: string): void {
-    this.hass.callService("button", "press", {
-      entity_id: getPrinterEntityId(this.printerEntityIdPart, "button", suffix),
-    });
+    this._changingSettings = true;
+    this.hass
+      .callService("button", "press", {
+        entity_id: getPrinterEntityId(
+          this.printerEntityIdPart,
+          "button",
+          suffix,
+        ),
+      })
+      .then(() => {
+        this._changingSettings = false;
+      })
+      .catch((_e: unknown) => {
+        this._changingSettings = false;
+      });
   }
 
-  private _handleConfirmApprove(): void {
+  private _handleConfirmApprove = (): void => {
     switch (this._confirmationType) {
       case AnycubicPrintOptionConfirmationType.PAUSE:
         this._pressHassButton("pause_print");
@@ -588,88 +598,99 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
     }
     this._confirmationType = undefined;
     this._closeModal();
-  }
+  };
 
-  private _handleConfirmCancel(): void {
+  private _handleConfirmCancel = (): void => {
     this._confirmationType = undefined;
-  }
+  };
 
-  private _handleFanSpeedChange(ev: Event): void {
-    const newSpeed = (ev.currentTarget as any).value;
+  private _handleFanSpeedChange = (ev: Event): void => {
+    const newSpeed = (
+      ev.currentTarget as unknown as TextfieldChangeDetail<number>
+    ).value;
     this.currentFanSpeed = Number(newSpeed);
     this._userEditFanSpeed = true;
-  }
+  };
 
-  private _handleAuxFanSpeedChange(ev: Event): void {
-    const newSpeed = (ev.currentTarget as any).value;
+  private _handleAuxFanSpeedChange = (ev: Event): void => {
+    const newSpeed = (
+      ev.currentTarget as unknown as TextfieldChangeDetail<number>
+    ).value;
     this.currentAuxFanSpeed = Number(newSpeed);
     this._userEditAuxFanSpeed = true;
-  }
+  };
 
-  private _handleBoxFanSpeedChange(ev: Event): void {
-    const newSpeed = (ev.currentTarget as any).value;
+  private _handleBoxFanSpeedChange = (ev: Event): void => {
+    const newSpeed = (
+      ev.currentTarget as unknown as TextfieldChangeDetail<number>
+    ).value;
     this.currentBoxFanSpeed = Number(newSpeed);
     this._userEditBoxFanSpeed = true;
-  }
+  };
 
-  private _handleFanSpeedKeyDown(ev: Event): void {
+  private _handleFanSpeedKeyDown = (ev: KeyboardEvent): void => {
     if (ev.code === "Enter") {
       ev.preventDefault();
       this._submitChangedFanSpeed();
     } else {
       this._userEditFanSpeed = true;
     }
-  }
+  };
 
-  private _handleAuxFanSpeedKeyDown(ev: Event): void {
+  private _handleAuxFanSpeedKeyDown = (ev: KeyboardEvent): void => {
     if (ev.code === "Enter") {
       ev.preventDefault();
       this._submitChangedAuxFanSpeed();
     } else {
       this._userEditAuxFanSpeed = true;
     }
-  }
+  };
 
-  private _handleBoxFanSpeedKeyDown(ev: Event): void {
+  private _handleBoxFanSpeedKeyDown = (ev: KeyboardEvent): void => {
     if (ev.code === "Enter") {
       ev.preventDefault();
       this._submitChangedBoxFanSpeed();
     } else {
       this._userEditBoxFanSpeed = true;
     }
-  }
+  };
 
-  private _handleTargetTempNozzleChange(ev: Event): void {
-    const newTemp = (ev.currentTarget as any).value;
+  private _handleTargetTempNozzleChange = (ev: Event): void => {
+    const newTemp = (
+      ev.currentTarget as unknown as TextfieldChangeDetail<number>
+    ).value;
     this.currentTargetTempNozzle = Number(newTemp);
     this._userEditTargetTempNozzle = true;
-  }
+  };
 
-  private _handleTargetTempHotbedChange(ev: Event): void {
-    const newTemp = (ev.currentTarget as any).value;
+  private _handleTargetTempHotbedChange = (ev: Event): void => {
+    const newTemp = (
+      ev.currentTarget as unknown as TextfieldChangeDetail<number>
+    ).value;
     this.currentTargetTempHotbed = Number(newTemp);
     this._userEditTargetTempHotbed = true;
-  }
+  };
 
-  private _handleTargetTempNozzleKeyDown(ev: Event): void {
+  private _handleTargetTempNozzleKeyDown = (ev: KeyboardEvent): void => {
     if (ev.code === "Enter") {
       ev.preventDefault();
       this._submitChangedTargetTempNozzle();
     } else {
       this._userEditTargetTempNozzle = true;
     }
-  }
+  };
 
-  private _handleTargetTempHotbedKeyDown(ev: Event): void {
+  private _handleTargetTempHotbedKeyDown = (ev: KeyboardEvent): void => {
     if (ev.code === "Enter") {
       ev.preventDefault();
       this._submitChangedTargetTempHotbed();
     } else {
       this._userEditTargetTempHotbed = true;
     }
-  }
+  };
 
-  private _handleModalEvent = (e: Event): void => {
+  private _handleModalEvent = (evt: Event): void => {
+    const e = evt as HASSDomEvent<ModalEventBase>;
     e.stopPropagation();
     if (e.detail.modalOpen) {
       this._isOpen = true;
@@ -677,7 +698,8 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
     }
   };
 
-  private _handleDropdownEvent = (e: Event): void => {
+  private _handleDropdownEvent = (evt: Event): void => {
+    const e = evt as HASSDomEvent<DropdownEvent<number, string>>;
     e.stopPropagation();
     this._userEditSpeedMode = true;
     if (typeof e.detail.key !== "undefined") {
@@ -690,35 +712,35 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
     }
   };
 
-  private _handleSaveFanSpeedButton(): void {
+  private _handleSaveFanSpeedButton = (): void => {
     this._submitChangedFanSpeed();
     this._resetUserEdits();
-  }
+  };
 
-  private _handleSaveAuxFanSpeedButton(): void {
+  private _handleSaveAuxFanSpeedButton = (): void => {
     this._submitChangedAuxFanSpeed();
     this._resetUserEdits();
-  }
+  };
 
-  private _handleSaveBoxFanSpeedButton(): void {
+  private _handleSaveBoxFanSpeedButton = (): void => {
     this._submitChangedBoxFanSpeed();
     this._resetUserEdits();
-  }
+  };
 
-  private _handleSaveSpeedModeButton(): void {
+  private _handleSaveSpeedModeButton = (): void => {
     this._submitChangedSpeedMode();
     this._resetUserEdits();
-  }
+  };
 
-  private _handleSaveTargetTempNozzleButton(): void {
+  private _handleSaveTargetTempNozzleButton = (): void => {
     this._submitChangedTargetTempNozzle();
     this._resetUserEdits();
-  }
+  };
 
-  private _handleSaveTargetTempHotbedButton(): void {
+  private _handleSaveTargetTempHotbedButton = (): void => {
     this._submitChangedTargetTempHotbed();
     this._resetUserEdits();
-  }
+  };
 
   private _resetUserEdits(): void {
     this._userEditFanSpeed = false;
@@ -729,26 +751,34 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
     this._userEditSpeedMode = false;
   }
 
-  private _closeModal(e?: Event | undefined): void {
+  private _closeModal = (e?: Event | undefined): void => {
     if (e) {
       e.stopPropagation();
     }
     this._isOpen = false;
     this._resetUserEdits();
-  }
+  };
 
-  private _cardClick(e: Event): void {
+  private _cardClick = (e: Event): void => {
     e.stopPropagation();
-  }
+  };
 
   private _submitChangedSpeedMode(): void {
     if (this._userEditSpeedMode && this.selectedPrinterDevice) {
       const serv = "change_print_speed_mode";
-      this.hass.callService(platform, serv, {
-        config_entry: this.selectedPrinterDevice.primary_config_entry,
-        device_id: this.selectedPrinterDevice.id,
-        speed_mode: this.currentSpeedModeKey,
-      });
+      this._changingSettings = true;
+      this.hass
+        .callService(platform, serv, {
+          config_entry: this.selectedPrinterDevice.primary_config_entry,
+          device_id: this.selectedPrinterDevice.id,
+          speed_mode: this.currentSpeedModeKey,
+        })
+        .then(() => {
+          this._changingSettings = false;
+        })
+        .catch((_e: unknown) => {
+          this._changingSettings = false;
+        });
       this._closeModal();
     }
   }
@@ -756,11 +786,19 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
   private _submitChangedFanSpeed(): void {
     if (this._userEditFanSpeed && this.selectedPrinterDevice) {
       const serv = "change_print_fan_speed";
-      this.hass.callService(platform, serv, {
-        config_entry: this.selectedPrinterDevice.primary_config_entry,
-        device_id: this.selectedPrinterDevice.id,
-        speed: this.currentFanSpeed,
-      });
+      this._changingSettings = true;
+      this.hass
+        .callService(platform, serv, {
+          config_entry: this.selectedPrinterDevice.primary_config_entry,
+          device_id: this.selectedPrinterDevice.id,
+          speed: this.currentFanSpeed,
+        })
+        .then(() => {
+          this._changingSettings = false;
+        })
+        .catch((_e: unknown) => {
+          this._changingSettings = false;
+        });
       this._closeModal();
     }
   }
@@ -768,11 +806,19 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
   private _submitChangedAuxFanSpeed(): void {
     if (this._userEditAuxFanSpeed && this.selectedPrinterDevice) {
       const serv = "change_print_aux_fan_speed";
-      this.hass.callService(platform, serv, {
-        config_entry: this.selectedPrinterDevice.primary_config_entry,
-        device_id: this.selectedPrinterDevice.id,
-        speed: this.currentAuxFanSpeed,
-      });
+      this._changingSettings = true;
+      this.hass
+        .callService(platform, serv, {
+          config_entry: this.selectedPrinterDevice.primary_config_entry,
+          device_id: this.selectedPrinterDevice.id,
+          speed: this.currentAuxFanSpeed,
+        })
+        .then(() => {
+          this._changingSettings = false;
+        })
+        .catch((_e: unknown) => {
+          this._changingSettings = false;
+        });
       this._closeModal();
     }
   }
@@ -780,11 +826,19 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
   private _submitChangedBoxFanSpeed(): void {
     if (this._userEditBoxFanSpeed && this.selectedPrinterDevice) {
       const serv = "change_print_box_fan_speed";
-      this.hass.callService(platform, serv, {
-        config_entry: this.selectedPrinterDevice.primary_config_entry,
-        device_id: this.selectedPrinterDevice.id,
-        speed: this.currentBoxFanSpeed,
-      });
+      this._changingSettings = true;
+      this.hass
+        .callService(platform, serv, {
+          config_entry: this.selectedPrinterDevice.primary_config_entry,
+          device_id: this.selectedPrinterDevice.id,
+          speed: this.currentBoxFanSpeed,
+        })
+        .then(() => {
+          this._changingSettings = false;
+        })
+        .catch((_e: unknown) => {
+          this._changingSettings = false;
+        });
       this._closeModal();
     }
   }
@@ -792,11 +846,19 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
   private _submitChangedTargetTempNozzle(): void {
     if (this._userEditTargetTempNozzle && this.selectedPrinterDevice) {
       const serv = "change_print_target_nozzle_temperature";
-      this.hass.callService(platform, serv, {
-        config_entry: this.selectedPrinterDevice.primary_config_entry,
-        device_id: this.selectedPrinterDevice.id,
-        temperature: this.currentTargetTempNozzle,
-      });
+      this._changingSettings = true;
+      this.hass
+        .callService(platform, serv, {
+          config_entry: this.selectedPrinterDevice.primary_config_entry,
+          device_id: this.selectedPrinterDevice.id,
+          temperature: this.currentTargetTempNozzle,
+        })
+        .then(() => {
+          this._changingSettings = false;
+        })
+        .catch((_e: unknown) => {
+          this._changingSettings = false;
+        });
       this._closeModal();
     }
   }
@@ -804,16 +866,24 @@ export class AnycubicPrintercardPrintsettingsModal extends LitElement {
   private _submitChangedTargetTempHotbed(): void {
     if (this._userEditTargetTempHotbed && this.selectedPrinterDevice) {
       const serv = "change_print_target_hotbed_temperature";
-      this.hass.callService(platform, serv, {
-        config_entry: this.selectedPrinterDevice.primary_config_entry,
-        device_id: this.selectedPrinterDevice.id,
-        temperature: this.currentTargetTempHotbed,
-      });
+      this._changingSettings = true;
+      this.hass
+        .callService(platform, serv, {
+          config_entry: this.selectedPrinterDevice.primary_config_entry,
+          device_id: this.selectedPrinterDevice.id,
+          temperature: this.currentTargetTempHotbed,
+        })
+        .then(() => {
+          this._changingSettings = false;
+        })
+        .catch((_e: unknown) => {
+          this._changingSettings = false;
+        });
       this._closeModal();
     }
   }
 
-  static get styles(): any {
+  static get styles(): CSSResult {
     return css`
       ${commonModalStyle}
 

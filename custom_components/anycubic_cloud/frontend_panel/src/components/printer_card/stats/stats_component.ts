@@ -1,4 +1,4 @@
-import { LitElement, html, css, PropertyValues } from "lit";
+import { CSSResult, LitElement, PropertyValues, css, html } from "lit";
 import { property, state } from "lit/decorators.js";
 import { repeat } from "lit/directives/repeat.js";
 
@@ -13,9 +13,11 @@ import {
   toTitleCase,
 } from "../../../helpers";
 import {
+  AnycubicSpeedModeEntity,
   HassEntity,
   HassEntityInfos,
   HomeAssistant,
+  LitTemplateResult,
   PrinterCardStatType,
   TemperatureUnit,
   TranslationDict,
@@ -34,10 +36,10 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
   @property()
   public language!: string;
 
-  @property()
+  @property({ attribute: "monitored-stats" })
   public monitoredStats: PrinterCardStatType[];
 
-  @property({ type: Boolean })
+  @property({ attribute: "show-percent", type: Boolean })
   public showPercent?: boolean;
 
   @property({ type: Boolean })
@@ -46,16 +48,16 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
   @property({ type: Boolean })
   public use_24hr?: boolean;
 
-  @property({ type: String })
+  @property({ attribute: "temperature-unit", type: String })
   public temperatureUnit: TemperatureUnit = TemperatureUnit.C;
 
-  @property()
+  @property({ attribute: "printer-entities" })
   public printerEntities: HassEntityInfos;
 
-  @property()
+  @property({ attribute: "printer-entity-id-part" })
   public printerEntityIdPart: string | undefined;
 
-  @property()
+  @property({ attribute: "progress-percent" })
   public progressPercent: number = 0;
 
   @state()
@@ -200,7 +202,8 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
         "printer_online",
         "Online",
         "Offline",
-      );
+        "unknown",
+      ) as string;
       this._valAvailability = toTitleCase(
         getPrinterSensorStateObj(
           this.hass,
@@ -221,17 +224,19 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
         this.printerEntityIdPart,
         "job_current_layer",
       ).state;
-      const speedModeState = getPrinterSensorStateObj(
+      const speedModeState: AnycubicSpeedModeEntity = getPrinterSensorStateObj(
         this.hass,
         this.printerEntities,
         this.printerEntityIdPart,
         "job_speed_mode",
         "",
         { available_modes: [], print_speed_mode_code: -1 },
-      );
+      ) as AnycubicSpeedModeEntity;
       const availableSpeedModes = speedModesFromStateObj(speedModeState);
-      const currentSpeedModeKey =
-        speedModeState.attributes.print_speed_mode_code;
+      const currentSpeedModeKey: number =
+        (speedModeState.attributes.print_speed_mode_code as
+          | number
+          | undefined) ?? 0;
       this._valSpeedMode =
         currentSpeedModeKey >= 0 && currentSpeedModeKey in availableSpeedModes
           ? availableSpeedModes[currentSpeedModeKey]
@@ -250,7 +255,8 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
         "drying_active",
         "Drying",
         "Not Drying",
-      );
+        "unknown",
+      ) as string;
       const dryTotal = Number(
         getPrinterSensorStateObj(
           this.hass,
@@ -344,7 +350,7 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
     }
   }
 
-  render(): any {
+  render(): LitTemplateResult {
     return html`
       <div class="ac-stats-box ac-stats-section">
         ${this.showPercent
@@ -363,11 +369,11 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
     `;
   }
 
-  private _renderStats(): HTMLElement {
+  private _renderStats(): LitTemplateResult {
     return repeat(
       this.monitoredStats,
       (condition) => condition,
-      (condition, _index) => {
+      (condition, _index): LitTemplateResult => {
         switch (condition) {
           case PrinterCardStatType.Status:
             return html`
@@ -596,10 +602,10 @@ export class AnycubicPrintercardStatsComponent extends LitElement {
             `;
         }
       },
-    );
+    ) as LitTemplateResult;
   }
 
-  static get styles(): any {
+  static get styles(): CSSResult {
     return css`
       :host {
         box-sizing: border-box;

@@ -1,10 +1,10 @@
-import { mdiCog, mdiPower, mdiLightbulbOn, mdiLightbulbOff } from "@mdi/js";
-import { LitElement, html, css, nothing, PropertyValues } from "lit";
+import { mdiCog, mdiLightbulbOff, mdiLightbulbOn, mdiPower } from "@mdi/js";
+import { CSSResult, LitElement, PropertyValues, css, html, nothing } from "lit";
 import { property, state } from "lit/decorators.js";
 import { query } from "lit/decorators/query.js";
 import { classMap } from "lit/directives/class-map.js";
-import { styleMap } from "lit-html/directives/style-map.js";
-import { animate } from "@lit-labs/motion";
+import { styleMap } from "lit/directives/style-map.js";
+import { animate, Options as motionOptions } from "@lit-labs/motion";
 
 import { localize } from "../../../../localize/localize";
 
@@ -17,6 +17,7 @@ import {
   HassEntity,
   HassEntityInfos,
   HomeAssistant,
+  LitTemplateResult,
   PrinterCardStatType,
   TemperatureUnit,
 } from "../../../types";
@@ -41,7 +42,7 @@ import "../multicolorbox_view/multicolorbox_modal_drying.ts";
 import "../multicolorbox_view/multicolorbox_modal_spool.ts";
 import "../printsettings/printsettings_modal.ts";
 
-const animOptionsCard = {
+const animOptionsCard: motionOptions = {
   keyframeOptions: {
     duration: 250,
     direction: "normal",
@@ -55,7 +56,7 @@ const defaultMonitoredStats: PrinterCardStatType[] = getDefaultMonitoredStats();
 @customElementIfUndef("anycubic-printercard-card")
 export class AnycubicPrintercardCard extends LitElement {
   @query(".ac-printer-card")
-  private _printerCardContainer!;
+  private _printerCardContainer!: HTMLElement | Window;
 
   @property()
   public hass!: HomeAssistant;
@@ -63,13 +64,13 @@ export class AnycubicPrintercardCard extends LitElement {
   @property()
   public language!: string;
 
-  @property()
+  @property({ attribute: "monitored-stats" })
   public monitoredStats?: PrinterCardStatType[] = defaultMonitoredStats;
 
-  @property()
+  @property({ attribute: "selected-printer-id" })
   public selectedPrinterID: string | undefined;
 
-  @property()
+  @property({ attribute: "selected-printer-device" })
   public selectedPrinterDevice: HassDevice | undefined;
 
   @property({ type: Boolean })
@@ -78,31 +79,31 @@ export class AnycubicPrintercardCard extends LitElement {
   @property({ type: Boolean })
   public use_24hr?: boolean;
 
-  @property({ type: Boolean })
+  @property({ attribute: "show-settings-button", type: Boolean })
   public showSettingsButton?: boolean;
 
-  @property({ type: Boolean })
+  @property({ attribute: "always-show", type: Boolean })
   public alwaysShow?: boolean;
 
-  @property({ type: String })
+  @property({ attribute: "temperature-unit", type: String })
   public temperatureUnit: TemperatureUnit = TemperatureUnit.C;
 
-  @property({ type: String })
+  @property({ attribute: "light-entity-id", type: String })
   public lightEntityId?: string;
 
-  @property({ type: String })
+  @property({ attribute: "power-entity-id", type: String })
   public powerEntityId?: string;
 
-  @property({ type: String })
+  @property({ attribute: "camera-entity-id", type: String })
   public cameraEntityId?: string;
 
   @property({ type: Boolean })
   public vertical?: boolean;
 
-  @property()
+  @property({ attribute: "scale-factor" })
   public scaleFactor?: number;
 
-  @property()
+  @property({ attribute: "slot-colors" })
   public slotColors?: string[];
 
   @state()
@@ -111,25 +112,25 @@ export class AnycubicPrintercardCard extends LitElement {
   @state()
   private cameraEntityState: HassEntity | undefined = undefined;
 
-  @state({ type: Boolean })
+  @state()
   private isHidden: boolean = false;
 
-  @state({ type: Boolean })
+  @state()
   private isPrinting: boolean = false;
 
-  @state({ type: Boolean })
+  @state()
   private hiddenOverride: boolean = false;
 
-  @state({ type: Boolean })
+  @state()
   private hasColorbox: boolean = false;
 
-  @state({ type: Boolean })
+  @state()
   private hasSecondaryColorbox: boolean = false;
 
-  @state({ type: Boolean })
+  @state()
   private lightIsOn: boolean = false;
 
-  @state({ type: String })
+  @state()
   private statusColor: string = "#ffc107";
 
   @state()
@@ -144,7 +145,13 @@ export class AnycubicPrintercardCard extends LitElement {
   @state()
   private _buttonPrintSettings: string;
 
-  protected willUpdate(changedProperties: PropertyValues<this>): void {
+  @state()
+  private _togglingLight: boolean = false;
+
+  @state()
+  private _togglingPower: boolean = false;
+
+  protected willUpdate(changedProperties: PropertyValues): void {
     super.willUpdate(changedProperties);
 
     if (changedProperties.has("language")) {
@@ -158,7 +165,7 @@ export class AnycubicPrintercardCard extends LitElement {
       this.monitoredStats = undefinedDefault(
         this.monitoredStats,
         defaultMonitoredStats,
-      );
+      ) as PrinterCardStatType[];
     }
 
     if (changedProperties.has("selectedPrinterID")) {
@@ -200,10 +207,10 @@ export class AnycubicPrintercardCard extends LitElement {
       }
       this.lightIsOn = getEntityStateBinary(
         this.hass,
-        { entity_id: this.lightEntityId },
+        { entity_id: this.lightEntityId ?? "" },
         true,
         false,
-      );
+      ) as boolean;
       const printStateString = getPrinterSensorStateObj(
         this.hass,
         this.printerEntities,
@@ -218,16 +225,16 @@ export class AnycubicPrintercardCard extends LitElement {
       this.statusColor = printStateStatusColor(printStateString);
       this.lightIsOn = getEntityStateBinary(
         this.hass,
-        { entity_id: this.lightEntityId },
+        { entity_id: this.lightEntityId ?? "" },
         true,
         false,
-      );
+      ) as boolean;
     }
   }
 
-  render(): any {
+  render(): LitTemplateResult {
     const classesCam = {
-      "ac-hidden": this._showVideo === true ? false : true,
+      "ac-hidden": !this._showVideo,
     };
 
     return html`
@@ -236,9 +243,9 @@ export class AnycubicPrintercardCard extends LitElement {
           ${this._renderHeader()} ${this._renderPrinterContainer()}
         </div>
         <anycubic-printercard-camera_view
-          class="${classMap(classesCam)}"
+          class=${classMap(classesCam)}
           .showVideo=${this._showVideo}
-          .toggleVideo=${(): void => this._toggleVideo()}
+          .toggleVideo=${this._toggleVideo}
           .cameraEntity=${this.cameraEntityState}
         ></anycubic-printercard-camera_view>
         <anycubic-printercard-multicolorbox_modal_spool
@@ -265,10 +272,9 @@ export class AnycubicPrintercardCard extends LitElement {
     `;
   }
 
-  private _renderHeader(): HTMLElement {
+  private _renderHeader(): LitTemplateResult {
     const classesHeader = {
-      "ac-h-justifycenter":
-        this.powerEntityId && this.lightEntityId ? false : true,
+      "ac-h-justifycenter": !(this.powerEntityId && this.lightEntityId),
     };
 
     const stylesDot = {
@@ -281,9 +287,8 @@ export class AnycubicPrintercardCard extends LitElement {
           ? html`
               <button
                 class="ac-printer-card-button-small"
-                @click="${(_e): void => {
-                  this._togglePowerEntity();
-                }}"
+                .disabled=${this._togglingPower}
+                @click=${this._togglePowerEntity}
               >
                 <ha-svg-icon .path=${mdiPower}></ha-svg-icon>
               </button>
@@ -292,9 +297,7 @@ export class AnycubicPrintercardCard extends LitElement {
 
         <button
           class="ac-printer-card-button-name"
-          @click="${(_e): void => {
-            this._toggleHiddenOveride();
-          }}"
+          @click=${this._toggleHiddenOveride}
         >
           <div
             class="ac-printer-card-header-status-dot"
@@ -308,9 +311,8 @@ export class AnycubicPrintercardCard extends LitElement {
           ? html`
               <button
                 class="ac-printer-card-button-small"
-                @click="${(_e): void => {
-                  this._toggleLightEntity();
-                }}"
+                .disabled=${this._togglingLight}
+                @click=${this._toggleLightEntity}
               >
                 <ha-svg-icon
                   .path=${this.lightIsOn ? mdiLightbulbOn : mdiLightbulbOff}
@@ -322,9 +324,9 @@ export class AnycubicPrintercardCard extends LitElement {
     `;
   }
 
-  private _renderPrinterContainer(): HTMLElement {
+  private _renderPrinterContainer(): LitTemplateResult {
     const classesMain = {
-      "ac-card-vertical": this.vertical ? true : false,
+      "ac-card-vertical": !!this.vertical,
     };
     const stylesMain = {
       height: this.isHidden ? "1px" : "auto",
@@ -335,14 +337,14 @@ export class AnycubicPrintercardCard extends LitElement {
       width: this.vertical
         ? "100%"
         : this.scaleFactor
-          ? 50 * this.scaleFactor + "%"
+          ? String(50 * this.scaleFactor) + "%"
           : "50%",
     };
     const stylesScaledColRight = {
       width: this.vertical
         ? "100%"
         : this.scaleFactor
-          ? 50 / this.scaleFactor + "%"
+          ? String(50 / this.scaleFactor) + "%"
           : "50%",
     };
 
@@ -361,7 +363,7 @@ export class AnycubicPrintercardCard extends LitElement {
             .printerEntities=${this.printerEntities}
             .printerEntityIdPart=${this.printerEntityIdPart}
             .scaleFactor=${this.scaleFactor}
-            .toggleVideo=${(): void => this._toggleVideo()}
+            .toggleVideo=${this._toggleVideo}
           ></anycubic-printercard-printer_view>
           ${this.vertical
             ? html`<p class="ac-printer-card-info-vertprog">
@@ -395,13 +397,13 @@ export class AnycubicPrintercardCard extends LitElement {
     `;
   }
 
-  private _toggleVideo(): void {
-    this._showVideo = this.cameraEntityState && !this._showVideo ? true : false;
-  }
+  private _toggleVideo = (): void => {
+    this._showVideo = !!(this.cameraEntityState && !this._showVideo);
+  };
 
-  private _renderPrintSettingsContainer(): HTMLElement {
+  private _renderPrintSettingsContainer(): LitTemplateResult {
     const classesMain = {
-      "ac-card-vertical": this.vertical ? true : false,
+      "ac-card-vertical": !!this.vertical,
     };
     const stylesMain = {
       height: this.isHidden ? "1px" : "auto",
@@ -421,9 +423,7 @@ export class AnycubicPrintercardCard extends LitElement {
             >
               <button
                 class="ac-printer-card-button-settings"
-                @click="${(_e): void => {
-                  this._openPrintSettingsModal();
-                }}"
+                @click=${this._openPrintSettingsModal}
               >
                 <ha-svg-icon .path=${mdiCog}></ha-svg-icon>
                 ${this._buttonPrintSettings}
@@ -434,9 +434,9 @@ export class AnycubicPrintercardCard extends LitElement {
       : nothing;
   }
 
-  private _renderMultiColorBoxContainer(): HTMLElement {
+  private _renderMultiColorBoxContainer(): LitTemplateResult {
     const classesMain = {
-      "ac-card-vertical": this.vertical ? true : false,
+      "ac-card-vertical": !!this.vertical,
     };
     const stylesMain = {
       height: this.isHidden ? "1px" : "auto",
@@ -465,9 +465,9 @@ export class AnycubicPrintercardCard extends LitElement {
       : nothing;
   }
 
-  private _renderSecondaryMultiColorBoxContainer(): HTMLElement {
+  private _renderSecondaryMultiColorBoxContainer(): LitTemplateResult {
     const classesMain = {
-      "ac-card-vertical": this.vertical ? true : false,
+      "ac-card-vertical": !!this.vertical,
     };
     const stylesMain = {
       height: this.isHidden ? "1px" : "auto",
@@ -496,43 +496,61 @@ export class AnycubicPrintercardCard extends LitElement {
       : nothing;
   }
 
-  private _openPrintSettingsModal(): void {
+  private _openPrintSettingsModal = (): void => {
     fireEvent(this._printerCardContainer, "ac-printset-modal", {
       modalOpen: true,
     });
-  }
+  };
 
-  private _toggleLightEntity(): void {
+  private _toggleLightEntity = (): void => {
     if (this.lightEntityId) {
-      this.hass.callService("homeassistant", "toggle", {
-        entity_id: this.lightEntityId,
-      });
+      this._togglingLight = true;
+      this.hass
+        .callService("homeassistant", "toggle", {
+          entity_id: this.lightEntityId,
+        })
+        .then(() => {
+          this._togglingLight = false;
+        })
+        .catch((_e: unknown) => {
+          this._togglingLight = false;
+        });
     }
-  }
+  };
 
-  private _togglePowerEntity(): void {
+  private _togglePowerEntity = (): void => {
     if (this.powerEntityId) {
-      this.hass.callService("homeassistant", "toggle", {
-        entity_id: this.powerEntityId,
-      });
+      this._togglingPower = true;
+      this.hass
+        .callService("homeassistant", "toggle", {
+          entity_id: this.powerEntityId,
+        })
+        .then(() => {
+          this._togglingPower = false;
+        })
+        .catch((_e: unknown) => {
+          this._togglingPower = false;
+        });
     }
-  }
+  };
 
-  private _toggleHiddenOveride(): void {
+  private _toggleHiddenOveride = (): void => {
     this.hiddenOverride = !this.hiddenOverride;
-  }
+  };
 
   private _percentComplete(): number {
-    return getPrinterSensorStateObj(
-      this.hass,
-      this.printerEntities,
-      this.printerEntityIdPart,
-      "job_progress",
-      -1.0,
-    ).state;
+    return Number(
+      getPrinterSensorStateObj(
+        this.hass,
+        this.printerEntities,
+        this.printerEntityIdPart,
+        "job_progress",
+        -1.0,
+      ).state,
+    );
   }
 
-  static get styles(): any {
+  static get styles(): CSSResult {
     return css`
       :host {
         display: block;
