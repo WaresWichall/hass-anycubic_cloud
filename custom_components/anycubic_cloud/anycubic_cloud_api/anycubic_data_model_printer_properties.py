@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from typing import Any
 
+from .anycubic_error_strings import ErrorsDataParsing
+from .anycubic_exceptions import AnycubicDataParsingError
+
 
 class AnycubicMaterialMapping:
     def __init__(
@@ -455,7 +458,7 @@ class AnycubicMultiColorBox:
             if spool := AnycubicSpoolInfo.from_json(x):
                 self._slots.append(spool)
             else:
-                raise Exception(f"Failed to load ACE spool info from: {slots}")
+                raise AnycubicDataParsingError(ErrorsDataParsing.ace.format(slots))
 
     def set_auto_feed(self, auto_feed: int) -> None:
         self._auto_feed = int(auto_feed)
@@ -481,7 +484,7 @@ class AnycubicMultiColorBox:
             if spool := AnycubicSpoolInfo.from_json(slot):
                 self._slots[slot_index] = spool
             else:
-                raise Exception(f"Failed to load ACE spool info from: {slot_list}")
+                raise AnycubicDataParsingError(ErrorsDataParsing.ace.format(slot_list))
 
     def build_mapping_for_material_list(
         self,

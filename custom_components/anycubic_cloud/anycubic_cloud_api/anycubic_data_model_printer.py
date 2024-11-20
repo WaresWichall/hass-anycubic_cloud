@@ -21,10 +21,16 @@ from .anycubic_enums import (
     AnycubicPrinterMaterialType,
     AnycubicPrintStatus,
 )
+from .anycubic_error_strings import (
+    ErrorsDataParsing,
+    ErrorsGeneral,
+    ErrorsMQTTUpdate,
+)
 from .anycubic_exceptions import (
     AnycubicAPIError,
     AnycubicDataParsingError,
     AnycubicMQTTUnhandledData,
+    AnycubicMQTTUnknownUpdate,
 )
 from .anycubic_helpers import (
     get_part_from_mqtt_topic,
@@ -187,9 +193,7 @@ class AnycubicPrinter:
             if file:
                 self._local_file_list.append(file)
             else:
-                raise AnycubicDataParsingError(
-                    f"Error parsing local_file_list: {file_list}"
-                )
+                raise AnycubicDataParsingError(ErrorsDataParsing.local_file_list.format(file_list))
 
     def _set_udisk_file_list(self, file_list: list[dict[str, Any]] | None) -> None:
         if file_list is None:
@@ -201,9 +205,7 @@ class AnycubicPrinter:
             if file:
                 self._udisk_file_list.append(file)
             else:
-                raise AnycubicDataParsingError(
-                    f"Error parsing udisk_file_list: {file_list}"
-                )
+                raise AnycubicDataParsingError(ErrorsDataParsing.udisk_file_list.format(file_list))
 
     def _set_multi_color_box(self, multi_color_box: list[dict[str, Any]] | dict[str, Any] | None) -> None:
         self._multi_color_box: list[AnycubicMultiColorBox] | None = None
@@ -219,9 +221,7 @@ class AnycubicPrinter:
                     if ace:
                         self._multi_color_box.append(ace)
                     else:
-                        raise AnycubicDataParsingError(
-                            f"Error parsing multi_color_box: {multi_color_box}"
-                        )
+                        raise AnycubicDataParsingError(ErrorsDataParsing.ace.format(multi_color_box))
 
         except Exception as e:
             self._initialisation_error = True
@@ -285,9 +285,7 @@ class AnycubicPrinter:
                     if tool:
                         self._tools.append(tool)
                     else:
-                        raise AnycubicDataParsingError(
-                            f"Error parsing tools: {tools}"
-                        )
+                        raise AnycubicDataParsingError(ErrorsDataParsing.tools.format(tools))
         except Exception as e:
             self._initialisation_error = True
             if not self._ignore_init_errors:
@@ -307,7 +305,7 @@ class AnycubicPrinter:
                         self._multi_color_box_fw_version.append(ace)
                     else:
                         raise AnycubicDataParsingError(
-                            f"Error parsing multi_color_box_fw_version: {multi_color_box_fw_version}"
+                            ErrorsDataParsing.ace_fw_version.format(multi_color_box_fw_version)
                         )
         except Exception as e:
             self._initialisation_error = True
@@ -593,7 +591,7 @@ class AnycubicPrinter:
             self._device_status = 2
             return
         else:
-            raise Exception('Unknown lastwill state.')
+            raise AnycubicMQTTUnknownUpdate(ErrorsMQTTUpdate.lastwill)
 
     def _process_mqtt_update_user(
         self,
@@ -608,7 +606,7 @@ class AnycubicPrinter:
             self._is_bound_to_user = False
             return
         else:
-            raise Exception('Unknown user update.')
+            raise AnycubicMQTTUnknownUpdate(ErrorsMQTTUpdate.user)
 
     def _process_mqtt_update_status(
         self,
@@ -623,7 +621,7 @@ class AnycubicPrinter:
             self._is_printing = 2
             return
         else:
-            raise Exception('Unknown status/workReport.')
+            raise AnycubicMQTTUnknownUpdate(ErrorsMQTTUpdate.printer_status)
 
     def _process_mqtt_update_ota_multicolorbox(
         self,
@@ -663,7 +661,7 @@ class AnycubicPrinter:
             self.multi_color_box_fw_version[box_id].set_update_progress(data['current_progress'])
             return
         else:
-            raise Exception('Unknown ota multiColorBox data.')
+            raise AnycubicMQTTUnknownUpdate(ErrorsMQTTUpdate.ota_ace)
 
     def _process_mqtt_update_ota_printer(
         self,
@@ -698,7 +696,7 @@ class AnycubicPrinter:
                 self.fw_version.set_update_progress(data['current_progress'])
             return
         else:
-            raise Exception('Unknown ota version.')
+            raise AnycubicMQTTUnknownUpdate(ErrorsMQTTUpdate.ota_printer)
 
     def _process_mqtt_update_temperature(
         self,
@@ -722,7 +720,7 @@ class AnycubicPrinter:
 
             return
         else:
-            raise Exception('Unknown temperature data.')
+            raise AnycubicMQTTUnknownUpdate(ErrorsMQTTUpdate.temperature)
 
     def _process_mqtt_update_fan(
         self,
@@ -737,7 +735,7 @@ class AnycubicPrinter:
 
             return
         else:
-            raise Exception('Unknown fan data.')
+            raise AnycubicMQTTUnknownUpdate(ErrorsMQTTUpdate.fan)
 
     def _process_mqtt_update_print(
         self,
@@ -846,9 +844,9 @@ class AnycubicPrinter:
                 project_id,
                 AnycubicPrintStatus.Cancelled,
             )
-            raise AnycubicAPIError(f"Print Failed: {err_msg}")
+            raise AnycubicAPIError(ErrorsGeneral.print_failed.format(err_msg))
         else:
-            raise Exception('Unknown print status data.')
+            raise AnycubicMQTTUnknownUpdate(ErrorsMQTTUpdate.job_status)
 
     def _process_mqtt_update_multicolorbox(
         self,
@@ -915,7 +913,7 @@ class AnycubicPrinter:
                 self._multi_color_box[box_id].set_auto_feed(box['auto_feed'])
             return
         else:
-            raise Exception('Unknown multiColorBox data.')
+            raise AnycubicMQTTUnknownUpdate(ErrorsMQTTUpdate.ace)
 
     def _process_mqtt_update_shelves(
         self,
@@ -929,7 +927,7 @@ class AnycubicPrinter:
                 self.external_shelves.update_with_mqtt_data(data)
             return
         else:
-            raise Exception('Unknown shelves data.')
+            raise AnycubicMQTTUnknownUpdate(ErrorsMQTTUpdate.shelves)
 
     def _process_mqtt_update_file(
         self,
@@ -956,7 +954,7 @@ class AnycubicPrinter:
             payload.force_empty()
             return
         else:
-            raise Exception('Unknown file data.')
+            raise AnycubicMQTTUnknownUpdate(ErrorsMQTTUpdate.file)
 
     def _process_mqtt_update_peripherals(
         self,
@@ -978,7 +976,7 @@ class AnycubicPrinter:
 
             return
         else:
-            raise Exception('Unknown peripherals data.')
+            raise AnycubicMQTTUnknownUpdate(ErrorsMQTTUpdate.peripherals)
 
     def process_mqtt_update(
         self,
@@ -1029,7 +1027,7 @@ class AnycubicPrinter:
             self._process_mqtt_update_peripherals(action, state, payload)
 
         else:
-            raise Exception("Unknown mqtt update.")
+            raise AnycubicMQTTUnknownUpdate(ErrorsMQTTUpdate.unknown.format(msg_type))
 
         remaining_data: AnycubicConsumableData | None = payload.get('data')
 
@@ -1083,7 +1081,7 @@ class AnycubicPrinter:
     @property
     def id(self) -> int:
         if self._id is None:
-            raise TypeError("Printer is missing ID.")
+            raise AnycubicAPIError(ErrorsGeneral.noid_printer)
         return self._id
 
     @property
@@ -1935,9 +1933,9 @@ class AnycubicPrinter:
         highest_box = max(slot_index_list) // 4
 
         if self.connected_ace_units < highest_box + 1:
-            raise TypeError(
-                f"Not enough ACE units connected for slot indexes (expected {highest_box + 1})."
-            )
+            raise AnycubicAPIError(ErrorsGeneral.insufficent_ace_units.format(
+                highest_box + 1
+            ))
 
         ams_box_mapping = list()
 
@@ -1957,7 +1955,7 @@ class AnycubicPrinter:
         with_project: bool = True,
     ) -> None:
         if self._id is None:
-            raise AnycubicAPIError('Error in printer update_info_from_api, missing id')
+            raise AnycubicAPIError(ErrorsGeneral.noid_update_info_from_api)
 
         await self._api_parent.printer_info_for_id(self._id, self)
 

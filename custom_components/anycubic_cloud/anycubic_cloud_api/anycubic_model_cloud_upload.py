@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any
 from aiofiles import open as aio_file_open
 from aiofiles.os import path as aio_path
 
+from .anycubic_error_strings import ErrorsCloudUpload
 from .anycubic_exceptions import AnycubicAPIError
 
 if TYPE_CHECKING:
@@ -36,7 +37,7 @@ class AnycubicCloudUpload:
             self._file_bytes = file_bytes
             self._is_file = False
         else:
-            raise AnycubicAPIError('AnycubicCloudUpload created without path or bytes.')
+            raise AnycubicAPIError(ErrorsCloudUpload.missing_path_bytes)
         self._file_size: int = 0
         self._previous_available_bytes: int = 0
         self._current_available_bytes: int = 0
@@ -101,12 +102,12 @@ class AnycubicCloudUpload:
 
     def set_previous_data_with_user_store(self, user_store: AnycubicCloudStore | None) -> None:
         if not user_store:
-            raise AnycubicAPIError('Error in set_previous_data_with_user_store, missing user_store')
+            raise AnycubicAPIError(ErrorsCloudUpload.missing_user_store_previous)
         self._previous_available_bytes = user_store.available_bytes
 
     def set_current_data_with_user_store(self, user_store: AnycubicCloudStore | None) -> None:
         if not user_store:
-            raise AnycubicAPIError('Error in set_previous_data_with_user_store, missing user_store')
+            raise AnycubicAPIError(ErrorsCloudUpload.missing_user_store_current)
         self._current_available_bytes = user_store.available_bytes
 
     def set_cloud_file_id(self, cloud_file_id: int) -> None:
@@ -120,38 +121,36 @@ class AnycubicCloudUpload:
 
     async def async_check_path_is_valid(self) -> None:
         if self._is_file and not self.valid_path:
-            raise AnycubicAPIError("Cannot upload an empty file path.")
+            raise AnycubicAPIError(ErrorsCloudUpload.missing_path)
         elif self._is_file:
             assert self.full_file_path
             if not (await aio_path.exists(self.full_file_path)):
-                raise AnycubicAPIError("Cannot upload, path does not exist.")
+                raise AnycubicAPIError(ErrorsCloudUpload.path_not_exist)
 
     def check_size_is_valid(self) -> None:
         if not self.valid_size:
-            raise AnycubicAPIError(f"Cannot upload file: {self.file_name} - empty file.")
+            raise AnycubicAPIError(ErrorsCloudUpload.empty_file_size.format(self.file_name))
 
     def check_data_is_valid(self) -> None:
         if not self.valid_bytes:
-            raise AnycubicAPIError(f"Cannot upload file: {self.file_name} - no data.")
+            raise AnycubicAPIError(ErrorsCloudUpload.empty_file_bytes.format(self.file_name))
 
     def check_upload_succeeded(self) -> None:
         if self.upload_error:
-            raise AnycubicAPIError(f"Error uploading file: {self.file_name} - {self.upload_error}.")
+            raise AnycubicAPIError(ErrorsCloudUpload.unknown.format(self.file_name, self.upload_error))
 
     async def async_check_available_cloud_space(self) -> None:
         if not self._is_temp_file:
             self.set_previous_data_with_user_store(await self._api_parent.get_user_cloud_store())
 
             if not self.valid_available_bytes:
-                raise AnycubicAPIError(f"Cannot upload file: {self.file_name} - no room on cloud.")
+                raise AnycubicAPIError(ErrorsCloudUpload.no_space_available.format(self.file_name))
 
     async def async_check_decreased_cloud_space(self) -> None:
         if not self._is_temp_file:
             self.set_current_data_with_user_store(await self._api_parent.get_user_cloud_store())
             if not self.valid_check_available_bytes_decreased:
-                raise AnycubicAPIError(
-                    f"Unknown error uploading file: {self.file_name} - not found in cloud storage."
-                )
+                raise AnycubicAPIError(ErrorsCloudUpload.not_found_cloud.format(self.file_name))
 
     async def async_read_file_bytes(self) -> None:
         if self._is_file:
@@ -174,7 +173,7 @@ class AnycubicCloudUpload:
 
     async def async_unlock_storage_space(self) -> None:
         if self.lock_file_id is None:
-            raise AnycubicAPIError('Error in unlock_storage_space, missing lock_file_id')
+            raise AnycubicAPIError(ErrorsCloudUpload.missing_unlock_file_id)
         await self._api_parent._unlock_storage_space(
             self.lock_file_id,
             is_delete_cos=(self.upload_error is not None),
@@ -182,11 +181,11 @@ class AnycubicCloudUpload:
 
     async def async_upload_and_set_cloud_file_id(self) -> None:
         if self._lock_data is None:
-            raise AnycubicAPIError('Error in upload_and_set_cloud_file_id, missing lock_data')
+            raise AnycubicAPIError(ErrorsCloudUpload.missing_lock_data)
         if self.file_bytes is None:
-            raise AnycubicAPIError('Error in upload_and_set_cloud_file_id, missing file_bytes')
+            raise AnycubicAPIError(ErrorsCloudUpload.missing_file_bytes)
         if self.lock_file_id is None:
-            raise AnycubicAPIError('Error in upload_and_set_cloud_file_id, missing lock_file_id')
+            raise AnycubicAPIError(ErrorsCloudUpload.missing_lock_file_id)
 
         try:
             await self._api_parent._fetch_aws_put_resp(

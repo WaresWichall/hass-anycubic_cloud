@@ -20,7 +20,8 @@ from .anycubic_const import (
     AC_KNOWN_VID_SLICER_NEXT,
     AC_KNOWN_VID_WEB,
 )
-from .anycubic_exceptions import AnycubicAPIError
+from .anycubic_error_strings import ErrorsAuth, ErrorsMQTTClient
+from .anycubic_exceptions import AnycubicAuthError, AnycubicMQTTClientError
 from .anycubic_helpers import (
     generate_android_app_nonce,
     generate_fake_device_id,
@@ -67,7 +68,7 @@ class AnycubicAuthentication:
     @property
     def auth_token(self) -> str:
         if not self._auth_token:
-            raise AnycubicAPIError('Missing auth token.')
+            raise AnycubicAuthError(ErrorsAuth.missing_auth_token)
         return self._auth_token
 
     @property
@@ -281,7 +282,7 @@ class AnycubicAuthentication:
 
     def get_user_id_md5_tuple(self) -> tuple[int, str]:
         if not self.api_user_id:
-            raise AnycubicAPIError('Unable to build user_id_md5_tuple, missing user id.')
+            raise AnycubicAuthError(ErrorsAuth.user_id_md5_tuple_missing_id)
         user_id_md5 = md5_hex_of_string(f"{self.api_user_id}")
         return (
             self.api_user_id,
@@ -290,7 +291,7 @@ class AnycubicAuthentication:
 
     def get_mqtt_client_id(self) -> str:
         if not self.api_user_email:
-            raise AnycubicAPIError('Unable to build mqtt_client_id, missing user email.')
+            raise AnycubicMQTTClientError(ErrorsMQTTClient.client_id_missing_email)
         client_id_string = self.api_user_email
         if self._auth_mode == AnycubicAuthMode.SLICER:
             # Slicer adds 'pcf' to the email before md5 hashing
@@ -306,7 +307,7 @@ class AnycubicAuthentication:
         public_key = cert.public_key()
 
         if not isinstance(public_key, RSAPublicKey):
-            raise AnycubicAPIError('Invalid Anycubic public key for MQTT signing.')
+            raise AnycubicMQTTClientError(ErrorsMQTTClient.pub_key_invalid)
 
         return public_key
 

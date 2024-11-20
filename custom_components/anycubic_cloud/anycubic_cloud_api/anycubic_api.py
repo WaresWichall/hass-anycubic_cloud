@@ -37,12 +37,19 @@ from .anycubic_enums import (
     AnycubicOrderID,
     AnycubicPrintStatus,
 )
-from .anycubic_error_strings import ErrorsAPIParsing, ErrorsGeneral
+from .anycubic_error_strings import (
+    ErrorsAPIParsing,
+    ErrorsDataParsing,
+    ErrorsFileNotFound,
+    ErrorsGcodeParsing,
+    ErrorsGeneral,
+)
 from .anycubic_exceptions import (
     AnycubicAPIError,
     AnycubicAPIParsingError,
     AnycubicDataParsingError,
     AnycubicFileNotFoundError,
+    AnycubicGcodeParsingError,
 )
 from .anycubic_model_cloud_upload import AnycubicCloudUpload
 
@@ -259,9 +266,7 @@ class AnycubicAPI(AnycubicAPIBase):
             if file:
                 file_list.append(file)
             else:
-                raise AnycubicDataParsingError(
-                    f"Error parsing user_cloud_files: {data}"
-                )
+                raise AnycubicDataParsingError(ErrorsDataParsing.user_cloud_files.format(data))
 
         return file_list
 
@@ -404,11 +409,9 @@ class AnycubicAPI(AnycubicAPIBase):
 
         if resp is None or resp.get('data') is None:
             if resp is not None and resp.get('data') is None and error_message == AnycubicServerMessage.FILE_NOT_FOUND:
-                raise AnycubicFileNotFoundError('File not found in cloud.')
+                raise AnycubicFileNotFoundError(ErrorsFileNotFound.in_cloud)
             else:
-                raise AnycubicAPIError(
-                    f"Error sending order to Anycubic Cloud, is the printer online? Message: {error_message}"
-                )
+                raise AnycubicAPIError(ErrorsGeneral.send_order_fail.format(error_message))
 
         data: str | None = resp['data'].get('msgid')
 
@@ -930,10 +933,10 @@ class AnycubicAPI(AnycubicAPIBase):
             return new_name
 
         elif resp.get('name') == old_name:
-            raise AnycubicAPIError('Failed to change printer name, reverted to previous.')
+            raise AnycubicAPIError(ErrorsGeneral.name_change_fail_revert)
 
         else:
-            raise AnycubicAPIError('Failed to change printer name, unknown error.')
+            raise AnycubicAPIError(ErrorsGeneral.name_change_fail_unknown)
 
     async def update_printer_firmware(
         self,
@@ -1286,10 +1289,7 @@ class AnycubicAPI(AnycubicAPIBase):
                 slot_color_blue
             ]])
         ):
-            raise TypeError(
-                "Must use either `slot_color` or "
-                "`slot_color_red`, `slot_color_green`, `slot_color_blue`"
-            )
+            raise AnycubicAPIError(ErrorsGeneral.set_slot_color_invalid)
 
         if slot_color is None:
             assert slot_color_red
@@ -1675,9 +1675,7 @@ class AnycubicAPI(AnycubicAPIBase):
             if proj:
                 proj_list.append(proj)
             else:
-                raise AnycubicDataParsingError(
-                    f"Error parsing projects: {resp['data']}"
-                )
+                raise AnycubicDataParsingError(ErrorsDataParsing.projects.format(resp['data']))
 
         return proj_list
 
@@ -1740,18 +1738,14 @@ class AnycubicAPI(AnycubicAPIBase):
         file_bytes: bytes | None = None,
     ) -> AnycubicGcodeFile:
         if (not full_file_path or len(full_file_path) <= 0) and file_bytes is None:
-            raise AnycubicAPIError(
-                "Cannot parse an empty file path."
-            )
+            raise AnycubicGcodeParsingError(ErrorsGcodeParsing.invalid_path)
 
         elif (
             (full_file_path and not full_file_path.endswith('.gcode'))
             or
             (file_name and not file_name.endswith('.gcode'))
         ):
-            raise AnycubicAPIError(
-                "Can only parse gcode files."
-            )
+            raise AnycubicGcodeParsingError(ErrorsGcodeParsing.invalid_ext)
 
         return await AnycubicGcodeFile.async_read_from_file(
             full_file_path=full_file_path,
@@ -1786,10 +1780,10 @@ class AnycubicAPI(AnycubicAPIBase):
             raise AnycubicAPIError(ErrorsGeneral.no_printer_to_print)
 
         if ams_box_mapping and not printer.primary_multi_color_box:
-            raise AnycubicAPIError(ErrorsGeneral.no_multi_color_box_for_map)
+            raise AnycubicAPIError(ErrorsGeneral.no_ace_for_map)
 
         if ams_box_mapping is None and printer.primary_multi_color_box:
-            raise AnycubicAPIError(ErrorsGeneral.no_map_for_multi_color_box)
+            raise AnycubicAPIError(ErrorsGeneral.no_map_for_ace)
 
         print_request = AnycubicStartPrintRequestCloud(
             file_id=cloud_file_id,
@@ -1824,27 +1818,28 @@ class AnycubicAPI(AnycubicAPIBase):
             raise AnycubicAPIError(ErrorsGeneral.no_printer_to_print)
 
         if slot_index_list is not None and not printer.primary_multi_color_box:
-            raise AnycubicAPIError(ErrorsGeneral.no_multi_color_box_for_slot_list)
+            raise AnycubicAPIError(ErrorsGeneral.no_ace_for_slot_list)
 
         if slot_index_list is None and printer.primary_multi_color_box:
-            raise AnycubicAPIError(ErrorsGeneral.no_slot_list_for_multi_color_box)
+            raise AnycubicAPIError(ErrorsGeneral.no_slot_list_for_ace)
 
         proj = await self.fetch_project_gcode_info_fdm(gcode_id)
 
         if not proj:
-            raise AnycubicAPIError('Failed to fetch project gcode data.')
+            raise AnycubicGcodeParsingError(ErrorsGcodeParsing.fetch_failed)
 
         if slot_index_list is not None:
 
             material_list = proj.slice_material_info_list
 
             if not material_list:
-                raise AnycubicAPIError('Empty material list in gcode file.')
+                raise AnycubicGcodeParsingError(ErrorsGcodeParsing.material_list_empty)
 
             if len(slot_index_list) != len(material_list):
-                raise AnycubicAPIError(
-                    f"{len(slot_index_list)} slots supplied but {len(material_list)} materials found in gcode file."
-                )
+                raise AnycubicGcodeParsingError(ErrorsGcodeParsing.slot_material_list_mismatch.format(
+                    len(slot_index_list),
+                    len(material_list),
+                ))
 
             ams_box_mapping = printer.build_mapping_for_material_list(
                 slot_index_list=slot_index_list,
@@ -1883,10 +1878,10 @@ class AnycubicAPI(AnycubicAPIBase):
             raise AnycubicAPIError(ErrorsGeneral.no_printer_to_print)
 
         if slot_index_list is not None and not printer.primary_multi_color_box:
-            raise AnycubicAPIError(ErrorsGeneral.no_multi_color_box_for_slot_list)
+            raise AnycubicAPIError(ErrorsGeneral.no_ace_for_slot_list)
 
         if slot_index_list is None and printer.primary_multi_color_box:
-            raise AnycubicAPIError(ErrorsGeneral.no_slot_list_for_multi_color_box)
+            raise AnycubicAPIError(ErrorsGeneral.no_slot_list_for_ace)
 
         cloud_file_id = await self.upload_file_to_cloud(
             full_file_path=full_file_path,
@@ -1896,10 +1891,10 @@ class AnycubicAPI(AnycubicAPIBase):
         latest_cloud_file = await self.get_latest_cloud_file()
 
         if not latest_cloud_file or latest_cloud_file.id != cloud_file_id:
-            raise AnycubicAPIError('File upload mis-match, cannot print.')
+            raise AnycubicAPIError(ErrorsGeneral.file_upload_mismatch)
 
         if latest_cloud_file.gcode_id is None:
-            raise AnycubicAPIError('Cloud file data error, missing gcodeid.')
+            raise AnycubicAPIError(ErrorsGeneral.cloud_file_no_gcodeid)
 
         return await self.print_with_cloud_gcode_id(
             printer=printer,
@@ -1920,10 +1915,10 @@ class AnycubicAPI(AnycubicAPIBase):
             raise AnycubicAPIError(ErrorsGeneral.no_printer_to_print)
 
         if slot_index_list is not None and not printer.primary_multi_color_box:
-            raise AnycubicAPIError(ErrorsGeneral.no_multi_color_box_for_slot_list)
+            raise AnycubicAPIError(ErrorsGeneral.no_ace_for_slot_list)
 
         if slot_index_list is None and printer.primary_multi_color_box:
-            raise AnycubicAPIError(ErrorsGeneral.no_slot_list_for_multi_color_box)
+            raise AnycubicAPIError(ErrorsGeneral.no_slot_list_for_ace)
 
         if slot_index_list is not None:
             gcode_file = await self.read_gcode_file(
@@ -1934,12 +1929,13 @@ class AnycubicAPI(AnycubicAPIBase):
             material_list = gcode_file.material_list
 
             if not material_list:
-                raise AnycubicAPIError('Empty material list read from gcode file.')
+                raise AnycubicGcodeParsingError(ErrorsGcodeParsing.material_list_empty)
 
             if len(slot_index_list) != len(material_list):
-                raise AnycubicAPIError(
-                    f"{len(slot_index_list)} slots supplied but {len(material_list)} materials read from gcode file."
-                )
+                raise AnycubicGcodeParsingError(ErrorsGcodeParsing.slot_material_list_mismatch.format(
+                    len(slot_index_list),
+                    len(material_list),
+                ))
 
             ams_box_mapping = printer.build_mapping_for_material_list(
                 slot_index_list=slot_index_list,

@@ -21,7 +21,12 @@ from .anycubic_const_mqtt import (
     MQTT_TIMEOUT,
 )
 from .anycubic_data_model_consumable import AnycubicConsumableData
-from .anycubic_exceptions import AnycubicAPIError, AnycubicMQTTUnhandledData
+from .anycubic_error_strings import ErrorsMQTTClient
+from .anycubic_exceptions import (
+    AnycubicMQTTClientError,
+    AnycubicMQTTUnhandledData,
+    AnycubicMQTTUnknownUpdate,
+)
 from .anycubic_helpers import (
     get_mqtt_ssl_path_ca,
     get_mqtt_ssl_path_cert,
@@ -155,11 +160,12 @@ class AnycubicMQTTAPI(AnycubicAPI):
                     f"    unhandled data: {e.unhandled_mqtt_data}"
                 )
 
-            except Exception as e:
+            except (AnycubicMQTTUnknownUpdate, Exception) as e:
                 tb = traceback.format_exc()
                 redacted_topic = redact_part_from_mqtt_topic(topic, 6)
+                error_type = type(e)
                 self._log_to_error(
-                    f"Anycubic MQTT Message error: {e}\n"
+                    f"Anycubic MQTT Message error: {error_type}: {e}\n"
                     f"  on MQTT topic: {redacted_topic}\n"
                     f"    {payload}\n"
                     f"{tb}"
@@ -216,7 +222,7 @@ class AnycubicMQTTAPI(AnycubicAPI):
 
         if not path.exists(crt_path):
             self._log_to_error(f"Anycubic MQTT unable to start, no certificate found in root: {ssl_root}.")
-            raise AnycubicAPIError('Unable to load MQTT Certificate.')
+            raise AnycubicMQTTClientError(ErrorsMQTTClient.cert_missing)
 
         ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
         ssl_context.set_ciphers(('ALL:@SECLEVEL=0'),)
@@ -283,7 +289,7 @@ class AnycubicMQTTAPI(AnycubicAPI):
             self._log_to_debug("Anycubic MQTT Connected.")
 
             if not self._mqtt_client:
-                raise AnycubicAPIError('Unexpected error in mqtt_on_connect, missing client.')
+                raise AnycubicMQTTClientError(ErrorsMQTTClient.connect_client_missing)
 
             for sub in self._build_mqtt_user_subscription():
                 self._log_to_debug(f"Anycubic MQTT Subscribing to USER {sub}.")
@@ -356,14 +362,14 @@ class AnycubicMQTTAPI(AnycubicAPI):
 
     def _mqtt_subscribe_printer_status(self, printer: AnycubicPrinter) -> None:
         if not self._mqtt_client:
-            raise AnycubicAPIError('Unexpected error in mqtt_subscribe_printer_status, missing client.')
+            raise AnycubicMQTTClientError(ErrorsMQTTClient.sub_printer_status_client_missing)
         for sub in self._build_mqtt_printer_subscription(printer):
             self._log_to_debug(f"Anycubic MQTT Subscribing to PRINTER {sub}.")
             self._mqtt_client.subscribe(sub)
 
     def mqtt_add_subscribed_printer(self, printer: AnycubicPrinter) -> None:
         if not printer.key:
-            raise AnycubicAPIError('Unexpected error in mqtt_add_subscribed_printer, missing printer key.')
+            raise AnycubicMQTTClientError(ErrorsMQTTClient.sub_printer_key_missing)
 
         if printer.key in self._mqtt_subscribed_printers:
             return

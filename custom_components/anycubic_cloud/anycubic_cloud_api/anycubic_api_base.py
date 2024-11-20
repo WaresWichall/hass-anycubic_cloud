@@ -17,11 +17,15 @@ from .anycubic_const import (
     WARN_INTERVAL_API_DURATION,
 )
 from .anycubic_const_api_endpoints import API_ENDPOINT
-from .anycubic_error_strings import ErrorsAPIParsing
+from .anycubic_error_strings import (
+    ErrorsAPIParsing,
+    ErrorsAuth,
+    ErrorsAuthTokenExpired,
+)
 from .anycubic_exceptions import (
-    AnycubicAPIError,
     AnycubicAPIParsingError,
-    APIAuthTokensExpired,
+    AnycubicAuthError,
+    AnycubicAuthTokensExpired,
 )
 from .anycubic_model_auth import AnycubicAuthentication, AnycubicAuthMode
 from .anycubic_model_http import HTTP_METHODS, AnycubicAPIEndpoint
@@ -67,9 +71,7 @@ class AnycubicAPIBase:
     @property
     def anycubic_auth(self) -> AnycubicAuthentication:
         if self._anycubic_auth is None:
-            raise AnycubicAPIError(
-                "anycubic_auth object is missing."
-            )
+            raise AnycubicAuthError(ErrorsAuth.missing_auth)
         return self._anycubic_auth
 
     @property
@@ -203,7 +205,7 @@ class AnycubicAPIBase:
             put_data=put_data,
         )
         if isinstance(resp, str):
-            raise AnycubicAPIParsingError(f"Unexpected error parsing AWS response: {resp}")
+            raise AnycubicAPIParsingError(ErrorsAPIParsing.api_error_aws.format(resp))
 
         return resp
 
@@ -242,9 +244,7 @@ class AnycubicAPIBase:
         auto_pick_token: bool = True,
     ) -> None:
         if not auth_token and not auth_access_token:
-            raise AnycubicAPIError(
-                "Must supply token or access_token"
-            )
+            raise AnycubicAuthError(ErrorsAuth.set_auth_missing_token)
 
         if isinstance(auth_mode, int):
             auth_mode = AnycubicAuthMode(auth_mode)
@@ -319,7 +319,7 @@ class AnycubicAPIBase:
         try:
             await self.get_user_info()
             return True
-        except APIAuthTokensExpired:
+        except AnycubicAuthTokensExpired:
             self._log_to_debug("Tokens expired.")
             return False
 
@@ -345,7 +345,7 @@ class AnycubicAPIBase:
         if resp and resp.get('msg') == 'request error':
             raise AnycubicAPIParsingError(ErrorsAPIParsing.api_error_user_server_maintenance)
         if data is None:
-            raise APIAuthTokensExpired('Invalid credentials.')
+            raise AnycubicAuthTokensExpired(ErrorsAuthTokenExpired.invalid_credentials)
 
         self.anycubic_auth.set_api_user_id(data['id'])
         self.anycubic_auth.set_api_user_email(data['user_email'])

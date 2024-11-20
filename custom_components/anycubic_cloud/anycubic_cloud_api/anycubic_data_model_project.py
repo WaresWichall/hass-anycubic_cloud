@@ -7,6 +7,11 @@ from typing import TYPE_CHECKING, Any
 from .anycubic_const import PROJECT_IMAGE_URL_BASE, REX_GCODE_EXT
 from .anycubic_data_model_print_speed_mode import AnycubicPrintSpeedMode
 from .anycubic_enums import AnycubicPrintStatus
+from .anycubic_error_strings import (
+    ErrorsDataParsing,
+    ErrorsInvalidValue,
+    ErrorsLoadingProps,
+)
 from .anycubic_exceptions import (
     AnycubicDataParsingError,
     AnycubicInvalidValue,
@@ -407,7 +412,7 @@ class AnycubicProject:
                     self._available_print_speed_modes.append(smode)
                 else:
                     raise AnycubicDataParsingError(
-                        f"Error parsing available_print_speed_modes: {print_speed_model_des}"
+                        ErrorsDataParsing.available_print_speed_modes.format(print_speed_model_des)
                     )
 
     def _set_temperature_data(self, temperature_data: dict[str, Any] | None) -> None:
@@ -586,7 +591,7 @@ class AnycubicProject:
                 self._settings.update(json.loads(new_settings))
             except Exception as e:
                 raise AnycubicDataParsingError(
-                    f"Error parsing project settings json: {e}\n{new_settings}"
+                    ErrorsDataParsing.project_settings_json.format(e, new_settings)
                 )
 
         elif new_settings and isinstance(new_settings, dict):
@@ -594,7 +599,7 @@ class AnycubicProject:
 
         elif new_settings:
             raise AnycubicDataParsingError(
-                f"Unexpected data for project settings: {new_settings}"
+                ErrorsDataParsing.project_settings_unknown.format(new_settings)
             )
 
     def set_slice_param(
@@ -608,7 +613,7 @@ class AnycubicProject:
                 self._slice_param.update(json.loads(new_slice_param))
             except Exception as e:
                 raise AnycubicDataParsingError(
-                    f"Error parsing project slice_param json: {e}\n{new_slice_param}"
+                    ErrorsDataParsing.project_slice_param_json.format(e, new_slice_param)
                 )
 
         elif new_slice_param and isinstance(new_slice_param, dict):
@@ -616,7 +621,7 @@ class AnycubicProject:
 
         elif new_slice_param:
             raise AnycubicDataParsingError(
-                f"Unexpected data for project slice_param: {new_slice_param}"
+                ErrorsDataParsing.project_slice_param_unknown.format(new_slice_param)
             )
 
     def set_slice_result(
@@ -630,7 +635,7 @@ class AnycubicProject:
                 self._slice_result.update(json.loads(new_slice_result))
             except Exception as e:
                 raise AnycubicDataParsingError(
-                    f"Error parsing project slice_result json: {e}\n{new_slice_result}"
+                    ErrorsDataParsing.project_slice_result_json.format(e, new_slice_result)
                 )
 
         elif new_slice_result and isinstance(new_slice_result, dict):
@@ -638,7 +643,7 @@ class AnycubicProject:
 
         elif new_slice_result:
             raise AnycubicDataParsingError(
-                f"Unexpected data for project slice_result: {new_slice_result}"
+                ErrorsDataParsing.project_slice_result_unknown.format(new_slice_result)
             )
 
     def _get_print_setting(
@@ -961,16 +966,16 @@ class AnycubicProject:
         try:
             target_nozzle_temperature = int(target_nozzle_temperature)
         except Exception:
-            raise AnycubicInvalidValue("Invalid target nozzle temperature.")
+            raise AnycubicInvalidValue(ErrorsInvalidValue.invalid_nozzle_temp)
 
         if self._temp_min_nozzle is None or self._temp_max_nozzle is None:
-            raise AnycubicPropertiesNotLoaded("Allowed nozzle temperature range is not loaded.")
+            raise AnycubicPropertiesNotLoaded(ErrorsLoadingProps.range_nozzle_temp)
 
         if target_nozzle_temperature < self._temp_min_nozzle:
-            raise AnycubicInvalidValue("Target nozzle temperature is below allowed minimum.")
+            raise AnycubicInvalidValue(ErrorsInvalidValue.too_low_nozzle_temp)
 
         if target_nozzle_temperature > self._temp_max_nozzle:
-            raise AnycubicInvalidValue("Target nozzle temperature is above allowed maximum.")
+            raise AnycubicInvalidValue(ErrorsInvalidValue.too_high_nozzle_temp)
 
     def validate_target_hotbed_temperature(
         self,
@@ -979,16 +984,16 @@ class AnycubicProject:
         try:
             target_hotbed_temperature = int(target_hotbed_temperature)
         except Exception:
-            raise AnycubicInvalidValue("Invalid target hotbed temperature.")
+            raise AnycubicInvalidValue(ErrorsInvalidValue.invalid_hotbed_temp)
 
         if self._temp_min_hotbed is None or self._temp_max_hotbed is None:
-            raise AnycubicPropertiesNotLoaded("Allowed hotbed temperature range is not loaded.")
+            raise AnycubicPropertiesNotLoaded(ErrorsLoadingProps.range_hotbed_temp)
 
         if target_hotbed_temperature < self._temp_min_hotbed:
-            raise AnycubicInvalidValue("Target hotbed temperature is below allowed minimum.")
+            raise AnycubicInvalidValue(ErrorsInvalidValue.too_low_hotbed_temp)
 
         if target_hotbed_temperature > self._temp_max_hotbed:
-            raise AnycubicInvalidValue("Target hotbed temperature is above allowed maximum.")
+            raise AnycubicInvalidValue(ErrorsInvalidValue.too_high_hotbed_temp)
 
     def validate_print_speed_mode(
         self,
@@ -997,10 +1002,10 @@ class AnycubicProject:
         try:
             print_speed_mode = int(print_speed_mode)
         except Exception:
-            raise AnycubicInvalidValue("Invalid print speed mode.")
+            raise AnycubicInvalidValue(ErrorsInvalidValue.invalid_speed_mode)
 
         if len(self._available_print_speed_modes) < 1:
-            raise AnycubicPropertiesNotLoaded("Available print speed modes not loaded.")
+            raise AnycubicPropertiesNotLoaded(ErrorsLoadingProps.speed_modes_not_loaded)
 
         mode_valid = False
 
@@ -1010,7 +1015,7 @@ class AnycubicProject:
                 break
 
         if not mode_valid:
-            raise AnycubicInvalidValue(f"Print speed mode {print_speed_mode} not found in available modes.")
+            raise AnycubicInvalidValue(ErrorsInvalidValue.speed_mode_not_found.format(print_speed_mode))
 
     def validate_fan_speed_pct(
         self,
@@ -1019,13 +1024,13 @@ class AnycubicProject:
         try:
             fan_speed_pct = int(fan_speed_pct)
         except Exception:
-            raise AnycubicInvalidValue("Invalid fan speed %.")
+            raise AnycubicInvalidValue(ErrorsInvalidValue.invalid_fan_speed)
 
         if fan_speed_pct < 0:
-            raise AnycubicInvalidValue("Fan speed is below allowed minimum.")
+            raise AnycubicInvalidValue(ErrorsInvalidValue.too_low_fan_speed)
 
         if fan_speed_pct > 100:
-            raise AnycubicInvalidValue("Fan speed is above allowed maximum.")
+            raise AnycubicInvalidValue(ErrorsInvalidValue.too_high_fan_speed)
 
     def validate_new_print_settings(
         self,

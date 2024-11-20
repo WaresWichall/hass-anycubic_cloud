@@ -3,11 +3,11 @@ from __future__ import annotations
 from typing import Any
 
 
-class APIAuthTokensExpired(Exception):
+class AnycubicAPIError(Exception):
     pass
 
 
-class AnycubicAPIError(Exception):
+class AnycubicAuthTokensExpired(AnycubicAPIError):
     pass
 
 
@@ -27,7 +27,27 @@ class AnycubicInvalidValue(AnycubicAPIError):
     pass
 
 
+class AnycubicAuthError(AnycubicAPIError):
+    pass
+
+
+class AnycubicMQTTClientError(AnycubicAPIError):
+    pass
+
+
+class AnycubicCloudUploadError(AnycubicAPIError):
+    pass
+
+
 class AnycubicDataParsingError(AnycubicAPIError):
+    pass
+
+
+class AnycubicGcodeParsingError(AnycubicDataParsingError):
+    pass
+
+
+class AnycubicMQTTUnknownUpdate(AnycubicDataParsingError):
     pass
 
 
