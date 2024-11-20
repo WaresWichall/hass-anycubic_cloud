@@ -5,7 +5,7 @@
 > 
 > MQTT access is now available using Slicer Next (windows version) tokens.
 > 
-> Still works as of 09/11/2024.
+> Still works as of 21/11/2024.
 
 ---
 
@@ -14,6 +14,8 @@
 Component is working very well so far with:
 - Kobra 3 Combo
 - Kobra 2
+- Kobra 2 Max
+- Kobra 2 Pro
 - Photon Mono M5s (Basic support still)
 - M7 Pro (Basic support still)
 
