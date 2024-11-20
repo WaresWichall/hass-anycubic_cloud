@@ -7,6 +7,16 @@ from .anycubic_exceptions import AnycubicDataParsingError
 
 
 class AnycubicMaterialMapping:
+    __slots__ = (
+        "_spool_index",
+        "_filament_used",
+        "_material_type",
+        "_color_red",
+        "_color_green",
+        "_color_blue",
+        "_paint_index",
+    )
+
     def __init__(
         self,
         spool_index: int,
@@ -73,6 +83,12 @@ class AnycubicMaterialMapping:
 
 
 class AnycubicMaterialColor:
+    __slots__ = (
+        "_red",
+        "_green",
+        "_blue",
+    )
+
     def __init__(
         self,
         red: int,
@@ -159,6 +175,22 @@ class AnycubicMaterialColor:
 
 
 class AnycubicMachineToolInfo:
+    __slots__ = (
+        "_id",
+        "_typd_id",
+        "_model_id",
+        "_type_function_id",
+        "_parent_id",
+        "_function_name",
+        "_function_des",
+        "_control",
+        "_param",
+        "_icon_url",
+        "_function_type",
+        "_status",
+        "_show_place",
+    )
+
     def __init__(
         self,
         id: int,
@@ -221,6 +253,15 @@ class AnycubicMachineToolInfo:
 
 
 class AnycubicMachineExternalShelves:
+    __slots__ = (
+        "_id",
+        "_type",
+        "_color",
+        "_loaded",
+        "_status_type",
+        "_current_status",
+    )
+
     def __init__(
         self,
         id: int,
@@ -271,6 +312,13 @@ class AnycubicMachineExternalShelves:
 
 
 class AnycubicFeedStatus:
+    __slots__ = (
+        "_code",
+        "_type",
+        "_current_status",
+        "_slot_index",
+    )
+
     def __init__(
         self,
         code: int,
@@ -303,6 +351,13 @@ class AnycubicFeedStatus:
 
 
 class AnycubicDryingStatus:
+    __slots__ = (
+        "_status",
+        "_target_temp",
+        "_duration",
+        "_remain_time",
+    )
+
     def __init__(
         self,
         status: int,
@@ -355,6 +410,15 @@ class AnycubicDryingStatus:
 
 
 class AnycubicSpoolInfo:
+    __slots__ = (
+        "_index",
+        "_sku",
+        "_material_type",
+        "_color",
+        "_edit_status",
+        "_status",
+    )
+
     def __init__(
         self,
         index: int,
@@ -429,6 +493,20 @@ class AnycubicSpoolInfo:
 
 
 class AnycubicMultiColorBox:
+    __slots__ = (
+        "_id",
+        "_status",
+        "_model_id",
+        "_auto_feed",
+        "_loaded_slot",
+        "_feed_status",
+        "_temp",
+        "_drying_status",
+        "_curr_nozzle_temp",
+        "_target_nozzle_temp",
+        "_slots",
+    )
+
     def __init__(
         self,
         id: int,
@@ -586,6 +664,19 @@ class AnycubicMultiColorBox:
 
 
 class AnycubicMachineData:
+    __slots__ = (
+        "_name",
+        "_pixel",
+        "_res_x",
+        "_res_y",
+        "_format",
+        "_size_x",
+        "_size_y",
+        "_size_z",
+        "_suffix",
+        "_anti_max",
+    )
+
     def __init__(
         self,
         name: str,
@@ -637,6 +728,11 @@ class AnycubicMachineData:
 
 
 class AnycubicMachineParameter:
+    __slots__ = (
+        "_curr_hotbed_temp",
+        "_curr_nozzle_temp",
+    )
+
     def __init__(
         self,
         curr_hotbed_temp: int,
@@ -672,6 +768,22 @@ class AnycubicMachineParameter:
 
 
 class AnycubicMachineFirmwareInfo:
+    __slots__ = (
+        "_need_update",
+        "_firmware_version",
+        "_update_progress",
+        "_update_date",
+        "_update_status",
+        "_update_desc",
+        "_force_update",
+        "_target_version",
+        "_time_cost",
+        "_box_id",
+        "_download_progress",
+        "_is_downloading",
+        "_is_updating",
+    )
+
     def __init__(
         self,
         need_update: int,
@@ -832,6 +944,11 @@ class AnycubicMachineFirmwareInfo:
 
 
 class AnycubicMachineColorInfo:
+    __slots__ = (
+        "_raw_color_list",
+        "_color_list",
+    )
+
     def __init__(
         self,
         color_list: list[list[int]],

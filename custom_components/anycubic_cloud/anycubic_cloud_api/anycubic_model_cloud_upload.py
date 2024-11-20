@@ -15,6 +15,22 @@ if TYPE_CHECKING:
 
 
 class AnycubicCloudUpload:
+    __slots__ = (
+        "_api_parent",
+        "_is_temp_file",
+        "_full_file_path",
+        "_file_name",
+        "_file_bytes",
+        "_is_file",
+        "_file_size",
+        "_previous_available_bytes",
+        "_current_available_bytes",
+        "_cloud_file_id",
+        "_lock_file_id",
+        "_upload_error",
+        "_lock_data",
+    )
+
     def __init__(
         self,
         api_parent: AnycubicAPI,

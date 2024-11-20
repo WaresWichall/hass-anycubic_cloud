@@ -4,6 +4,11 @@ from typing import Any
 
 
 class AnycubicPrintSpeedMode:
+    __slots__ = (
+        "_title",
+        "_mode",
+    )
+
     def __init__(
         self,
         title: str,

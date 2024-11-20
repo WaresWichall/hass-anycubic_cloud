@@ -41,6 +41,17 @@ if TYPE_CHECKING:
 
 
 class AnycubicMQTTAPI(AnycubicAPI):
+    __slots__ = (
+        "_mqtt_client",
+        "_mqtt_subscribed_printers",
+        "_mqtt_log_all_messages",
+        "_mqtt_connected",
+        "_mqtt_disconnected",
+        "_mqtt_callback_printer_update",
+        "_mqtt_callback_printer_busy",
+        "_mqtt_callback_subscribed",
+    )
+
     def __init__(
         self,
         *args: Any,

@@ -32,6 +32,19 @@ from .anycubic_model_http import HTTP_METHODS, AnycubicAPIEndpoint
 
 
 class AnycubicAPIBase:
+    __slots__ = (
+        "_cached_web_auth_token_path",
+        "_base_url",
+        "_public_api_root",
+        "_session",
+        "_sessionjar",
+        "_debug_logger",
+        "_tokens_changed",
+        "_log_api_call_info",
+        "_last_warn_api_duration",
+        "_anycubic_auth",
+    )
+
     def __init__(
         self,
         session: aiohttp.ClientSession,
@@ -44,8 +57,8 @@ class AnycubicAPIBase:
         # Cache
         self._cached_web_auth_token_path: str | None = None
         # API
-        self.base_url = f"https://{BASE_DOMAIN}/"
-        self._public_api_root = f"{self.base_url}{PUBLIC_API_ENDPOINT}"
+        self._base_url: str = f"https://{BASE_DOMAIN}/"
+        self._public_api_root: str = f"{self.base_url}{PUBLIC_API_ENDPOINT}"
         # Internal
         self._session: aiohttp.ClientSession = session
         self._sessionjar: aiohttp.CookieJar = cookie_jar
@@ -61,6 +74,10 @@ class AnycubicAPIBase:
                 auth_mode=auth_mode,
                 device_id=device_id,
             )
+
+    @property
+    def base_url(self) -> str:
+        return self._base_url
 
     def set_log_api_call_info(
         self,

@@ -52,6 +52,13 @@ class AnycubicMQTTUnknownUpdate(AnycubicDataParsingError):
 
 
 class AnycubicMQTTUnhandledData(AnycubicDataParsingError):
+    __slots__ = (
+        "_unhandled_mqtt_data",
+        "_unhandled_mqtt_type",
+        "_unhandled_mqtt_action",
+        "_unhandled_mqtt_state",
+    )
+
     def __init__(
         self,
         *args: Any,

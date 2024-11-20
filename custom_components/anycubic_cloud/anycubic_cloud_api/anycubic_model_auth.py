@@ -39,6 +39,21 @@ class AnycubicAuthMode(IntEnum):
 
 
 class AnycubicAuthentication:
+    __slots__ = (
+        "_auth_token",
+        "_auth_mode",
+        "_app_id",
+        "_app_secret",
+        "_app_version",
+        "_app_client_id",
+        "_device_id",
+        "_device_type",
+        "_auth_cn",
+        "_auth_access_token",
+        "_api_user_id",
+        "_api_user_email",
+    )
+
     def __init__(
         self,
         auth_token: str | None = None,

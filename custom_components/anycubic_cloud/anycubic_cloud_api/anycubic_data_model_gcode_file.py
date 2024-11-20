@@ -15,6 +15,10 @@ from .anycubic_helpers import (
 
 
 class AnycubicGcodeFile(UserDict[str, Any]):
+    __slots__ = (
+        "_material_list",
+    )
+
     def __init__(
         self,
         *args: Any,

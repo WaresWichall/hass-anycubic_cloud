@@ -4,6 +4,59 @@ from typing import Any
 
 
 class AnycubicCloudFile:
+    __slots__ = (
+        "_id",
+        "_user_id",
+        "_post_id",
+        "_filename",
+        "_time",
+        "_size",
+        "_status",
+        "_ip",
+        "_old_filename",
+        "_img_status",
+        "_device_type",
+        "_file_type",
+        "_md5",
+        "_url",
+        "_thumbnail",
+        "_is_delete",
+        "_update_time",
+        "_uuid",
+        "_store_type",
+        "_bucket",
+        "_region",
+        "_path",
+        "_thumbnail_nonce",
+        "_sliceparse_nonce",
+        "_file_extension",
+        "_name_counts",
+        "_source_user_upload_id",
+        "_origin_post_id",
+        "_stl_user_upload_id",
+        "_is_official_slice",
+        "_triangles_count",
+        "_is_parse",
+        "_source_type",
+        "_file_source",
+        "_user_lock_space_id",
+        "_origin_file_md5",
+        "_is_temp_file",
+        "_official_file_key",
+        "_official_file_id",
+        "_simplify_model",
+        "_size_x",
+        "_size_y",
+        "_size_z",
+        "_estimate",
+        "_material_name",
+        "_layer_height",
+        "_supplies_usage",
+        "_gcode_id",
+        "_printer_names",
+        "_slice_param",
+    )
+
     def __init__(
         self,
         id: int,
@@ -251,6 +304,14 @@ class AnycubicCloudFile:
 
 
 class AnycubicCloudStore:
+    __slots__ = (
+        "_used_bytes",
+        "_total_bytes",
+        "_used_str",
+        "_total_str",
+        "_user_file_exists",
+    )
+
     def __init__(
         self,
         used_bytes: int = 0,
@@ -300,6 +361,13 @@ class AnycubicCloudStore:
 
 
 class AnycubicFile:
+    __slots__ = (
+        "_filename",
+        "_timestamp",
+        "_size",
+        "_is_dir",
+    )
+
     def __init__(
         self,
         filename: str,

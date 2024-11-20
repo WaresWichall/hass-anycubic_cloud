@@ -5,6 +5,11 @@ from typing import Any
 
 
 class AnycubicConsumableData(UserDict[Any, Any]):
+    __slots__ = (
+        "data",
+        "_consumed_data",
+    )
+
     def __init__(
         self,
         *args: Any,
