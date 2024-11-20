@@ -357,6 +357,9 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 "latest_version": printer.secondary_multi_color_box_fw_available_version,
                 "in_progress": printer.secondary_multi_color_box_fw_total_progress,
             },
+            "mqtt_connection_active": {
+                "supports_mqtt_login": self.anycubic_api.anycubic_auth.supports_mqtt_login,
+            },
         }
 
         for x in range(MAX_DRYING_PRESETS):
