@@ -4,6 +4,7 @@ import base64
 import hashlib
 import time
 from enum import IntEnum
+from os import path
 from typing import Any
 
 import bcrypt
@@ -316,6 +317,10 @@ class AnycubicAuthentication:
     def get_anycubic_ca_public_key(self) -> RSAPublicKey:
         ssl_root = get_ssl_cert_directory()
         ca_path = get_mqtt_ssl_path_ca(ssl_root)
+
+        if not path.exists(ca_path):
+            raise AnycubicMQTTClientError(ErrorsMQTTClient.cert_ca_missing)
+
         with open(ca_path, "rb") as fp:
             pem_data = fp.read()
         cert: x509.Certificate = x509.load_pem_x509_certificate(pem_data)

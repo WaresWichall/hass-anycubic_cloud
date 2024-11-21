@@ -65,6 +65,9 @@ class ErrorsMQTTClient:
     cert_missing = str(
         "Unable to load MQTT Certificate, path does not exist."
     )
+    cert_ca_missing = str(
+        "Unable to load MQTT CA Certificate, path does not exist."
+    )
     connect_client_missing = str(
         "Unexpected error in mqtt_on_connect, missing client."
     )
