@@ -10,8 +10,7 @@ from typing import TYPE_CHECKING, Any
 
 from paho.mqtt import client as mqtt_client
 
-from .anycubic_api import AnycubicAPI
-from .anycubic_const_mqtt import (
+from ..const.mqtt import (
     MQTT_HOST,
     MQTT_PORT,
     MQTT_ROOT_TOPIC_PLUS,
@@ -20,14 +19,14 @@ from .anycubic_const_mqtt import (
     MQTT_ROOT_TOPIC_SERVER,
     MQTT_TIMEOUT,
 )
-from .anycubic_data_model_consumable import AnycubicConsumableData
-from .anycubic_error_strings import ErrorsMQTTClient
-from .anycubic_exceptions import (
+from ..data_models.consumable import AnycubicConsumableData
+from ..exceptions.error_strings import ErrorsMQTTClient
+from ..exceptions.exceptions import (
     AnycubicMQTTClientError,
     AnycubicMQTTUnhandledData,
     AnycubicMQTTUnknownUpdate,
 )
-from .anycubic_helpers import (
+from ..helpers.helpers import (
     get_mqtt_ssl_path_ca,
     get_mqtt_ssl_path_cert,
     get_mqtt_ssl_path_key,
@@ -35,12 +34,13 @@ from .anycubic_helpers import (
     get_ssl_cert_directory,
     redact_part_from_mqtt_topic,
 )
+from .functions import AnycubicAPIFunctions
 
 if TYPE_CHECKING:
-    from .anycubic_data_model_printer import AnycubicPrinter
+    from ..data_models.printer import AnycubicPrinter
 
 
-class AnycubicMQTTAPI(AnycubicAPI):
+class AnycubicMQTTAPI(AnycubicAPIFunctions):
     __slots__ = (
         "_mqtt_client",
         "_mqtt_subscribed_printers",

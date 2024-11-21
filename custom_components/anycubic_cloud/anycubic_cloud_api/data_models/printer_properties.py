@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from .anycubic_error_strings import ErrorsDataParsing
-from .anycubic_exceptions import AnycubicDataParsingError
+from ..exceptions.error_strings import ErrorsDataParsing
+from ..exceptions.exceptions import AnycubicDataParsingError
 
 
 class AnycubicMaterialMapping:

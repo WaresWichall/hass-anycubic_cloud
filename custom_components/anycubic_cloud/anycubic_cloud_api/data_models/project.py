@@ -4,31 +4,31 @@ import json
 import time
 from typing import TYPE_CHECKING, Any
 
-from .anycubic_const import PROJECT_IMAGE_URL_BASE, REX_GCODE_EXT
-from .anycubic_data_model_print_speed_mode import AnycubicPrintSpeedMode
-from .anycubic_enums import AnycubicPrintStatus
-from .anycubic_error_strings import (
+from ..const.const import PROJECT_IMAGE_URL_BASE, REX_GCODE_EXT
+from ..const.enums import AnycubicPrintStatus
+from ..exceptions.error_strings import (
     ErrorsDataParsing,
     ErrorsInvalidValue,
     ErrorsLoadingProps,
 )
-from .anycubic_exceptions import (
+from ..exceptions.exceptions import (
     AnycubicDataParsingError,
     AnycubicInvalidValue,
     AnycubicPropertiesNotLoaded,
 )
-from .anycubic_helpers import (
+from ..helpers.helpers import (
     time_duration_string_to_delta,
     timedelta_to_dhm_string,
     timedelta_to_total_minutes,
 )
+from .print_speed_mode import AnycubicPrintSpeedMode
 
 if TYPE_CHECKING:
     from datetime import timedelta
 
-    from .anycubic_api import AnycubicAPI
-    from .anycubic_data_model_consumable import AnycubicConsumableData
-    from .anycubic_data_model_printing_settings import AnycubicPrintingSettings
+    from ..anycubic_api import AnycubicAPI
+    from .consumable import AnycubicConsumableData
+    from .printing_settings import AnycubicPrintingSettings
 
 
 class AnycubicProject:

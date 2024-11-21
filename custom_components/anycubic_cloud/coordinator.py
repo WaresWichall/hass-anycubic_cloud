@@ -26,8 +26,8 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .anycubic_cloud_api.anycubic_api_mqtt import AnycubicMQTTAPI as AnycubicAPI
-from .anycubic_cloud_api.anycubic_exceptions import AnycubicAPIError, AnycubicAPIParsingError
+from .anycubic_cloud_api.anycubic_api import AnycubicMQTTAPI as AnycubicAPI
+from .anycubic_cloud_api.exceptions.exceptions import AnycubicAPIError, AnycubicAPIParsingError
 from .const import (
     API_SETUP_RETRIES,
     API_SETUP_RETRY_INTERVAL_SECONDS,
@@ -71,7 +71,7 @@ from .helpers import (
 )
 
 if TYPE_CHECKING:
-    from .anycubic_cloud_api.anycubic_data_model_printer import AnycubicPrinter
+    from .anycubic_cloud_api.data_models.printer import AnycubicPrinter
     from .entity import AnycubicCloudEntity, AnycubicCloudEntityDescription
 
 

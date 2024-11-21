@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from .anycubic_data_model_printer_properties import AnycubicMaterialMapping
+    from .printer_properties import AnycubicMaterialMapping
 
 
 class AnycubicBaseOrderRequest:

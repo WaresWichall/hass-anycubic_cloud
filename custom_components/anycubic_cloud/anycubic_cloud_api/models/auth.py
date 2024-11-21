@@ -11,7 +11,7 @@ from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
 
-from .anycubic_const import (
+from ..const.const import (
     AC_KNOWN_AID,
     AC_KNOWN_CID_APP,
     AC_KNOWN_CID_WEB,
@@ -20,9 +20,9 @@ from .anycubic_const import (
     AC_KNOWN_VID_SLICER_NEXT,
     AC_KNOWN_VID_WEB,
 )
-from .anycubic_error_strings import ErrorsAuth, ErrorsMQTTClient
-from .anycubic_exceptions import AnycubicAuthError, AnycubicMQTTClientError
-from .anycubic_helpers import (
+from ..exceptions.error_strings import ErrorsAuth, ErrorsMQTTClient
+from ..exceptions.exceptions import AnycubicAuthError, AnycubicMQTTClientError
+from ..helpers.helpers import (
     generate_android_app_nonce,
     generate_fake_device_id,
     generate_web_nonce,

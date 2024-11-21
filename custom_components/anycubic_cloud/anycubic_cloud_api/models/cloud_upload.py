@@ -6,12 +6,12 @@ from typing import TYPE_CHECKING, Any
 from aiofiles import open as aio_file_open
 from aiofiles.os import path as aio_path
 
-from .anycubic_error_strings import ErrorsCloudUpload
-from .anycubic_exceptions import AnycubicAPIError
+from ..exceptions.error_strings import ErrorsCloudUpload
+from ..exceptions.exceptions import AnycubicAPIError
 
 if TYPE_CHECKING:
-    from .anycubic_api import AnycubicAPI
-    from .anycubic_data_model_files import AnycubicCloudStore
+    from ..anycubic_api import AnycubicAPI
+    from ..data_models.files import AnycubicCloudStore
 
 
 class AnycubicCloudUpload:

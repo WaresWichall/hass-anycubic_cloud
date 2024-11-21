@@ -8,7 +8,7 @@ from typing import Any
 
 from aiofiles import open as aio_file_open
 
-from ..anycubic_cloud_api.anycubic_data_model_gcode_file import AnycubicGcodeFile
+from ..anycubic_cloud_api.data_models.gcode_file import AnycubicGcodeFile
 from . import script_base
 
 

@@ -5,9 +5,9 @@ from typing import Any
 
 from aiofiles import open as aio_file_open
 
-from .anycubic_error_strings import ErrorsGcodeParsing
-from .anycubic_exceptions import AnycubicGcodeParsingError
-from .anycubic_helpers import (
+from ..exceptions.error_strings import ErrorsGcodeParsing
+from ..exceptions.exceptions import AnycubicGcodeParsingError
+from ..helpers.helpers import (
     GCODE_STRING_FIRST_ATTR_LINE,
     REX_GCODE_DATA_KEY_VALUE,
     gcode_key_value_pair_to_dict,

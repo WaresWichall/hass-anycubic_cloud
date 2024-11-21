@@ -9,7 +9,8 @@ import aiohttp
 from aiofiles import open as aio_file_open
 from aiofiles.os import path as aio_path
 
-from .anycubic_const import (
+from ..const.api_endpoints import API_ENDPOINT
+from ..const.const import (
     ACCESS_TOKEN_LOGIN_RETRIES,
     ACCESS_TOKEN_LOGIN_RETRY_INTERVAL,
     AUTH_DOMAIN,
@@ -19,19 +20,18 @@ from .anycubic_const import (
     PUBLIC_API_ENDPOINT,
     WARN_INTERVAL_API_DURATION,
 )
-from .anycubic_const_api_endpoints import API_ENDPOINT
-from .anycubic_error_strings import (
+from ..exceptions.error_strings import (
     ErrorsAPIParsing,
     ErrorsAuth,
     ErrorsAuthTokenExpired,
 )
-from .anycubic_exceptions import (
+from ..exceptions.exceptions import (
     AnycubicAPIParsingError,
     AnycubicAuthError,
     AnycubicAuthTokensExpired,
 )
-from .anycubic_model_auth import AnycubicAuthentication, AnycubicAuthMode
-from .anycubic_model_http import HTTP_METHODS, AnycubicAPIEndpoint
+from ..models.auth import AnycubicAuthentication, AnycubicAuthMode
+from ..models.http import HTTP_METHODS, AnycubicAPIEndpoint
 
 
 class AnycubicAPIBase:

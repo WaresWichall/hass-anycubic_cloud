@@ -19,8 +19,8 @@ from homeassistant.helpers.aiohttp_client import async_create_clientsession
 from homeassistant.helpers.selector import BooleanSelector, ObjectSelector
 from homeassistant.helpers.storage import Store
 
-from .anycubic_cloud_api.anycubic_api_mqtt import AnycubicMQTTAPI as AnycubicAPI
-from .anycubic_cloud_api.anycubic_model_auth import AnycubicAuthMode
+from .anycubic_cloud_api.anycubic_api import AnycubicMQTTAPI as AnycubicAPI
+from .anycubic_cloud_api.models.auth import AnycubicAuthMode
 from .const import (
     CONF_CARD_CONFIG,
     CONF_DEBUG_API_CALLS,
