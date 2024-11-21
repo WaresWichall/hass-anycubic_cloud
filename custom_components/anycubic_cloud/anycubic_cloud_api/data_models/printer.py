@@ -105,6 +105,7 @@ class AnycubicPrinter:
         "_has_peripheral_multi_color_box",
         "_has_peripheral_udisk",
         "_is_bound_to_user",
+        "_job_download_progress",
     )
 
     def __init__(
@@ -208,8 +209,12 @@ class AnycubicPrinter:
         self._has_peripheral_multi_color_box: bool = False
         self._has_peripheral_udisk: bool = False
         self._is_bound_to_user: bool = True
+        self._job_download_progress: int = 0
 
         self._ignore_init_errors = False
+
+    def _set_job_download_progress(self, job_download_progress: int | None) -> None:
+        self._job_download_progress = int(job_download_progress) if job_download_progress is not None else 0
 
     def _set_total_print_time(self, print_totaltime: str | None) -> None:
         self._total_print_time: str | None = print_totaltime
@@ -567,6 +572,8 @@ class AnycubicPrinter:
         paused: int | None = None,
         reason: str | None = None,
     ) -> bool:
+        self._set_job_download_progress(0)
+
         if self._check_latest_project_id_valid(incoming_project_id):
             assert self._latest_project
             self._latest_project.update_with_mqtt_print_status_data(
@@ -578,6 +585,9 @@ class AnycubicPrinter:
 
             return True
 
+        elif mqtt_data:
+            mqtt_data.force_empty()
+
         return False
 
     def _update_latest_project_with_mqtt_download_status_data(
@@ -585,6 +595,8 @@ class AnycubicPrinter:
         incoming_project_id: int,
         mqtt_data: AnycubicConsumableData,
     ) -> bool:
+        self._set_job_download_progress(int(mqtt_data['progress']))
+
         if self._check_latest_project_id_valid(incoming_project_id):
             assert self._latest_project
             self._latest_project.update_with_mqtt_download_status_data(
@@ -599,6 +611,8 @@ class AnycubicPrinter:
         self,
         incoming_project_id: int,
     ) -> bool:
+        self._set_job_download_progress(0)
+
         if self._check_latest_project_id_valid(incoming_project_id):
             assert self._latest_project
             self._latest_project.update_with_mqtt_checking_status_data()
@@ -897,6 +911,7 @@ class AnycubicPrinter:
                 data['settings']['target_hotbed_temp'],
                 data['settings']['target_nozzle_temp'],
             )
+            data['settings']
             return
         elif action in ['start', 'stop'] and state in ['failed']:
             err_msg = payload.get('msg')
@@ -1976,6 +1991,15 @@ class AnycubicPrinter:
             return self.latest_project.print_z_down_speed
 
         return None
+
+    @property
+    def latest_project_download_progress_percentage(self) -> int:
+        if self._job_download_progress:
+            return self._job_download_progress
+        elif self.latest_project:
+            return self.latest_project.download_progress_percentage
+
+        return 0
 
     @property
     def curr_nozzle_temp(self) -> int | None:
