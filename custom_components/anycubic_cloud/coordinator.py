@@ -679,6 +679,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 await printer.request_local_file_list()
 
     async def _setup_anycubic_api_connection(self) -> None:
+        LOGGER.debug("Coordinator setting up Anycubic Cloud API connection.")
         store = Store[dict[str, Any]](self.hass, STORAGE_VERSION, STORAGE_KEY)
 
         if self.entry.data.get(CONF_USER_TOKEN) is None:
@@ -737,7 +738,9 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             raise
 
         except Exception as error:
-            raise ConfigEntryAuthFailed(f"Authentication failed with unknown Error. Check credentials {error}")
+            raise ConfigEntryAuthFailed(
+                f"Coordinator authentication failed with unknown Error. Check credentials {error}"
+            )
 
     async def _setup_anycubic_printer_objects(self) -> None:
         for printer_id in self.entry.data[CONF_PRINTER_ID_LIST]:
