@@ -2823,6 +2823,9 @@
         yes: "Yes",
         no: "No",
         save: "Save"
+      },
+      messages: {
+        mqtt_unsupported: "This feature requires MQTT to retrieve data but unfortunately MQTT is not supported with the configured authentication mode."
       }
     },
     or = {

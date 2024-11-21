@@ -1,8 +1,13 @@
-import { CSSResult, LitElement, PropertyValues, css, html } from "lit";
+import { CSSResult, LitElement, PropertyValues, css, html, nothing } from "lit";
 import { property, state } from "lit/decorators.js";
 
 import { commonFilesStyle } from "./styles";
-import { getPrinterEntities } from "../../helpers";
+import { localize } from "../../../localize/localize";
+import {
+  getPrinterEntities,
+  getPrinterEntityIdPart,
+  getPrinterSupportsMQTT,
+} from "../../helpers";
 import {
   AnycubicFileLocal,
   DomClickEvent,
@@ -42,6 +47,9 @@ export class AnycubicViewFilesBase extends LitElement {
   protected printerEntities: HassEntityInfos;
 
   @state()
+  private printerEntityIdPart: string | undefined;
+
+  @state()
   protected _fileArray: AnycubicFileLocal[] | undefined;
 
   @state()
@@ -53,8 +61,24 @@ export class AnycubicViewFilesBase extends LitElement {
   @state()
   protected _isDeleting: boolean;
 
+  @state()
+  private _noMqttMessage: string;
+
+  @state()
+  private _supportsMQTT: boolean = false;
+
+  @state()
+  protected _httpResponse: boolean = false;
+
   protected willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
+
+    if (changedProperties.has("language")) {
+      this._noMqttMessage = localize(
+        "common.messages.mqtt_unsupported",
+        this.language,
+      );
+    }
 
     if (
       changedProperties.has("hass") ||
@@ -64,6 +88,12 @@ export class AnycubicViewFilesBase extends LitElement {
         this.hass,
         this.selectedPrinterID,
       );
+      this.printerEntityIdPart = getPrinterEntityIdPart(this.printerEntities);
+      this._supportsMQTT = getPrinterSupportsMQTT(
+        this.hass,
+        this.printerEntities,
+        this.printerEntityIdPart,
+      );
     }
   }
 
@@ -71,7 +101,7 @@ export class AnycubicViewFilesBase extends LitElement {
     return html`
       <div class="files-card" elevation="2">
         <button
-          .disabled=${this._isRefreshing}
+          .disabled=${(!this._httpResponse && !this._supportsMQTT) || this._isRefreshing}
           class="file-refresh-button"
           @click=${this.refreshList}
         >
@@ -81,6 +111,11 @@ export class AnycubicViewFilesBase extends LitElement {
           >
           </ha-icon>
         </button>
+        ${
+          !this._httpResponse && !this._supportsMQTT
+            ? html` <div class="no-mqtt-msg">${this._noMqttMessage}</div> `
+            : nothing
+        }
         <ul class="files-container">
         ${
           this._fileArray

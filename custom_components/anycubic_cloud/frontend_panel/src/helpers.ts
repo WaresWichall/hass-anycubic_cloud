@@ -424,6 +424,21 @@ export function getPrinterUpdateEntityState(
   }
 }
 
+export function getPrinterSupportsMQTT(
+  hass: HomeAssistant,
+  entities: HassEntityInfos,
+  printerEntityIdPart: string | undefined,
+): boolean {
+  const entInfo = getStrictMatchingEntity(
+    entities,
+    printerEntityIdPart,
+    "binary_sensor",
+    "mqtt_connection_active",
+  );
+  const stateObj = getEntityState(hass, entInfo);
+  return stateObj ? !!stateObj.attributes.supports_mqtt_login : false;
+}
+
 export function isFDMPrinter(
   hass: HomeAssistant,
   entities: HassEntityInfos,

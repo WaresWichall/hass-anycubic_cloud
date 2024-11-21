@@ -71,6 +71,9 @@ export const commonFilesStyle: CSSResult = css`
   .file-delete-icon {
   }
 
+  .no-mqtt-msg {
+  }
+
   @media (max-width: 599px) {
     :host {
       padding: 6px;

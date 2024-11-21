@@ -20,6 +20,9 @@ export class AnycubicViewFilesCloud extends AnycubicViewFilesBase {
   @state()
   protected _fileArray: AnycubicFileCloud[] | undefined;
 
+  @state()
+  protected _httpResponse: boolean = true;
+
   protected willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
 
