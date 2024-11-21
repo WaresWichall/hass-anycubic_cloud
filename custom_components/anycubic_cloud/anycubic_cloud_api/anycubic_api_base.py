@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import time
 from typing import Any, overload
@@ -9,6 +10,8 @@ from aiofiles import open as aio_file_open
 from aiofiles.os import path as aio_path
 
 from .anycubic_const import (
+    ACCESS_TOKEN_LOGIN_RETRIES,
+    ACCESS_TOKEN_LOGIN_RETRY_INTERVAL,
     AUTH_DOMAIN,
     BASE_DOMAIN,
     DEFAULT_USER_AGENT,
@@ -282,6 +285,18 @@ class AnycubicAPIBase:
             auth_access_token=auth_access_token,
         )
 
+    async def _get_user_token_with_access_token_with_retry(self) -> None:
+        retries = ACCESS_TOKEN_LOGIN_RETRIES
+        for x in range(retries):
+            try:
+                await self._get_user_token_with_access_token()
+                return
+            except AnycubicAuthError:
+                if x < retries - 1:
+                    await asyncio.sleep(ACCESS_TOKEN_LOGIN_RETRY_INTERVAL)
+                else:
+                    raise
+
     async def _get_user_token_with_access_token(self) -> None:
         params = self.anycubic_auth.auth_access_token_payload
         resp = await self._fetch_api_resp(
@@ -290,6 +305,11 @@ class AnycubicAPIBase:
             params=params,
             with_token=False,
         )
+        if not resp or not resp['data']:
+            server_message = resp.get('msg') if resp else None
+            error_message = ErrorsAuth.access_token_login_failed.format(server_message)
+            self._log_to_debug(error_message)
+            raise AnycubicAuthError(error_message)
         self.anycubic_auth.set_auth_token(
             resp['data']['token']
         )
@@ -332,7 +352,10 @@ class AnycubicAPIBase:
     ) -> bool:
         await self._load_cached_web_auth_token()
         if self.anycubic_auth.requires_access_token:
-            await self._get_user_token_with_access_token()
+            try:
+                await self._get_user_token_with_access_token_with_retry()
+            except AnycubicAuthError:
+                return False
         try:
             await self.get_user_info()
             return True

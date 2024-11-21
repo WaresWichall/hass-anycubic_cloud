@@ -188,6 +188,9 @@ class ErrorsAuth:
     user_id_md5_tuple_missing_id = str(
         "Unable to build user_id_md5_tuple, missing user id."
     )
+    access_token_login_failed = str(
+        "Failed to login with access_token, server message: {0}"
+    )
 
 
 class ErrorsAuthTokenExpired:
