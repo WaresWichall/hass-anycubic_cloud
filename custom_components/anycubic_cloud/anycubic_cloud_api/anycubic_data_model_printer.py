@@ -565,6 +565,7 @@ class AnycubicPrinter:
         print_status: AnycubicPrintStatus,
         mqtt_data: AnycubicConsumableData | None = None,
         paused: int | None = None,
+        reason: str | None = None,
     ) -> bool:
         if self._check_latest_project_id_valid(incoming_project_id):
             assert self._latest_project
@@ -572,6 +573,7 @@ class AnycubicPrinter:
                 print_status,
                 mqtt_data,
                 paused=paused,
+                reason=reason,
             )
 
             return True
@@ -902,6 +904,7 @@ class AnycubicPrinter:
             self._update_latest_project_with_mqtt_print_status_data(
                 project_id,
                 AnycubicPrintStatus.Cancelled,
+                reason=err_msg,
             )
             raise AnycubicAPIError(ErrorsGeneral.print_failed.format(err_msg))
         else:
@@ -1719,6 +1722,13 @@ class AnycubicPrinter:
     def latest_project_print_time_remaining_minutes(self) -> int | None:
         if self.latest_project:
             return self.latest_project.print_time_remaining_minutes
+
+        return None
+
+    @property
+    def latest_project_print_status_message(self) -> str | None:
+        if self.latest_project:
+            return self.latest_project.print_status_message
 
         return None
 

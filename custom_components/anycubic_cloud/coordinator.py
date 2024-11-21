@@ -344,6 +344,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 "print_total_time_minutes": printer.latest_project_print_total_time_minutes,
                 "print_total_time_dhm": printer.latest_project_print_total_time_dhm_str,
                 "print_supplies_usage": printer.latest_project_print_supplies_usage,
+                "print_status_message": printer.latest_project_print_status_message,
             },
             "fw_version": {
                 "latest_version": printer.fw_version.available_version if printer.fw_version else None,

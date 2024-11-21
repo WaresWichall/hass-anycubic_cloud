@@ -128,7 +128,7 @@ class AnycubicProject:
         pause: int | str | None = None,
         connect_status: int | str | None = None,
         print_status: int | str | None = None,
-        reason: str | None = None,
+        reason: str | int | None = None,
         slice_data: Any = None,
         slice_status: int | str | None = None,
         ischeck: int | str | None = None,
@@ -362,8 +362,12 @@ class AnycubicProject:
         if self._print_status not in [AnycubicPrintStatus.Complete, AnycubicPrintStatus.Cancelled]:
             self._print_status = int(print_status) if print_status is not None else None
 
-    def _set_reason(self, reason: str | None) -> None:
-        self._reason = str(reason) if reason is not None else None
+    def _set_reason(self, reason: str | int | None) -> None:
+        self._reason: str | None = (
+            str(reason)
+            if reason is not None and reason != 0
+            else None
+        )
 
     def _set_slice_status(self, slice_status: int | str | None) -> None:
         self._slice_status = int(slice_status) if slice_status is not None else None
@@ -608,11 +612,15 @@ class AnycubicProject:
         print_status: AnycubicPrintStatus,
         mqtt_data: AnycubicConsumableData | None = None,
         paused: int | None = None,
+        reason: str | None = None,
     ) -> None:
         self._print_status = int(print_status)
 
         if paused is not None:
-            self._pause = int(paused)
+            self._set_pause(paused)
+
+        if reason is not None:
+            self._set_reason(reason)
 
         if not mqtt_data:
             return
@@ -787,6 +795,10 @@ class AnycubicProject:
     @property
     def name(self) -> str:
         return self._gcode_name
+
+    @property
+    def print_status_message(self) -> str | None:
+        return self._reason
 
     @property
     def print_total_time(self) -> str | None:
