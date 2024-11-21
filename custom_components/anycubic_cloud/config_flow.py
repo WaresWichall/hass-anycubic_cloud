@@ -387,6 +387,7 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
                     vol.Required(CONF_PRINTER_ID_LIST): cv.multi_select(printer_id_map),
                 },
             ),
+            errors=errors,
         )
 
     async def async_step_user(
