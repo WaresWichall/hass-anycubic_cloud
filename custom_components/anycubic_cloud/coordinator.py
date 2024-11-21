@@ -330,6 +330,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 "total_material_used": printer.material_used,
                 "total_print_time_hrs": printer.total_print_time_hrs,
                 "total_print_time_dhm": printer.total_print_time_dhm_str,
+                "job_download_progress": printer.latest_project_download_progress_percentage,
             },
             "dry_status_is_drying": {
                 "dry_status_code": printer.primary_drying_status_raw_status_code,
