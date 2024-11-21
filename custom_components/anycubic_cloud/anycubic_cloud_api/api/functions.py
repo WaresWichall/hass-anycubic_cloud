@@ -38,6 +38,7 @@ from ..data_models.printing_settings import AnycubicPrintingSettings
 from ..data_models.project import AnycubicProject
 from ..exceptions.error_strings import (
     ErrorsAPIParsing,
+    ErrorsCloudUpload,
     ErrorsDataParsing,
     ErrorsFileNotFound,
     ErrorsGcodeParsing,
@@ -46,6 +47,7 @@ from ..exceptions.error_strings import (
 from ..exceptions.exceptions import (
     AnycubicAPIError,
     AnycubicAPIParsingError,
+    AnycubicCloudUploadError,
     AnycubicDataParsingError,
     AnycubicFileNotFoundError,
     AnycubicGcodeParsingError,
@@ -123,6 +125,17 @@ class AnycubicAPIFunctions(AnycubicAPIBase):
         resp = await self._fetch_api_resp(endpoint=API_ENDPOINT.new_file_upload, params=params)
         if raw_data:
             return resp
+
+        if (
+            not resp or (
+                'data' not in resp
+                or not resp['data']
+                or 'id' not in resp['data']
+            )
+        ):
+            raise AnycubicCloudUploadError(
+                ErrorsCloudUpload.file_claim_failed.format(resp)
+            )
 
         data = resp['data']
 

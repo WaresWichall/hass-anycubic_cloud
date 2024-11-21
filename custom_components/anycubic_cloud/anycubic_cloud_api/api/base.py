@@ -224,7 +224,8 @@ class AnycubicAPIBase:
             is_json=False,
             put_data=put_data,
         )
-        if isinstance(resp, str):
+
+        if isinstance(resp, str) and len(resp) > 0:
             raise AnycubicAPIParsingError(ErrorsAPIParsing.api_error_aws.format(resp))
 
         return resp

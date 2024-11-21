@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import traceback
 from os.path import basename as path_basename
 from typing import TYPE_CHECKING, Any
 
@@ -209,10 +210,16 @@ class AnycubicCloudUpload:
                 put_data=self.file_bytes,
             )
 
-            self.set_cloud_file_id(await self._api_parent._claim_file_upload_from_aws(self.lock_file_id))
+            cloud_file_id = await self._api_parent._claim_file_upload_from_aws(self.lock_file_id)
 
-        except Exception as e:
-            self.set_error(e)
+            self.set_cloud_file_id(cloud_file_id)
+
+        except Exception as error:
+            tb = traceback.format_exc()
+            self._api_parent._log_to_debug(
+                f"Error during async_upload_and_set_cloud_file_id: {error}\n{tb}"
+            )
+            self.set_error(error)
 
     async def async_process_upload(self) -> int:
         await self.async_check_path_is_valid()
@@ -229,7 +236,9 @@ class AnycubicCloudUpload:
 
         await self.async_upload_and_set_cloud_file_id()
 
-        assert self.cloud_file_id
+        self.check_upload_succeeded()
+
+        assert self.cloud_file_id is not None
 
         await self.async_unlock_storage_space()
 

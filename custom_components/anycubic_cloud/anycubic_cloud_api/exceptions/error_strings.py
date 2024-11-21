@@ -293,6 +293,9 @@ class ErrorsCloudUpload:
     missing_lock_file_id = str(
         "Error in upload_and_set_cloud_file_id, missing lock_file_id"
     )
+    file_claim_failed = str(
+        "Failed to claim file upload, response: {0}"
+    )
 
 
 class ErrorsMQTTUpdate:
