@@ -50,6 +50,7 @@ from .const import (
     MQTT_IDLE_DISCONNECT_SECONDS,
     MQTT_REFRESH_INTERVAL,
     MQTT_SCAN_INTERVAL,
+    PRINT_JOB_STARTED_UPDATE_DELAY,
     STORAGE_KEY,
     STORAGE_VERSION,
 )
@@ -521,7 +522,11 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         )
 
     async def _async_print_job_started(self) -> None:
-        self._last_state_update = int(time.time()) - DEFAULT_SCAN_INTERVAL + 25
+        LOGGER.debug(
+            f"Print job started, forcing state update in {PRINT_JOB_STARTED_UPDATE_DELAY} seconds."
+        )
+        await asyncio.sleep(PRINT_JOB_STARTED_UPDATE_DELAY)
+        await self.force_state_update()
 
     async def _async_mqtt_callback_subscribed(self) -> None:
         await asyncio.sleep(10)
