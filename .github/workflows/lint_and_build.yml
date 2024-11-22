@@ -31,6 +31,10 @@ jobs:
         uses: isort/isort-action@v1
         with:
           configuration: "--settings-path=pyproject.toml"
+      - name: Check translation diff
+        run: |
+          python custom_components/anycubic_cloud/scripts/build_translations.py
+          git diff --exit-code
   lint-ts:
     runs-on: ubuntu-latest
     name: "Lint & Build: Typescript"
