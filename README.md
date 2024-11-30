@@ -5,7 +5,7 @@
 > 
 > MQTT access is now available using Slicer Next (windows version) tokens.
 > 
-> Still works as of 21/11/2024.
+> Still works as of 01/12/2024.
 
 ---
 
