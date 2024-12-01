@@ -1,17 +1,25 @@
-import { LitElement, html, css, PropertyValues } from "lit";
+import { CSSResult, LitElement, PropertyValues, css, html, nothing } from "lit";
 import { property, state } from "lit/decorators.js";
 
-import { getPrinterEntities } from "../../helpers";
+import { commonFilesStyle } from "./styles";
+import { localize } from "../../../localize/localize";
+import {
+  getPrinterEntities,
+  getPrinterEntityIdPart,
+  getPrinterSupportsMQTT,
+} from "../../helpers";
 import {
   AnycubicFileLocal,
-  HassEntityInfos,
-  HassEntityInfo,
-  HomeAssistant,
+  DomClickEvent,
+  EvtTargFileInfo,
   HassDevice,
+  HassEntityInfo,
+  HassEntityInfos,
   HassPanel,
   HassRoute,
+  HomeAssistant,
+  LitTemplateResult,
 } from "../../types";
-import { commonFilesStyle } from "./styles";
 
 export class AnycubicViewFilesBase extends LitElement {
   @property()
@@ -29,23 +37,48 @@ export class AnycubicViewFilesBase extends LitElement {
   @property()
   public panel!: HassPanel;
 
-  @property()
+  @property({ attribute: "selected-printer-id" })
   public selectedPrinterID: string | undefined;
 
-  @property()
+  @property({ attribute: "selected-printer-device" })
   public selectedPrinterDevice: HassDevice | undefined;
 
   @state()
-  private printerEntities: HassEntityInfos;
+  protected printerEntities: HassEntityInfos;
 
   @state()
-  private _fileArray: AnycubicFileLocal[] | undefined;
+  private printerEntityIdPart: string | undefined;
 
   @state()
-  private _listRefreshEntity: HassEntityInfo | undefined;
+  protected _fileArray: AnycubicFileLocal[] | undefined;
+
+  @state()
+  protected _listRefreshEntity: HassEntityInfo | undefined;
+
+  @state()
+  private _isRefreshing: boolean = false;
+
+  @state()
+  protected _isDeleting: boolean;
+
+  @state()
+  private _noMqttMessage: string;
+
+  @state()
+  private _supportsMQTT: boolean = false;
+
+  @state()
+  protected _httpResponse: boolean = false;
 
   protected willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
+
+    if (changedProperties.has("language")) {
+      this._noMqttMessage = localize(
+        "common.messages.mqtt_unsupported",
+        this.language,
+      );
+    }
 
     if (
       changedProperties.has("hass") ||
@@ -55,15 +88,34 @@ export class AnycubicViewFilesBase extends LitElement {
         this.hass,
         this.selectedPrinterID,
       );
+      this.printerEntityIdPart = getPrinterEntityIdPart(this.printerEntities);
+      this._supportsMQTT = getPrinterSupportsMQTT(
+        this.hass,
+        this.printerEntities,
+        this.printerEntityIdPart,
+      );
     }
   }
 
-  render(): any {
+  render(): LitTemplateResult {
     return html`
       <div class="files-card" elevation="2">
-        <button class="file-refresh-button" @click="${(_e): void => {
-          this.refreshList(this._listRefreshEntity);
-        }}"><ha-icon class="file-refresh-icon" icon="mdi:refresh"></ha-icon></button>
+        <button
+          .disabled=${(!this._httpResponse && !this._supportsMQTT) || this._isRefreshing}
+          class="file-refresh-button"
+          @click=${this.refreshList}
+        >
+          <ha-icon
+            class="file-refresh-icon"
+            icon="mdi:refresh"
+          >
+          </ha-icon>
+        </button>
+        ${
+          !this._httpResponse && !this._supportsMQTT
+            ? html` <div class="no-mqtt-msg">${this._noMqttMessage}</div> `
+            : nothing
+        }
         <ul class="files-container">
         ${
           this._fileArray
@@ -73,9 +125,9 @@ export class AnycubicViewFilesBase extends LitElement {
                     <div class="file-name">${fileInfo.name}</div>
                     <button
                       class="file-delete-button"
-                      @click="${(_e): void => {
-                        this.deleteFile(fileInfo);
-                      }}"
+                      .disabled=${this._isDeleting}
+                      .file_info=${fileInfo}
+                      @click=${this.deleteFile}
                     >
                       <ha-icon
                         class="file-delete-icon"
@@ -91,15 +143,26 @@ export class AnycubicViewFilesBase extends LitElement {
     `;
   }
 
-  refreshList(entity): void {
-    if (entity) {
-      this.hass.callService("button", "press", { entity_id: entity.entity_id });
+  refreshList = (): void => {
+    if (this._listRefreshEntity) {
+      this._isRefreshing = true;
+      this.hass
+        .callService("button", "press", {
+          entity_id: this._listRefreshEntity.entity_id,
+        })
+        .then(() => {
+          this._isRefreshing = false;
+        })
+        .catch((_e: unknown) => {
+          this._isRefreshing = false;
+        });
     }
-  }
+  };
 
-  deleteFile(_fileInfo: any): void {}
+  // eslint-disable-next-line no-empty-function
+  deleteFile = (_ev: DomClickEvent<EvtTargFileInfo>): void => {};
 
-  static get styles(): any {
+  static get styles(): CSSResult {
     return css`
       ${commonFilesStyle}
     `;

@@ -1,4 +1,8 @@
-export const loadHaServiceControl = async (): void => {
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access  */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+export const loadHaServiceControl = async (): Promise<void> => {
   if (customElements.get("ha-service-control")) {
     return;
   }

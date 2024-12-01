@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import time
 from typing import Any, overload
@@ -8,7 +9,10 @@ import aiohttp
 from aiofiles import open as aio_file_open
 from aiofiles.os import path as aio_path
 
-from .anycubic_const import (
+from ..const.api_endpoints import API_ENDPOINT
+from ..const.const import (
+    ACCESS_TOKEN_LOGIN_RETRIES,
+    ACCESS_TOKEN_LOGIN_RETRY_INTERVAL,
     AUTH_DOMAIN,
     BASE_DOMAIN,
     DEFAULT_USER_AGENT,
@@ -16,18 +20,34 @@ from .anycubic_const import (
     PUBLIC_API_ENDPOINT,
     WARN_INTERVAL_API_DURATION,
 )
-from .anycubic_const_api_endpoints import API_ENDPOINT
-from .anycubic_error_strings import ErrorsAPIParsing
-from .anycubic_exceptions import (
-    AnycubicAPIError,
-    AnycubicAPIParsingError,
-    APIAuthTokensExpired,
+from ..exceptions.error_strings import (
+    ErrorsAPIParsing,
+    ErrorsAuth,
+    ErrorsAuthTokenExpired,
 )
-from .anycubic_model_auth import AnycubicAuthentication, AnycubicAuthMode
-from .anycubic_model_http import HTTP_METHODS, AnycubicAPIEndpoint
+from ..exceptions.exceptions import (
+    AnycubicAPIParsingError,
+    AnycubicAuthError,
+    AnycubicAuthTokensExpired,
+)
+from ..models.auth import AnycubicAuthentication, AnycubicAuthMode
+from ..models.http import HTTP_METHODS, AnycubicAPIEndpoint
 
 
 class AnycubicAPIBase:
+    __slots__ = (
+        "_cached_web_auth_token_path",
+        "_base_url",
+        "_public_api_root",
+        "_session",
+        "_sessionjar",
+        "_debug_logger",
+        "_tokens_changed",
+        "_log_api_call_info",
+        "_last_warn_api_duration",
+        "_anycubic_auth",
+    )
+
     def __init__(
         self,
         session: aiohttp.ClientSession,
@@ -40,8 +60,8 @@ class AnycubicAPIBase:
         # Cache
         self._cached_web_auth_token_path: str | None = None
         # API
-        self.base_url = f"https://{BASE_DOMAIN}/"
-        self._public_api_root = f"{self.base_url}{PUBLIC_API_ENDPOINT}"
+        self._base_url: str = f"https://{BASE_DOMAIN}/"
+        self._public_api_root: str = f"{self.base_url}{PUBLIC_API_ENDPOINT}"
         # Internal
         self._session: aiohttp.ClientSession = session
         self._sessionjar: aiohttp.CookieJar = cookie_jar
@@ -58,6 +78,10 @@ class AnycubicAPIBase:
                 device_id=device_id,
             )
 
+    @property
+    def base_url(self) -> str:
+        return self._base_url
+
     def set_log_api_call_info(
         self,
         val: bool,
@@ -67,9 +91,7 @@ class AnycubicAPIBase:
     @property
     def anycubic_auth(self) -> AnycubicAuthentication:
         if self._anycubic_auth is None:
-            raise AnycubicAPIError(
-                "anycubic_auth object is missing."
-            )
+            raise AnycubicAuthError(ErrorsAuth.missing_auth)
         return self._anycubic_auth
 
     @property
@@ -202,8 +224,9 @@ class AnycubicAPIBase:
             is_json=False,
             put_data=put_data,
         )
-        if isinstance(resp, str):
-            raise AnycubicAPIParsingError(f"Unexpected error parsing AWS response: {resp}")
+
+        if isinstance(resp, str) and len(resp) > 0:
+            raise AnycubicAPIParsingError(ErrorsAPIParsing.api_error_aws.format(resp))
 
         return resp
 
@@ -242,9 +265,7 @@ class AnycubicAPIBase:
         auto_pick_token: bool = True,
     ) -> None:
         if not auth_token and not auth_access_token:
-            raise AnycubicAPIError(
-                "Must supply token or access_token"
-            )
+            raise AnycubicAuthError(ErrorsAuth.set_auth_missing_token)
 
         if isinstance(auth_mode, int):
             auth_mode = AnycubicAuthMode(auth_mode)
@@ -265,6 +286,18 @@ class AnycubicAPIBase:
             auth_access_token=auth_access_token,
         )
 
+    async def _get_user_token_with_access_token_with_retry(self) -> None:
+        retries = ACCESS_TOKEN_LOGIN_RETRIES
+        for x in range(retries):
+            try:
+                await self._get_user_token_with_access_token()
+                return
+            except AnycubicAuthError:
+                if x < retries - 1:
+                    await asyncio.sleep(ACCESS_TOKEN_LOGIN_RETRY_INTERVAL)
+                else:
+                    raise
+
     async def _get_user_token_with_access_token(self) -> None:
         params = self.anycubic_auth.auth_access_token_payload
         resp = await self._fetch_api_resp(
@@ -273,6 +306,11 @@ class AnycubicAPIBase:
             params=params,
             with_token=False,
         )
+        if not resp or not resp['data']:
+            server_message = resp.get('msg') if resp else None
+            error_message = ErrorsAuth.access_token_login_failed.format(server_message)
+            self._log_to_debug(error_message)
+            raise AnycubicAuthError(error_message)
         self.anycubic_auth.set_auth_token(
             resp['data']['token']
         )
@@ -315,11 +353,14 @@ class AnycubicAPIBase:
     ) -> bool:
         await self._load_cached_web_auth_token()
         if self.anycubic_auth.requires_access_token:
-            await self._get_user_token_with_access_token()
+            try:
+                await self._get_user_token_with_access_token_with_retry()
+            except AnycubicAuthError:
+                return False
         try:
             await self.get_user_info()
             return True
-        except APIAuthTokensExpired:
+        except AnycubicAuthTokensExpired:
             self._log_to_debug("Tokens expired.")
             return False
 
@@ -345,7 +386,7 @@ class AnycubicAPIBase:
         if resp and resp.get('msg') == 'request error':
             raise AnycubicAPIParsingError(ErrorsAPIParsing.api_error_user_server_maintenance)
         if data is None:
-            raise APIAuthTokensExpired('Invalid credentials.')
+            raise AnycubicAuthTokensExpired(ErrorsAuthTokenExpired.invalid_credentials)
 
         self.anycubic_auth.set_api_user_id(data['id'])
         self.anycubic_auth.set_api_user_email(data['user_email'])

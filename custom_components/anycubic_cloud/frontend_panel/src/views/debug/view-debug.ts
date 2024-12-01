@@ -1,14 +1,15 @@
-import { LitElement, html, css, PropertyValues } from "lit";
-import { property, customElement, state } from "lit/decorators.js";
+import { CSSResult, LitElement, PropertyValues, css, html } from "lit";
+import { customElement, property, state } from "lit/decorators.js";
 
 import { getPrinterEntities } from "../../helpers";
 import {
-  HomeAssistant,
   HassDevice,
   HassDeviceList,
   HassEntityInfos,
   HassPanel,
   HassRoute,
+  HomeAssistant,
+  LitTemplateResult,
 } from "../../types";
 
 @customElement("anycubic-view-debug")
@@ -31,10 +32,10 @@ export class AnycubicViewDebug extends LitElement {
   @property()
   public printers?: HassDeviceList;
 
-  @property()
+  @property({ attribute: "selected-printer-id" })
   public selectedPrinterID: string | undefined;
 
-  @property()
+  @property({ attribute: "selected-printer-device" })
   public selectedPrinterDevice: HassDevice | undefined;
 
   @state()
@@ -53,7 +54,7 @@ export class AnycubicViewDebug extends LitElement {
     );
   }
 
-  render(): any {
+  render(): LitTemplateResult {
     return html`
       <debug-data elevation="2">
         <p>There are ${Object.keys(this.hass.states).length} entities.</p>
@@ -72,7 +73,7 @@ export class AnycubicViewDebug extends LitElement {
     `;
   }
 
-  static get styles(): any {
+  static get styles(): CSSResult {
     return css`
       :host {
         padding: 16px;

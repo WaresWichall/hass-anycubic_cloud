@@ -1,8 +1,9 @@
-import { LitElement, html, css } from "lit";
+import { CSSResult, LitElement, css, html } from "lit";
 import { property } from "lit/decorators.js";
-import { styleMap } from "lit-html/directives/style-map.js";
+import { styleMap } from "lit/directives/style-map.js";
 
 import { customElementIfUndef } from "../../../internal/register-custom-element";
+import { LitTemplateResult } from "../../../types";
 
 @customElementIfUndef("anycubic-printercard-progress-line")
 export class AnycubicPrintercardProgressLine extends LitElement {
@@ -15,7 +16,7 @@ export class AnycubicPrintercardProgressLine extends LitElement {
   @property({ type: Number })
   public progress: number;
 
-  render(): any {
+  render(): LitTemplateResult {
     const progressStyle = {
       width: String(this.progress) + "%",
     };
@@ -35,7 +36,7 @@ export class AnycubicPrintercardProgressLine extends LitElement {
     `;
   }
 
-  static get styles(): any {
+  static get styles(): CSSResult {
     return css`
       :host {
         box-sizing: border-box;

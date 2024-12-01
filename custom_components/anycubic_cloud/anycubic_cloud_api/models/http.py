@@ -10,6 +10,8 @@ class HTTP_METHODS(Enum):
 
 
 class AnycubicAPIEndpoint:
+    __slots__ = ("_method", "_endpoint")
+
     def __init__(
         self,
         method: HTTP_METHODS,

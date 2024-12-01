@@ -1,13 +1,15 @@
-import { LitElement, html, PropertyValues } from "lit";
-import { property, customElement, state } from "lit/decorators.js";
+import { LitElement, PropertyValues, html } from "lit";
+import { customElement, property, state } from "lit/decorators.js";
 
 import * as pkgjson from "../../../package.json";
 
 import {
   AnycubicCardConfig,
+  CustomCardsWindow,
   HassDevice,
   HassDeviceList,
   HomeAssistant,
+  LitTemplateResult,
   PrinterCardStatType,
   TemperatureUnit,
 } from "../../types";
@@ -44,8 +46,9 @@ export class AnycubicPrintercardEditor extends LitElement {
   @state()
   private language: string;
 
-  async firstUpdated(): void {
-    this.printers = await getPrinterDevices(this.hass);
+  // eslint-disable-next-line @typescript-eslint/require-await
+  async firstUpdated(): Promise<void> {
+    this.printers = getPrinterDevices(this.hass);
   }
 
   protected willUpdate(changedProperties: PropertyValues<this>): void {
@@ -59,47 +62,47 @@ export class AnycubicPrintercardEditor extends LitElement {
       this.config.vertical = undefinedDefault(
         this.config.vertical,
         defaultConfig.vertical,
-      );
+      ) as boolean;
       this.config.round = undefinedDefault(
         this.config.round,
         defaultConfig.round,
-      );
+      ) as boolean;
       this.config.use_24hr = undefinedDefault(
         this.config.use_24hr,
         defaultConfig.use_24hr,
-      );
+      ) as boolean;
       this.config.alwaysShow = undefinedDefault(
         this.config.alwaysShow,
         defaultConfig.alwaysShow,
-      );
+      ) as boolean;
       this.config.showSettingsButton = undefinedDefault(
         this.config.showSettingsButton,
         defaultConfig.showSettingsButton,
-      );
+      ) as boolean;
       this.config.temperatureUnit = undefinedDefault(
         this.config.temperatureUnit,
         defaultConfig.temperatureUnit,
-      );
+      ) as TemperatureUnit;
       this.config.monitoredStats = undefinedDefault(
         this.config.monitoredStats,
         defaultConfig.monitoredStats,
-      );
+      ) as PrinterCardStatType[];
       this.config.slotColors = undefinedDefault(
         this.config.slotColors,
         defaultConfig.slotColors,
-      );
+      ) as string[];
       this.config.scaleFactor = undefinedDefault(
         this.config.scaleFactor,
         defaultConfig.scaleFactor,
-      );
+      ) as number;
     }
   }
 
-  public setConfig(config): void {
+  public setConfig(config: AnycubicCardConfig): void {
     this.config = config;
   }
 
-  render(): any {
+  render(): LitTemplateResult {
     return html`
       <anycubic-printercard-configure
         .hass=${this.hass}
@@ -131,34 +134,34 @@ export class AnycubicCard extends LitElement {
   @state()
   private selectedPrinterDevice: HassDevice | undefined;
 
-  @state({ type: Boolean })
+  @state()
   private vertical?: boolean;
 
-  @state({ type: Boolean })
+  @state()
   private round?: boolean;
 
-  @state({ type: Boolean })
+  @state()
   private use_24hr?: boolean;
 
-  @state({ type: Boolean })
+  @state()
   private showSettingsButton?: boolean;
 
-  @state({ type: Boolean })
+  @state()
   private alwaysShow?: boolean;
 
-  @state({ type: String })
+  @state()
   private temperatureUnit: TemperatureUnit | undefined;
 
-  @state({ type: String })
+  @state()
   private lightEntityId?: string | undefined;
 
-  @state({ type: String })
+  @state()
   private powerEntityId?: string | undefined;
 
-  @state({ type: String })
+  @state()
   private cameraEntityId?: string | undefined;
 
-  @state({ type: Number })
+  @state()
   private scaleFactor?: number | undefined;
 
   @state()
@@ -167,12 +170,13 @@ export class AnycubicCard extends LitElement {
   @state()
   private monitoredStats: PrinterCardStatType[] | undefined;
 
-  async firstUpdated(): void {
-    this.printers = await getPrinterDevices(this.hass);
+  // eslint-disable-next-line @typescript-eslint/require-await
+  async firstUpdated(): Promise<void> {
+    this.printers = getPrinterDevices(this.hass);
     this.requestUpdate();
   }
 
-  protected willUpdate(changedProperties: PropertyValues<this>): void {
+  protected willUpdate(changedProperties: PropertyValues): void {
     super.willUpdate(changedProperties);
 
     if (changedProperties.has("hass") && this.hass.language !== this.language) {
@@ -183,24 +187,27 @@ export class AnycubicCard extends LitElement {
       this.vertical = undefinedDefault(
         this.config.vertical,
         defaultConfig.vertical,
-      );
-      this.round = undefinedDefault(this.config.round, defaultConfig.round);
+      ) as boolean;
+      this.round = undefinedDefault(
+        this.config.round,
+        defaultConfig.round,
+      ) as boolean;
       this.use_24hr = undefinedDefault(
         this.config.use_24hr,
         defaultConfig.use_24hr,
-      );
+      ) as boolean;
       this.alwaysShow = undefinedDefault(
         this.config.alwaysShow,
         defaultConfig.alwaysShow,
-      );
+      ) as boolean;
       this.showSettingsButton = undefinedDefault(
         this.config.showSettingsButton,
         defaultConfig.showSettingsButton,
-      );
+      ) as boolean;
       this.temperatureUnit = undefinedDefault(
         this.config.temperatureUnit,
         defaultConfig.temperatureUnit,
-      );
+      ) as TemperatureUnit;
       this.lightEntityId = this.config.lightEntityId;
       this.powerEntityId = this.config.powerEntityId;
       this.cameraEntityId = this.config.cameraEntityId;
@@ -217,11 +224,11 @@ export class AnycubicCard extends LitElement {
     }
   }
 
-  public setConfig(config): void {
+  public setConfig(config: AnycubicCardConfig): void {
     this.config = config;
   }
 
-  render(): any {
+  render(): LitTemplateResult {
     return html`
       <anycubic-printercard-card
         .hass=${this.hass}
@@ -261,8 +268,10 @@ export class AnycubicCard extends LitElement {
   }
 }
 
-window.customCards = window.customCards || [];
-window.customCards.push({
+const customCardsWindow = window as CustomCardsWindow;
+
+customCardsWindow.customCards = customCardsWindow.customCards || [];
+customCardsWindow.customCards.push({
   type: "anycubic-card",
   name: "Anycubic Card",
   preview: true,

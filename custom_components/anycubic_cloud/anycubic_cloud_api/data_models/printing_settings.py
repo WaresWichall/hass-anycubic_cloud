@@ -2,6 +2,19 @@ from __future__ import annotations
 
 
 class AnycubicPrintingSettings:
+    __slots__ = (
+        "_print_speed_mode",
+        "_target_nozzle_temp",
+        "_target_hotbed_temp",
+        "_fan_speed_pct",
+        "_aux_fan_speed_pct",
+        "_box_fan_level",
+        "_bottom_layers",
+        "_bottom_time",
+        "_off_time",
+        "_on_time",
+    )
+
     def __init__(
         self,
         print_speed_mode: int | None = None,

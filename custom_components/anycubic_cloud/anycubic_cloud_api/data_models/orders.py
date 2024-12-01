@@ -3,10 +3,15 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from .anycubic_data_model_printer_properties import AnycubicMaterialMapping
+    from .printer_properties import AnycubicMaterialMapping
 
 
 class AnycubicBaseOrderRequest:
+    __slots__ = (
+        "_order_id",
+        "_printer_id",
+    )
+
     def __init__(
         self,
         order_id: int | None = None,
@@ -37,6 +42,10 @@ class AnycubicBaseOrderRequest:
 
 
 class AnycubicBaseProjectOrderRequest(AnycubicBaseOrderRequest):
+    __slots__ = (
+        "_project_id",
+    )
+
     def __init__(
         self,
         project_id: int,
@@ -62,6 +71,10 @@ class AnycubicBaseProjectOrderRequest(AnycubicBaseOrderRequest):
 
 
 class AnycubicProjectOrderRequest(AnycubicBaseProjectOrderRequest):
+    __slots__ = (
+        "_order_data",
+    )
+
     def __init__(
         self,
         order_data: dict[str, Any] = {},
@@ -88,6 +101,11 @@ class AnycubicProjectOrderRequest(AnycubicBaseProjectOrderRequest):
 
 
 class AnycubicProjectCtrlOrderRequest(AnycubicProjectOrderRequest):
+    __slots__ = (
+        "_ams_info",
+        "_print_settings",
+    )
+
     def __init__(
         self,
         ams_box_mapping: list[AnycubicMaterialMapping] | None = None,
@@ -136,6 +154,14 @@ class AnycubicProjectCtrlOrderRequest(AnycubicProjectOrderRequest):
 
 
 class AnycubicBaseStartPrintRequest:
+    __slots__ = (
+        "_file_key",
+        "_file_name",
+        "_filetype",
+        "_task_setting_ai_detect",
+        "_task_setting_camera_timelapse",
+    )
+
     def __init__(
         self,
         file_key: str = "",
@@ -176,6 +202,11 @@ class AnycubicBaseStartPrintRequest:
 
 
 class AnycubicStartPrintRequestLocal(AnycubicBaseStartPrintRequest):
+    __slots__ = (
+        "_filename",
+        "_filepath",
+    )
+
     def __init__(
         self,
         filename: str = "",
@@ -224,6 +255,18 @@ class AnycubicStartPrintRequestUdisk(AnycubicStartPrintRequestLocal):
 
 
 class AnycubicStartPrintRequestCloud(AnycubicBaseStartPrintRequest):
+    __slots__ = (
+        "_file_id",
+        "_hollow_param",
+        "_is_delete_file",
+        "_matrix",
+        "_project_type",
+        "_punching_param",
+        "_slice_param",
+        "_slice_size",
+        "_template_id",
+    )
+
     def __init__(
         self,
         file_id: int = -1,
@@ -273,6 +316,14 @@ class AnycubicStartPrintRequestCloud(AnycubicBaseStartPrintRequest):
 
 
 class AnycubicCameraToken:
+    __slots__ = (
+        "_secret_id",
+        "_secret_key",
+        "_session_token",
+        "_region",
+        "_msg_id",
+    )
+
     def __init__(
         self,
         secret_id: str,

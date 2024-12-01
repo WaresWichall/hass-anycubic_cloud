@@ -212,10 +212,12 @@ def md5_hex_of_string(
 
 
 def get_ssl_cert_directory() -> str:
-    ssl_root = path.dirname(__file__)
+    library_root = path.dirname(path.dirname(__file__))
 
-    if 'anycubic_cloud_api' not in ssl_root:
-        ssl_root = path.join(ssl_root, 'anycubic_cloud_api')
+    if 'anycubic_cloud_api' not in library_root:
+        library_root = path.join(library_root, 'anycubic_cloud_api')
+
+    ssl_root = path.join(library_root, 'resources')
 
     return ssl_root
 

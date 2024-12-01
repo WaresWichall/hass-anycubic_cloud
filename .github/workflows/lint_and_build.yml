@@ -31,3 +31,29 @@ jobs:
         uses: isort/isort-action@v1
         with:
           configuration: "--settings-path=pyproject.toml"
+      - name: Check translation diff
+        run: |
+          python custom_components/anycubic_cloud/scripts/build_translations.py
+          git diff --exit-code
+  lint-ts:
+    runs-on: ubuntu-latest
+    name: "Lint & Build: Typescript"
+    steps:
+      - name: Check out source repository
+        uses: actions/checkout@v3
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache-dependency-path: custom_components/anycubic_cloud/frontend_panel/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+        working-directory: custom_components/anycubic_cloud/frontend_panel
+      - name: Run lint
+        run: npm run lint
+        working-directory: custom_components/anycubic_cloud/frontend_panel
+      - name: Build and check diff
+        run: |
+          npm run build && npm run build_card
+          git diff --exit-code
+        working-directory: custom_components/anycubic_cloud/frontend_panel

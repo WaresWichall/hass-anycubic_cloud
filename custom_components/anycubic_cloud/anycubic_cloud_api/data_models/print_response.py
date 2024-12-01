@@ -3,10 +3,21 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from .anycubic_data_model_printer_properties import AnycubicMaterialMapping
+    from .printer_properties import AnycubicMaterialMapping
 
 
 class AnycubicPrintResponse:
+    __slots__ = (
+        "_order_msg_id",
+        "_printer_id",
+        "_saved_in_cloud",
+        "_file_name",
+        "_cloud_file_id",
+        "_gcode_id",
+        "_material_list",
+        "_ams_box_mapping",
+    )
+
     def __init__(
         self,
         order_msg_id: str | None = None,

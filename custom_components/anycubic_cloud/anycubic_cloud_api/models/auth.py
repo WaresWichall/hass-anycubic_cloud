@@ -4,6 +4,7 @@ import base64
 import hashlib
 import time
 from enum import IntEnum
+from os import path
 from typing import Any
 
 import bcrypt
@@ -11,7 +12,7 @@ from cryptography import x509
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
 
-from .anycubic_const import (
+from ..const.const import (
     AC_KNOWN_AID,
     AC_KNOWN_CID_APP,
     AC_KNOWN_CID_WEB,
@@ -20,8 +21,9 @@ from .anycubic_const import (
     AC_KNOWN_VID_SLICER_NEXT,
     AC_KNOWN_VID_WEB,
 )
-from .anycubic_exceptions import AnycubicAPIError
-from .anycubic_helpers import (
+from ..exceptions.error_strings import ErrorsAuth, ErrorsMQTTClient
+from ..exceptions.exceptions import AnycubicAuthError, AnycubicMQTTClientError
+from ..helpers.helpers import (
     generate_android_app_nonce,
     generate_fake_device_id,
     generate_web_nonce,
@@ -38,6 +40,21 @@ class AnycubicAuthMode(IntEnum):
 
 
 class AnycubicAuthentication:
+    __slots__ = (
+        "_auth_token",
+        "_auth_mode",
+        "_app_id",
+        "_app_secret",
+        "_app_version",
+        "_app_client_id",
+        "_device_id",
+        "_device_type",
+        "_auth_cn",
+        "_auth_access_token",
+        "_api_user_id",
+        "_api_user_email",
+    )
+
     def __init__(
         self,
         auth_token: str | None = None,
@@ -67,7 +84,7 @@ class AnycubicAuthentication:
     @property
     def auth_token(self) -> str:
         if not self._auth_token:
-            raise AnycubicAPIError('Missing auth token.')
+            raise AnycubicAuthError(ErrorsAuth.missing_auth_token)
         return self._auth_token
 
     @property
@@ -281,7 +298,7 @@ class AnycubicAuthentication:
 
     def get_user_id_md5_tuple(self) -> tuple[int, str]:
         if not self.api_user_id:
-            raise AnycubicAPIError('Unable to build user_id_md5_tuple, missing user id.')
+            raise AnycubicAuthError(ErrorsAuth.user_id_md5_tuple_missing_id)
         user_id_md5 = md5_hex_of_string(f"{self.api_user_id}")
         return (
             self.api_user_id,
@@ -290,7 +307,7 @@ class AnycubicAuthentication:
 
     def get_mqtt_client_id(self) -> str:
         if not self.api_user_email:
-            raise AnycubicAPIError('Unable to build mqtt_client_id, missing user email.')
+            raise AnycubicMQTTClientError(ErrorsMQTTClient.client_id_missing_email)
         client_id_string = self.api_user_email
         if self._auth_mode == AnycubicAuthMode.SLICER:
             # Slicer adds 'pcf' to the email before md5 hashing
@@ -300,13 +317,17 @@ class AnycubicAuthentication:
     def get_anycubic_ca_public_key(self) -> RSAPublicKey:
         ssl_root = get_ssl_cert_directory()
         ca_path = get_mqtt_ssl_path_ca(ssl_root)
+
+        if not path.exists(ca_path):
+            raise AnycubicMQTTClientError(ErrorsMQTTClient.cert_ca_missing)
+
         with open(ca_path, "rb") as fp:
             pem_data = fp.read()
         cert: x509.Certificate = x509.load_pem_x509_certificate(pem_data)
         public_key = cert.public_key()
 
         if not isinstance(public_key, RSAPublicKey):
-            raise AnycubicAPIError('Invalid Anycubic public key for MQTT signing.')
+            raise AnycubicMQTTClientError(ErrorsMQTTClient.pub_key_invalid)
 
         return public_key
 

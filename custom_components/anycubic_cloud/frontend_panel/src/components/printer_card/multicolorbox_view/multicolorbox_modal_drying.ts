@@ -1,9 +1,11 @@
-import { LitElement, html, css, PropertyValues, nothing } from "lit";
+import { CSSResult, LitElement, PropertyValues, css, html, nothing } from "lit";
 import { property, state } from "lit/decorators.js";
-import { styleMap } from "lit-html/directives/style-map.js";
-import { animate } from "@lit-labs/motion";
+import { styleMap } from "lit/directives/style-map.js";
+import { animate, Options as motionOptions } from "@lit-labs/motion";
 
 import { localize } from "../../../../localize/localize";
+
+import { HASSDomEvent } from "../../../fire_event";
 
 import { customElementIfUndef } from "../../../internal/register-custom-element";
 
@@ -13,13 +15,20 @@ import {
   isPrinterButtonStateAvailable,
 } from "../../../helpers";
 
-import { HomeAssistant, HassDevice, HassEntityInfos } from "../../../types";
+import {
+  AnycubicDryingPresetEntity,
+  HassDevice,
+  HassEntityInfos,
+  HomeAssistant,
+  LitTemplateResult,
+  ModalEventDrying,
+} from "../../../types";
 
 import { commonModalStyle } from "../../ui/modal-styles";
 
 import "../../ui/select-dropdown.ts";
 
-const animOptionsCard = {
+const animOptionsCard: motionOptions = {
   keyframeOptions: {
     duration: 250,
     direction: "alternate",
@@ -50,13 +59,13 @@ export class AnycubicPrintercardMulticolorboxModalDrying extends LitElement {
   @property()
   public language!: string;
 
-  @property()
+  @property({ attribute: "selected-printer-device" })
   public selectedPrinterDevice: HassDevice | undefined;
 
-  @property()
+  @property({ attribute: "printer-entities" })
   public printerEntities: HassEntityInfos;
 
-  @property()
+  @property({ attribute: "printer-entity-id-part" })
   public printerEntityIdPart: string | undefined;
 
   @state()
@@ -131,7 +140,8 @@ export class AnycubicPrintercardMulticolorboxModalDrying extends LitElement {
   @state()
   private _buttonStopDrying: string;
 
-  async firstUpdated(): void {
+  // eslint-disable-next-line @typescript-eslint/require-await
+  async firstUpdated(): Promise<void> {
     this.addEventListener("click", (e) => {
       this._closeModal(e);
     });
@@ -153,7 +163,7 @@ export class AnycubicPrintercardMulticolorboxModalDrying extends LitElement {
     super.disconnectedCallback();
   }
 
-  protected willUpdate(changedProperties: PropertyValues<this>): void {
+  protected willUpdate(changedProperties: PropertyValues): void {
     super.willUpdate(changedProperties);
 
     if (changedProperties.has("language")) {
@@ -192,46 +202,58 @@ export class AnycubicPrintercardMulticolorboxModalDrying extends LitElement {
       changedProperties.has("hass") ||
       changedProperties.has("selectedPrinterDevice")
     ) {
-      const dryingPresetState1 = getPrinterDryingButtonStateObj(
-        this.hass,
-        this.printerEntities,
-        this.printerEntityIdPart,
-        this._dryingPresetId1,
-      );
+      const dryingPresetState1: AnycubicDryingPresetEntity =
+        getPrinterDryingButtonStateObj(
+          this.hass,
+          this.printerEntities,
+          this.printerEntityIdPart,
+          this._dryingPresetId1,
+        ) as AnycubicDryingPresetEntity;
       this._hasDryingPreset1 =
         isPrinterButtonStateAvailable(dryingPresetState1);
-      this._dryingPresetTemp1 = dryingPresetState1.attributes.temperature;
-      this._dryingPresetDur1 = dryingPresetState1.attributes.duration;
-      const dryingPresetState2 = getPrinterDryingButtonStateObj(
-        this.hass,
-        this.printerEntities,
-        this.printerEntityIdPart,
-        this._dryingPresetId2,
+      this._dryingPresetTemp1 = String(
+        dryingPresetState1.attributes.temperature,
       );
+      this._dryingPresetDur1 = String(dryingPresetState1.attributes.duration);
+      const dryingPresetState2: AnycubicDryingPresetEntity =
+        getPrinterDryingButtonStateObj(
+          this.hass,
+          this.printerEntities,
+          this.printerEntityIdPart,
+          this._dryingPresetId2,
+        ) as AnycubicDryingPresetEntity;
       this._hasDryingPreset2 =
         isPrinterButtonStateAvailable(dryingPresetState2);
-      this._dryingPresetTemp2 = dryingPresetState2.attributes.temperature;
-      this._dryingPresetDur2 = dryingPresetState2.attributes.duration;
-      const dryingPresetState3 = getPrinterDryingButtonStateObj(
-        this.hass,
-        this.printerEntities,
-        this.printerEntityIdPart,
-        this._dryingPresetId3,
+      this._dryingPresetTemp2 = String(
+        dryingPresetState2.attributes.temperature,
       );
+      this._dryingPresetDur2 = String(dryingPresetState2.attributes.duration);
+      const dryingPresetState3: AnycubicDryingPresetEntity =
+        getPrinterDryingButtonStateObj(
+          this.hass,
+          this.printerEntities,
+          this.printerEntityIdPart,
+          this._dryingPresetId3,
+        ) as AnycubicDryingPresetEntity;
       this._hasDryingPreset3 =
         isPrinterButtonStateAvailable(dryingPresetState3);
-      this._dryingPresetTemp3 = dryingPresetState3.attributes.temperature;
-      this._dryingPresetDur3 = dryingPresetState3.attributes.duration;
-      const dryingPresetState4 = getPrinterDryingButtonStateObj(
-        this.hass,
-        this.printerEntities,
-        this.printerEntityIdPart,
-        this._dryingPresetId4,
+      this._dryingPresetTemp3 = String(
+        dryingPresetState3.attributes.temperature,
       );
+      this._dryingPresetDur3 = String(dryingPresetState3.attributes.duration);
+      const dryingPresetState4: AnycubicDryingPresetEntity =
+        getPrinterDryingButtonStateObj(
+          this.hass,
+          this.printerEntities,
+          this.printerEntityIdPart,
+          this._dryingPresetId4,
+        ) as AnycubicDryingPresetEntity;
       this._hasDryingPreset4 =
         isPrinterButtonStateAvailable(dryingPresetState4);
-      this._dryingPresetTemp4 = dryingPresetState4.attributes.temperature;
-      this._dryingPresetDur4 = dryingPresetState4.attributes.duration;
+      this._dryingPresetTemp4 = String(
+        dryingPresetState4.attributes.temperature,
+      );
+      this._dryingPresetDur4 = String(dryingPresetState4.attributes.duration);
       const dryingStopState = getPrinterDryingButtonStateObj(
         this.hass,
         this.printerEntities,
@@ -251,11 +273,11 @@ export class AnycubicPrintercardMulticolorboxModalDrying extends LitElement {
     }
   }
 
-  render(): any {
+  render(): LitTemplateResult {
     const stylesMain = {
-      height: this.isHidden ? "1px" : "auto",
-      opacity: this.isHidden ? 0.0 : 1.0,
-      scale: this.isHidden ? 0.0 : 1.0,
+      height: "auto",
+      opacity: 1.0,
+      scale: 1.0,
     };
 
     return html`
@@ -264,26 +286,15 @@ export class AnycubicPrintercardMulticolorboxModalDrying extends LitElement {
         style=${styleMap(stylesMain)}
         ${animate({ ...animOptionsCard })}
       >
-        <span
-          class="ac-modal-close"
-          @click="${(e): void => {
-            this._closeModal(e);
-          }}"
-          >&times;</span
-        >
-        <div
-          class="ac-modal-card"
-          @click="${(e): void => {
-            this._cardClick(e);
-          }}"
-        >
+        <span class="ac-modal-close" @click=${this._closeModal}>&times;</span>
+        <div class="ac-modal-card" @click=${this._cardClick}>
           ${this._renderCard()}
         </div>
       </div>
     `;
   }
 
-  _renderCard(): any {
+  _renderCard(): LitTemplateResult {
     return html`
       <div>
         <div class="ac-drying-header">${this._heading}</div>
@@ -291,11 +302,7 @@ export class AnycubicPrintercardMulticolorboxModalDrying extends LitElement {
           ${this._hasDryingPreset1
             ? html`
                 <div class="ac-drying-buttoncont">
-                  <ha-control-button
-                    @click="${(_e): void => {
-                      this._handleDryingPreset1();
-                    }}"
-                  >
+                  <ha-control-button @click=${this._handleDryingPreset1}>
                     ${this._buttonTextPreset} 1<br />
                     ${this._dryingPresetDur1} ${this._buttonTextMinutes} @
                     ${this._dryingPresetTemp1}°C
@@ -306,11 +313,7 @@ export class AnycubicPrintercardMulticolorboxModalDrying extends LitElement {
           ${this._hasDryingPreset2
             ? html`
                 <div class="ac-drying-buttoncont">
-                  <ha-control-button
-                    @click="${(_e): void => {
-                      this._handleDryingPreset2();
-                    }}"
-                  >
+                  <ha-control-button @click=${this._handleDryingPreset2}>
                     ${this._buttonTextPreset} 2<br />
                     ${this._dryingPresetDur2} ${this._buttonTextMinutes} @
                     ${this._dryingPresetTemp2}°C
@@ -321,11 +324,7 @@ export class AnycubicPrintercardMulticolorboxModalDrying extends LitElement {
           ${this._hasDryingPreset3
             ? html`
                 <div class="ac-drying-buttoncont">
-                  <ha-control-button
-                    @click="${(_e): void => {
-                      this._handleDryingPreset3();
-                    }}"
-                  >
+                  <ha-control-button @click=${this._handleDryingPreset3}>
                     ${this._buttonTextPreset} 3<br />
                     ${this._dryingPresetDur3} ${this._buttonTextMinutes} @
                     ${this._dryingPresetTemp3}°C
@@ -336,11 +335,7 @@ export class AnycubicPrintercardMulticolorboxModalDrying extends LitElement {
           ${this._hasDryingPreset4
             ? html`
                 <div class="ac-drying-buttoncont">
-                  <ha-control-button
-                    @click="${(_e): void => {
-                      this._handleDryingPreset4();
-                    }}"
-                  >
+                  <ha-control-button @click=${this._handleDryingPreset4}>
                     ${this._buttonTextPreset} 4<br />
                     ${this._dryingPresetDur4} ${this._buttonTextMinutes} @
                     ${this._dryingPresetTemp4}°C
@@ -352,11 +347,7 @@ export class AnycubicPrintercardMulticolorboxModalDrying extends LitElement {
             ? html`
                 <div class="ac-flex-break"></div>
                 <div class="ac-drying-buttoncont">
-                  <ha-control-button
-                    @click="${(_e): void => {
-                      this._handleDryingStop();
-                    }}"
-                  >
+                  <ha-control-button @click=${this._handleDryingStop}>
                     ${this._buttonStopDrying}
                   </ha-control-button>
                 </div>
@@ -378,38 +369,39 @@ export class AnycubicPrintercardMulticolorboxModalDrying extends LitElement {
           ),
         })
         .then()
-        .catch((_e) => {
+        .catch((_e: unknown) => {
           // Show in error modal
         });
     }
   }
 
-  private _handleDryingPreset1(): void {
+  private _handleDryingPreset1 = (): void => {
     this._pressHassButton(this._dryingPresetId1);
     this._closeModal();
-  }
+  };
 
-  private _handleDryingPreset2(): void {
+  private _handleDryingPreset2 = (): void => {
     this._pressHassButton(this._dryingPresetId2);
     this._closeModal();
-  }
+  };
 
-  private _handleDryingPreset3(): void {
+  private _handleDryingPreset3 = (): void => {
     this._pressHassButton(this._dryingPresetId3);
     this._closeModal();
-  }
+  };
 
-  private _handleDryingPreset4(): void {
+  private _handleDryingPreset4 = (): void => {
     this._pressHassButton(this._dryingPresetId4);
     this._closeModal();
-  }
+  };
 
-  private _handleDryingStop(): void {
+  private _handleDryingStop = (): void => {
     this._pressHassButton(this._dryingStopId);
     this._closeModal();
-  }
+  };
 
-  private _handleModalEvent = (e: Event): void => {
+  private _handleModalEvent = (evt: Event): void => {
+    const e = evt as HASSDomEvent<ModalEventDrying>;
     e.stopPropagation();
     if (e.detail.modalOpen) {
       this._isOpen = true;
@@ -417,19 +409,19 @@ export class AnycubicPrintercardMulticolorboxModalDrying extends LitElement {
     }
   };
 
-  private _closeModal(e?: Event | undefined): void {
+  private _closeModal = (e?: Event | undefined): void => {
     if (e) {
       e.stopPropagation();
     }
     this._isOpen = false;
     this.box_id = 0;
-  }
+  };
 
-  private _cardClick(e: Event): void {
+  private _cardClick = (e: Event): void => {
     e.stopPropagation();
-  }
+  };
 
-  static get styles(): any {
+  static get styles(): CSSResult {
     return css`
       ${commonModalStyle}
 

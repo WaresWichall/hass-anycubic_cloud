@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/ban-types */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 /*
  * This was pulled AND MODIFIED from the URL below as
  * LitElements does not prevent the same element from
@@ -13,22 +16,21 @@ interface Constructor<T> {
 }
 
 // From the TC39 Decorators proposal
-interface ClassDescriptor {
-  kind: "class";
-  elements: ClassElement[];
-  finisher?: <T>(clazz: Constructor<T>) => undefined | Constructor<T>;
-}
-
-// From the TC39 Decorators proposal
 interface ClassElement {
   kind: "field" | "method";
   key: PropertyKey;
   placement: "static" | "prototype" | "own";
-  // eslint-disable-next-line @typescript-eslint/ban-types
   initializer?: Function;
   extras?: ClassElement[];
   finisher?: <T>(clazz: Constructor<T>) => undefined | Constructor<T>;
   descriptor?: PropertyDescriptor;
+}
+
+// From the TC39 Decorators proposal
+interface ClassDescriptor {
+  kind: "class";
+  elements: ClassElement[];
+  finisher?: <T>(clazz: Constructor<T>) => undefined | Constructor<T>;
 }
 
 const legacyCustomElement = (
@@ -36,7 +38,6 @@ const legacyCustomElement = (
   clazz: Constructor<HTMLElement>,
 ): any => {
   if (window.customElements.get(tagName)) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return clazz as any;
   }
 
@@ -46,14 +47,13 @@ const legacyCustomElement = (
   // `Constructor<HTMLElement>` for some reason.
   // `Constructor<HTMLElement>` is helpful to make sure the decorator is
   // applied to elements however.
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return clazz as any;
 };
 
 const standardCustomElement = (
   tagName: string,
   descriptor: ClassDescriptor,
-): void => {
+): any => {
   const { kind, elements } = descriptor;
   return {
     kind,
@@ -83,9 +83,8 @@ const standardCustomElement = (
  * @param tagName The name of the custom element to define.
  */
 export const customElementIfUndef =
-  (tagName: string): void =>
-  (classOrDescriptor: Constructor<HTMLElement> | ClassDescriptor): void =>
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  (tagName: string): any =>
+  (classOrDescriptor: Constructor<HTMLElement> | ClassDescriptor): any =>
     typeof classOrDescriptor === "function"
       ? legacyCustomElement(tagName, classOrDescriptor)
       : standardCustomElement(tagName, classOrDescriptor);

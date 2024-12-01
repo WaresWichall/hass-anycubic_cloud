@@ -1,6 +1,6 @@
-import { css } from "lit";
+import { CSSResult, css } from "lit";
 
-export const commonFilesStyle: any = css`
+export const commonFilesStyle: CSSResult = css`
   :host {
     padding: 16px;
     display: block;
@@ -69,6 +69,9 @@ export const commonFilesStyle: any = css`
   }
 
   .file-delete-icon {
+  }
+
+  .no-mqtt-msg {
   }
 
   @media (max-width: 599px) {

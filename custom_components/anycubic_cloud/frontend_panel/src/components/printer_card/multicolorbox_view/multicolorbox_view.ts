@@ -1,8 +1,8 @@
 import { mdiRadiator } from "@mdi/js";
-import { LitElement, html, css, PropertyValues } from "lit";
+import { CSSResult, LitElement, PropertyValues, css, html } from "lit";
 import { property, state } from "lit/decorators.js";
 import { map } from "lit/directives/map.js";
-import { styleMap } from "lit-html/directives/style-map.js";
+import { styleMap } from "lit/directives/style-map.js";
 
 import { localize } from "../../../../localize/localize";
 
@@ -17,9 +17,13 @@ import {
 } from "../../../helpers";
 import {
   AnycubicSpoolInfo,
-  HomeAssistant,
+  AnycubicSpoolInfoEntity,
+  DomClickEvent,
+  EvtTargSpoolEdit,
   HassEntity,
   HassEntityInfos,
+  HomeAssistant,
+  LitTemplateResult,
 } from "../../../types";
 
 const SECONDARY_PREFIX = "secondary_";
@@ -38,10 +42,10 @@ export class AnycubicPrintercardMulticolorboxview extends LitElement {
   @property()
   public language!: string;
 
-  @property()
+  @property({ attribute: "printer-entities" })
   public printerEntities: HassEntityInfos;
 
-  @property()
+  @property({ attribute: "printer-entity-id-part" })
   public printerEntityIdPart: string | undefined;
 
   @property()
@@ -74,6 +78,9 @@ export class AnycubicPrintercardMulticolorboxview extends LitElement {
   @state()
   private _buttonDry: string;
 
+  @state()
+  private _changingRunout: boolean = false;
+
   protected willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
 
@@ -100,13 +107,15 @@ export class AnycubicPrintercardMulticolorboxview extends LitElement {
       changedProperties.has("printerEntities") ||
       changedProperties.has("printerEntityIdPart")
     ) {
-      this.spoolList = getPrinterSensorStateObj(
-        this.hass,
-        this.printerEntities,
-        this.printerEntityIdPart,
-        this._spoolsEntityId,
-        "not loaded",
-        { spool_info: [] },
+      this.spoolList = (
+        getPrinterSensorStateObj(
+          this.hass,
+          this.printerEntities,
+          this.printerEntityIdPart,
+          this._spoolsEntityId,
+          "not loaded",
+          { spool_info: [] },
+        ) as AnycubicSpoolInfoEntity
       ).attributes.spool_info;
       this._runoutRefillState = getPrinterSwitchStateObj(
         this.hass,
@@ -117,11 +126,11 @@ export class AnycubicPrintercardMulticolorboxview extends LitElement {
     }
   }
 
-  render(): any {
+  render(): LitTemplateResult {
     return html`
       <div class="ac-printercard-mcbview">
         <div class="ac-printercard-mcbmenu ac-printercard-menuleft">
-          <div class="ac-switch" @click="${this._handleRunoutRefillChanged}">
+          <div class="ac-switch" @click=${this._handleRunoutRefillChanged}>
             <div class="ac-switch-label">${this._buttonRefill}</div>
             <ha-entity-toggle
               .hass=${this.hass}
@@ -131,11 +140,7 @@ export class AnycubicPrintercardMulticolorboxview extends LitElement {
         </div>
         <div class="ac-printercard-spoolcont">${this._renderSpools()}</div>
         <div class="ac-printercard-mcbmenu ac-printercard-menuright">
-          <ha-control-button
-            @click="${(_e): void => {
-              this._openDryingModal();
-            }}"
-          >
+          <ha-control-button @click=${this._openDryingModal}>
             <ha-svg-icon .path=${mdiRadiator}></ha-svg-icon>
             ${this._buttonDry}
           </ha-control-button>
@@ -144,52 +149,77 @@ export class AnycubicPrintercardMulticolorboxview extends LitElement {
     `;
   }
 
-  private _renderSpools(): HTMLElement {
-    return map(this.spoolList, (spool, index) => {
-      const ringStyle = {
-        "background-color": spool.spool_loaded
-          ? `rgb(${spool.color[0]}, ${spool.color[1]}, ${spool.color[2]})`
-          : "#aaa",
-      };
-      return html`
-        <div
-          class="ac-spool-info"
-          @click="${(_e): void => {
-            this._editSpool(index, spool.material_type, spool.color);
-          }}"
-        >
-          <div class="ac-spool-color-ring-cont">
-            <div class="ac-spool-color-ring-inner" style=${styleMap(ringStyle)}>
-              <div class="ac-spool-color-num">${index + 1}</div>
+  private _renderSpools(): Generator<
+    AnycubicSpoolInfo,
+    void,
+    LitTemplateResult
+  > {
+    return map(
+      this.spoolList,
+      (spool: AnycubicSpoolInfo, index: number): LitTemplateResult => {
+        const ringStyle = {
+          "background-color": spool.spool_loaded
+            ? `rgb(${spool.color[0]}, ${spool.color[1]}, ${spool.color[2]})`
+            : "#aaa",
+        };
+        return html`
+          <div
+            class="ac-spool-info"
+            .index=${index}
+            .material_type=${spool.material_type}
+            .color=${spool.color}
+            @click=${this._editSpool}
+          >
+            <div class="ac-spool-color-ring-cont">
+              <div
+                class="ac-spool-color-ring-inner"
+                style=${styleMap(ringStyle)}
+              >
+                <div class="ac-spool-color-num">${index + 1}</div>
+              </div>
+            </div>
+            <div class="ac-spool-material-type">
+              ${spool.spool_loaded ? spool.material_type : "---"}
             </div>
           </div>
-          <div class="ac-spool-material-type">
-            ${spool.spool_loaded ? spool.material_type : "---"}
-          </div>
-        </div>
-      `;
-    });
+        `;
+      },
+    ) as Generator<AnycubicSpoolInfo, void, LitTemplateResult>;
   }
 
-  private _openDryingModal(): void {
+  private _openDryingModal = (): void => {
     fireEvent(this, "ac-mcbdry-modal", {
       modalOpen: true,
       box_id: this.box_id,
     });
-  }
+  };
 
   private _handleRunoutRefillChanged = (_ev: Event): void => {
     // const refillActive = ev.target.checked;
-    this.hass.callService("switch", "toggle", {
-      entity_id: getPrinterEntityId(
-        this.printerEntityIdPart,
-        "switch",
-        this._runoutRefillId,
-      ),
-    });
+    if (this._changingRunout) {
+      return;
+    }
+    this._changingRunout = true;
+    this.hass
+      .callService("switch", "toggle", {
+        entity_id: getPrinterEntityId(
+          this.printerEntityIdPart,
+          "switch",
+          this._runoutRefillId,
+        ),
+      })
+      .then(() => {
+        this._changingRunout = false;
+      })
+      .catch((_e: unknown) => {
+        this._changingRunout = false;
+      });
   };
 
-  private _editSpool(index, material_type, color): void {
+  private _editSpool = (ev: DomClickEvent<EvtTargSpoolEdit>): void => {
+    const index: number = ev.currentTarget.index;
+    const material_type: string = ev.currentTarget.material_type;
+    const color: number[] = ev.currentTarget.color;
     fireEvent(this, "ac-mcb-modal", {
       modalOpen: true,
       box_id: this.box_id,
@@ -197,9 +227,9 @@ export class AnycubicPrintercardMulticolorboxview extends LitElement {
       material_type: material_type,
       color: color,
     });
-  }
+  };
 
-  static get styles(): any {
+  static get styles(): CSSResult {
     return css`
       :host {
         box-sizing: border-box;

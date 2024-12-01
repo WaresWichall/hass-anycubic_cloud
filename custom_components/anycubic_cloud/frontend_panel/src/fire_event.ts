@@ -41,24 +41,25 @@ export interface HASSDomEvent<T> extends Event {
   detail: T;
 }
 
-export const fireEvent: Event = (
+export const fireEvent = (
   node: HTMLElement | Window,
   type: string,
-  detail?: object,
-  options?: {
+  evt_detail?: object | null,
+  evt_options?: {
     bubbles?: boolean;
     cancelable?: boolean;
     composed?: boolean;
   },
-) => {
-  options = options || {};
-  detail = detail === null || detail === undefined ? {} : detail;
+): Event => {
+  const options = evt_options || {};
+  const detail =
+    evt_detail === null || evt_detail === undefined ? {} : evt_detail;
   const event = new Event(type, {
     bubbles: options.bubbles === undefined ? true : options.bubbles,
     cancelable: Boolean(options.cancelable),
     composed: options.composed === undefined ? true : options.composed,
   });
-  (event as any).detail = detail;
+  (event as HASSDomEvent<typeof detail>).detail = detail;
   node.dispatchEvent(event);
   return event;
 };

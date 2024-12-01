@@ -1,6 +1,7 @@
 """Adds config flow for Anycubic Cloud integration."""
 from __future__ import annotations
 
+import traceback
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any
 
@@ -18,8 +19,8 @@ from homeassistant.helpers.aiohttp_client import async_create_clientsession
 from homeassistant.helpers.selector import BooleanSelector, ObjectSelector
 from homeassistant.helpers.storage import Store
 
-from .anycubic_cloud_api.anycubic_api_mqtt import AnycubicMQTTAPI as AnycubicAPI
-from .anycubic_cloud_api.anycubic_model_auth import AnycubicAuthMode
+from .anycubic_cloud_api.anycubic_api import AnycubicMQTTAPI as AnycubicAPI
+from .anycubic_cloud_api.models.auth import AnycubicAuthMode
 from .const import (
     CONF_CARD_CONFIG,
     CONF_DEBUG_API_CALLS,
@@ -134,6 +135,7 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
         self._user_auth_mode: AnycubicAuthMode | int | None = None
         self._user_device_id: str | None = None
         self._is_reconfigure: bool = False
+        self._is_reauth: bool = False
         self._anycubic_api: AnycubicAPI | None = None
         self.entry: ConfigEntry | None = None
 
@@ -162,19 +164,24 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
         if self._anycubic_api is not None:
             return
 
+        LOGGER.debug("Setting up API instance for config flow.")
+
         self._anycubic_api = self._async_create_anycubic_api()
 
-        if not self.entry:
+        if not self.entry or self._is_reauth:
             return
 
         await async_load_tokens_from_store(self.hass, self._anycubic_api)
 
     async def _async_check_login_errors(self) -> dict[str, str]:
+        LOGGER.debug("Config flow checking auth was successful.")
         assert self._anycubic_api
         success = await self._anycubic_api.check_api_tokens()
         if not success:
             LOGGER.error("Authentication failed. Check credentials.")
             return {"base": "invalid_auth"}
+
+        LOGGER.debug("Config flow auth successful.")
 
         return {}
 
@@ -198,6 +205,8 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
             errors = await self._async_check_login_errors()
 
         except Exception as error:
+            tb = traceback.format_exc()
+            LOGGER.debug(f"Error during authentication with user_input: {error}\n{tb}")
             errors = self._errors_unknown_authentication_failure(error)
 
         return errors
@@ -259,6 +268,7 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
         errors = {}
 
         if user_input is not None:
+            LOGGER.debug("Handling auth step with user_input.")
             errors = await self._async_check_authentication_with_user_input(
                 auth_mode=auth_mode,
                 user_input=user_input,
@@ -275,7 +285,7 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
                             CONF_USER_DEVICE_ID: self._user_device_id,
                         },
                     )
-                    return await self.async_step_printer()
+                    return self.async_abort(reason="reauth_successful")
 
                 else:
                     return await self.async_step_printer()
@@ -294,7 +304,9 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
         printer_id_map = {}
 
         try:
-            if self._is_reconfigure:
+            LOGGER.debug("Config flow step: Printer")
+            if self._is_reconfigure and not self._is_reauth:
+                LOGGER.debug("Fetching existing entry for printer auth.")
                 self.entry = self.hass.config_entries.async_get_entry(self.context["entry_id"])
 
                 assert self.entry
@@ -317,6 +329,8 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
             printer_id_map = {f"{x.id}": x.name for x in printer_list}
 
         except Exception as error:
+            tb = traceback.format_exc()
+            LOGGER.debug(f"Error during printers list fetch: {error}\n{tb}")
             errors = self._errors_unknown_authentication_failure(error)
 
         if user_input and not errors:
@@ -334,6 +348,8 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
                         break
 
                 except Exception as error:
+                    tb = traceback.format_exc()
+                    LOGGER.debug(f"Error during printer info fetch: {error}\n{tb}")
                     errors = self._errors_unknown_authentication_failure(error)
                     break
 
@@ -352,12 +368,7 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
                             CONF_PRINTER_ID_LIST: printer_id_list,
                         },
                     )
-                    await self.hass.config_entries.async_reload(existing_entry.entry_id)
-                    if self._is_reconfigure:
-                        self._is_reconfigure = False
-                        return self.async_abort(reason="reconfigure_successful")
-                    else:
-                        return self.async_abort(reason="reauth_successful")
+                    return self.async_abort(reason="reconfigure_successful")
                 else:
                     return self.async_create_entry(
                         title=self._anycubic_api.anycubic_auth.api_user_identifier,
@@ -376,6 +387,7 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
                     vol.Required(CONF_PRINTER_ID_LIST): cv.multi_select(printer_id_map),
                 },
             ),
+            errors=errors,
         )
 
     async def async_step_user(
@@ -386,6 +398,7 @@ class AnycubicCloudConfigFlow(ConfigFlow, domain=DOMAIN):
 
     async def async_step_reauth(self, entry_data: Mapping[str, Any]) -> ConfigFlowResult:
         """Handle initiation of re-authentication with AnycubicCloud."""
+        self._is_reauth = True
         self.entry = self.hass.config_entries.async_get_entry(self.context["entry_id"])
         return await self.async_step_reauth_confirm()
 

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .anycubic_model_http import HTTP_METHODS, AnycubicAPIEndpoint
+from ..models.http import HTTP_METHODS, AnycubicAPIEndpoint
 
 
 class API_ENDPOINT:

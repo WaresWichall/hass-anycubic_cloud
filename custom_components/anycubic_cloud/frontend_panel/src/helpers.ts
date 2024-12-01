@@ -1,18 +1,27 @@
-import moment from "moment";
+import { utc as dfnsUtc } from "@date-fns/utc";
+import {
+  Duration as dfnsDuration,
+  format as dfnsFormat,
+  intervalToDuration as dfnsIntervalToDuration,
+} from "date-fns";
 
 import { fireEvent } from "./fire_event";
 import {
   AnycubicCardConfig,
+  AnycubicLitNode,
+  AnycubicMaterialType,
   AnycubicSpeedMode,
+  AnycubicSpeedModeEntity,
   AnycubicSpeedModes,
   CalculatedTimeType,
-  HomeAssistant,
   HassDevice,
   HassDeviceList,
+  HassEmptyEntity,
   HassEntity,
   HassEntityInfo,
   HassEntityInfos,
   HassRoute,
+  HomeAssistant,
   PrinterCardStatType,
   TemperatureUnit,
 } from "./types";
@@ -21,11 +30,13 @@ const stylePxKeys = ["width", "height", "left", "top"];
 
 export function updateElementStyleWithObject(
   el: HTMLElement | undefined,
-  updateObj: any,
+  updateObj: any, // eslint-disable-line
 ): void {
-  Object.keys(updateObj).forEach((key) => {
+  Object.keys(updateObj as object).forEach((key) => {
+    // eslint-disable-next-line
     if (stylePxKeys.includes(key) && !isNaN(updateObj[key])) {
-      updateObj[key] = updateObj[key].toString() + "px";
+      // eslint-disable-next-line
+      updateObj[key] = (updateObj[key].toString()) + "px";
     }
   });
   if (el) {
@@ -33,26 +44,44 @@ export function updateElementStyleWithObject(
   }
 }
 
-export function numberFromString(str: string): number {
-  return Number(str.match(/\d+/)[0]);
+export function createEmptyEntity(entityParams: HassEmptyEntity): HassEntity {
+  return {
+    state: entityParams.state,
+    attributes: entityParams.attributes,
+    entity_id: "invalid_domain.invalid_entity",
+    last_changed: "",
+    last_updated: "",
+    context: {
+      id: "",
+      parent_id: null,
+      user_id: null,
+    },
+  };
 }
 
-export function toTitleCase(str: any): string {
+export function numberFromString(str: string): number {
+  const matches = str.match(/\d+/);
+  return Number(matches ? matches[0] : -1);
+}
+
+export function toTitleCase(str: string): string {
   return str
     .toLowerCase()
     .split(" ")
-    .map((word: any) => {
+    .map((word: string) => {
       return word.charAt(0).toUpperCase() + word.slice(1);
     })
     .join(" ");
 }
 
 export function buildImageUrlFromEntity(entityState: HassEntity): string {
-  return `${window.location.origin}/api/image_proxy/${entityState.entity_id}?token=${entityState.attributes.access_token}`;
+  const token: string = entityState.attributes.access_token as string;
+  return `${window.location.origin}/api/image_proxy/${entityState.entity_id}?token=${token}`;
 }
 
 export function buildCameraUrlFromEntity(entityState: HassEntity): string {
-  return `${window.location.origin}/api/camera_proxy_stream/${entityState.entity_id}?token=${entityState.attributes.access_token}`;
+  const token: string = entityState.attributes.access_token as string;
+  return `${window.location.origin}/api/camera_proxy_stream/${entityState.entity_id}?token=${token}`;
 }
 
 export function prettyFilename(str: string): string {
@@ -60,22 +89,22 @@ export function prettyFilename(str: string): string {
   const splitName =
     splitI > 0 ? [str.slice(0, splitI), str.slice(splitI + 1)] : [str];
   const chunksFirst = splitName[0].match(/.{1,10}/g);
-  const joinFirst = chunksFirst.join("\n");
+  const joinFirst = chunksFirst ? chunksFirst.join("\n") : splitName[0];
   return splitName.length > 1
-    ? joinFirst + "-" + splitName.slice(1)
+    ? joinFirst + "-" + splitName.slice(1)[0]
     : joinFirst;
 }
 
 export function getEntityState(
   hass: HomeAssistant,
-  entityInfo: HassEntityInfo,
+  entityInfo: HassEntityInfo | undefined,
 ): HassEntity | undefined {
   return entityInfo ? hass.states[entityInfo.entity_id] : undefined;
 }
 
 export function getEntityStateFloat(
   hass: HomeAssistant,
-  entityInfo: HassEntityInfo,
+  entityInfo: HassEntityInfo | undefined,
 ): number {
   const entityState = getEntityState(hass, entityInfo);
   const stateFloat = entityState ? parseFloat(entityState.state) : 0;
@@ -84,7 +113,7 @@ export function getEntityStateFloat(
 
 export function getEntityStateString(
   hass: HomeAssistant,
-  entityInfo: HassEntityInfo,
+  entityInfo: HassEntityInfo | undefined,
 ): string {
   const entityState = getEntityState(hass, entityInfo);
   return entityState ? String(entityState.state) : "";
@@ -92,7 +121,7 @@ export function getEntityStateString(
 
 export function getEntityStateBinary(
   hass: HomeAssistant,
-  entityInfo: HassEntityInfo,
+  entityInfo: HassEntityInfo | undefined,
   onValue: string | boolean,
   offValue: string | boolean,
 ): string | boolean {
@@ -114,14 +143,16 @@ export function getPrinterDevices(hass: HomeAssistant): HassDeviceList {
 
 export function getPrinterEntities(
   hass: HomeAssistant,
-  deviceID: string,
+  deviceID: string | undefined,
 ): HassEntityInfos {
   const entities: HassEntityInfos = {};
-  for (const key in hass.entities) {
-    const ent = hass.entities[key];
+  if (deviceID) {
+    for (const key in hass.entities) {
+      const ent = hass.entities[key];
 
-    if (ent.device_id === deviceID) {
-      entities[ent.entity_id] = ent;
+      if (ent.device_id === deviceID) {
+        entities[ent.entity_id] = ent;
+      }
     }
   }
   return entities;
@@ -150,7 +181,7 @@ export function getPrinterEntityId(
   domain: string,
   suffix: string,
 ): string {
-  return domain + "." + printerEntityIdPart + suffix;
+  return domain + "." + String(printerEntityIdPart) + suffix;
 }
 
 export function getStrictMatchingEntity(
@@ -159,6 +190,9 @@ export function getStrictMatchingEntity(
   match_domain: string,
   match_suffix: string,
 ): HassEntityInfo | undefined {
+  if (!printerEntityIdPart) {
+    return undefined;
+  }
   for (const key in entities) {
     const ent = entities[key];
     const splitID = key.split(".");
@@ -227,8 +261,8 @@ export function getPrinterButtonStateObj(
   entities: HassEntityInfos,
   printerEntityIdPart: string | undefined,
   suffix: string,
-  defaultState: any = "unavailable",
-  defaultAttributes: any = {},
+  defaultState: string | number = "unavailable",
+  defaultAttributes: object = {},
 ): HassEntity {
   const entInfo = getStrictMatchingEntity(
     entities,
@@ -237,7 +271,13 @@ export function getPrinterButtonStateObj(
     suffix,
   );
   const stateObj = getEntityState(hass, entInfo);
-  return stateObj || { state: defaultState, attributes: defaultAttributes };
+  return (
+    stateObj ||
+    createEmptyEntity({
+      state: String(defaultState),
+      attributes: defaultAttributes,
+    })
+  );
 }
 
 export function getPrinterDryingButtonStateObj(
@@ -257,7 +297,7 @@ export function getPrinterDryingButtonStateObj(
 }
 
 export function isPrinterButtonStateAvailable(stateObj: HassEntity): boolean {
-  return !["unavailable"].includes(stateObj.state) ? true : false;
+  return !["unavailable"].includes(stateObj.state);
 }
 
 export function getPrinterImageStateUrl(
@@ -281,8 +321,8 @@ export function getPrinterSensorStateObj(
   entities: HassEntityInfos,
   printerEntityIdPart: string | undefined,
   suffix: string,
-  defaultState: any = "unavailable",
-  defaultAttributes: any = {},
+  defaultState: string | number = "unavailable",
+  defaultAttributes: object = {},
 ): HassEntity {
   const entInfo = getStrictMatchingEntity(
     entities,
@@ -291,7 +331,13 @@ export function getPrinterSensorStateObj(
     suffix,
   );
   const stateObj = getEntityState(hass, entInfo);
-  return stateObj || { state: defaultState, attributes: defaultAttributes };
+  return (
+    stateObj ||
+    createEmptyEntity({
+      state: String(defaultState),
+      attributes: defaultAttributes,
+    })
+  );
 }
 
 export function getPrinterSensorStateString(
@@ -341,6 +387,7 @@ export function getPrinterBinarySensorState(
   suffix: string,
   onValue: string | boolean,
   offValue: string | boolean,
+  undefValue: string | boolean | undefined = undefined,
 ): string | boolean | undefined {
   const entInfo = getStrictMatchingEntity(
     entities,
@@ -350,7 +397,7 @@ export function getPrinterBinarySensorState(
   );
   return entInfo
     ? getEntityStateBinary(hass, entInfo, onValue, offValue)
-    : undefined;
+    : undefValue;
 }
 
 export function getPrinterUpdateEntityState(
@@ -371,10 +418,25 @@ export function getPrinterUpdateEntityState(
       entInfo,
       "Update Available",
       "Up To Date",
-    );
+    ) as string;
   } else {
     return undefined;
   }
+}
+
+export function getPrinterSupportsMQTT(
+  hass: HomeAssistant,
+  entities: HassEntityInfos,
+  printerEntityIdPart: string | undefined,
+): boolean {
+  const entInfo = getStrictMatchingEntity(
+    entities,
+    printerEntityIdPart,
+    "binary_sensor",
+    "mqtt_connection_active",
+  );
+  const stateObj = getEntityState(hass, entInfo);
+  return stateObj ? !!stateObj.attributes.supports_mqtt_login : false;
 }
 
 export function isFDMPrinter(
@@ -485,24 +547,31 @@ export function isPrintStatePrinting(printStateString: string): boolean {
 }
 
 export function printStateStatusColor(printStateString: string): string {
-  return printStateString === "preheating"
-    ? "#ffc107"
-    : isPrintStatePrinting(printStateString)
-      ? "#4caf50"
-      : printStateString === "unknown"
-        ? "#f44336"
-        : printStateString === "operational" || printStateString === "finished"
-          ? "#00bcd4"
-          : "#f44336";
+  if (printStateString === "preheating") {
+    return "#ffc107";
+  } else if (isPrintStatePrinting(printStateString)) {
+    return "#4caf50";
+  } else if (printStateString === "unknown") {
+    return "#f44336";
+  } else if (
+    printStateString === "operational" ||
+    printStateString === "finished"
+  ) {
+    return "#00bcd4";
+  } else {
+    return "#f44336";
+  }
 }
 
 export const navigateToPrinter = (
-  node: any,
+  node: AnycubicLitNode,
   printerID: string,
   replace: boolean = false,
 ): void => {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  const prefix: string = node.route.prefix;
   const endpoint = printerID ? `${printerID}/main` : "";
-  const url = `${node.route.prefix}/${endpoint}`;
+  const url = `${prefix}/${endpoint}`;
   if (replace) {
     history.replaceState(null, "", url);
   } else {
@@ -514,13 +583,16 @@ export const navigateToPrinter = (
 };
 
 export const navigateToPage = (
-  node: any,
+  node: AnycubicLitNode,
   path: string,
   replace: boolean = false,
 ): void => {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  const prefix: string = node.route.prefix;
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
   const printerID = getPrinterDevID(node.route);
   const endpoint = printerID ? `${printerID}/${path}` : "";
-  const url = `${node.route.prefix}/${endpoint}`;
+  const url = `${prefix}/${endpoint}`;
   if (replace) {
     history.replaceState(null, "", url);
   } else {
@@ -531,23 +603,60 @@ export const navigateToPage = (
   });
 };
 
-export const formatDuration = (time: number, round: boolean): string => {
-  return round
-    ? moment.duration(time, "seconds").humanize()
-    : ((): string => {
-        const t = moment.duration(time, "seconds");
+export function milliSecondsToDuration(milliSeconds: number): dfnsDuration {
+  const epoch = new Date(0);
+  const secondsAfterEpoch = new Date(milliSeconds);
+  return dfnsIntervalToDuration({
+    start: epoch,
+    end: secondsAfterEpoch,
+  });
+}
 
-        const d = t.days();
-        const h = t.hours();
-        const m = t.minutes();
-        const s = t.seconds();
+export function secondsToDuration(seconds: number): dfnsDuration {
+  return milliSecondsToDuration(seconds * 1e3);
+}
 
-        return `${d > 0 ? `${d}d` : ""}${h > 0 ? ` ${h}h` : ""}${m > 0 ? ` ${m}m` : ""}${s > 0 ? ` ${s}s` : "0s"}`;
-      })();
+export const formatDuration = (
+  time: number | string | undefined,
+  round: boolean,
+): string => {
+  if (time !== 0 && (!time || isNaN(time as number))) {
+    return "invalid duration";
+  }
+  const dur: dfnsDuration = secondsToDuration(
+    round ? Math.ceil(Number(time) / 60) * 60 : Number(time),
+  );
+
+  const days: string = dur.days && dur.days > 0 ? `${dur.days}d` : "";
+  const hours: string = dur.hours && dur.hours > 0 ? `${dur.hours}h` : "";
+  const minutes: string =
+    dur.minutes && dur.minutes > 0 ? `${dur.minutes}m` : "";
+  const seconds: string =
+    dur.seconds && dur.seconds > 0 ? `${dur.seconds}s` : round ? "" : "0s";
+
+  return `${days}${hours}${minutes}${seconds}`;
+};
+
+export const formatFutureTime = (
+  futureSeconds: number | string | undefined,
+  round: boolean,
+  use_24hr: boolean,
+): string => {
+  if (
+    futureSeconds !== 0 &&
+    (!futureSeconds || isNaN(futureSeconds as number))
+  ) {
+    return "invalid time";
+  }
+  const fmtSeconds = round ? "" : ":ss";
+  const fmtString = use_24hr ? `HH:mm${fmtSeconds}` : `h:mm${fmtSeconds} a`;
+  const newDate = new Date();
+  newDate.setSeconds(newDate.getSeconds() + Number(futureSeconds));
+  return dfnsFormat(newDate, fmtString, { in: dfnsUtc });
 };
 
 export const calculateTimeStat = (
-  time: number,
+  time: number | string | undefined,
   timeType: CalculatedTimeType,
   round: boolean = false,
   use_24hr: boolean = false,
@@ -556,9 +665,7 @@ export const calculateTimeStat = (
     case CalculatedTimeType.Remaining:
       return formatDuration(time, round);
     case CalculatedTimeType.ETA:
-      return moment()
-        .add(time, "seconds")
-        .format(use_24hr ? "HH:mm" : "h:mm a");
+      return formatFutureTime(time, round, use_24hr);
     case CalculatedTimeType.Elapsed:
       return formatDuration(time, round);
     default:
@@ -570,12 +677,13 @@ export function getEntityTotalSeconds(
   timeEntity: HassEntity,
   isSeconds: boolean = false,
 ): number {
-  let result;
+  let result: number;
   if (timeEntity.state) {
     if (timeEntity.state.includes(", ")) {
       const [days_string, time_string] = timeEntity.state.split(", ");
       const [hours, minutes, seconds] = time_string.split(":");
-      const days = days_string.match(/\d+/)[0];
+      const day_match = days_string.match(/\d+/);
+      const days = day_match ? day_match[0] : 0;
       result =
         +days * 60 * 60 * 24 + +hours * 60 * 60 + +minutes * 60 + +seconds;
     } else if (timeEntity.state.includes(":")) {
@@ -597,7 +705,7 @@ export function getEntityTotalSeconds(
 export const temperatureUnitFromEntity = (
   entity: HassEntity,
 ): TemperatureUnit => {
-  switch (entity.attributes?.unit_of_measurement) {
+  switch (entity.attributes.unit_of_measurement) {
     case "°C":
       return TemperatureUnit.C;
     case "°F":
@@ -609,12 +717,12 @@ export const temperatureUnitFromEntity = (
 
 const temperatureMap = {
   [TemperatureUnit.C]: {
-    [TemperatureUnit.C]: (t): number => t,
-    [TemperatureUnit.F]: (t): number => (t * 9.0) / 5.0 + 32.0,
+    [TemperatureUnit.C]: (t: number): number => t,
+    [TemperatureUnit.F]: (t: number): number => (t * 9.0) / 5.0 + 32.0,
   },
   [TemperatureUnit.F]: {
-    [TemperatureUnit.C]: (t): number => ((t - 32.0) * 5.0) / 9.0,
-    [TemperatureUnit.F]: (t): number => t,
+    [TemperatureUnit.C]: (t: number): number => ((t - 32.0) * 5.0) / 9.0,
+    [TemperatureUnit.F]: (t: number): number => t,
   },
 };
 
@@ -623,6 +731,7 @@ export const convertTemperature = (
   from: TemperatureUnit,
   to: TemperatureUnit,
 ): number => {
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   if (!temperatureMap[from] || !temperatureMap[from][to]) {
     return -1;
   }
@@ -632,7 +741,7 @@ export const convertTemperature = (
 
 export const getEntityTemperature = (
   temperatureEntity: HassEntity,
-  temperatureUnit: TemperatureUnit,
+  temperatureUnit: TemperatureUnit | undefined,
   round: boolean = false,
 ): string => {
   const t: number = parseFloat(temperatureEntity.state);
@@ -703,17 +812,29 @@ export function getDefaultCardConfig(): AnycubicCardConfig {
   };
 }
 
+// eslint-disable-next-line
 export function undefinedDefault(value: any, defaultValue: any): any {
   return typeof value === "undefined" ? defaultValue : value;
 }
 
 export function speedModesFromStateObj(
-  speedModeState: HassEntity,
+  speedModeState: AnycubicSpeedModeEntity,
 ): AnycubicSpeedModes {
   const speedModeAttr: AnycubicSpeedMode[] =
-    speedModeState.attributes.available_modes;
+    (speedModeState.attributes.available_modes as
+      | AnycubicSpeedMode[]
+      | undefined) ?? [];
   return speedModeAttr.reduce(
     (modes, mode) => ({ ...modes, [mode.mode]: mode.description }),
     {},
   );
+}
+
+export function materialTypeFromString(
+  material_type?: string,
+): AnycubicMaterialType | undefined {
+  return material_type &&
+    (Object.values(AnycubicMaterialType) as string[]).includes(material_type)
+    ? AnycubicMaterialType[material_type.toUpperCase() as AnycubicMaterialType]
+    : undefined;
 }

@@ -5,7 +5,9 @@ from typing import Any
 
 from aiofiles import open as aio_file_open
 
-from .anycubic_helpers import (
+from ..exceptions.error_strings import ErrorsGcodeParsing
+from ..exceptions.exceptions import AnycubicGcodeParsingError
+from ..helpers.helpers import (
     GCODE_STRING_FIRST_ATTR_LINE,
     REX_GCODE_DATA_KEY_VALUE,
     gcode_key_value_pair_to_dict,
@@ -13,6 +15,10 @@ from .anycubic_helpers import (
 
 
 class AnycubicGcodeFile(UserDict[str, Any]):
+    __slots__ = (
+        "_material_list",
+    )
+
     def __init__(
         self,
         *args: Any,
@@ -23,7 +29,7 @@ class AnycubicGcodeFile(UserDict[str, Any]):
 
         try:
             self.material_list
-        except ValueError:
+        except AnycubicGcodeParsingError:
             pass
 
     @classmethod
@@ -41,14 +47,14 @@ class AnycubicGcodeFile(UserDict[str, Any]):
                 async with aio_file_open(full_file_path, mode='r') as f:
                     file_lines = await f.readlines()
             except Exception as error:
-                raise Exception(f'Failed to read gcode file, error: {error}')
+                raise AnycubicGcodeParsingError(ErrorsGcodeParsing.read_fail.format(error))
         elif file_bytes is not None:
             try:
                 file_lines = file_bytes.decode('utf-8').split('\n')
             except Exception as error:
-                raise Exception(f'Failed to decode gcode file bytes, error: {error}')
+                raise AnycubicGcodeParsingError(ErrorsGcodeParsing.byte_decode_fail.format(error))
         else:
-            raise Exception('Cannot read slicer data without file path or bytes.')
+            raise AnycubicGcodeParsingError(ErrorsGcodeParsing.invalid_path_and_bytes)
 
         for line in file_lines:
             if not data_found and line.startswith(GCODE_STRING_FIRST_ATTR_LINE):
@@ -58,7 +64,7 @@ class AnycubicGcodeFile(UserDict[str, Any]):
             try:
                 slicer_data.update(gcode_key_value_pair_to_dict(REX_GCODE_DATA_KEY_VALUE, line))
             except Exception as error:
-                raise Exception(f'Failed to parse gcode metadata, error: {error}')
+                raise AnycubicGcodeParsingError(ErrorsGcodeParsing.parse_meta_fail.format(error))
 
         return cls(slicer_data)
 
@@ -73,13 +79,13 @@ class AnycubicGcodeFile(UserDict[str, Any]):
         ams_data = self.data.get('paint_info')
 
         if not ams_data:
-            raise ValueError('Cannot load AMS paint info from gcode.')
+            raise AnycubicGcodeParsingError(ErrorsGcodeParsing.empty_paint_info)
 
         if not filament_used_g or len(filament_used_g) < 1:
-            raise ValueError('Cannot load used filament info from gcode.')
+            raise AnycubicGcodeParsingError(ErrorsGcodeParsing.empty_used_filament)
 
         if len(filament_used_g) < len(ams_data):
-            raise ValueError('Not enough used filament info parsed for AMS data.')
+            raise AnycubicGcodeParsingError(ErrorsGcodeParsing.invalid_used_filament)
 
         if not filament_used_mm or len(filament_used_mm) < len(ams_data):
             filament_used_mm = list([None for x in range(len(ams_data))])

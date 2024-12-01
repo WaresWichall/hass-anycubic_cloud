@@ -26,8 +26,8 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .anycubic_cloud_api.anycubic_api_mqtt import AnycubicMQTTAPI as AnycubicAPI
-from .anycubic_cloud_api.anycubic_exceptions import AnycubicAPIError, AnycubicAPIParsingError
+from .anycubic_cloud_api.anycubic_api import AnycubicMQTTAPI as AnycubicAPI
+from .anycubic_cloud_api.exceptions.exceptions import AnycubicAPIError, AnycubicAPIParsingError
 from .const import (
     API_SETUP_RETRIES,
     API_SETUP_RETRY_INTERVAL_SECONDS,
@@ -50,6 +50,7 @@ from .const import (
     MQTT_IDLE_DISCONNECT_SECONDS,
     MQTT_REFRESH_INTERVAL,
     MQTT_SCAN_INTERVAL,
+    PRINT_JOB_STARTED_UPDATE_DELAY,
     STORAGE_KEY,
     STORAGE_VERSION,
 )
@@ -71,7 +72,7 @@ from .helpers import (
 )
 
 if TYPE_CHECKING:
-    from .anycubic_cloud_api.anycubic_data_model_printer import AnycubicPrinter
+    from .anycubic_cloud_api.data_models.printer import AnycubicPrinter
     from .entity import AnycubicCloudEntity, AnycubicCloudEntityDescription
 
 
@@ -330,6 +331,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 "total_material_used": printer.material_used,
                 "total_print_time_hrs": printer.total_print_time_hrs,
                 "total_print_time_dhm": printer.total_print_time_dhm_str,
+                "job_download_progress": printer.latest_project_download_progress_percentage,
             },
             "dry_status_is_drying": {
                 "dry_status_code": printer.primary_drying_status_raw_status_code,
@@ -344,6 +346,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 "print_total_time_minutes": printer.latest_project_print_total_time_minutes,
                 "print_total_time_dhm": printer.latest_project_print_total_time_dhm_str,
                 "print_supplies_usage": printer.latest_project_print_supplies_usage,
+                "print_status_message": printer.latest_project_print_status_message,
             },
             "fw_version": {
                 "latest_version": printer.fw_version.available_version if printer.fw_version else None,
@@ -356,6 +359,9 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             "secondary_multi_color_box_fw_version": {
                 "latest_version": printer.secondary_multi_color_box_fw_available_version,
                 "in_progress": printer.secondary_multi_color_box_fw_total_progress,
+            },
+            "mqtt_connection_active": {
+                "supports_mqtt_login": self.anycubic_api.anycubic_auth.supports_mqtt_login,
             },
         }
 
@@ -516,7 +522,11 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         )
 
     async def _async_print_job_started(self) -> None:
-        self._last_state_update = int(time.time()) - DEFAULT_SCAN_INTERVAL + 25
+        LOGGER.debug(
+            f"Print job started, forcing state update in {PRINT_JOB_STARTED_UPDATE_DELAY} seconds."
+        )
+        await asyncio.sleep(PRINT_JOB_STARTED_UPDATE_DELAY)
+        await self.force_state_update()
 
     async def _async_mqtt_callback_subscribed(self) -> None:
         await asyncio.sleep(10)
@@ -676,6 +686,7 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 await printer.request_local_file_list()
 
     async def _setup_anycubic_api_connection(self) -> None:
+        LOGGER.debug("Coordinator setting up Anycubic Cloud API connection.")
         store = Store[dict[str, Any]](self.hass, STORAGE_VERSION, STORAGE_KEY)
 
         if self.entry.data.get(CONF_USER_TOKEN) is None:
@@ -734,7 +745,9 @@ class AnycubicCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             raise
 
         except Exception as error:
-            raise ConfigEntryAuthFailed(f"Authentication failed with unknown Error. Check credentials {error}")
+            raise ConfigEntryAuthFailed(
+                f"Coordinator authentication failed with unknown Error. Check credentials {error}"
+            )
 
     async def _setup_anycubic_printer_objects(self) -> None:
         for printer_id in self.entry.data[CONF_PRINTER_ID_LIST]:

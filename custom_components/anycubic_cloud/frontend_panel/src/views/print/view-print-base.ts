@@ -1,15 +1,24 @@
 import { mdiPlay } from "@mdi/js";
-import { LitElement, html, css, PropertyValues, nothing } from "lit";
+import { CSSResult, LitElement, PropertyValues, css, html, nothing } from "lit";
 import { property, state } from "lit/decorators.js";
 
+import { commonPrintStyle } from "./styles";
 import { localize } from "../../../localize/localize";
 
 import { platform } from "../../const";
+import { HASSDomEvent } from "../../fire_event";
 import { fireHaptic } from "../../fire_haptic";
 import { loadHaServiceControl } from "../../load-ha-elements";
-import { HomeAssistant, HassDevice, HassPanel, HassRoute } from "../../types";
-
-import { commonPrintStyle } from "./styles";
+import {
+  FormChangeDetail,
+  HassDevice,
+  HassPanel,
+  HassProgressButton,
+  HassRoute,
+  HassServiceError,
+  HomeAssistant,
+  LitTemplateResult,
+} from "../../types";
 
 export class AnycubicViewPrintBase extends LitElement {
   @property({ attribute: false }) public hass!: HomeAssistant;
@@ -26,27 +35,30 @@ export class AnycubicViewPrintBase extends LitElement {
   @property()
   public panel!: HassPanel;
 
-  @property()
+  @property({ attribute: "selected-printer-id" })
   public selectedPrinterID: string | undefined;
 
-  @property()
+  @property({ attribute: "selected-printer-device" })
   public selectedPrinterDevice: HassDevice | undefined;
 
-  @state() private _scriptData: Record<string, any> = {};
+  @state() private _scriptData: Record<
+    string,
+    string | Record<string, string> | undefined
+  > = {};
 
   @state()
   private _error: string | undefined;
 
   @state()
-  private _serviceName: string = "";
+  protected _serviceName: string = "";
 
   @state()
   private _buttonPrint: string;
 
-  @state({ type: Boolean })
+  @state()
   private _buttonProgress: boolean = false;
 
-  async firstUpdated(): void {
+  async firstUpdated(): Promise<void> {
     await loadHaServiceControl();
   }
 
@@ -65,7 +77,8 @@ export class AnycubicViewPrintBase extends LitElement {
           action: srvName,
           service: srvName,
           data: {
-            ...(this._scriptData.data || {}),
+            ...((this._scriptData.data as object | undefined) ||
+              ({} as object)),
             config_entry: this.selectedPrinterDevice.primary_config_entry,
             device_id: this.selectedPrinterDevice.id,
           },
@@ -74,7 +87,7 @@ export class AnycubicViewPrintBase extends LitElement {
     }
   }
 
-  render(): any {
+  render(): LitTemplateResult {
     return html`
       <ac-print-view elevation="2">
         <ha-service-control
@@ -101,31 +114,31 @@ export class AnycubicViewPrintBase extends LitElement {
     `;
   }
 
-  private _scriptDataChanged(ev: CustomEvent): void {
+  private _scriptDataChanged = (ev: HASSDomEvent<FormChangeDetail>): void => {
     this._scriptData = { ...this._scriptData, ...ev.detail.value };
     this._error = undefined;
-  }
+  };
 
-  private async _runScript(ev: Event): Promise<void> {
-    const button = ev.currentTarget as any;
+  private _runScript = (ev: Event): void => {
+    const button = ev.currentTarget as unknown as HassProgressButton;
     this._error = undefined;
     ev.stopPropagation();
     this._buttonProgress = true;
     fireHaptic();
     this.hass
-      .callService(platform, this._serviceName, this._scriptData.data)
+      .callService(platform, this._serviceName, this._scriptData.data as object)
       .then(() => {
         button.actionSuccess();
         this._buttonProgress = false;
       })
-      .catch((e) => {
-        this._error = e.message;
+      .catch((e: unknown) => {
+        this._error = (e as HassServiceError).message;
         button.actionError();
         this._buttonProgress = false;
       });
-  }
+  };
 
-  static get styles(): any {
+  static get styles(): CSSResult {
     return css`
       ${commonPrintStyle}
     `;
