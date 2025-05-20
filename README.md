@@ -16,6 +16,7 @@ Component is working very well so far with:
 - Kobra 2
 - Kobra 2 Max
 - Kobra 2 Pro
+- Kobra S1 Combo
 - Photon Mono M5s (Basic support still)
 - M7 Pro (Basic support still)
 
@@ -80,7 +81,7 @@ Current features:
 ### Slicer authentication
 
 > [!IMPORTANT]  
-> Only tested / supported with Slicer Next for Windows
+> Only tested / supported with Slicer Next for Windows and Mac
 
 1. Make sure your installation of Slicer Next is logged in, then close it.
 2. Locate your `AnycubicSlicerNext` config directory.
@@ -93,12 +94,21 @@ Current features:
 > ```
 > C:\Users\<USERNAME>\AppData\Roaming\AnycubicSlicerNext\AnycubicSlicerNext.conf
 > ```
+> or
+> ```
+> $HOME/Library/Application\ Support/AnycubicSlicerNext/AnycubicSlicerNext.conf
+> ```
 3. Copy/save the whole `access_token` string without the quotes, it should be a 344 character string.
 4. Ideally you should now clear your login config for the slicer to prevent it logging in at the same time as Home Assistant.
     This can be done setting your `access_token` to an empty string in the config file, e.g. `"access_token": "",`
 
 <img width="400" alt="" src="https://raw.githubusercontent.com/WaresWichall/hass-anycubic_cloud/dev/screenshots/auth_slicer_token.png">
 
+> [!NOTE]  
+> If you are on a mac and have `yq` installed. You can copy the access token using this command
+> ```
+> yq '.anycubic_cloud.access_token' $HOME/Library/Application\ Support/AnycubicSlicerNext/AnycubicSlicerNext.conf |pbcopy
+> ```
 
 ### Web authentication
 
