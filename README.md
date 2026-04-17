@@ -1,3 +1,5 @@
+> This is the fork of the [original by WaresWichall](https://github.com/WaresWichall/hass-anycubic_cloud) which is largely abandoned, and has a dependency issue. This version fixes that and should be easier to install!
+
 > [!NOTE]  
 > Anycubic have been attempting to block MQTT access, see [here](https://github.com/WaresWichall/hass-anycubic_cloud/issues/33)
 > 
