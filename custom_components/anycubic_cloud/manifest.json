@@ -15,6 +15,6 @@
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/WaresWichall/anycubic_cloud/issues",
   "loggers": [],
-  "requirements": ["paho-mqtt==1.6.1"],
+  "requirements": ["paho-mqtt"],
   "version": "0.2.2"
 }
